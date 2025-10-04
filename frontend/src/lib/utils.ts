@@ -25,10 +25,7 @@ export function getRelativeTime(dateString: string): string {
     if (diffInHours === 0) {
       const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
       if (diffInMinutes === 0) {
-        if (diffInSeconds <= 10) {
-          return "just now";
-        }
-        return `${diffInSeconds} second${diffInSeconds === 1 ? "" : "s"} ago`;
+        return diffInSeconds <= 10 ? "just now" : "less than a minute ago";
       }
       return `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
     }
