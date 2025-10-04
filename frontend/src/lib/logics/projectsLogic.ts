@@ -1,12 +1,12 @@
 import { actions, connect, kea, listeners, path, selectors } from "kea";
 
-import type { projectsLogicType } from "./projectsLogicType";
-import { ProjectsApi, type Project } from "../api/projects.api";
-import { authLogic } from "./authLogic";
 import { loaders } from "kea-loaders";
-import { SymmetricCrypto } from "../crypto/crypto.symmetric";
-import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { subscriptions } from "kea-subscriptions";
+import { ProjectsApi, type Project } from "../api/projects.api";
+import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
+import { SymmetricCrypto } from "../crypto/crypto.symmetric";
+import { authLogic } from "./authLogic";
+import type { projectsLogicType } from "./projectsLogicType";
 
 export const projectsLogic = kea<projectsLogicType>([
   path(["src", "lib", "logics", "projectsLogic"]),
@@ -27,7 +27,7 @@ export const projectsLogic = kea<projectsLogicType>([
 
   loaders(({ values }) => ({
     projects: [
-      [] as Project[],
+      undefined as Project[] | undefined,
       {
         loadProjects: async () => {
           const projects = await ProjectsApi.getProjects(values.jwtToken!);
@@ -42,7 +42,7 @@ export const projectsLogic = kea<projectsLogicType>([
       (state) => [state.projects],
       (projects) =>
         (id: string): Project | undefined => {
-          return projects.find((project) => {
+          return projects?.find((project) => {
             return project.id === id;
           });
         },

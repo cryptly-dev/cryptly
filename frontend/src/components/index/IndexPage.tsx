@@ -62,8 +62,7 @@ export function IndexPage() {
             transition={{ duration: 0.8, ease: [0, 0.55, 0.45, 1], delay: 0.4 }}
           >
             <Link
-              to="/app/project/$projectId"
-              params={{ projectId: "demo" }}
+              to="/app/project"
               className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-white text-black px-8 py-3 font-semibold shadow-2xl transition-all hover:scale-105 hover:shadow-white/25"
             >
               <span>Dashboard</span>
@@ -282,8 +281,7 @@ export function IndexPage() {
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
-                to="/app/project/$projectId"
-                params={{ projectId: "demo" }}
+                to="/app/project"
                 className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-white text-black px-8 py-3 font-semibold shadow-2xl transition-all hover:scale-105 hover:shadow-white/25"
               >
                 <span>Start using Cryptly</span>
