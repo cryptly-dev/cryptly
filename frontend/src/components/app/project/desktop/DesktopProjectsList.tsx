@@ -40,7 +40,7 @@ export function DesktopProjectsList() {
     },
   } as const;
 
-  if (!projects.length && projectsLoading) {
+  if (!projects || !projects.length && projectsLoading) {
     return null;
   }
 

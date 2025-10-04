@@ -26,7 +26,7 @@ export function CreateFirstProjectView() {
     }
 
     // If there are projects, navigate to the most recent one
-    if (projects.length > 0) {
+    if (projects && projects.length > 0) {
       // Sort by updatedAt to find the most recent project
       const sortedProjects = [...projects].sort((a, b) => {
         return (
@@ -60,7 +60,7 @@ export function CreateFirstProjectView() {
   }
 
   // Show empty state if no projects
-  if (projects.length === 0) {
+  if (projects && projects.length === 0) {
     return <EmptyProjectsState />;
   }
 

@@ -84,7 +84,7 @@ export function MobileProjectTile() {
   return (
     <div className="h-full flex flex-col">
       <MobileProjectHeader
-        projects={projects}
+        projects={projects || []}
         activeProject={activeProject}
         onProjectChange={handleProjectChange}
         isShowingHistory={isShowingHistory}

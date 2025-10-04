@@ -30,6 +30,7 @@ export function ProjectPage() {
 
   useEffect(() => {
     if (
+      projects &&
       projects.length &&
       !projects.find((project) => project.id === activeProject?.id)
     ) {
@@ -37,7 +38,7 @@ export function ProjectPage() {
         to: "/app/project/$projectId",
         params: { projectId: projects[0].id },
       });
-    } else if (projects.length === 0) {
+    } else if (projects && projects.length === 0) {
       navigate({ to: "/app/project" });
     }
   }, [projects, activeProject]);
