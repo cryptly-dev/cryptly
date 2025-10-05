@@ -13,14 +13,14 @@
 
 ## ⭐ Features
 
-- **🔒 End-to-End Encryption** - Your secrets are encrypted on the client side, server never sees plaintext
-- **👥 Team Collaboration** - Share encrypted secrets with team members via secure invitations
-- **📝 Version History** - Track all changes to your secrets with full version control
-- **🔄 GitHub Integration** - Sync secrets directly to your GitHub repositories
+- **🔒 End-to-end encryption** - Your secrets are encrypted on the client side, server never sees plaintext
+- **👥 Team collaboration** - Share encrypted secrets with team members via secure invitations
+- **📝 Version history** - Track all changes to your secrets with full version control
+- **🔄 GitHub integration** - Sync secrets directly to your GitHub repositories
 - **🎨 Modern UI** - Beautiful, responsive interface built with React
-- **🚀 Real-time Updates** - See changes instantly with WebSocket support
-- **🔑 Multiple Auth Options** - Login with Google, GitHub, or local development mode
-- **📦 Project Organization** - Organize secrets by projects for better management
+- **🚀 Real-time updates** - See changes instantly with SSE support
+- **🔑 Multiple auth ooptions** - Login with Google, GitHub, or local development mode
+- **📦 Project organization** - Organize secrets by projects for better management
 
 ## 🚀 Quick Start
 
