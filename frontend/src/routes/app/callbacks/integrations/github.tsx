@@ -2,6 +2,7 @@ import { IntegrationsApi } from "@/lib/api/integrations.api";
 import { authLogic } from "@/lib/logics/authLogic";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useValues } from "kea";
+import posthog from "posthog-js";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/app/callbacks/integrations/github")({
@@ -36,10 +37,13 @@ function RouteComponent() {
 
     const extractedProjectId = projectIdMatch[1];
 
-    updateProjectAndRedirect(extractedProjectId, id);
+    posthog.capture("installation_created", {
+      type: "github",
+    });
+    createInstallationAndRedirect(extractedProjectId, id);
   }, []);
 
-  const updateProjectAndRedirect = async (
+  const createInstallationAndRedirect = async (
     projectId: string,
     installationId: string
   ) => {

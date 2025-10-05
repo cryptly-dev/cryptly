@@ -5,5 +5,10 @@ import { OAuthCallbackPage } from "./OAuthCallbackPage";
 export function GooglePage() {
   const { exchangeGoogleCodeForJwt } = useActions(authLogic);
 
-  return <OAuthCallbackPage exchangeCodeForJwt={exchangeGoogleCodeForJwt} />;
+  return (
+    <OAuthCallbackPage
+      exchangeCodeForJwt={exchangeGoogleCodeForJwt}
+      method="google"
+    />
+  );
 }
