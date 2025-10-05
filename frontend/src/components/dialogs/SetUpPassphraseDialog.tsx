@@ -50,9 +50,11 @@ export function SetUpPassphraseDialog() {
       <DialogContent showCloseButton={false} className="sm:max-w-md">
         <form onSubmit={onSubmit} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>Set up your passphrase</DialogTitle>
+            <DialogTitle>Set up your account passphrase</DialogTitle>
             <DialogDescription>
-              Create a passphrase to encrypt your private key. Store it safely.
+              You will be asked to enter this passphrase every time you try to
+              access your account from a different device. It can not be
+              recovered. We as admins have no way to recover it.
             </DialogDescription>
           </DialogHeader>
 

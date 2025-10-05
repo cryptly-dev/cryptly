@@ -58,6 +58,19 @@ const buttonVariants = cva(
   }
 );
 
+export interface ButtonProps
+  extends React.ComponentProps<"button">,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+  isLoading?: boolean;
+  tooltip?:
+    | string
+    | {
+        title: string;
+        description?: string;
+      };
+}
+
 function Button({
   className,
   variant,
@@ -66,15 +79,12 @@ function Button({
   isLoading = false,
   disabled,
   children,
+  tooltip,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-    isLoading?: boolean;
-  }) {
+}: ButtonProps) {
   const Comp = asChild ? Slot : "button";
 
-  return (
+  const buttonElement = (
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
@@ -84,6 +94,30 @@ function Button({
       {isLoading && <LoaderIcon className="size-4" />}
       {!isLoading && children}
     </Comp>
+  );
+
+  // If no tooltip, return button as-is
+  if (!tooltip) {
+    return buttonElement;
+  }
+
+  // Parse tooltip content
+  const tooltipContent =
+    typeof tooltip === "string" ? { title: tooltip } : tooltip;
+
+  // Wrap button with tooltip
+  return (
+    <div className="relative group">
+      {buttonElement}
+      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+        <div className="font-medium">{tooltipContent.title}</div>
+        {tooltipContent.description && (
+          <div className="text-xs text-muted-foreground">
+            {tooltipContent.description}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

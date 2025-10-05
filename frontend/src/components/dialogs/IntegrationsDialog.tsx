@@ -76,7 +76,7 @@ function ExistingIntegrationsSection() {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <IconLink className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Connected Repositories</h3>
+        <h3 className="text-sm font-medium">Connections</h3>
       </div>
 
       {integrations.length > 0 ? (
@@ -91,7 +91,7 @@ function ExistingIntegrationsSection() {
       ) : (
         <div className="text-center py-4 px-4 bg-muted/20 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
-            No repositories connected to this project yet.
+            No connections yet
           </div>
         </div>
       )}
@@ -157,7 +157,7 @@ function AddIntegrationSection() {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <IconPlus className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Connect New External Connection</h3>
+        <h3 className="text-sm font-medium">New connection</h3>
       </div>
 
       {/* Provider and Installation selectors on the same line */}
@@ -176,7 +176,6 @@ function AddIntegrationSection() {
         <Select
           value={selectedInstallationEntityId ?? undefined}
           onValueChange={handleInstallationSelectChange}
-          className="flex-1"
         >
           <SelectTrigger className="flex-1">
             <SelectValue placeholder="Choose a GitHub installation" />
@@ -268,7 +267,7 @@ export function IntegrationsDialog({
             For now, we only support GitHub integrations. If you need any other
             integration,{" "}
             <a
-              href="https://github.com/ablaszkiewicz/secretlify"
+              href="https://github.com/cryptly-dev/cryptly/issues"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
