@@ -52,9 +52,9 @@ local:
 	@cp frontend/.env.example frontend/.env
 	@echo "Created frontend/.env from frontend/.env.example"
 	@echo "Starting MongoDB container..."
-	@docker ps --filter "name=secretlify-mongo" --format '{{.Names}}' | grep -q secretlify-mongo && \
+	@docker ps --filter "name=cryptly-mongo" --format '{{.Names}}' | grep -q cryptly-mongo && \
 		echo "MongoDB container already running" || \
-		(docker run -d --name secretlify-mongo -p 2137:27017 mongo:8 && echo "Started MongoDB 8 on port 2137")
+		(docker run -d --name cryptly-mongo -p 2137:27017 mongo:8 && echo "Started MongoDB 8 on port 2137")
 	@echo "Starting backend and frontend..."
 	@trap 'kill %1; kill %2' EXIT; \
 	make backend & make frontend & \
