@@ -1,3 +1,4 @@
+import { Kbd } from "@/components/ui/kbd";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { cn } from "@/lib/utils";
 import { useActions, useValues } from "kea";
@@ -58,11 +59,8 @@ export function UpdateButton() {
         <span>Saved</span>
       ) : (
         <>
-          <span>Save {"("}</span>
-          <span>
-            <CommandIcon />
-          </span>
-          <span>+ Enter )</span>
+          <span>Save</span>
+          <Kbd>Enter</Kbd>
           <motion.span
             className="inline-flex items-center justify-center overflow-hidden"
             aria-hidden

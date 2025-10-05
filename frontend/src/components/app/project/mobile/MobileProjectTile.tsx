@@ -30,11 +30,13 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { useActions, useValues } from "kea";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MobileFileEditor } from "./MobileFileEditor";
 import { MobileHistoryView } from "./MobileHistoryView";
 import { MobileSaveButton } from "./MobileSaveButton";
 import posthog from "posthog-js";
+import { authLogic } from "@/lib/logics/authLogic";
+import { getRelativeTime } from "@/lib/utils";
 
 const truncateText = (text: string, maxLength: number) => {
   if (text.length <= maxLength) return text;
@@ -48,7 +50,9 @@ export function MobileProjectTile() {
     isSubmitting,
     isEditorDirty,
     inputValue,
+    lastEditAuthor,
   } = useValues(projectLogic);
+  const { userData } = useValues(authLogic);
   const { projects } = useValues(projectsLogic);
   const { activeProject } = useProjects();
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
@@ -74,6 +78,12 @@ export function MobileProjectTile() {
     inputValue,
     isShowingHistory,
   ]);
+
+  const changedBy = useMemo(() => {
+    if (lastEditAuthor?.id === userData?.id) {
+      return "you";
+    }
+  }, [lastEditAuthor, userData]);
 
   const handleProjectChange = (projectId: string) => {
     navigate({
@@ -119,16 +129,21 @@ export function MobileProjectTile() {
                 />
                 <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center">
                   <AnimatePresence mode="wait">
-                    <motion.span
-                      key={"edit-mode"}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ ease: "easeInOut", duration: 0.1 }}
-                      className="rounded bg-background/80 px-2 py-0.5 text-xs text-muted-foreground shadow-sm"
-                    >
-                      Changed by you 1 week ago
-                    </motion.span>
+                    {" "}
+                    {changedBy && (
+                      <motion.div
+                        className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ ease: "easeInOut", duration: 0.1 }}
+                      >
+                        <span className="rounded bg-background/100 px-2 py-0.5 text-xs text-muted-foreground shadow-sm">
+                          Changed by {changedBy.split("@")[0]}{" "}
+                          {getRelativeTime(projectData.updatedAt)}
+                        </span>
+                      </motion.div>
+                    )}{" "}
                   </AnimatePresence>
                 </div>
               </div>
@@ -161,6 +176,7 @@ function MobileProjectHeader({
 
   const handleSelectChange = (value: string) => {
     if (value === "add-project") {
+      posthog.capture("add_project_button_clicked");
       setAddDialogOpen(true);
     } else {
       onProjectChange(value);

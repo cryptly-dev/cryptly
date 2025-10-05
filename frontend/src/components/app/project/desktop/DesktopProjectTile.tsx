@@ -124,7 +124,7 @@ export function DesktopProjectTile() {
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ ease: "easeInOut", duration: 0.1 }}
                   >
-                    <span className="rounded bg-background/80 px-2 py-0.5 text-xs text-muted-foreground shadow-sm">
+                    <span className="rounded bg-background/100 px-2 py-0.5 text-xs text-muted-foreground shadow-sm">
                       Changed by {changedBy.split("@")[0]}{" "}
                       {getRelativeTime(projectData.updatedAt)}
                     </span>
