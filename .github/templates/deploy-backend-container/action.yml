@@ -45,17 +45,17 @@ inputs:
   google-redirect-uri-alternative:
     required: true
 
-  github-client-id:
+  gh-client-id:
     required: true
-  github-client-secret:
+  gh-client-secret:
     required: true
-  github-client-id-alternative:
+  gh-client-id-alternative:
     required: true
-  github-client-secret-alternative:
+  gh-client-secret-alternative:
     required: true
-  github-cryptly-app-id:
+  gh-cryptly-app-id:
     required: true
-  github-cryptly-app-private-key:
+  gh-cryptly-app-private-key:
     required: true
 
 runs:
@@ -84,12 +84,12 @@ runs:
           -e GOOGLE_CLIENT_SECRET=${{ inputs.google-client-secret }} \
           -e GOOGLE_REDIRECT_URI=${{ inputs.google-redirect-uri }} \
           -e GOOGLE_REDIRECT_URI_ALTERNATIVE=${{ inputs.google-redirect-uri-alternative }} \
-          -e GITHUB_CLIENT_ID=${{ inputs.github-client-id }} \
-          -e GITHUB_CLIENT_SECRET=${{ inputs.github-client-secret }} \
-          -e GITHUB_CLIENT_ID_ALTERNATIVE=${{ inputs.github-client-id-alternative }} \
-          -e GITHUB_CLIENT_SECRET_ALTERNATIVE=${{ inputs.github-client-secret-alternative }} \
-          -e GITHUB_CRYPTLY_APP_ID=${{ inputs.github-cryptly-app-id }} \
-          -e GITHUB_CRYPTLY_APP_PRIVATE_KEY="${{ inputs.github-cryptly-app-private-key }}" \
+          -e GH_CLIENT_ID=${{ inputs.gh-client-id }} \
+          -e GH_CLIENT_SECRET=${{ inputs.gh-client-secret }} \
+          -e GH_CLIENT_ID_ALTERNATIVE=${{ inputs.gh-client-id-alternative }} \
+          -e GH_CLIENT_SECRET_ALTERNATIVE=${{ inputs.gh-client-secret-alternative }} \
+          -e GH_CRYPTLY_APP_ID=${{ inputs.gh-cryptly-app-id }} \
+          -e GH_CRYPTLY_APP_PRIVATE_KEY="${{ inputs.gh-cryptly-app-private-key }}" \
           -e POSTHOG_API_KEY=${{ inputs.posthog-api-key }} \
           -e POSTHOG_HOST=${{ inputs.posthog-host }} \
           -e PORT=${{ inputs.application-port }} \
