@@ -21,6 +21,7 @@ export interface EnvConfig {
   };
   auth: {
     jwtSecret: string;
+    allowLocalLogin: boolean;
   };
   logdash: {
     apiKey: string;
@@ -64,6 +65,7 @@ export const EnvConfigs: EnvConfigs = {
     },
     auth: {
       jwtSecret: process.env.JWT_SECRET!,
+      allowLocalLogin: process.env.ALLOW_LOCAL_LOGIN === 'true',
     },
     logdash: {
       apiKey: process.env.LOGDASH_API_KEY!,
@@ -100,6 +102,7 @@ export const EnvConfigs: EnvConfigs = {
     },
     auth: {
       jwtSecret: process.env.JWT_SECRET!,
+      allowLocalLogin: process.env.ALLOW_LOCAL_LOGIN === 'true',
     },
     logdash: {
       apiKey: process.env.LOGDASH_API_KEY!,

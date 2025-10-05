@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
+import { LocalLoginForm } from "./LocalLoginForm";
 
 export function LoginPage() {
+  const allowLocalLogin = import.meta.env.VITE_ALLOW_LOCAL_LOGIN === "true";
+
   const handleGoogleLogin = () => {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     const appUrl = import.meta.env.VITE_APP_URL;
@@ -30,27 +33,31 @@ export function LoginPage() {
             </p>
           </div>
 
-          <div className="space-y-4">
-            <Button
-              onClick={handleGoogleLogin}
-              variant="outline"
-              size="lg"
-              className="w-full flex items-center justify-center gap-3 h-12 cursor-pointer"
-            >
-              <GoogleIcon />
-              Continue with Google
-            </Button>
+          {allowLocalLogin ? (
+            <LocalLoginForm />
+          ) : (
+            <div className="space-y-4">
+              <Button
+                onClick={handleGoogleLogin}
+                variant="outline"
+                size="lg"
+                className="w-full flex items-center justify-center gap-3 h-12 cursor-pointer"
+              >
+                <GoogleIcon />
+                Continue with Google
+              </Button>
 
-            <Button
-              onClick={handleGitHubLogin}
-              variant="outline"
-              size="lg"
-              className="w-full flex items-center justify-center gap-3 h-12 cursor-pointer"
-            >
-              <GitHubIcon />
-              Continue with GitHub
-            </Button>
-          </div>
+              <Button
+                onClick={handleGitHubLogin}
+                variant="outline"
+                size="lg"
+                className="w-full flex items-center justify-center gap-3 h-12 cursor-pointer"
+              >
+                <GitHubIcon />
+                Continue with GitHub
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
