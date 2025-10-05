@@ -59,12 +59,12 @@ jobs:
           google-redirect-uri: ${{ secrets.GOOGLE_REDIRECT_URI }}
           google-redirect-uri-alternative: ${{ secrets.GOOGLE_REDIRECT_URI_ALTERNATIVE }}
 
-          github-client-id: ${{ secrets.GITHUB_CLIENT_ID }}
-          github-client-secret: ${{ secrets.GITHUB_CLIENT_SECRET }}
-          github-client-id-alternative: ${{ secrets.GITHUB_CLIENT_ID_ALTERNATIVE }}
-          github-client-secret-alternative: ${{ secrets.GITHUB_CLIENT_SECRET_ALTERNATIVE }}
-          github-cryptly-app-id: ${{ secrets.GITHUB_CRYPTLY_APP_ID }}
-          github-cryptly-app-private-key: ${{ secrets.GITHUB_CRYPTLY_APP_PRIVATE_KEY }}
+          gh-client-id: ${{ secrets.GH_CLIENT_ID }}
+          gh-client-secret: ${{ secrets.GH_CLIENT_SECRET }}
+          gh-client-id-alternative: ${{ secrets.GH_CLIENT_ID_ALTERNATIVE }}
+          gh-client-secret-alternative: ${{ secrets.GH_CLIENT_SECRET_ALTERNATIVE }}
+          gh-cryptly-app-id: ${{ secrets.GH_CRYPTLY_APP_ID }}
+          gh-cryptly-app-private-key: ${{ secrets.GH_CRYPTLY_APP_PRIVATE_KEY }}
 
           logdash-api-key: ${{ secrets.LOGDASH_API_KEY }}
 
