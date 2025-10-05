@@ -52,6 +52,7 @@ export function DesktopProjectTile() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        posthog.capture("save_button_clicked");
         event.preventDefault();
         event.stopPropagation();
         if (
