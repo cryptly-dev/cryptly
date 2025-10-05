@@ -1,5 +1,5 @@
 <div align="center" width="100%">
-    <img src="https://i.ibb.co/NghM11t8/download.png" alt="Cryptly Logo" width="100"/>
+    <img src="https://i.ibb.co/ccfncjvr/download2.png" alt="Cryptly Logo" width="100"/>
     <h1>Cryptly</h1>
 </div>
 
