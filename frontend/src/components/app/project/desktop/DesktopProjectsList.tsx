@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
+import posthog from "posthog-js";
 
 export function DesktopProjectsList() {
   const { projects, projectsLoading } = useValues(projectsLogic);
@@ -40,7 +41,7 @@ export function DesktopProjectsList() {
     },
   } as const;
 
-  if (!projects || !projects.length && projectsLoading) {
+  if (!projects || (!projects.length && projectsLoading)) {
     return null;
   }
 
@@ -69,7 +70,10 @@ export function DesktopProjectsList() {
             type="button"
             aria-label="Add project"
             className="text-muted-foreground hover:text-foreground cursor-pointer bg-accent/100 rounded-md w-8 h-8 justify-center items-center"
-            onClick={() => setAddDialogOpen(true)}
+            onClick={() => {
+              setAddDialogOpen(true);
+              posthog.capture("add_project_button_clicked");
+            }}
             animate={{ scale: isAddProjectButtonHovered ? 1.15 : 1 }}
             onHoverStart={() => setAddProjectButtonHovered(true)}
             onHoverEnd={() => setAddProjectButtonHovered(false)}
