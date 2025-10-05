@@ -12,10 +12,10 @@ import { projectLogic } from "@/lib/logics/projectLogic";
 import { getRelativeTime } from "@/lib/utils";
 import {
   IconArrowLeft,
-  IconBrandGithub,
   IconHistory,
   IconSettings,
   IconUsers,
+  IconPlugConnected,
 } from "@tabler/icons-react";
 import { useActions, useValues } from "kea";
 import { AlertTriangle } from "lucide-react";
@@ -245,15 +245,15 @@ function ProjectHeader() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIntegrationsDialogOpen(true)}
-                aria-label="Integrations"
+                aria-label="External Connections"
                 className="cursor-pointer"
               >
-                <IconBrandGithub className="size-5" />
+                <IconPlugConnected className="size-5" />
               </Button>
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">Integrations</div>
+                <div className="font-medium">External Connections</div>
                 <div className="text-xs text-muted-foreground">
-                  Connect github repositories
+                  Connect external services
                 </div>
               </div>
             </div>
@@ -396,15 +396,15 @@ function ProjectHeaderSkeleton() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIntegrationsDialogOpen(true)}
-                aria-label="Integrations"
+                aria-label="External Connections"
                 className="cursor-pointer"
               >
-                <IconBrandGithub className="size-5" />
+                <IconPlugConnected className="size-5" />
               </Button>
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">Integrations</div>
+                <div className="font-medium">External Connections</div>
                 <div className="text-xs text-muted-foreground">
-                  Connect github repositories
+                  Connect external services
                 </div>
               </div>
             </div>

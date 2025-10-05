@@ -157,46 +157,60 @@ function AddIntegrationSection() {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <IconPlus className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Connect New Repository</h3>
+        <h3 className="text-sm font-medium">Connect New External Connection</h3>
       </div>
 
-      {/* Installation selector on its own line */}
-      <Select
-        value={selectedInstallationEntityId ?? undefined}
-        onValueChange={handleInstallationSelectChange}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Choose a GitHub installation" />
-        </SelectTrigger>
-        <SelectContent>
-          {installations.map((installation) => (
-            <SelectItem key={installation.id} value={installation.id}>
+      {/* Provider and Installation selectors on the same line */}
+      <div className="flex gap-2">
+        <Select value="github" disabled>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue>
               <div className="flex items-center gap-2">
-                {installation.liveData?.avatar && (
-                  <img
-                    src={installation.liveData.avatar}
-                    alt={`${installation.liveData.owner} avatar`}
-                    className="size-5 rounded-full"
-                  />
-                )}
-                <span className="truncate">
-                  {installation.liveData?.owner ||
-                    `Installation ${installation.githubInstallationId}`}
-                </span>
+                <IconBrandGithub className="size-4" />
+                <span>GitHub</span>
+              </div>
+            </SelectValue>
+          </SelectTrigger>
+        </Select>
+
+        <Select
+          value={selectedInstallationEntityId ?? undefined}
+          onValueChange={handleInstallationSelectChange}
+          className="flex-1"
+        >
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder="Choose a GitHub installation" />
+          </SelectTrigger>
+          <SelectContent>
+            {installations.map((installation) => (
+              <SelectItem key={installation.id} value={installation.id}>
+                <div className="flex items-center gap-2">
+                  {installation.liveData?.avatar && (
+                    <img
+                      src={installation.liveData.avatar}
+                      alt={`${installation.liveData.owner} avatar`}
+                      className="size-5 rounded-full"
+                    />
+                  )}
+                  <span className="truncate">
+                    {installation.liveData?.owner ||
+                      `Installation ${installation.githubInstallationId}`}
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
+            <SelectItem
+              value="add-installation"
+              className="text-muted-foreground cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <IconPlus className="size-4" />
+                <span>Add new installation</span>
               </div>
             </SelectItem>
-          ))}
-          <SelectItem
-            value="add-installation"
-            className="text-muted-foreground cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <IconPlus className="size-4" />
-              <span>Add new installation</span>
-            </div>
-          </SelectItem>
-        </SelectContent>
-      </Select>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Repository selector and connect button on the same line */}
       <div className="flex gap-2">
@@ -238,17 +252,31 @@ export function IntegrationsDialog({
         <div className="grid gap-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              Integrations
+              External Connections
             </DialogTitle>
             <DialogDescription>
-              Connect github repositories to sync and manage your project
-              secrets.
+              Connect external services to sync and manage your project secrets
+              across platforms.
             </DialogDescription>
           </DialogHeader>
 
           <ExistingIntegrationsSection />
 
           <AddIntegrationSection />
+
+          <div className="text-xs text-muted-foreground bg-muted/20 p-3 rounded-md border border-dashed">
+            For now, we only support GitHub integrations. If you need any other
+            integration,{" "}
+            <a
+              href="https://github.com/ablaszkiewicz/secretlify"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              let us know
+            </a>
+            .
+          </div>
         </div>
       </DialogContent>
     </Dialog>
