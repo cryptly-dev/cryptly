@@ -35,6 +35,21 @@ const posthogOptions = {
 
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 
+// Add global axios interceptor to handle 401 responses
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear auth token from localStorage
+      localStorage.clear();
+
+      // Redirect to login page
+      window.location.href = "/app/login";
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
   interface Register {
