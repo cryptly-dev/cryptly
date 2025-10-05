@@ -1,10 +1,11 @@
 import { authLogic } from "@/lib/logics/authLogic";
 import { useLocation } from "@tanstack/react-router";
 import { useValues } from "kea";
-import { Home, LogIn, User } from "lucide-react";
+import { Code, Home, LogIn, User } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { memo } from "react";
 import { FloatingDock } from "./floating-dock";
+import { useFeatureFlagEnabled } from "posthog-js/react";
 
 function AppNavigationImpl() {
   const location = useLocation();
@@ -12,6 +13,8 @@ function AppNavigationImpl() {
   const isAppRoute = location.href.startsWith("/app");
 
   const { isLoggedIn } = useValues(authLogic);
+
+  const isDeveloper = useFeatureFlagEnabled("developer");
 
   const navItems = [
     // Show Login only when user is not logged in
@@ -36,13 +39,17 @@ function AppNavigationImpl() {
             ),
             href: `/app/project/`,
           },
-          {
-            title: "Dev",
-            icon: (
-              <Home className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
-            href: `/app/developer/`,
-          },
+          ...(isDeveloper
+            ? [
+                {
+                  title: "Dev",
+                  icon: (
+                    <Code className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+                  ),
+                  href: `/app/developer/`,
+                },
+              ]
+            : []),
           {
             title: "Me",
             icon: (
