@@ -185,7 +185,6 @@ export const integrationsLogic = kea<integrationsLogicType>([
       actions.loadInstallations();
     },
     selectedInstallationEntityId: () => {
-      console.log("Id changed to loading repos");
       actions.loadRepositories();
     },
   })),

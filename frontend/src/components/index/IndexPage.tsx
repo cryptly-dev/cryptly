@@ -70,7 +70,7 @@ export function IndexPage() {
             </Link>
 
             <a
-              href="https://github.com/secretlify/secretlify"
+              href="https://github.com/cryptly-dev/cryptly"
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-flex items-center justify-center gap-2 rounded-full border border-neutral-700 bg-neutral-900/70 px-8 py-3 font-semibold text-white transition-all hover:border-neutral-600 hover:bg-neutral-800/70"
@@ -315,7 +315,7 @@ export function IndexPage() {
           </div>
           <div className="flex items-center gap-6 text-sm text-neutral-500">
             <a
-              href="https://github.com/secretlify/secretlify"
+              href="https://github.com/cryptly-dev/cryptly"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-neutral-300 transition-colors"
@@ -323,7 +323,7 @@ export function IndexPage() {
               GitHub
             </a>
             <a
-              href="https://github.com/secretlify/secretlify/issues"
+              href="https://github.com/cryptly-dev/cryptly"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-neutral-300 transition-colors"

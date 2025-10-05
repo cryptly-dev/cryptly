@@ -65,7 +65,7 @@ export class GithubApiFacadeService {
         headers: {
           Authorization: `Bearer ${jwtToken}`,
           Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'Secretlify',
+          'User-Agent': 'Cryptly',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({}),
@@ -92,7 +92,7 @@ export class GithubApiFacadeService {
   ): Promise<T> {
     const headers: Record<string, string> = {
       Accept: 'application/vnd.github.v3+json',
-      'User-Agent': 'Secretlify',
+      'User-Agent': 'Cryptly',
     };
 
     if (installationId) {
@@ -121,7 +121,9 @@ export class GithubApiFacadeService {
     const response = await fetch(fullUrl, fetchOptions);
 
     if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `GitHub API error: ${response.status} ${response.statusText} ${await response.text()}`,
+      );
     }
 
     if (method === 'DELETE' && response.status === 204) {
@@ -202,7 +204,7 @@ export class GithubApiFacadeService {
         headers: {
           Authorization: `Bearer ${jwtToken}`,
           Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'Secretlify',
+          'User-Agent': 'Cryptly',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({}),

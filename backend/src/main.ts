@@ -14,7 +14,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .addBearerAuth()
     .addApiKey({ type: 'apiKey', in: 'header', name: 'project-api-key' }, 'project-api-key')
-    .setTitle('Secretlify')
+    .setTitle('Cryptly')
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);
