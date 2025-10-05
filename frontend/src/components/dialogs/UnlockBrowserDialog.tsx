@@ -55,9 +55,7 @@ export function UnlockBrowserDialog() {
       <DialogContent showCloseButton={false} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Unlock this browser</DialogTitle>
-          <DialogDescription>
-            Enter your passphrase to decrypt your private key locally.
-          </DialogDescription>
+          <DialogDescription>Enter your account passphrase.</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-2">

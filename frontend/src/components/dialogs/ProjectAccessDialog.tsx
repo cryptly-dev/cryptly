@@ -429,7 +429,7 @@ function GenerateNewInviteLinkSection() {
               value={passphrase}
               onChange={(e) => setPassphrase(e.target.value)}
               className="w-full rounded-md border px-3 py-2 bg-background text-base sm:text-sm pr-10"
-              placeholder="Enter a secure passphrase"
+              placeholder="Enter a secure code"
               autoComplete="new-password"
               required
             />
@@ -467,8 +467,8 @@ function GenerateNewInviteLinkSection() {
           </Select>
         </div>
         <div className="text-xs text-muted-foreground">
-          This passphrase will be required to accept the invitation. Each invite
-          link can only be used by one person.
+          This code will be required to accept the invitation. Each invite link
+          can only be used by one person.
         </div>
       </div>
 

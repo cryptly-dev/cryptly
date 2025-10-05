@@ -37,6 +37,13 @@ function AppNavigationImpl() {
             href: `/app/project/`,
           },
           {
+            title: "Dev",
+            icon: (
+              <Home className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+            ),
+            href: `/app/developer/`,
+          },
+          {
             title: "Me",
             icon: (
               <User className="h-full w-full text-neutral-500 dark:text-neutral-300" />

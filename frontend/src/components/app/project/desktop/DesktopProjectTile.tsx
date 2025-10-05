@@ -164,99 +164,58 @@ function ProjectHeader() {
       {/* Left buttons - fixed width */}
       <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-2">
         {isShowingHistory ? (
-          <div className="relative group">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleHistoryView}
+            aria-label="Go back"
+            className="cursor-pointer"
+            tooltip={{ title: "Go back" }}
+          >
+            <IconArrowLeft className="size-5" />
+          </Button>
+        ) : (
+          <>
+            <Button
+              variant={isShowingHistory ? "default" : "ghost"}
+              size="icon"
+              onClick={toggleHistoryView}
+              aria-label="History"
+              className="cursor-pointer"
+              tooltip={{ title: "History" }}
+            >
+              <IconHistory className="size-5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleHistoryView}
-              aria-label="Go back"
+              onClick={() => setShareDialogOpen(true)}
+              aria-label="Members"
               className="cursor-pointer"
+              tooltip={{ title: "Members" }}
             >
-              <IconArrowLeft className="size-5" />
+              <IconUsers className="size-5" />
             </Button>
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-              <div className="font-medium">Go back</div>
-              <div className="text-xs text-muted-foreground">
-                Return to editor
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="relative group">
-              <Button
-                variant={isShowingHistory ? "default" : "ghost"}
-                size="icon"
-                onClick={toggleHistoryView}
-                aria-label={
-                  isShowingHistory ? "Exit history mode" : "View history"
-                }
-                className="cursor-pointer"
-              >
-                <IconHistory className="size-5" />
-              </Button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">
-                  {isShowingHistory ? "Exit History Mode" : "View History"}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {isShowingHistory
-                    ? "Return to edit mode"
-                    : "View version history"}
-                </div>
-              </div>
-            </div>
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShareDialogOpen(true)}
-                aria-label="Share project"
-                className="cursor-pointer"
-              >
-                <IconUsers className="size-5" />
-              </Button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">Members</div>
-                <div className="text-xs text-muted-foreground">
-                  Invite members
-                </div>
-              </div>
-            </div>
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSettingsDialogOpen(true)}
-                aria-label="Project settings"
-                className="cursor-pointer"
-              >
-                <IconSettings className="size-5" />
-              </Button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">Settings</div>
-                <div className="text-xs text-muted-foreground">
-                  Project settings
-                </div>
-              </div>
-            </div>
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIntegrationsDialogOpen(true)}
-                aria-label="External Connections"
-                className="cursor-pointer"
-              >
-                <IconPlugConnected className="size-5" />
-              </Button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">External Connections</div>
-                <div className="text-xs text-muted-foreground">
-                  Connect external services
-                </div>
-              </div>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSettingsDialogOpen(true)}
+              aria-label="Settings"
+              className="cursor-pointer"
+              tooltip={{ title: "Settings" }}
+            >
+              <IconSettings className="size-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIntegrationsDialogOpen(true)}
+              aria-label="External Connections"
+              className="cursor-pointer"
+              tooltip="External Connections"
+            >
+              <IconPlugConnected className="size-5" />
+            </Button>
           </>
         )}
       </div>
@@ -315,99 +274,68 @@ function ProjectHeaderSkeleton() {
       {/* Left buttons - fixed width */}
       <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-2">
         {isShowingHistory ? (
-          <div className="relative group">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleHistoryView}
+            aria-label="Go back"
+            className="cursor-pointer"
+            tooltip={{ title: "Go back", description: "Return to editor" }}
+          >
+            <IconArrowLeft className="size-5" />
+          </Button>
+        ) : (
+          <>
+            <Button
+              variant={isShowingHistory ? "default" : "ghost"}
+              size="icon"
+              onClick={toggleHistoryView}
+              aria-label={
+                isShowingHistory ? "Exit history mode" : "View history"
+              }
+              className="cursor-pointer"
+              tooltip={{
+                title: isShowingHistory ? "Exit History Mode" : "View History",
+                description: isShowingHistory
+                  ? "Return to edit mode"
+                  : "View version history",
+              }}
+            >
+              <IconHistory className="size-5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleHistoryView}
-              aria-label="Go back"
+              onClick={() => setShareDialogOpen(true)}
+              aria-label="Share project"
               className="cursor-pointer"
+              tooltip={{ title: "Members", description: "Invite members" }}
             >
-              <IconArrowLeft className="size-5" />
+              <IconUsers className="size-5" />
             </Button>
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-              <div className="font-medium">Go back</div>
-              <div className="text-xs text-muted-foreground">
-                Return to editor
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="relative group">
-              <Button
-                variant={isShowingHistory ? "default" : "ghost"}
-                size="icon"
-                onClick={toggleHistoryView}
-                aria-label={
-                  isShowingHistory ? "Exit history mode" : "View history"
-                }
-                className="cursor-pointer"
-              >
-                <IconHistory className="size-5" />
-              </Button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">
-                  {isShowingHistory ? "Exit History Mode" : "View History"}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {isShowingHistory
-                    ? "Return to edit mode"
-                    : "View version history"}
-                </div>
-              </div>
-            </div>
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShareDialogOpen(true)}
-                aria-label="Share project"
-                className="cursor-pointer"
-              >
-                <IconUsers className="size-5" />
-              </Button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">Members</div>
-                <div className="text-xs text-muted-foreground">
-                  Invite members
-                </div>
-              </div>
-            </div>
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSettingsDialogOpen(true)}
-                aria-label="Project settings"
-                className="cursor-pointer"
-              >
-                <IconSettings className="size-5" />
-              </Button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">Settings</div>
-                <div className="text-xs text-muted-foreground">
-                  Project settings
-                </div>
-              </div>
-            </div>
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIntegrationsDialogOpen(true)}
-                aria-label="External Connections"
-                className="cursor-pointer"
-              >
-                <IconPlugConnected className="size-5" />
-              </Button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">External Connections</div>
-                <div className="text-xs text-muted-foreground">
-                  Connect external services
-                </div>
-              </div>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSettingsDialogOpen(true)}
+              aria-label="Project settings"
+              className="cursor-pointer"
+              tooltip={{ title: "Settings", description: "Project settings" }}
+            >
+              <IconSettings className="size-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIntegrationsDialogOpen(true)}
+              aria-label="External Connections"
+              className="cursor-pointer"
+              tooltip={{
+                title: "External Connections",
+                description: "Connect external services",
+              }}
+            >
+              <IconPlugConnected className="size-5" />
+            </Button>
           </>
         )}
       </div>

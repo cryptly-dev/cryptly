@@ -87,7 +87,7 @@ export function AcceptInvitationPage() {
             <IconUsers className="size-8 mx-auto text-primary mb-3" />
             <h1 className="text-xl font-bold mb-2">Join Project</h1>
             <p className="text-muted-foreground text-sm">
-              Enter the passphrase to accept the invitation.
+              Enter the invitation code to accept the invitation.
             </p>
           </div>
 
@@ -114,7 +114,7 @@ export function AcceptInvitationPage() {
                 className="text-sm font-medium flex items-center gap-2"
               >
                 <IconKey className="size-4" />
-                Invitation Passphrase
+                Invitation code
               </label>
               <input
                 id="passphrase"
@@ -127,7 +127,7 @@ export function AcceptInvitationPage() {
                   }
                 }}
                 className="w-full rounded-lg border px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary text-base sm:text-sm"
-                placeholder="Enter passphrase"
+                placeholder="Enter invitation code"
                 autoComplete="new-password"
                 autoFocus
               />
