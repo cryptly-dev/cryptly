@@ -1,14 +1,17 @@
 import { useAfterLogin } from "@/lib/hooks/useAfterLogin";
 import { authLogic } from "@/lib/logics/authLogic";
 import { useValues } from "kea";
+import posthog from "posthog-js";
 import { useEffect } from "react";
 
 interface OAuthCallbackPageProps {
   exchangeCodeForJwt: (code: string) => void;
+  method: "google" | "github";
 }
 
 export function OAuthCallbackPage({
   exchangeCodeForJwt,
+  method,
 }: OAuthCallbackPageProps) {
   const { userData } = useValues(authLogic);
   const { afterLogin } = useAfterLogin();
@@ -23,6 +26,9 @@ export function OAuthCallbackPage({
   }, [exchangeCodeForJwt]);
 
   useEffect(() => {
+    posthog.capture("logged_in", {
+      method,
+    });
     afterLogin(userData);
   }, [userData, afterLogin]);
 

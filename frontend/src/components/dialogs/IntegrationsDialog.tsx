@@ -26,6 +26,7 @@ import {
 import { useActions, useAsyncActions, useValues } from "kea";
 import { useState, useEffect } from "react";
 import { commonLogic } from "@/lib/logics/commonLogic";
+import posthog from "posthog-js";
 
 function repositoryFullName(dto: { name?: string; owner?: string }) {
   return `${dto.owner}/${dto.name}`;
@@ -147,7 +148,11 @@ function AddIntegrationSection() {
       Number(selectedInstallationEntityId)
     );
     setIsLoading(false);
-    setSelectedRepository(""); // Reset after successful connection
+    setSelectedRepository("");
+
+    posthog.capture("integration_created", {
+      type: "github",
+    });
   };
 
   const isRepositoryDisabled =

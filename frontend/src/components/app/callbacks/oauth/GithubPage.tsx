@@ -5,5 +5,10 @@ import { OAuthCallbackPage } from "./OAuthCallbackPage";
 export function GithubPage() {
   const { exchangeGithubCodeForJwt } = useActions(authLogic);
 
-  return <OAuthCallbackPage exchangeCodeForJwt={exchangeGithubCodeForJwt} />;
+  return (
+    <OAuthCallbackPage
+      exchangeCodeForJwt={exchangeGithubCodeForJwt}
+      method="github"
+    />
+  );
 }
