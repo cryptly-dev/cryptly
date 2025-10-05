@@ -1,5 +1,5 @@
 <div align="center" width="100%">
-    <h1>🔐 Cryptly</h1>
+    <h1>Cryptly</h1>
 </div>
 
 <div align="center">
@@ -41,29 +41,10 @@ This will:
 
 > **Note:** Local development mode includes simplified authentication - just enter any email to log in!
 
-## 🏗️ Architecture
-
-**Backend:**
-
-- NestJS with TypeScript
-- MongoDB + Mongoose
-- JWT Authentication
-- OAuth (Google, GitHub)
-- WebSocket support
-- Swagger API documentation
-
-**Frontend:**
-
-- React 18 + TypeScript
-- TanStack Router for navigation
-- Kea for state management
-- Vite for blazing fast builds
-- Tailwind CSS + shadcn/ui components
-- End-to-end crypto in the browser
-
 ## 🔐 Security
 
 - All secrets are encrypted client-side using **AES-256-GCM**
+- Your keys for encrypting secrets are encrypted client-side using **RSA-OAEP**,
 - Private keys never leave the browser
 - Server only stores encrypted data
 - Per-project encryption keys
@@ -76,8 +57,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📝 License
 
 This project is licensed under the MIT License.
-
----
 
 <div align="center">
     Made with ❤️ for developers who care about security
