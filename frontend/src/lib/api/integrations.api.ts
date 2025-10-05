@@ -1,4 +1,5 @@
 import axios from "axios";
+import dotenv from "dotenv";
 import { SodiumCrypto } from "../crypto/crypto.sodium";
 
 export interface Repository {
@@ -188,12 +189,8 @@ export class IntegrationsApi {
     integrations: Integration[],
     content: string
   ): Promise<void> {
-    const secrets: SecretDto[] = [];
-    const lines = content.split("\n");
-    for (const line of lines) {
-      const [key, value] = line.split("=");
-      secrets.push({ key, plainValue: value });
-    }
+    const secrets = dotenv.parse(content);
+
     for (const integration of integrations) {
       const publicKey = integration.githubRepositoryPublicKey;
 
@@ -202,18 +199,15 @@ export class IntegrationsApi {
         integration.installationEntityId
       );
       await Promise.all(
-        secrets.map(async (secret) => {
-          const encryptedValue = await SodiumCrypto.encrypt(
-            secret.plainValue,
-            publicKey
-          );
+        Object.entries(secrets).map(async ([key, value]) => {
+          const encryptedValue = await SodiumCrypto.encrypt(value, publicKey);
 
           await this.pushSecret(githubToken, {
             encryptedValue,
             keyId: integration.githubRepositoryPublicKeyId,
             owner: integration.repositoryData?.owner!,
             repo: integration.repositoryData?.name!,
-            secretName: secret.key,
+            secretName: key,
           });
         })
       );
