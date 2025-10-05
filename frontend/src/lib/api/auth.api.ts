@@ -24,4 +24,12 @@ export class AuthApi {
 
     return response.data.token;
   }
+
+  public static async loginLocal(email: string): Promise<JwtToken> {
+    const response = await axios.post("/auth/local/login", {
+      email,
+    });
+
+    return response.data.token;
+  }
 }

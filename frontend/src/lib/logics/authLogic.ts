@@ -72,6 +72,11 @@ export const authLogic = kea<authLogicType>([
 
         return jwtTokenValue;
       },
+      loginLocal: async (email: string): Promise<string | null> => {
+        const jwtTokenValue = await AuthApi.loginLocal(email);
+
+        return jwtTokenValue;
+      },
     },
     userData: {
       loadUserData: async (): Promise<User> => {

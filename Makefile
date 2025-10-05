@@ -1,4 +1,4 @@
-.PHONY: backend frontend dev help clean install
+.PHONY: backend frontend dev help clean install local
 
 # Default target
 help:
@@ -6,6 +6,7 @@ help:
 	@echo "  backend    - Run backend development server"
 	@echo "  frontend   - Run frontend development server"
 	@echo "  dev        - Run both backend and frontend concurrently"
+	@echo "  local      - Set up and run complete local stack (with MongoDB)"
 	@echo "  install    - Install dependencies for both backend and frontend"
 	@echo "  clean      - Clean node_modules and build artifacts"
 	@echo "  help       - Show this help message"
@@ -40,3 +41,21 @@ clean:
 	cd backend && rm -rf node_modules dist
 	@echo "Cleaning frontend..."
 	cd frontend && rm -rf node_modules dist
+
+# Set up and run complete local stack
+local:
+	@echo "Setting up local development environment..."
+	@make install
+	@echo "Setting up environment files..."
+	@cp backend/.env.example backend/.env
+	@echo "Created backend/.env from backend/.env.example"
+	@cp frontend/.env.example frontend/.env
+	@echo "Created frontend/.env from frontend/.env.example"
+	@echo "Starting MongoDB container..."
+	@docker ps --filter "name=secretlify-mongo" --format '{{.Names}}' | grep -q secretlify-mongo && \
+		echo "MongoDB container already running" || \
+		(docker run -d --name secretlify-mongo -p 2137:27017 mongo:8 && echo "Started MongoDB 8 on port 2137")
+	@echo "Starting backend and frontend..."
+	@trap 'kill %1; kill %2' EXIT; \
+	make backend & make frontend & \
+	wait
