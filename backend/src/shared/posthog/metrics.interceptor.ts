@@ -43,6 +43,7 @@ export class MetricsInterceptor implements NestInterceptor {
             path: request.route.path,
             statusCode: response.statusCode,
             $current_url: request.path,
+            $host: 'api.cryptly.dev',
           },
         });
       }
