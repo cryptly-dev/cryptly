@@ -9,7 +9,7 @@ export function MobileSaveButton() {
   const { updateProjectContent } = useActions(projectLogic);
 
   const update = () => {
-    posthog.capture("update_buttom_clicked");
+    posthog.capture("save_button_clicked");
     updateProjectContent();
   };
 

@@ -20,6 +20,7 @@ import {
 import { useActions, useValues } from "kea";
 import { AlertTriangle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import posthog from "posthog-js";
 import { useEffect, useMemo, useState } from "react";
 
 export function DesktopProjectTile() {
@@ -179,7 +180,10 @@ function ProjectHeader() {
             <Button
               variant={isShowingHistory ? "default" : "ghost"}
               size="icon"
-              onClick={toggleHistoryView}
+              onClick={() => {
+                toggleHistoryView();
+                posthog.capture("history_button_clicked");
+              }}
               aria-label="History"
               className="cursor-pointer"
               tooltip={{ title: "History" }}
@@ -189,7 +193,10 @@ function ProjectHeader() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShareDialogOpen(true)}
+              onClick={() => {
+                setShareDialogOpen(true);
+                posthog.capture("members_button_clicked");
+              }}
               aria-label="Members"
               className="cursor-pointer"
               tooltip={{ title: "Members" }}
@@ -199,7 +206,10 @@ function ProjectHeader() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setSettingsDialogOpen(true)}
+              onClick={() => {
+                setSettingsDialogOpen(true);
+                posthog.capture("settings_button_clicked");
+              }}
               aria-label="Settings"
               className="cursor-pointer"
               tooltip={{ title: "Settings" }}
@@ -209,7 +219,10 @@ function ProjectHeader() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIntegrationsDialogOpen(true)}
+              onClick={() => {
+                setIntegrationsDialogOpen(true);
+                posthog.capture("integrations_button_clicked");
+              }}
               aria-label="External Connections"
               className="cursor-pointer"
               tooltip="External Connections"

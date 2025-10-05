@@ -34,6 +34,7 @@ import { useEffect, useState } from "react";
 import { MobileFileEditor } from "./MobileFileEditor";
 import { MobileHistoryView } from "./MobileHistoryView";
 import { MobileSaveButton } from "./MobileSaveButton";
+import posthog from "posthog-js";
 
 const truncateText = (text: string, maxLength: number) => {
   if (text.length <= maxLength) return text;
@@ -184,7 +185,10 @@ function MobileProjectHeader({
             <Button
               variant={isShowingHistory ? "default" : "ghost"}
               size="sm"
-              onClick={toggleHistoryView}
+              onClick={() => {
+                toggleHistoryView();
+                posthog.capture("history_button_clicked");
+              }}
               aria-label={
                 isShowingHistory ? "Exit history mode" : "View history"
               }
@@ -198,16 +202,29 @@ function MobileProjectHeader({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setShareDialogOpen(true);
+                    posthog.capture("members_button_clicked");
+                  }}
+                >
                   <IconUsers className="size-4 mr-2" />
                   <span>Members</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSettingsDialogOpen(true)}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSettingsDialogOpen(true);
+                    posthog.capture("settings_button_clicked");
+                  }}
+                >
                   <IconSettings className="size-4 mr-2" />
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setIntegrationsDialogOpen(true)}
+                  onClick={() => {
+                    setIntegrationsDialogOpen(true);
+                    posthog.capture("integrations_button_clicked");
+                  }}
                 >
                   <IconBrandGithub className="size-4 mr-2" />
                   <span>Integrations</span>
