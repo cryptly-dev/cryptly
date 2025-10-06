@@ -21,6 +21,16 @@ export function PushButton() {
   const isEnabled =
     !isEditorDirty && !isPushing && !isExternallyUpdated && hasIntegrations;
 
+  // Determine tooltip description based on state
+  let tooltipDescription: string | undefined;
+  if (!hasIntegrations) {
+    tooltipDescription = "You have no external connections";
+  } else if (isEditorDirty) {
+    tooltipDescription = "Save your changes first";
+  } else if (isExternallyUpdated) {
+    tooltipDescription = "Project was updated by someone else";
+  }
+
   return (
     <Button
       variant="outline"
@@ -28,7 +38,10 @@ export function PushButton() {
       disabled={!isEnabled}
       aria-label="Push to external connections"
       className="cursor-pointer h-10 w-10 p-0 bg-secondary/50 hover:bg-secondary"
-      tooltip={{ title: "Push to external connections" }}
+      tooltip={{
+        title: "Push to external connections",
+        description: tooltipDescription,
+      }}
     >
       <AnimatePresence mode="popLayout" initial={false}>
         {isPushing ? (
