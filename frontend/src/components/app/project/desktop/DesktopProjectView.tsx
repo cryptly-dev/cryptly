@@ -8,11 +8,11 @@ export function DesktopProjectView() {
       {/* Content */}
       <div className="h-screen w-full overflow-hidden text-foreground relative z-10">
         <div className="mx-auto max-w-7xl h-full grid grid-cols-1 md:grid-cols-[280px_1fr] gap-2 p-4 md:p-8">
-          <aside className="h-full overflow-y-auto flex flex-col justify-center">
+          <aside className="h-full overflow-hidden flex flex-col justify-center">
             <DesktopProjectsList />
           </aside>
 
-          <main className="h-full overflow-y-auto flex items-center">
+          <main className="h-full overflow-hidden flex items-center">
             <motion.div
               className="w-full max-w-5xl px-8 relative"
               initial={{ opacity: 0, x: -50, scale: 0.9 }}
