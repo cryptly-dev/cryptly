@@ -82,6 +82,8 @@ export const projectLogic = kea<projectLogicType>([
 
   actions({
     updateProjectContent: true,
+    pushToIntegrations: true,
+    setIsPushing: (isPushing: boolean) => ({ isPushing }),
     toggleHistoryView: true,
     setIsShowingHistory: (isShowingHistory: boolean) => ({ isShowingHistory }),
     selectHistoryChange: (changeId: string | null, patch: string | null) => ({
@@ -114,6 +116,12 @@ export const projectLogic = kea<projectLogicType>([
       {
         setIsExternallyUpdated: (_, { isExternallyUpdated }) =>
           isExternallyUpdated,
+      },
+    ],
+    isPushing: [
+      false as boolean,
+      {
+        setIsPushing: (_, { isPushing }) => isPushing,
       },
     ],
     syncConnection: [
@@ -349,18 +357,23 @@ export const projectLogic = kea<projectLogicType>([
       );
       actions.setIsExternallyUpdated(false);
 
-      await IntegrationsApi.pushSecrets(
-        values.jwtToken!,
-        values.integrations,
-        values.inputValue
-      );
-
       await Promise.all([
         asyncActions.loadProjectData(),
         asyncActions.loadProjectVersions(),
       ]);
 
       actions.setIsSubmitting(false);
+    },
+    pushToIntegrations: async () => {
+      actions.setIsPushing(true);
+
+      await IntegrationsApi.pushSecrets(
+        values.jwtToken!,
+        values.integrations,
+        values.inputValue
+      );
+
+      actions.setIsPushing(false);
     },
     computePatches: ({ versions }) => {
       if (versions.length < 2) {

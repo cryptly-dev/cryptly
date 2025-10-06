@@ -1,24 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { projectLogic } from "@/lib/logics/projectLogic";
-import { useValues } from "kea";
-import { IconCloudUpload } from "@tabler/icons-react";
+import { useActions, useValues } from "kea";
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
-import { useState } from "react";
+import { PlugZap } from "lucide-react";
 
 export function PushButton() {
-  const { isEditorDirty, isExternallyUpdated } = useValues(projectLogic);
-  const [isPushing, setIsPushing] = useState(false);
+  const { isEditorDirty, isExternallyUpdated, isPushing } =
+    useValues(projectLogic);
+  const { pushToIntegrations } = useActions(projectLogic);
 
-  const push = async () => {
+  const push = () => {
     posthog.capture("push_button_clicked");
-    setIsPushing(true);
-
-    // Simulate push operation for 1 second
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setIsPushing(false);
+    pushToIntegrations();
   };
 
   // Button is enabled when there are no unsaved changes
@@ -41,7 +36,8 @@ export function PushButton() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
             transition={{
-              duration: 0.5,
+              ease: "easeInOut",
+              duration: 0.2,
             }}
           >
             <Spinner className="size-5" />
@@ -53,11 +49,11 @@ export function PushButton() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}
             transition={{
-              duration: 0.5,
-              ease: [0.23, 1, 0.32, 1],
+              duration: 0.2,
+              ease: "easeInOut",
             }}
           >
-            <IconCloudUpload className="size-5" />
+            <PlugZap className="size-5" />
           </motion.div>
         )}
       </AnimatePresence>
