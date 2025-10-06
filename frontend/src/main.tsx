@@ -57,16 +57,28 @@ declare module "@tanstack/react-router" {
   }
 }
 
-// Render the app
-const rootElement = document.getElementById("root")!;
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <PostHogProvider
-      apiKey={import.meta.env.VITE_POSTHOG_KEY}
-      options={posthogOptions}
-    >
-      <RouterProvider router={router} />
-    </PostHogProvider>
-  );
+async function renderApp() {
+  try {
+    await Promise.race([
+      document.fonts.ready,
+      new Promise((resolve) => setTimeout(resolve, 1_000)),
+    ]);
+  } catch (error) {
+    console.warn("Font loading timed out or failed:", error);
+  }
+
+  const rootElement = document.getElementById("root")!;
+  if (!rootElement.innerHTML) {
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(
+      <PostHogProvider
+        apiKey={import.meta.env.VITE_POSTHOG_KEY}
+        options={posthogOptions}
+      >
+        <RouterProvider router={router} />
+      </PostHogProvider>
+    );
+  }
 }
+
+renderApp();
