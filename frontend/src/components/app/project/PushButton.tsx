@@ -7,7 +7,7 @@ import posthog from "posthog-js";
 import { PlugZap } from "lucide-react";
 
 export function PushButton() {
-  const { isEditorDirty, isExternallyUpdated, isPushing } =
+  const { isEditorDirty, isExternallyUpdated, isPushing, integrations } =
     useValues(projectLogic);
   const { pushToIntegrations } = useActions(projectLogic);
 
@@ -16,8 +16,10 @@ export function PushButton() {
     pushToIntegrations();
   };
 
-  // Button is enabled when there are no unsaved changes
-  const isEnabled = !isEditorDirty && !isPushing && !isExternallyUpdated;
+  const hasIntegrations = integrations && integrations.length > 0;
+  // Button is enabled when there are no unsaved changes and there are integrations
+  const isEnabled =
+    !isEditorDirty && !isPushing && !isExternallyUpdated && hasIntegrations;
 
   return (
     <Button
@@ -26,7 +28,7 @@ export function PushButton() {
       disabled={!isEnabled}
       aria-label="Push to external connections"
       className="cursor-pointer h-10 w-10 p-0 bg-secondary/50 hover:bg-secondary"
-      tooltip={{ title: "Push changes" }}
+      tooltip={{ title: "Push to external connections" }}
     >
       <AnimatePresence mode="popLayout" initial={false}>
         {isPushing ? (
