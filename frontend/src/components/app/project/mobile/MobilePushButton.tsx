@@ -1,24 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { projectLogic } from "@/lib/logics/projectLogic";
-import { useValues } from "kea";
+import { useActions, useValues } from "kea";
 import { IconCloudUpload } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
-import { useState } from "react";
 
 export function MobilePushButton() {
-  const { isEditorDirty, isExternallyUpdated } = useValues(projectLogic);
-  const [isPushing, setIsPushing] = useState(false);
+  const { isEditorDirty, isExternallyUpdated, isPushing } =
+    useValues(projectLogic);
+  const { pushToIntegrations } = useActions(projectLogic);
 
-  const push = async () => {
+  const push = () => {
     posthog.capture("push_button_clicked");
-    setIsPushing(true);
-
-    // Simulate push operation for 1 second
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setIsPushing(false);
+    pushToIntegrations();
   };
 
   // Button is enabled when there are no unsaved changes
