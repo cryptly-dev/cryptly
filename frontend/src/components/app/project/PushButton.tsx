@@ -17,11 +17,11 @@ export function PushButton() {
   };
 
   const hasIntegrations = integrations && integrations.length > 0;
+
   // Button is enabled when there are no unsaved changes and there are integrations
   const isEnabled =
     !isEditorDirty && !isPushing && !isExternallyUpdated && hasIntegrations;
 
-  // Determine tooltip description based on state
   let tooltipDescription: string | undefined;
   if (!hasIntegrations) {
     tooltipDescription = "You have no external connections";
