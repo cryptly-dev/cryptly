@@ -1,6 +1,5 @@
 import { FileEditor } from "@/components/app/project/FileEditor";
-import { UpdateButton } from "@/components/app/project/SaveButton";
-import { PushButton } from "@/components/app/project/PushButton";
+import { SavePushButtonGroup } from "@/components/app/project/SavePushButtonGroup";
 import { DesktopHistoryView } from "@/components/app/project/desktop/DesktopHistoryView";
 import { IntegrationsDialog } from "@/components/dialogs/IntegrationsDialog";
 import { ProjectAccessDialog } from "@/components/dialogs/ProjectAccessDialog";
@@ -258,12 +257,7 @@ function ProjectHeader() {
             </div>
           </div>
         )}
-        {!isShowingHistory && (
-          <>
-            <UpdateButton />
-            <PushButton />
-          </>
-        )}
+        {!isShowingHistory && <SavePushButtonGroup />}
       </div>
 
       <ProjectAccessDialog
@@ -369,12 +363,7 @@ function ProjectHeaderSkeleton() {
 
       {/* Right button - fixed width */}
       <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-2">
-        {!isShowingHistory && (
-          <>
-            <UpdateButton />
-            <PushButton />
-          </>
-        )}
+        {!isShowingHistory && <SavePushButtonGroup />}
       </div>
 
       <ProjectAccessDialog
