@@ -33,8 +33,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { MobileFileEditor } from "./MobileFileEditor";
 import { MobileHistoryView } from "./MobileHistoryView";
-import { MobileSaveButton } from "./MobileSaveButton";
-import { MobilePushButton } from "./MobilePushButton";
+import { SavePushButtonGroup } from "../SavePushButtonGroup";
 import posthog from "posthog-js";
 import { authLogic } from "@/lib/logics/authLogic";
 import { getRelativeTime } from "@/lib/utils";
@@ -286,13 +285,8 @@ function MobileProjectHeader({
       </div>
 
       {/* Right side - Save and Push buttons */}
-      <div className="relative h-8 flex items-center gap-1">
-        {!isShowingHistory && projectData && (
-          <>
-            <MobileSaveButton />
-            <MobilePushButton />
-          </>
-        )}
+      <div className="relative h-8 flex items-center">
+        {!isShowingHistory && projectData && <SavePushButtonGroup />}
       </div>
       <AddProjectDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
       <ProjectAccessDialog
