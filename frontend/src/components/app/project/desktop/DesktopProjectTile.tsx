@@ -1,5 +1,6 @@
 import { FileEditor } from "@/components/app/project/FileEditor";
 import { UpdateButton } from "@/components/app/project/SaveButton";
+import { PushButton } from "@/components/app/project/PushButton";
 import { DesktopHistoryView } from "@/components/app/project/desktop/DesktopHistoryView";
 import { IntegrationsDialog } from "@/components/dialogs/IntegrationsDialog";
 import { ProjectAccessDialog } from "@/components/dialogs/ProjectAccessDialog";
@@ -244,7 +245,7 @@ function ProjectHeader() {
       </div>
 
       {/* Right button - fixed width */}
-      <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-4">
+      <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-2">
         {isExternallyUpdated && (
           <div className="relative group/tooltip">
             <AlertTriangle className="size-5 text-amber-500" />
@@ -257,7 +258,12 @@ function ProjectHeader() {
             </div>
           </div>
         )}
-        {!isShowingHistory && <UpdateButton />}
+        {!isShowingHistory && (
+          <>
+            <UpdateButton />
+            <PushButton />
+          </>
+        )}
       </div>
 
       <ProjectAccessDialog
@@ -362,8 +368,13 @@ function ProjectHeaderSkeleton() {
       </div>
 
       {/* Right button - fixed width */}
-      <div className="absolute right-0 top-1/2 flex -translate-y-1/2">
-        {!isShowingHistory && <UpdateButton />}
+      <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-2">
+        {!isShowingHistory && (
+          <>
+            <UpdateButton />
+            <PushButton />
+          </>
+        )}
       </div>
 
       <ProjectAccessDialog
