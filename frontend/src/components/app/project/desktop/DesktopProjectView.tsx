@@ -12,7 +12,7 @@ export function DesktopProjectView() {
             <DesktopProjectsList />
           </aside>
 
-          <main className="h-full overflow flex items-center">
+          <main className="h-full overflow-hidden flex items-center">
             <motion.div
               className="w-full max-w-5xl px-8 relative"
               initial={{ opacity: 0, x: -50, scale: 0.9 }}
