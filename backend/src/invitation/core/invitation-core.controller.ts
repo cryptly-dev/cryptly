@@ -3,9 +3,9 @@ import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProjectMemberGuard } from 'src/project/core/guards/project-member.guard';
 import { RequireRole } from 'src/project/decorators/require-project-role.decorator';
 import { Role } from 'src/shared/types/role.enum';
+import { CurrentUserId } from '../../auth/core/decorators/current-user-id.decorator';
 import { ProjectWriteService } from '../../project/write/project-write.service';
 import { UserReadService } from '../../user/read/user-read.service';
-import { CurrentUserId } from '../../auth/core/decorators/current-user-id.decorator';
 import { InvitationReadService } from '../read/invitation-read.service';
 import { InvitationWriteService } from '../write/invitation-write.service';
 import { AcceptInvitationBody } from './dto/accept-invitation.body';
@@ -27,7 +27,7 @@ export class InvitationCoreController {
 
   @Get('projects/:projectId/invitations')
   @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Owner)
+  @RequireRole(Role.Admin, Role.Owner)
   @ApiResponse({ type: [InvitationSerialized] })
   public async findProjectInvitations(
     @Param('projectId') projectId: string,

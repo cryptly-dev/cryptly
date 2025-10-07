@@ -5,8 +5,8 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Role } from '../../../shared/types/role.enum';
 import { ProjectReadService } from '../../../project/read/project-read.service';
+import { Role } from '../../../shared/types/role.enum';
 import { InvitationReadService } from '../../read/invitation-read.service';
 
 @Injectable()
@@ -38,14 +38,7 @@ export class ProjectOwnerInvitationGuard implements CanActivate {
       throw new ForbiddenException();
     }
 
-    if (userRole === Role.Owner) {
-      return true;
-    }
-
-    if (userRole === Role.Admin) {
-      if (request.body.role === Role.Admin) {
-        throw new ForbiddenException('Admins can only invite members');
-      }
+    if (userRole === Role.Owner || userRole === Role.Admin) {
       return true;
     }
 

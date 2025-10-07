@@ -135,16 +135,13 @@ export class ProjectCoreController {
 
   @Patch('projects/:projectId')
   @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Member, Role.Admin, Role.Owner)
+  @RequireRole(Role.Admin, Role.Owner)
   @ApiResponse({ type: ProjectSerialized })
   public async update(
     @Param('projectId') projectId: string,
     @Body() body: UpdateProjectBody,
     @CurrentUserId() userId: string,
   ): Promise<ProjectSerialized> {
-    const project = await this.projectReadService.findById(projectId);
-    this.requireIsAllowedUpdate(project.members.get(userId)!, body);
-
     const updatedProject = await this.projectWriteService.update(projectId, body, userId);
     const memberIds = [...updatedProject.members.keys()];
     const members = await this.userReadService.readByIds(memberIds);
@@ -168,21 +165,6 @@ export class ProjectCoreController {
     );
   }
 
-  private requireIsAllowedUpdate(userRole: Role, body: UpdateProjectBody): void {
-    const allowedUpdates = {
-      [Role.Member]: ['encryptedSecretsKeys', 'encryptedSecrets'],
-      [Role.Admin]: ['encryptedSecretsKeys', 'encryptedSecrets'],
-      [Role.Owner]: ['name', 'encryptedSecretsKeys', 'encryptedSecrets'],
-    };
-
-    const isForbidden =
-      Object.keys(body).filter((key) => !allowedUpdates[userRole].includes(key)).length > 0;
-
-    if (isForbidden) {
-      throw new ForbiddenException('You are not allowed to perform this action');
-    }
-  }
-
   @Delete('projects/:projectId/members/:memberId')
   @UseGuards(RemoveProjectMemberGuard)
   @HttpCode(204)
@@ -195,13 +177,22 @@ export class ProjectCoreController {
 
   @Patch('projects/:projectId/members/:memberId')
   @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Owner)
+  @RequireRole(Role.Admin, Role.Owner)
   @HttpCode(204)
   public async updateMemberRole(
     @Param('projectId') projectId: string,
     @Param('memberId') memberId: string,
     @Body() body: UpdateMemberRoleBody,
+    @CurrentUserId() userId: string,
   ): Promise<void> {
+    const project = await this.projectReadService.findById(projectId);
+    const currentUserRole = project.members.get(userId);
+    const targetMemberRole = project.members.get(memberId);
+
+    if (targetMemberRole === Role.Owner && currentUserRole !== Role.Owner) {
+      throw new ForbiddenException('Cannot change owner role');
+    }
+
     await this.projectWriteService.updateMemberRole(projectId, memberId, body.role);
   }
 
