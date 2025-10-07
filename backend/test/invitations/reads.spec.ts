@@ -146,7 +146,31 @@ describe('InvitationCoreController (reads)', () => {
       expect(response.body).toEqual([]);
     });
 
-    it('returns 403 when user is not an owner', async () => {
+    it('gets invitations for project as admin', async () => {
+      // given
+      const { admin, token, project } = await bootstrap.utils.projectUtils.setupAdmin();
+      const invitationA = await bootstrap.utils.invitationUtils.createInvitation(token, project.id);
+      const invitationB = await bootstrap.utils.invitationUtils.createInvitation(token, project.id);
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .get(`/projects/${project.id}/invitations`)
+        .set('authorization', `Bearer ${token}`);
+
+      // then
+      expect(response.status).toEqual(200);
+      expect(response.body).toHaveLength(2);
+      expect(response.body.map((i) => i.id).sort()).toEqual(
+        [invitationA.id, invitationB.id].sort(),
+      );
+      expect(response.body[0].author).toEqual({
+        id: admin.id,
+        email: admin.email,
+        avatarUrl: admin.avatarUrl,
+      });
+    });
+
+    it('returns 403 when user is a member', async () => {
       // given
       const { project, token: memberToken } = await bootstrap.utils.projectUtils.setupMember();
 
