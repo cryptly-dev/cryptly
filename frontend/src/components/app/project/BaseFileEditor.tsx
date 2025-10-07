@@ -50,7 +50,7 @@ export function BaseFileEditor({
   const editorOptions = {
     minimap: { enabled: false },
     wordWrap: "on" as const,
-    scrollBeyondLastLine: false,
+    scrollBeyondLastLine: true,
     lineNumbers: "on" as const,
     fontSize,
     automaticLayout: true,
