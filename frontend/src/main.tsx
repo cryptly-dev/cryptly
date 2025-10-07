@@ -11,6 +11,7 @@ import { localStoragePlugin } from "kea-localstorage";
 import { routerPlugin } from "kea-router";
 import { subscriptionsPlugin } from "kea-subscriptions";
 import { PostHogProvider } from "posthog-js/react";
+import { withTimeout } from "./lib/utils";
 import { routeTree } from "./routeTree.gen";
 
 // Create a new router instance
@@ -58,14 +59,7 @@ declare module "@tanstack/react-router" {
 }
 
 async function renderApp() {
-  try {
-    await Promise.race([
-      document.fonts.ready,
-      new Promise((resolve) => setTimeout(resolve, 1_000)),
-    ]);
-  } catch (error) {
-    console.warn("Font loading timed out or failed:", error);
-  }
+  await withTimeout(document.fonts.ready, 3000);
 
   const rootElement = document.getElementById("root")!;
   if (!rootElement.innerHTML) {
