@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: "Open Sans Variable";
+  font-display: block;
+}
+
 @theme inline {
   --font-sans: "Open Sans Variable", sans-serif;
   --radius-sm: calc(var(--radius) - 4px);

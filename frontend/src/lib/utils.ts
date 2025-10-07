@@ -45,3 +45,10 @@ export function getRelativeTime(dateString: string): string {
     return `${years} year${years === 1 ? "" : "s"} ago`;
   }
 }
+
+export function withTimeout<T>(p: Promise<T>, ms: number) {
+  return Promise.race([
+    p,
+    new Promise<T>((resolve) => setTimeout(resolve, ms) as any),
+  ]);
+}
