@@ -236,11 +236,16 @@ function ProjectHeader() {
       </div>
 
       {/* Center - project name with proper truncation */}
-      <div className="w-[50%] flex min-w-0 items-center justify-center gap-4">
+      <div className="w-[45%] flex min-w-0 items-center justify-center gap-4">
         <div className="h-px w-6 flex-shrink-0 bg-border"></div>
-        <h1 className="min-w-0 truncate text-2xl font-semibold tracking-wide text-foreground/90">
-          {projectData?.name}
-        </h1>
+        <div className="relative group min-w-0">
+          <h1 className="min-w-0 truncate text-2xl font-semibold tracking-wide text-foreground/90">
+            {projectData?.name}
+          </h1>
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            {projectData?.name}
+          </div>
+        </div>
         <div className="h-px w-6 flex-shrink-0 bg-border"></div>
       </div>
 
@@ -361,7 +366,7 @@ function ProjectHeaderSkeleton() {
       </div>
 
       {/* Center - project name skeleton */}
-      <div className="w-[50%] flex min-w-0 items-center justify-center gap-4">
+      <div className="w-[45%] flex min-w-0 items-center justify-center gap-4">
         <div className="h-px w-6 flex-shrink-0 bg-border"></div>
         <Skeleton className="h-8 w-48 rounded-md" />
         <div className="h-px w-6 flex-shrink-0 bg-border"></div>
@@ -372,7 +377,7 @@ function ProjectHeaderSkeleton() {
         {!isShowingHistory && (
           <div className="flex items-center gap-4">
             <SavePushButtonGroup />
-            <CopyAllButton />
+            <CopyAllButton disabled />
           </div>
         )}
       </div>

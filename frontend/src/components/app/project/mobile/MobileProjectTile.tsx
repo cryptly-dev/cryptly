@@ -254,35 +254,42 @@ function MobileProjectHeader({
 
       {/* Center - Project selector - Fixed width, always centered */}
       <div className="flex-1 flex justify-center">
-        <Select
-          value={activeProject?.id || ""}
-          onValueChange={handleSelectChange}
-        >
-          <SelectTrigger className="border-none shadow-none text-lg font-semibold bg-transparent hover:bg-accent/30 cursor-pointer">
-            <SelectValue placeholder="Select project">
-              {activeProject?.name
-                ? truncateText(activeProject.name, 15)
-                : "Select project"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {projects.map((project) => (
+        <div className="relative group">
+          <Select
+            value={activeProject?.id || ""}
+            onValueChange={handleSelectChange}
+          >
+            <SelectTrigger className="border-none shadow-none text-lg font-semibold bg-transparent hover:bg-accent/30 cursor-pointer">
+              <SelectValue placeholder="Select project">
+                {activeProject?.name
+                  ? truncateText(activeProject.name, 15)
+                  : "Select project"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {projects.map((project) => (
+                <SelectItem
+                  key={project.id}
+                  value={project.id}
+                  className="cursor-pointer hover:bg-accent/70 focus:bg-accent/70 py-2"
+                >
+                  {truncateText(project.name, 40)}
+                </SelectItem>
+              ))}
               <SelectItem
-                key={project.id}
-                value={project.id}
-                className="cursor-pointer hover:bg-accent/70 focus:bg-accent/70 py-2"
+                value="add-project"
+                className="text-muted-foreground cursor-pointer hover:bg-accent/70 focus:bg-accent/70 py-2"
               >
-                {truncateText(project.name, 40)}
+                + Add new project
               </SelectItem>
-            ))}
-            <SelectItem
-              value="add-project"
-              className="text-muted-foreground cursor-pointer hover:bg-accent/70 focus:bg-accent/70 py-2"
-            >
-              + Add new project
-            </SelectItem>
-          </SelectContent>
-        </Select>
+            </SelectContent>
+          </Select>
+          {activeProject?.name && (
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+              {activeProject.name}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Right side - Save and Push buttons */}
