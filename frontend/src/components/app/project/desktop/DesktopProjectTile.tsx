@@ -165,14 +165,14 @@ function ProjectHeader() {
   return (
     <div className="relative flex h-10 items-center justify-center">
       {/* Left buttons - fixed width */}
-      <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-2">
+      <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-4">
         {isShowingHistory ? (
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleHistoryView}
             aria-label="Go back"
-            className="cursor-pointer"
+            className="size-10 cursor-pointer"
             tooltip={{ title: "Go back" }}
           >
             <IconArrowLeft className="size-5" />
@@ -187,7 +187,7 @@ function ProjectHeader() {
                 posthog.capture("history_button_clicked");
               }}
               aria-label="History"
-              className="cursor-pointer"
+              className="size-10 cursor-pointer"
               tooltip={{ title: "History" }}
             >
               <IconHistory className="size-5" />
@@ -200,7 +200,7 @@ function ProjectHeader() {
                 posthog.capture("members_button_clicked");
               }}
               aria-label="Members"
-              className="cursor-pointer"
+              className="size-10 cursor-pointer"
               tooltip={{ title: "Members" }}
             >
               <IconUsers className="size-5" />
@@ -213,7 +213,7 @@ function ProjectHeader() {
                 posthog.capture("settings_button_clicked");
               }}
               aria-label="Settings"
-              className="cursor-pointer"
+              className="size-10 cursor-pointer"
               tooltip={{ title: "Settings" }}
             >
               <IconSettings className="size-5" />
@@ -226,7 +226,7 @@ function ProjectHeader() {
                 posthog.capture("integrations_button_clicked");
               }}
               aria-label="External Connections"
-              className="cursor-pointer"
+              className="size-10 cursor-pointer"
               tooltip="External Connections"
             >
               <IconPlugConnected className="size-5" />
