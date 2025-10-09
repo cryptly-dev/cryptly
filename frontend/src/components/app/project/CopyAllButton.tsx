@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
 import { useState } from "react";
 
-export function CopyAllButton() {
+export function CopyAllButton({ disabled = false }: { disabled?: boolean }) {
   const { inputValue } = useValues(projectLogic);
   const [showCopied, setShowCopied] = useState(false);
 
@@ -28,6 +28,7 @@ export function CopyAllButton() {
       aria-label="Copy all content"
       className="cursor-pointer h-10 w-10 p-0 bg-secondary/50 hover:bg-secondary"
       tooltip={showCopied ? "Copied!" : "Copy all content"}
+      disabled={disabled}
     >
       <AnimatePresence mode="wait" initial={false}>
         {showCopied ? (
