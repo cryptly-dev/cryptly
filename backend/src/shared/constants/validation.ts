@@ -1,1 +1,2 @@
 export const ENCRYPTED_SECRETS_MAX_LENGTH = 10_000;
+export const PROJECT_NAME_MAX_LENGTH = 100;

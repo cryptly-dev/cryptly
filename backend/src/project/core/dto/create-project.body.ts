@@ -1,10 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsObject, IsString, MaxLength } from 'class-validator';
-import { ENCRYPTED_SECRETS_MAX_LENGTH } from '../../../shared/constants/validation';
+import {
+  ENCRYPTED_SECRETS_MAX_LENGTH,
+  PROJECT_NAME_MAX_LENGTH,
+} from '../../../shared/constants/validation';
 
 export class CreateProjectBody {
   @ApiProperty()
   @IsString()
+  @MaxLength(PROJECT_NAME_MAX_LENGTH)
   public name: string;
 
   @ApiProperty()
