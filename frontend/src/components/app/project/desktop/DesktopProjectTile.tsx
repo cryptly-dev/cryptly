@@ -1,6 +1,7 @@
+import { CopyAllButton } from "@/components/app/project/CopyAllButton";
+import { DesktopHistoryView } from "@/components/app/project/desktop/DesktopHistoryView";
 import { FileEditor } from "@/components/app/project/FileEditor";
 import { SavePushButtonGroup } from "@/components/app/project/SavePushButtonGroup";
-import { DesktopHistoryView } from "@/components/app/project/desktop/DesktopHistoryView";
 import { IntegrationsDialog } from "@/components/dialogs/IntegrationsDialog";
 import { ProjectAccessDialog } from "@/components/dialogs/ProjectAccessDialog";
 import { ProjectSettingsDialog } from "@/components/dialogs/ProjectSettingsDialog";
@@ -13,9 +14,9 @@ import { getRelativeTime } from "@/lib/utils";
 import {
   IconArrowLeft,
   IconHistory,
+  IconPlugConnected,
   IconSettings,
   IconUsers,
-  IconPlugConnected,
 } from "@tabler/icons-react";
 import { useActions, useValues } from "kea";
 import { AlertTriangle } from "lucide-react";
@@ -257,7 +258,12 @@ function ProjectHeader() {
             </div>
           </div>
         )}
-        {!isShowingHistory && <SavePushButtonGroup />}
+        {!isShowingHistory && (
+          <div className="flex items-center gap-4">
+            <SavePushButtonGroup />
+            <CopyAllButton />
+          </div>
+        )}
       </div>
 
       <ProjectAccessDialog
@@ -363,7 +369,12 @@ function ProjectHeaderSkeleton() {
 
       {/* Right button - fixed width */}
       <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-2">
-        {!isShowingHistory && <SavePushButtonGroup />}
+        {!isShowingHistory && (
+          <div className="flex items-center gap-4">
+            <SavePushButtonGroup />
+            <CopyAllButton />
+          </div>
+        )}
       </div>
 
       <ProjectAccessDialog

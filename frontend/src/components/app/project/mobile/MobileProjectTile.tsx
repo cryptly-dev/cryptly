@@ -17,8 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProjects } from "@/lib/hooks/useProjects";
+import { authLogic } from "@/lib/logics/authLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
+import { getRelativeTime } from "@/lib/utils";
 import {
   IconArrowLeft,
   IconBrandGithub,
@@ -30,13 +32,12 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { useActions, useValues } from "kea";
 import { AnimatePresence, motion } from "motion/react";
+import posthog from "posthog-js";
 import { useEffect, useMemo, useState } from "react";
+import { CopyAllButton } from "../CopyAllButton";
+import { SavePushButtonGroup } from "../SavePushButtonGroup";
 import { MobileFileEditor } from "./MobileFileEditor";
 import { MobileHistoryView } from "./MobileHistoryView";
-import { SavePushButtonGroup } from "../SavePushButtonGroup";
-import posthog from "posthog-js";
-import { authLogic } from "@/lib/logics/authLogic";
-import { getRelativeTime } from "@/lib/utils";
 
 const truncateText = (text: string, maxLength: number) => {
   if (text.length <= maxLength) return text;
@@ -285,8 +286,13 @@ function MobileProjectHeader({
       </div>
 
       {/* Right side - Save and Push buttons */}
-      <div className="relative h-8 flex items-center">
-        {!isShowingHistory && projectData && <SavePushButtonGroup />}
+      <div className="relative h-8 flex items-center gap-2">
+        {!isShowingHistory && projectData && (
+          <>
+            <SavePushButtonGroup />
+            <CopyAllButton />
+          </>
+        )}
       </div>
       <AddProjectDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
       <ProjectAccessDialog
