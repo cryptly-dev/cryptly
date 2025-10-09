@@ -185,120 +185,121 @@ function MobileProjectHeader({
   };
 
   return (
-    <div className="flex items-center px-4 py-3 border-b border-border bg-card/60 backdrop-blur">
-      {/* Left side - History and Share buttons - Fixed width */}
-      <div className="w-20 flex justify-start gap-1">
-        {isShowingHistory ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleHistoryView}
-            aria-label="Go back"
-          >
-            <IconArrowLeft className="size-4" />
-          </Button>
-        ) : (
-          <>
+    <div className="p-3 border-b border-border bg-card/60 backdrop-blur">
+      {/* Top row - Buttons */}
+      <div className="flex items-center justify-between mb-3">
+        {/* Left side - History and Menu buttons */}
+        <div className="flex gap-3">
+          {isShowingHistory ? (
             <Button
-              variant={isShowingHistory ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              onClick={() => {
-                toggleHistoryView();
-                posthog.capture("history_button_clicked");
-              }}
-              aria-label={
-                isShowingHistory ? "Exit history mode" : "View history"
-              }
+              onClick={toggleHistoryView}
+              aria-label="Go back"
             >
-              <IconHistory className="size-4" />
+              <IconArrowLeft className="size-4" />
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <IconDots className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setShareDialogOpen(true);
-                    posthog.capture("members_button_clicked");
-                  }}
-                >
-                  <IconUsers className="size-4 mr-2" />
-                  <span>Members</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSettingsDialogOpen(true);
-                    posthog.capture("settings_button_clicked");
-                  }}
-                >
-                  <IconSettings className="size-4 mr-2" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIntegrationsDialogOpen(true);
-                    posthog.capture("integrations_button_clicked");
-                  }}
-                >
-                  <IconBrandGithub className="size-4 mr-2" />
-                  <span>Integrations</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        )}
-      </div>
-
-      {/* Center - Project selector - Fixed width, always centered */}
-      <div className="flex-1 flex justify-center">
-        <div className="relative group">
-          <Select
-            value={activeProject?.id || ""}
-            onValueChange={handleSelectChange}
-          >
-            <SelectTrigger className="border-none shadow-none text-lg font-semibold bg-transparent hover:bg-accent/30 cursor-pointer">
-              <SelectValue placeholder="Select project">
-                {activeProject?.name
-                  ? truncateText(activeProject.name, 15)
-                  : "Select project"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {projects.map((project) => (
-                <SelectItem
-                  key={project.id}
-                  value={project.id}
-                  className="cursor-pointer hover:bg-accent/70 focus:bg-accent/70 py-2"
-                >
-                  {truncateText(project.name, 40)}
-                </SelectItem>
-              ))}
-              <SelectItem
-                value="add-project"
-                className="text-muted-foreground cursor-pointer hover:bg-accent/70 focus:bg-accent/70 py-2"
+          ) : (
+            <>
+              <Button
+                variant={isShowingHistory ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  toggleHistoryView();
+                  posthog.capture("history_button_clicked");
+                }}
+                aria-label={
+                  isShowingHistory ? "Exit history mode" : "View history"
+                }
               >
-                + Add new project
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          {activeProject?.name && (
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-              {activeProject.name}
-            </div>
+                <IconHistory className="size-4" />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <IconDots className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setShareDialogOpen(true);
+                      posthog.capture("members_button_clicked");
+                    }}
+                  >
+                    <IconUsers className="size-4 mr-2" />
+                    <span>Members</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSettingsDialogOpen(true);
+                      posthog.capture("settings_button_clicked");
+                    }}
+                  >
+                    <IconSettings className="size-4 mr-2" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setIntegrationsDialogOpen(true);
+                      posthog.capture("integrations_button_clicked");
+                    }}
+                  >
+                    <IconBrandGithub className="size-4 mr-2" />
+                    <span>Integrations</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
+        </div>
+
+        {/* Right side - Save and Push buttons */}
+        <div className="flex items-center gap-3">
+          {!isShowingHistory && (
+            <>
+              <SavePushButtonGroup />
+              <CopyAllButton disabled={!projectData} />
+            </>
           )}
         </div>
       </div>
 
-      {/* Right side - Save and Push buttons */}
-      <div className="relative h-8 flex items-center gap-2">
-        {!isShowingHistory && projectData && (
-          <>
-            <SavePushButtonGroup />
-            <CopyAllButton />
-          </>
+      {/* Bottom row - Project selector */}
+      <div className="relative group w-full">
+        <Select
+          value={activeProject?.id || ""}
+          onValueChange={handleSelectChange}
+        >
+          <SelectTrigger className="w-full border-none shadow-none text-lg font-semibold bg-transparent hover:bg-accent/30 cursor-pointer">
+            <SelectValue placeholder="Select project">
+              {activeProject?.name
+                ? truncateText(activeProject.name, 15)
+                : "Select project"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {projects.map((project) => (
+              <SelectItem
+                key={project.id}
+                value={project.id}
+                className="cursor-pointer hover:bg-accent/70 focus:bg-accent/70 py-2"
+              >
+                {truncateText(project.name, 40)}
+              </SelectItem>
+            ))}
+            <SelectItem
+              value="add-project"
+              className="text-muted-foreground cursor-pointer hover:bg-accent/70 focus:bg-accent/70 py-2"
+            >
+              + Add new project
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        {activeProject?.name && (
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            {activeProject.name}
+          </div>
         )}
       </div>
       <AddProjectDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
