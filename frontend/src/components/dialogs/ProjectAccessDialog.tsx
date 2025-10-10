@@ -62,10 +62,11 @@ function MemberItem({
     // Can't edit owner roles
     if (member.role === ProjectMemberRole.Owner) return false;
 
-    // Only owners can edit admin roles
+    // Only owners and admins can edit admin roles
     if (
       member.role === ProjectMemberRole.Admin &&
-      currentUserRole !== ProjectMemberRole.Owner
+      currentUserRole !== ProjectMemberRole.Owner &&
+      currentUserRole !== ProjectMemberRole.Admin
     )
       return false;
 
@@ -89,20 +90,16 @@ function MemberItem({
     )
       return false;
 
-    // Admins can only remove members, not other admins
-    if (
-      currentUserRole === ProjectMemberRole.Admin &&
-      member.role === ProjectMemberRole.Admin
-    )
-      return false;
-
     return true;
   }, [member.id, member.role, userData?.id, currentUserRole]);
 
   const availableRoles = useMemo(() => {
     const roles = [];
 
-    if (currentUserRole === ProjectMemberRole.Owner) {
+    if (
+      currentUserRole === ProjectMemberRole.Owner ||
+      currentUserRole === ProjectMemberRole.Admin
+    ) {
       roles.push({ value: ProjectMemberRole.Admin, label: "Admin" });
     }
 
@@ -371,13 +368,14 @@ function GenerateNewInviteLinkSection() {
   );
 
   const availableRoles = useMemo(() => {
-    if (myRole === ProjectMemberRole.Owner) {
+    if (
+      myRole === ProjectMemberRole.Owner ||
+      myRole === ProjectMemberRole.Admin
+    ) {
       return [
         { value: "member" as const, label: "Member" },
         { value: "admin" as const, label: "Admin" },
       ];
-    } else if (myRole === ProjectMemberRole.Admin) {
-      return [{ value: "member" as const, label: "Member" }];
     }
     return [];
   }, [myRole]);
