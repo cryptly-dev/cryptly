@@ -96,7 +96,7 @@ export function MobileProjectTile() {
         projectData={projectData}
       />
 
-      <div className="flex-1 h-full">
+      <div className="flex-1 h-full relative">
         <motion.div
           className="bg-card/60 backdrop-blur h-full flex flex-col overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
@@ -209,18 +209,20 @@ function MobileProjectHeader({
               >
                 <IconHistory className="size-5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShareDialogOpen(true);
-                  posthog.capture("members_button_clicked");
-                }}
-                aria-label="Members"
-                className="size-10"
-              >
-                <IconUsers className="size-5" />
-              </Button>
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShareDialogOpen(true);
+                    posthog.capture("members_button_clicked");
+                  }}
+                  aria-label="Members"
+                  className="size-10"
+                >
+                  <IconUsers className="size-5" />
+                </Button>
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
@@ -233,18 +235,20 @@ function MobileProjectHeader({
               >
                 <IconSettings className="size-5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setIntegrationsDialogOpen(true);
-                  posthog.capture("integrations_button_clicked");
-                }}
-                aria-label="Integrations"
-                className="size-10"
-              >
-                <IconPlugConnected className="size-5" />
-              </Button>
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIntegrationsDialogOpen(true);
+                    posthog.capture("integrations_button_clicked");
+                  }}
+                  aria-label="Integrations"
+                  className="size-10"
+                >
+                  <IconPlugConnected className="size-5" />
+                </Button>
+              </div>
             </>
           )}
         </div>
