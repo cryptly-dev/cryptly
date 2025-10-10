@@ -225,9 +225,9 @@ function ProjectHeader() {
                 setIntegrationsDialogOpen(true);
                 posthog.capture("integrations_button_clicked");
               }}
-              aria-label="External Connections"
+              aria-label="Integrations"
               className="size-10 cursor-pointer"
-              tooltip="External Connections"
+              tooltip="Integrations"
             >
               <IconPlugConnected className="size-5" />
             </Button>
@@ -352,10 +352,10 @@ function ProjectHeaderSkeleton() {
               variant="ghost"
               size="icon"
               onClick={() => setIntegrationsDialogOpen(true)}
-              aria-label="External Connections"
+              aria-label="Integrations"
               className="cursor-pointer size-10"
               tooltip={{
-                title: "External Connections",
+                title: "Integrations",
                 description: "Connect external services",
               }}
             >

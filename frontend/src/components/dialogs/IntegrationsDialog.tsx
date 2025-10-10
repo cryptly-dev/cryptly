@@ -292,7 +292,7 @@ export function IntegrationsDialog({
         <div className="grid gap-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              External Connections
+              Integrations
             </DialogTitle>
             <DialogDescription>
               Connect external services to sync and manage your project secrets

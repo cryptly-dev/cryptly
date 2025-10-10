@@ -24,7 +24,7 @@ export function PushButton() {
 
   let tooltipDescription: string | undefined;
   if (!hasIntegrations) {
-    tooltipDescription = "You have no external connections";
+    tooltipDescription = "You have no integrations";
   } else if (isEditorDirty) {
     tooltipDescription = "Save your changes first";
   } else if (isExternallyUpdated) {
@@ -36,10 +36,10 @@ export function PushButton() {
       variant="outline"
       onClick={push}
       disabled={!isEnabled}
-      aria-label="Push to external connections"
+      aria-label="Push to integrations"
       className="cursor-pointer h-10 w-10 p-0 bg-secondary/50 hover:bg-secondary"
       tooltip={{
-        title: "Push to external connections",
+        title: "Push to integrations",
         description: tooltipDescription,
       }}
     >
