@@ -4,12 +4,6 @@ import { ProjectAccessDialog } from "@/components/dialogs/ProjectAccessDialog";
 import { ProjectSettingsDialog } from "@/components/dialogs/ProjectSettingsDialog";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -24,8 +18,8 @@ import { getRelativeTime } from "@/lib/utils";
 import {
   IconArrowLeft,
   IconBrandGithub,
-  IconDots,
   IconHistory,
+  IconPlugConnected,
   IconSettings,
   IconUsers,
 } from "@tabler/icons-react";
@@ -196,8 +190,9 @@ function MobileProjectHeader({
               size="sm"
               onClick={toggleHistoryView}
               aria-label="Go back"
+              className="size-10"
             >
-              <IconArrowLeft className="size-4" />
+              <IconArrowLeft className="size-5" />
             </Button>
           ) : (
             <>
@@ -211,45 +206,46 @@ function MobileProjectHeader({
                 aria-label={
                   isShowingHistory ? "Exit history mode" : "View history"
                 }
+                className="size-10"
               >
-                <IconHistory className="size-4" />
+                <IconHistory className="size-5" />
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <IconDots className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setShareDialogOpen(true);
-                      posthog.capture("members_button_clicked");
-                    }}
-                  >
-                    <IconUsers className="size-4 mr-2" />
-                    <span>Members</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSettingsDialogOpen(true);
-                      posthog.capture("settings_button_clicked");
-                    }}
-                  >
-                    <IconSettings className="size-4 mr-2" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setIntegrationsDialogOpen(true);
-                      posthog.capture("integrations_button_clicked");
-                    }}
-                  >
-                    <IconBrandGithub className="size-4 mr-2" />
-                    <span>Integrations</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShareDialogOpen(true);
+                  posthog.capture("members_button_clicked");
+                }}
+                aria-label="Members"
+                className="size-10"
+              >
+                <IconUsers className="size-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSettingsDialogOpen(true);
+                  posthog.capture("settings_button_clicked");
+                }}
+                aria-label="Settings"
+                className="size-10"
+              >
+                <IconSettings className="size-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIntegrationsDialogOpen(true);
+                  posthog.capture("integrations_button_clicked");
+                }}
+                aria-label="Integrations"
+                className="size-10"
+              >
+                <IconPlugConnected className="size-5" />
+              </Button>
             </>
           )}
         </div>
