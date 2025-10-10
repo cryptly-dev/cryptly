@@ -219,7 +219,7 @@ function AddIntegrationSection() {
           onValueChange={handleInstallationSelectChange}
         >
           <SelectTrigger className="flex-1">
-            <SelectValue placeholder="Choose a GitHub installation" />
+            <SelectValue placeholder="Choose installation" />
           </SelectTrigger>
           <SelectContent>
             {installations.map((installation) => (
