@@ -537,17 +537,7 @@ function IntegrationsSection() {
 
                 {/* Right side - Mock UI from actual app */}
                 <div className="relative">
-                  <motion.div
-                    className="relative rounded-2xl border border-neutral-700 bg-neutral-900/80 p-6 backdrop-blur"
-                    initial={{ opacity: 0, x: 40 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{
-                      duration: 0.8,
-                      ease: [0, 0.55, 0.45, 1],
-                      delay: 0.2,
-                    }}
-                  >
+                  <div className="relative rounded-2xl border border-neutral-700 bg-neutral-900/80 p-6 backdrop-blur">
                     <div className="space-y-6">
                       {/* Existing Integration */}
                       <div>
@@ -690,13 +680,11 @@ function IntegrationsSection() {
                         )}
                       </button>
 
-                      {!isSyncing && (
-                        <p className="text-xs text-center text-neutral-500">
-                          Last synced: 2 minutes ago
-                        </p>
-                      )}
+                      <p className="text-xs text-center text-neutral-500">
+                        Last synced: 2 minutes ago
+                      </p>
                     </div>
-                  </motion.div>
+                  </div>
                 </div>
               </div>
             ) : (
