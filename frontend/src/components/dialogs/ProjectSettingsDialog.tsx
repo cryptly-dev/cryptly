@@ -30,7 +30,9 @@ function RenameProjectSection() {
   const [isRenaming, setIsRenaming] = useState(false);
   const [showRenameForm, setShowRenameForm] = useState(false);
 
-  const canRename = currentUserRole === ProjectMemberRole.Owner;
+  const canRename =
+    currentUserRole === ProjectMemberRole.Owner ||
+    currentUserRole === ProjectMemberRole.Admin;
 
   useEffect(() => {
     if (showRenameForm && projectData) {
@@ -63,7 +65,8 @@ function RenameProjectSection() {
             this project.
           </div>
           <div className="text-sm text-muted-foreground mt-1">
-            Only <span className="font-medium underline">Owners</span> can
+            Only{" "}
+            <span className="font-medium underline">Owners and Admins</span> can
             rename projects.
           </div>
         </div>
