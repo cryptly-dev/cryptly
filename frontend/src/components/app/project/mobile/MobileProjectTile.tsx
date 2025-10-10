@@ -17,7 +17,6 @@ import { projectsLogic } from "@/lib/logics/projectsLogic";
 import { getRelativeTime } from "@/lib/utils";
 import {
   IconArrowLeft,
-  IconBrandGithub,
   IconHistory,
   IconPlugConnected,
   IconSettings,
