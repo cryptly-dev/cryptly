@@ -4,7 +4,7 @@ import { projectLogic } from "@/lib/logics/projectLogic";
 import { useActions, useValues } from "kea";
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
-import { PlugZap } from "lucide-react";
+import { CloudUpload } from "lucide-react";
 
 export function PushButton() {
   const { isEditorDirty, isExternallyUpdated, isPushing, integrations } =
@@ -68,7 +68,7 @@ export function PushButton() {
               ease: "easeInOut",
             }}
           >
-            <PlugZap className="size-5" />
+            <CloudUpload className="size-5" />
           </motion.div>
         )}
       </AnimatePresence>
