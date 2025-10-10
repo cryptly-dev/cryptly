@@ -297,14 +297,14 @@ function ProjectHeaderSkeleton() {
   return (
     <div className="relative flex h-10 items-center justify-center">
       {/* Left buttons - fixed width */}
-      <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-2">
+      <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-3">
         {isShowingHistory ? (
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleHistoryView}
             aria-label="Go back"
-            className="cursor-pointer"
+            className="cursor-pointer size-10"
             tooltip={{ title: "Go back", description: "Return to editor" }}
           >
             <IconArrowLeft className="size-5" />
@@ -318,7 +318,7 @@ function ProjectHeaderSkeleton() {
               aria-label={
                 isShowingHistory ? "Exit history mode" : "View history"
               }
-              className="cursor-pointer"
+              className="cursor-pointer size-10"
               tooltip={{
                 title: isShowingHistory ? "Exit History Mode" : "View History",
                 description: isShowingHistory
@@ -333,7 +333,7 @@ function ProjectHeaderSkeleton() {
               size="icon"
               onClick={() => setShareDialogOpen(true)}
               aria-label="Share project"
-              className="cursor-pointer"
+              className="cursor-pointer size-10"
               tooltip={{ title: "Members", description: "Invite members" }}
             >
               <IconUsers className="size-5" />
@@ -343,7 +343,7 @@ function ProjectHeaderSkeleton() {
               size="icon"
               onClick={() => setSettingsDialogOpen(true)}
               aria-label="Project settings"
-              className="cursor-pointer"
+              className="cursor-pointer size-10"
               tooltip={{ title: "Settings", description: "Project settings" }}
             >
               <IconSettings className="size-5" />
@@ -353,7 +353,7 @@ function ProjectHeaderSkeleton() {
               size="icon"
               onClick={() => setIntegrationsDialogOpen(true)}
               aria-label="External Connections"
-              className="cursor-pointer"
+              className="cursor-pointer size-10"
               tooltip={{
                 title: "External Connections",
                 description: "Connect external services",
