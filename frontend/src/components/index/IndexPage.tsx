@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export function IndexPage() {
   return (
@@ -671,20 +672,14 @@ function IntegrationsSection() {
                             </SelectContent>
                           </Select>
 
-                          <button
+                          <Button
                             onClick={handleConnect}
                             disabled={isConnecting}
-                            className="rounded-lg border border-neutral-700 bg-neutral-800/50 text-white font-semibold px-4 py-3 flex items-center justify-center gap-2 hover:bg-neutral-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            isLoading={isConnecting}
+                            className="cursor-pointer"
                           >
-                            {isConnecting ? (
-                              <>
-                                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                <span>Connecting...</span>
-                              </>
-                            ) : (
-                              <span>Connect</span>
-                            )}
-                          </button>
+                            Connect
+                          </Button>
                         </div>
                       </div>
 
@@ -704,7 +699,7 @@ function IntegrationsSection() {
                         ) : (
                           <>
                             <CloudUpload className="h-4 w-4" />
-                            <span>Sync to GitHub</span>
+                            <span>Push to GitHub</span>
                           </>
                         )}
                       </button>
