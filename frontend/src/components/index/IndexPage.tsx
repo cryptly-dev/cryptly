@@ -18,6 +18,13 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function IndexPage() {
   return (
@@ -384,6 +391,11 @@ const GridItem = ({ area, icon, title, description }: GridItemProps) => {
 function IntegrationsSection() {
   const [selectedTab, setSelectedTab] = useState<"github" | "more">("github");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [selectedInstallation, setSelectedInstallation] =
+    useState("cryptly-dev");
+  const [selectedRepository, setSelectedRepository] = useState(
+    "cryptly-dev/cryptly"
+  );
 
   const handleSync = () => {
     setIsSyncing(true);
@@ -571,40 +583,90 @@ function IntegrationsSection() {
 
                         {/* Provider and Installation selectors */}
                         <div className="flex gap-2 mb-3">
-                          <div className="w-[140px] rounded-lg border border-neutral-700 bg-neutral-800/50 px-3 py-2">
-                            <div className="flex items-center gap-2">
-                              <GitHubIcon className="h-4 w-4" />
-                              <span className="text-sm text-white">GitHub</span>
-                            </div>
-                          </div>
+                          <Select value="github" disabled>
+                            <SelectTrigger className="w-[140px] bg-neutral-800/50 border-neutral-700">
+                              <SelectValue>
+                                <div className="flex items-center gap-2">
+                                  <GitHubIcon className="h-4 w-4" />
+                                  <span>GitHub</span>
+                                </div>
+                              </SelectValue>
+                            </SelectTrigger>
+                          </Select>
 
-                          <div className="flex-1 rounded-lg border border-neutral-700 bg-neutral-800/50 px-3 py-2">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src="https://avatars.githubusercontent.com/u/232047591?v=4"
-                                alt="cryptly-dev"
-                                className="h-5 w-5 rounded-full"
-                              />
-                              <span className="text-sm text-white truncate">
-                                cryptly-dev
-                              </span>
-                            </div>
-                          </div>
+                          <Select
+                            value={selectedInstallation}
+                            onValueChange={setSelectedInstallation}
+                          >
+                            <SelectTrigger className="flex-1 bg-neutral-800/50 border-neutral-700">
+                              <SelectValue placeholder="Choose installation" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="cryptly-dev">
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src="https://avatars.githubusercontent.com/u/232047591?v=4"
+                                    alt="cryptly-dev"
+                                    className="h-5 w-5 rounded-full"
+                                  />
+                                  <span>cryptly-dev</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="other-org">
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src="https://avatars.githubusercontent.com/u/232047591?v=4"
+                                    alt="other-org"
+                                    className="h-5 w-5 rounded-full"
+                                  />
+                                  <span>other-org</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         {/* Repository selector */}
-                        <div className="rounded-lg border border-neutral-700 bg-neutral-800/50 px-3 py-2 mb-3">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src="https://avatars.githubusercontent.com/u/232047591?v=4"
-                              alt="cryptly"
-                              className="h-5 w-5 rounded-full"
-                            />
-                            <span className="text-sm text-white">
-                              cryptly-dev/cryptly
-                            </span>
-                          </div>
-                        </div>
+                        <Select
+                          value={selectedRepository}
+                          onValueChange={setSelectedRepository}
+                        >
+                          <SelectTrigger className="w-full bg-neutral-800/50 border-neutral-700 mb-3">
+                            <SelectValue placeholder="Choose repository" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cryptly-dev/cryptly">
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src="https://avatars.githubusercontent.com/u/232047591?v=4"
+                                  alt="cryptly"
+                                  className="h-5 w-5 rounded-full"
+                                />
+                                <span>cryptly-dev/cryptly</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="cryptly-dev/docs">
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src="https://avatars.githubusercontent.com/u/232047591?v=4"
+                                  alt="docs"
+                                  className="h-5 w-5 rounded-full"
+                                />
+                                <span>cryptly-dev/docs</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="cryptly-dev/api">
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src="https://avatars.githubusercontent.com/u/232047591?v=4"
+                                  alt="api"
+                                  className="h-5 w-5 rounded-full"
+                                />
+                                <span>cryptly-dev/api</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="h-px bg-neutral-700" />
