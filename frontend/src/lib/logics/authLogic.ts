@@ -83,7 +83,7 @@ export const authLogic = kea<authLogicType>([
         const userDataValue = await UserApi.getMe(values.jwtToken!);
 
         if (userDataValue.email) {
-          posthog.identify(userDataValue.email, {
+          posthog.identify(userDataValue.id, {
             email: userDataValue.email,
           });
         }
