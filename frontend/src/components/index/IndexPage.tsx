@@ -12,10 +12,12 @@ import {
   Shield,
   Terminal,
   Users,
-  Zap,
+  CloudUpload,
   Plug,
   Sparkles,
+  Zap,
 } from "lucide-react";
+import { IconPlugConnected } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import {
@@ -143,35 +145,35 @@ export function IndexPage() {
             <GridItem
               area="md:[grid-area:1/1/2/7] xl:[grid-area:1/1/2/5]"
               icon={<Lock className="h-5 w-5 text-neutral-400" />}
-              title="End-to-End Encryption"
+              title="End-to-end encryption"
               description="All encryption happens in your browser. We never see your actual secrets - it's mathematically impossible for us to decrypt them."
             />
 
             <GridItem
               area="md:[grid-area:1/7/2/13] xl:[grid-area:2/1/3/5]"
               icon={<KeyRound className="h-5 w-5 text-neutral-400" />}
-              title="Local Key Generation"
+              title="Local key generation"
               description="Your cryptographic keys are generated locally in your browser. Your private key never leaves your device in plaintext."
             />
 
             <GridItem
               area="md:[grid-area:2/1/3/7] xl:[grid-area:1/5/3/8]"
               icon={<Shield className="h-5 w-5 text-neutral-400" />}
-              title="Passphrase Protected"
+              title="Passphrase protected"
               description="Your private key is encrypted with your passphrase using AES-256-GCM. Even if someone accesses your encrypted key, it's useless without your passphrase."
             />
 
             <GridItem
               area="md:[grid-area:2/7/3/13] xl:[grid-area:1/8/2/13]"
               icon={<Users className="h-5 w-5 text-neutral-400" />}
-              title="Secure Team Collaboration"
+              title="Secure team collaboration"
               description="Share secrets with your team without compromising security. Each member has their own keys and encryption."
             />
 
             <GridItem
               area="md:[grid-area:3/1/4/13] xl:[grid-area:2/8/3/13]"
               icon={<Zap className="h-5 w-5 text-neutral-400" />}
-              title="Lightning Fast & Reliable"
+              title="Lightning fast & reliable"
               description="All cryptographic operations happen locally for instant response. No waiting for server-side encryption or decryption."
             />
           </ul>
@@ -189,7 +191,7 @@ export function IndexPage() {
             transition={{ duration: 2, ease: [0, 1, 0, 1] }}
           >
             <h2 className="text-4xl font-bold text-white md:text-5xl">
-              <span className="">How It Works</span>
+              <span className="">How it works</span>
             </h2>
             <p className="mt-4 text-lg text-neutral-400">
               Military-grade encryption meets developer-friendly experience
@@ -236,7 +238,7 @@ export function IndexPage() {
                 <Terminal className="h-6 w-6 text-neutral-300" />
               </div>
               <h3 className="mb-2 text-xl font-semibold text-white">
-                2. Create & Edit
+                2. Create & edit
               </h3>
               <p className="text-sm text-neutral-400">
                 Every secret you add is encrypted in your browser before
@@ -260,7 +262,7 @@ export function IndexPage() {
                 <Server className="h-6 w-6 text-neutral-300" />
               </div>
               <h3 className="mb-2 text-xl font-semibold text-white">
-                3. Store Securely
+                3. Store securely
               </h3>
               <p className="text-sm text-neutral-400">
                 We only store encrypted data. Even if our servers were
@@ -391,16 +393,26 @@ const GridItem = ({ area, icon, title, description }: GridItemProps) => {
 function IntegrationsSection() {
   const [selectedTab, setSelectedTab] = useState<"github" | "more">("github");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [selectedInstallation, setSelectedInstallation] =
     useState("cryptly-dev");
   const [selectedRepository, setSelectedRepository] = useState(
     "cryptly-dev/cryptly"
   );
+  const [lastSyncTime, setLastSyncTime] = useState("2 minutes ago");
 
   const handleSync = () => {
     setIsSyncing(true);
     setTimeout(() => {
       setIsSyncing(false);
+      setLastSyncTime("just now");
+    }, 1000);
+  };
+
+  const handleConnect = () => {
+    setIsConnecting(true);
+    setTimeout(() => {
+      setIsConnecting(false);
     }, 1000);
   };
 
@@ -415,11 +427,11 @@ function IntegrationsSection() {
           transition={{ duration: 2, ease: [0, 1, 0, 1] }}
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-neutral-700 bg-neutral-800/30 px-4 py-2 mb-6 backdrop-blur">
-            <Sparkles className="h-4 w-4 text-neutral-300" />
+            <IconPlugConnected className="h-4 w-4 text-neutral-300" />
             <span className="text-sm text-neutral-300">Integrations</span>
           </div>
           <h2 className="text-4xl font-bold text-white md:text-5xl">
-            <span className="">One-Click Sync</span>
+            <span className="">One click sync</span>
           </h2>
           <p className="mt-4 text-lg text-neutral-400 max-w-2xl mx-auto">
             Connect your tools and sync your secrets instantly. No manual
@@ -444,7 +456,7 @@ function IntegrationsSection() {
             <div className="flex gap-3 mb-8">
               <button
                 onClick={() => setSelectedTab("github")}
-                className={`inline-flex items-center gap-3 rounded-2xl border px-5 py-3 transition-all ${
+                className={`inline-flex items-center gap-3 rounded-2xl border px-5 py-3 transition-all cursor-pointer ${
                   selectedTab === "github"
                     ? "border-neutral-600 bg-neutral-800/70"
                     : "border-neutral-700 bg-neutral-800/30 hover:bg-neutral-800/50"
@@ -453,13 +465,13 @@ function IntegrationsSection() {
                 <GitHubIcon className="h-6 w-6" />
                 <span className="text-lg font-semibold text-white">GitHub</span>
                 <div className="ml-2 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400 border border-green-500/20">
-                  Available Now
+                  Available now
                 </div>
               </button>
 
               <button
                 onClick={() => setSelectedTab("more")}
-                className={`inline-flex items-center gap-3 rounded-2xl border px-5 py-3 transition-all ${
+                className={`inline-flex items-center gap-3 rounded-2xl border px-5 py-3 transition-all cursor-pointer ${
                   selectedTab === "more"
                     ? "border-neutral-600 bg-neutral-800/70"
                     : "border-neutral-700 bg-neutral-800/30 hover:bg-neutral-800/50"
@@ -468,7 +480,7 @@ function IntegrationsSection() {
                 <Sparkles className="h-6 w-6 text-neutral-300" />
                 <span className="text-lg font-semibold text-white">More</span>
                 <div className="ml-2 rounded-full bg-neutral-500/10 px-2 py-0.5 text-xs font-medium text-neutral-400 border border-neutral-500/20">
-                  Available Soon
+                  Available soon
                 </div>
               </button>
             </div>
@@ -478,7 +490,7 @@ function IntegrationsSection() {
                 {/* Left side - Content */}
                 <div className="space-y-6">
                   <h3 className="text-3xl font-bold text-white md:text-4xl">
-                    Sync Secrets to Your Repos
+                    Sync secrets to your repos
                   </h3>
 
                   <p className="text-neutral-400 text-lg leading-relaxed">
@@ -494,7 +506,7 @@ function IntegrationsSection() {
                       </div>
                       <div>
                         <h4 className="text-white font-semibold mb-1">
-                          Instant Connection
+                          Instant connection
                         </h4>
                         <p className="text-sm text-neutral-400">
                           OAuth integration makes connecting your repos
@@ -505,11 +517,11 @@ function IntegrationsSection() {
 
                     <div className="flex items-start gap-3">
                       <div className="mt-1 rounded-lg bg-neutral-800/50 p-2">
-                        <Zap className="h-4 w-4 text-neutral-300" />
+                        <CloudUpload className="h-4 w-4 text-neutral-300" />
                       </div>
                       <div>
                         <h4 className="text-white font-semibold mb-1">
-                          One-Click Sync
+                          One click sync
                         </h4>
                         <p className="text-sm text-neutral-400">
                           Update all repository secrets with a single button
@@ -524,7 +536,7 @@ function IntegrationsSection() {
                       </div>
                       <div>
                         <h4 className="text-white font-semibold mb-1">
-                          Always Encrypted
+                          Always encrypted
                         </h4>
                         <p className="text-sm text-neutral-400">
                           Secrets are decrypted locally before syncing - your
@@ -661,27 +673,44 @@ function IntegrationsSection() {
 
                       <div className="h-px bg-neutral-700" />
 
-                      {/* Sync Button */}
-                      <button
-                        onClick={handleSync}
-                        disabled={isSyncing}
-                        className="w-full rounded-lg bg-white text-black font-semibold py-3 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isSyncing ? (
-                          <>
-                            <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                            <span>Syncing...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="h-4 w-4" />
-                            <span>Sync to GitHub</span>
-                          </>
-                        )}
-                      </button>
+                      {/* Connect and Sync Buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleConnect}
+                          disabled={isConnecting}
+                          className="rounded-lg border border-neutral-700 bg-neutral-800/50 text-white font-semibold px-4 py-3 flex items-center justify-center gap-2 hover:bg-neutral-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isConnecting ? (
+                            <>
+                              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>Connecting...</span>
+                            </>
+                          ) : (
+                            <span>Connect</span>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={handleSync}
+                          disabled={isSyncing}
+                          className="flex-1 rounded-lg bg-white text-black font-semibold py-3 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSyncing ? (
+                            <>
+                              <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                              <span>Syncing...</span>
+                            </>
+                          ) : (
+                            <>
+                              <CloudUpload className="h-4 w-4" />
+                              <span>Sync to GitHub</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
 
                       <p className="text-xs text-center text-neutral-500">
-                        Last synced: 2 minutes ago
+                        Last synced: {lastSyncTime}
                       </p>
                     </div>
                   </div>
@@ -694,7 +723,7 @@ function IntegrationsSection() {
                 </div>
                 <div className="space-y-3 max-w-xl mx-auto">
                   <h3 className="text-2xl font-bold text-white">
-                    More Integrations Coming Soon
+                    More integrations coming soon
                   </h3>
                   <p className="text-neutral-400 text-lg">
                     We're happy to add integrations for other platforms! Let us
@@ -707,8 +736,7 @@ function IntegrationsSection() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white text-black font-semibold hover:scale-105 transition-transform"
                 >
-                  <GitHubIcon className="h-5 w-5" />
-                  <span>Request Integration</span>
+                  <span>Request integration</span>
                   <ArrowRight className="h-4 w-4" />
                 </a>
               </div>
