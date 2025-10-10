@@ -628,86 +628,86 @@ function IntegrationsSection() {
                           </Select>
                         </div>
 
-                        {/* Repository selector */}
-                        <Select
-                          value={selectedRepository}
-                          onValueChange={setSelectedRepository}
-                        >
-                          <SelectTrigger className="w-full bg-neutral-800/50 border-neutral-700 mb-3">
-                            <SelectValue placeholder="Choose repository" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="cryptly-dev/cryptly">
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src="https://avatars.githubusercontent.com/u/232047591?v=4"
-                                  alt="cryptly"
-                                  className="h-5 w-5 rounded-full"
-                                />
-                                <span>cryptly-dev/cryptly</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="cryptly-dev/docs">
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src="https://avatars.githubusercontent.com/u/232047591?v=4"
-                                  alt="docs"
-                                  className="h-5 w-5 rounded-full"
-                                />
-                                <span>cryptly-dev/docs</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="cryptly-dev/api">
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src="https://avatars.githubusercontent.com/u/232047591?v=4"
-                                  alt="api"
-                                  className="h-5 w-5 rounded-full"
-                                />
-                                <span>cryptly-dev/api</span>
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {/* Repository selector and Connect button */}
+                        <div className="flex gap-2 mb-3">
+                          <Select
+                            value={selectedRepository}
+                            onValueChange={setSelectedRepository}
+                          >
+                            <SelectTrigger className="flex-1 bg-neutral-800/50 border-neutral-700">
+                              <SelectValue placeholder="Choose repository" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="cryptly-dev/cryptly">
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src="https://avatars.githubusercontent.com/u/232047591?v=4"
+                                    alt="cryptly"
+                                    className="h-5 w-5 rounded-full"
+                                  />
+                                  <span>cryptly-dev/cryptly</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="cryptly-dev/docs">
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src="https://avatars.githubusercontent.com/u/232047591?v=4"
+                                    alt="docs"
+                                    className="h-5 w-5 rounded-full"
+                                  />
+                                  <span>cryptly-dev/docs</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="cryptly-dev/api">
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src="https://avatars.githubusercontent.com/u/232047591?v=4"
+                                    alt="api"
+                                    className="h-5 w-5 rounded-full"
+                                  />
+                                  <span>cryptly-dev/api</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+
+                          <button
+                            onClick={handleConnect}
+                            disabled={isConnecting}
+                            className="rounded-lg border border-neutral-700 bg-neutral-800/50 text-white font-semibold px-4 py-3 flex items-center justify-center gap-2 hover:bg-neutral-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isConnecting ? (
+                              <>
+                                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                <span>Connecting...</span>
+                              </>
+                            ) : (
+                              <span>Connect</span>
+                            )}
+                          </button>
+                        </div>
                       </div>
 
                       <div className="h-px bg-neutral-700" />
 
-                      {/* Connect and Sync Buttons */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={handleConnect}
-                          disabled={isConnecting}
-                          className="rounded-lg border border-neutral-700 bg-neutral-800/50 text-white font-semibold px-4 py-3 flex items-center justify-center gap-2 hover:bg-neutral-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isConnecting ? (
-                            <>
-                              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              <span>Connecting...</span>
-                            </>
-                          ) : (
-                            <span>Connect</span>
-                          )}
-                        </button>
-
-                        <button
-                          onClick={handleSync}
-                          disabled={isSyncing}
-                          className="flex-1 rounded-lg bg-white text-black font-semibold py-3 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isSyncing ? (
-                            <>
-                              <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                              <span>Syncing...</span>
-                            </>
-                          ) : (
-                            <>
-                              <CloudUpload className="h-4 w-4" />
-                              <span>Sync to GitHub</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
+                      {/* Sync Button */}
+                      <button
+                        onClick={handleSync}
+                        disabled={isSyncing}
+                        className="w-full rounded-lg bg-white text-black font-semibold py-3 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSyncing ? (
+                          <>
+                            <div className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                            <span>Syncing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CloudUpload className="h-4 w-4" />
+                            <span>Sync to GitHub</span>
+                          </>
+                        )}
+                      </button>
 
                       <p className="text-xs text-center text-neutral-500">
                         Last synced: {lastSyncTime}
