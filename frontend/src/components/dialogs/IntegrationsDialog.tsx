@@ -27,6 +27,8 @@ import { useActions, useAsyncActions, useValues } from "kea";
 import { useState, useEffect } from "react";
 import { commonLogic } from "@/lib/logics/commonLogic";
 import posthog from "posthog-js";
+import { projectLogic } from "@/lib/logics/projectLogic";
+import { ProjectMemberRole } from "@/lib/api/projects.api";
 
 function repositoryFullName(dto: { name?: string; owner?: string }) {
   return `${dto.owner}/${dto.name}`;
@@ -40,6 +42,11 @@ interface IntegrationsDialogProps {
 function IntegrationListItem({ integration }: { integration: Integration }) {
   const [isLoading, setIsLoading] = useState(false);
   const { removeIntegration } = useActions(integrationsLogic);
+  const { currentUserRole } = useValues(projectLogic);
+
+  const canDelete =
+    currentUserRole === ProjectMemberRole.Owner ||
+    currentUserRole === ProjectMemberRole.Admin;
 
   const handleRemoveIntegration = () => {
     setIsLoading(true);
@@ -57,15 +64,17 @@ function IntegrationListItem({ integration }: { integration: Integration }) {
           Repository ID: {integration.githubRepositoryId}
         </div>
       </div>
-      <Button
-        onClick={handleRemoveIntegration}
-        variant="ghost"
-        isLoading={isLoading}
-        size="sm"
-        className="cursor-pointer text-destructive hover:text-destructive"
-      >
-        <IconTrash className="size-4" />
-      </Button>
+      {canDelete && (
+        <Button
+          onClick={handleRemoveIntegration}
+          variant="ghost"
+          isLoading={isLoading}
+          size="sm"
+          className="cursor-pointer text-destructive hover:text-destructive"
+        >
+          <IconTrash className="size-4" />
+        </Button>
+      )}
     </div>
   );
 }
@@ -114,6 +123,11 @@ function AddIntegrationSection() {
   const { createIntegration } = useAsyncActions(integrationsLogic);
   const { setSelectedInstallationEntityId } = useActions(integrationsLogic);
   const { setShouldReopenIntegrationsDialog } = useActions(commonLogic);
+  const { currentUserRole } = useValues(projectLogic);
+
+  const canAddIntegration =
+    currentUserRole === ProjectMemberRole.Owner ||
+    currentUserRole === ProjectMemberRole.Admin;
 
   // Reset repository selection when installation changes
   useEffect(() => {
@@ -157,6 +171,28 @@ function AddIntegrationSection() {
 
   const isRepositoryDisabled =
     !selectedInstallationEntityId || repositoriesLoading;
+
+  if (!canAddIntegration) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <IconPlus className="size-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium">New connection</h3>
+        </div>
+        <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
+          <div className="text-sm text-muted-foreground">
+            You are a <span className="font-medium underline">Member</span> of
+            this project.
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">
+            Only{" "}
+            <span className="font-medium underline">Owners and Admins</span> can
+            add integrations.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
