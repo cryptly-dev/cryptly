@@ -165,7 +165,7 @@ function ProjectHeader() {
   return (
     <div className="relative flex h-10 items-center justify-center">
       {/* Left buttons - fixed width */}
-      <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-4">
+      <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-3">
         {isShowingHistory ? (
           <Button
             variant="ghost"

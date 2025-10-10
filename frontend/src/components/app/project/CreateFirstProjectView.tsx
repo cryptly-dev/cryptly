@@ -1,5 +1,6 @@
 import { AddProjectDialog } from "@/components/dialogs/AddProjectDialog";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { authLogic } from "@/lib/logics/authLogic";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
 import { IconFolder, IconPlus } from "@tabler/icons-react";
@@ -50,7 +51,7 @@ export function CreateFirstProjectView() {
     return (
       <div className="w-screen h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <Spinner className="h-12 w-12" />
           <span className="text-lg text-muted-foreground">
             Loading your projects...
           </span>
@@ -69,7 +70,7 @@ export function CreateFirstProjectView() {
   return (
     <div className="w-screen h-screen flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <Spinner className="h-12 w-12" />
         <span className="text-lg text-muted-foreground">
           Redirecting to your project...
         </span>

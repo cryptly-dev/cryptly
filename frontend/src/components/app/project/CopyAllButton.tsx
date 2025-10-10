@@ -42,7 +42,7 @@ export function CopyAllButton({ disabled = false }: { disabled?: boolean }) {
               ease: "easeInOut",
             }}
           >
-            <Check className="size-5 text-green-500" />
+            <Check className="size-4 text-green-500" />
           </motion.div>
         ) : (
           <motion.div
@@ -55,7 +55,7 @@ export function CopyAllButton({ disabled = false }: { disabled?: boolean }) {
               ease: "easeInOut",
             }}
           >
-            <Copy className="size-5" />
+            <Copy className="size-4" />
           </motion.div>
         )}
       </AnimatePresence>
