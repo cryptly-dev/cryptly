@@ -1,4 +1,5 @@
 import { actions, kea, listeners, path, reducers, selectors } from "kea";
+import posthog from "posthog-js";
 
 import type { ftuxLogicType } from "./ftuxLogicType";
 
@@ -118,11 +119,20 @@ export const ftuxLogic = kea<ftuxLogicType>([
     },
 
     completeFTUX: () => {
+      posthog.capture("ftux_done_button_clicked");
       localStorage.setItem(FTUX_STORAGE_KEY, "true");
     },
 
     nextStep: () => {
       const { currentStep } = values;
+
+      // Track "Next" button clicks for all steps except the last one
+      if (currentStep !== FTUXStep.INTEGRATIONS) {
+        posthog.capture("ftux_next_button_clicked", {
+          current_step: currentStep,
+        });
+      }
+
       switch (currentStep) {
         case FTUXStep.EDITOR:
           actions.setCurrentStep(FTUXStep.SAVE);
