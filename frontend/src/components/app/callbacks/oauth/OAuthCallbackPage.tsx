@@ -1,5 +1,6 @@
 import { useAfterLogin } from "@/lib/hooks/useAfterLogin";
 import { authLogic } from "@/lib/logics/authLogic";
+import { Spinner } from "@/components/ui/spinner";
 import { useValues } from "kea";
 import posthog from "posthog-js";
 import { useEffect } from "react";
@@ -35,7 +36,7 @@ export function OAuthCallbackPage({
   return (
     <div className="w-screen h-screen flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <Spinner className="h-12 w-12" />
         <span className="text-lg text-muted-foreground">
           Fetching projects...
         </span>
