@@ -48,23 +48,23 @@ This will:
 
 ## 🔐 Encryption Architecture
 
-### User Key Pair Generation
+### User key pair generation
 
 Upon account creation, an asymmetric RSA-OAEP key pair is generated client-side within the user's browser. This key pair forms the foundation of the user's cryptographic identity within the system.
 
-### Private Key Protection
+### Private key protection
 
 The generated private key is encrypted using a user-provided passphrase before any storage operations occur. This ensures that the private key remains protected even when stored on the server infrastructure.
 
-### Key Storage and Multi-Device Support
+### Key storage and multi-device support
 
 To enable cross-device access, the encrypted private key is stored on the server. During authentication from a new device, the encrypted private key is retrieved and decrypted locally using the user's passphrase. The server never has access to the unencrypted private key or the passphrase.
 
-### Project-Level Encryption
+### Project-level encryption
 
 When a new project is created, a random symmetric encryption key is generated client-side. This project-specific key is then encrypted using the user's public key and stored alongside the encrypted project content. All project secrets are encrypted and decrypted using this symmetric key, ensuring optimal performance while maintaining security.
 
-### Secure Project Sharing
+### Secure project sharing
 
 The project sharing mechanism employs a temporary asymmetric key pair to facilitate secure transfer:
 
