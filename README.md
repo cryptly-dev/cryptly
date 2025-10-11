@@ -4,6 +4,10 @@
 </div>
 
 <div align="center">
+    <img src="docs/README/app-preview.png" alt="Cryptly App Preview" width="800"/>
+</div>
+
+<div align="center">
     <b>A secure, collaborative secrets management platform with end-to-end encryption</b>
 </div>
 
