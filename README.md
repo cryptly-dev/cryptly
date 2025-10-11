@@ -55,6 +55,37 @@ This will:
 - Per-project encryption keys
 - Zero-knowledge architecture
 
+## 🔒 Encryption Architecture
+
+### User Key Pair Generation
+
+Upon account creation, an asymmetric RSA-OAEP key pair is generated client-side within the user's browser. This key pair forms the foundation of the user's cryptographic identity within the system.
+
+### Private Key Protection
+
+The generated private key is encrypted using a user-provided passphrase before any storage operations occur. This ensures that the private key remains protected even when stored on the server infrastructure.
+
+### Key Storage and Multi-Device Support
+
+To enable cross-device access, the encrypted private key is stored on the server. During authentication from a new device, the encrypted private key is retrieved and decrypted locally using the user's passphrase. The server never has access to the unencrypted private key or the passphrase.
+
+### Project-Level Encryption
+
+When a new project is created, a random symmetric encryption key is generated client-side. This project-specific key is then encrypted using the user's public key and stored alongside the encrypted project content. All project secrets are encrypted and decrypted using this symmetric key, ensuring optimal performance while maintaining security.
+
+### Secure Project Sharing
+
+The project sharing mechanism employs a temporary asymmetric key pair to facilitate secure transfer:
+
+1. A temporary RSA-OAEP key pair is generated for the invitation
+2. The project's symmetric key is encrypted using the temporary public key
+3. An invitation-specific code is used to encrypt the temporary private key
+4. When a recipient claims the invitation, they provide the invitation code to decrypt the temporary private key
+5. The temporary private key is used to decrypt the project's symmetric key
+6. Finally, the project key is re-encrypted using the recipient's public key
+
+This cryptographic workflow ensures end-to-end encryption throughout the entire project lifecycle, maintaining zero-knowledge architecture where the server cannot access plaintext data at any point.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
