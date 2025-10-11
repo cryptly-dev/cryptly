@@ -46,16 +46,7 @@ This will:
 
 > **Note:** Local development mode includes simplified authentication - just enter any email to log in!
 
-## 🔐 Security
-
-- All secrets are encrypted client-side using **AES-256-GCM**
-- Your keys for encrypting secrets are encrypted client-side using **RSA-OAEP**,
-- Private keys never leave the browser
-- Server only stores encrypted data
-- Per-project encryption keys
-- Zero-knowledge architecture
-
-## 🔒 Encryption Architecture
+## 🔐 Encryption Architecture
 
 ### User Key Pair Generation
 
