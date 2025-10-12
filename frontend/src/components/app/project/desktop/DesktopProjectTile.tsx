@@ -156,40 +156,51 @@ export function DesktopProjectTile() {
     <div className="h-[65vh] rounded-2xl border border-border bg-card/60 backdrop-blur">
       <div className="h-full flex flex-col p-4 gap-4 relative">
         <ProjectHeader />
-        <div className="relative rounded-xl overflow-hidden h-full">
-          {isShowingHistory ? (
-            <DesktopHistoryView />
-          ) : (
-            <div className="h-full">
-              <FileEditor
-                value={inputValue}
-                onChange={(v) => setInputValue(v)}
-                readOnly={isReadOnly}
-              />
-              <AnimatePresence mode="wait">
-                {" "}
-                {changedBy && (
-                  <motion.div
-                    className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ ease: "easeInOut", duration: 0.1 }}
-                  >
-                    <span className="rounded bg-background/100 px-2 py-0.5 text-xs text-muted-foreground shadow-sm">
-                      Changed by {changedBy.split("@")[0]}{" "}
-                      {getRelativeTime(projectData.updatedAt)}
-                    </span>
-                  </motion.div>
-                )}{" "}
-              </AnimatePresence>
-            </div>
-          )}
-        </div>
-        {/* FTUX Tooltip positioned in the center of editor */}
-        {shouldShowEditorTooltip && !isShowingHistory && (
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-80 z-[100]">
-            <div className="relative rounded-lg bg-popover border border-border shadow-2xl p-4">
+        <TooltipProvider>
+          <Tooltip
+            open={shouldShowEditorTooltip && !isShowingHistory}
+            delayDuration={0}
+          >
+            <TooltipTrigger asChild>
+              <div className="relative rounded-xl overflow-hidden h-full">
+                {isShowingHistory ? (
+                  <DesktopHistoryView />
+                ) : (
+                  <div className="h-full">
+                    <FileEditor
+                      value={inputValue}
+                      onChange={(v) => setInputValue(v)}
+                      readOnly={isReadOnly}
+                    />
+                    <AnimatePresence mode="wait">
+                      {" "}
+                      {changedBy && (
+                        <motion.div
+                          className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ ease: "easeInOut", duration: 0.1 }}
+                        >
+                          <span className="rounded bg-background/100 px-2 py-0.5 text-xs text-muted-foreground shadow-sm">
+                            Changed by {changedBy.split("@")[0]}{" "}
+                            {getRelativeTime(projectData.updatedAt)}
+                          </span>
+                        </motion.div>
+                      )}{" "}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              align="center"
+              sideOffset={-200}
+              className="w-80 p-4 shadow-2xl"
+              onPointerDownOutside={(e) => e.preventDefault()}
+            >
+              <TooltipArrow width={12} height={6} />
               <div className="flex flex-col gap-4">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4">
@@ -245,9 +256,9 @@ export function DesktopProjectTile() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );
@@ -371,11 +382,7 @@ function ProjectHeader() {
                     className="w-80 p-4 shadow-2xl"
                     onPointerDownOutside={(e) => e.preventDefault()}
                   >
-                    <TooltipArrow
-                      className="fill-border"
-                      width={12}
-                      height={6}
-                    />
+                    <TooltipArrow width={12} height={6} />
                     <div className="flex flex-col gap-4">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-4">
@@ -487,11 +494,7 @@ function ProjectHeader() {
                     className="w-80 p-4 shadow-2xl"
                     onPointerDownOutside={(e) => e.preventDefault()}
                   >
-                    <TooltipArrow
-                      className="fill-border"
-                      width={12}
-                      height={6}
-                    />
+                    <TooltipArrow width={12} height={6} />
                     <div className="flex flex-col gap-4">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-4">
@@ -512,11 +515,12 @@ function ProjectHeader() {
                       {/* Description */}
                       <p className="text-sm text-foreground leading-relaxed">
                         Click Save or press{" "}
-                        <Kbd className="inline-flex">
-                          <CommandIcon className="size-3" />
+                        <Kbd className="inline-flex !text-white">
+                          <CommandIcon className="size-3 !text-white" />
                         </Kbd>{" "}
-                        + <Kbd className="inline-flex">Enter</Kbd>. Your data is
-                        encrypted before it ever leaves your device.
+                        + <Kbd className="inline-flex !text-white">Enter</Kbd>.
+                        Your data is encrypted before it ever leaves your
+                        device.
                       </p>
 
                       {/* Actions */}
