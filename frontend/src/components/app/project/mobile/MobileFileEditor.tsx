@@ -3,9 +3,11 @@ import { BaseFileEditor } from "../BaseFileEditor";
 export function MobileFileEditor({
   value,
   onChange,
+  readOnly = false,
 }: {
   value: string;
   onChange: (value: string) => void;
+  readOnly?: boolean;
 }) {
   return (
     <BaseFileEditor
@@ -15,6 +17,7 @@ export function MobileFileEditor({
       fontSize={16}
       padding={{ top: 12, bottom: 8 }}
       lineNumbersMinChars={3}
+      readOnly={readOnly}
     />
   );
 }

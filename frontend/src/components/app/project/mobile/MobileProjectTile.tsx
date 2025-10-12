@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { authLogic } from "@/lib/logics/authLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
@@ -45,19 +46,26 @@ export function MobileProjectTile() {
     isEditorDirty,
     inputValue,
     lastEditAuthor,
+    currentUserRole,
   } = useValues(projectLogic);
   const { userData } = useValues(authLogic);
   const { projects } = useValues(projectsLogic);
   const { activeProject } = useProjects();
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
   const navigate = useNavigate();
+  const isReadOnly = currentUserRole === ProjectMemberRole.Member;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
         event.preventDefault();
         event.stopPropagation();
-        if (!isSubmitting && isEditorDirty && !isShowingHistory) {
+        if (
+          !isSubmitting &&
+          isEditorDirty &&
+          !isShowingHistory &&
+          !isReadOnly
+        ) {
           updateProjectContent();
         }
       }
@@ -71,6 +79,7 @@ export function MobileProjectTile() {
     updateProjectContent,
     inputValue,
     isShowingHistory,
+    isReadOnly,
   ]);
 
   const changedBy = useMemo(() => {
@@ -120,6 +129,7 @@ export function MobileProjectTile() {
                 <MobileFileEditor
                   value={inputValue}
                   onChange={(v) => setInputValue(v)}
+                  readOnly={isReadOnly}
                 />
                 <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center">
                   <AnimatePresence mode="wait">
