@@ -47,7 +47,12 @@ function TooltipArrow({
 }: React.ComponentProps<typeof TooltipPrimitive.Arrow>) {
   return (
     <TooltipPrimitive.Arrow
-      className={cn("fill-popover", className)}
+      className={cn("-my-px border-none fill-popover", className)}
+      style={{
+        filter:
+          "drop-shadow(0 1px 0 hsl(var(--border))) drop-shadow(0 -1px 0 hsl(var(--border))) drop-shadow(1px 0 0 hsl(var(--border))) drop-shadow(-1px 0 0 hsl(var(--border)))",
+        ...props.style,
+      }}
       {...props}
     />
   );
