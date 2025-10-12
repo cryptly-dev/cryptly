@@ -86,7 +86,7 @@ function ExistingIntegrationsSection() {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <IconLink className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Connections</h3>
+        <h3 className="text-sm font-medium">Integrations</h3>
       </div>
 
       {integrations.length > 0 ? (
@@ -101,7 +101,7 @@ function ExistingIntegrationsSection() {
       ) : (
         <div className="text-center py-4 px-4 bg-muted/20 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
-            No connections yet
+            No integrations yet
           </div>
         </div>
       )}
@@ -177,7 +177,7 @@ function AddIntegrationSection() {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <IconPlus className="size-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium">New connection</h3>
+          <h3 className="text-sm font-medium">New integration</h3>
         </div>
         <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
@@ -198,7 +198,7 @@ function AddIntegrationSection() {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <IconPlus className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">New connection</h3>
+        <h3 className="text-sm font-medium">New integration</h3>
       </div>
 
       {/* Provider and Installation selectors on the same line */}

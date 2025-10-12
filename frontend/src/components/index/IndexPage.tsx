@@ -557,7 +557,7 @@ function IntegrationsSection() {
                         <div className="flex items-center gap-2 mb-3">
                           <Plug className="h-4 w-4 text-neutral-500" />
                           <h3 className="text-sm font-medium text-neutral-300">
-                            Connections
+                            Integrations
                           </h3>
                         </div>
                         <div className="flex items-center gap-3 p-3 bg-neutral-800/30 rounded-lg">
@@ -575,12 +575,12 @@ function IntegrationsSection() {
 
                       <div className="h-px bg-neutral-700" />
 
-                      {/* New Connection Form */}
+                      {/* New Integration Form */}
                       <div>
                         <div className="flex items-center gap-2 mb-3">
                           <Server className="h-4 w-4 text-neutral-500" />
                           <h3 className="text-sm font-medium text-neutral-300">
-                            New connection
+                            New integration
                           </h3>
                         </div>
 
