@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { Kbd } from "@/components/ui/kbd";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipArrow,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { authLogic } from "@/lib/logics/authLogic";
 import { commonLogic } from "@/lib/logics/commonLogic";
@@ -27,154 +34,6 @@ import { AlertTriangle, ArrowLeft, CommandIcon, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
 import React, { useEffect, useMemo, useState } from "react";
-
-// Reusable FTUX tooltip content component
-function FTUXTooltipContent({
-  description,
-  currentStep,
-  onNext,
-  onBack,
-  onSkip,
-  position = "top",
-  isLastStep = false,
-}: {
-  description: React.ReactNode;
-  currentStep: number;
-  onNext?: () => void;
-  onBack?: () => void;
-  onSkip: () => void;
-  position?: "top" | "bottom";
-  isLastStep?: boolean;
-}) {
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: position === "top" ? 10 : -10, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: position === "top" ? 10 : -10, scale: 0.95 }}
-        transition={{
-          duration: 0.3,
-          ease: [0.16, 1, 0.3, 1],
-        }}
-        className={`absolute left-1/2 -translate-x-1/2 w-80 z-[100] ${
-          position === "top" ? "bottom-full mb-3" : "top-full mt-3"
-        }`}
-      >
-        <motion.div
-          className="relative rounded-lg bg-popover border border-border shadow-2xl p-4"
-          initial={{ boxShadow: "0 0 0 0 rgba(0, 0, 0, 0)" }}
-          animate={{
-            boxShadow: [
-              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-              "0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 12px 12px -5px rgba(0, 0, 0, 0.06)",
-              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-            ],
-          }}
-          transition={{
-            boxShadow: {
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            },
-          }}
-        >
-          {/* Arrow with border - continuous border effect */}
-          <div
-            className={`absolute left-1/2 -translate-x-1/2 ${
-              position === "top"
-                ? "top-full -mt-[1px]"
-                : "bottom-full -mb-[1px]"
-            }`}
-          >
-            {/* Border triangle (larger, for border) */}
-            <div
-              className={`absolute left-1/2 -translate-x-1/2 w-0 h-0 ${
-                position === "top"
-                  ? "border-l-[9px] border-r-[9px] border-t-[9px] border-l-transparent border-r-transparent border-t-border"
-                  : "border-l-[9px] border-r-[9px] border-b-[9px] border-l-transparent border-r-transparent border-b-border"
-              }`}
-            />
-            {/* Fill triangle (smaller, sits inside border) */}
-            <div
-              className={`absolute left-1/2 -translate-x-1/2 w-0 h-0 ${
-                position === "top"
-                  ? "top-[-1px] border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-popover"
-                  : "bottom-[-1px] border-l-[8px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-popover"
-              }`}
-            />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-sm font-medium text-muted-foreground">
-                Step {currentStep} of 3
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onSkip}
-                className="h-5 w-5 hover:bg-secondary cursor-pointer"
-                aria-label="Skip tutorial"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Description */}
-            <motion.p
-              className="text-sm text-foreground leading-relaxed"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              {description}
-            </motion.p>
-
-            {/* Actions */}
-            <motion.div
-              className="flex justify-between gap-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15 }}
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onSkip}
-                className="text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                Skip tutorial
-              </Button>
-              <div className="flex gap-2">
-                {onBack && currentStep > 1 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onBack}
-                    className="px-2 border cursor-pointer"
-                    aria-label="Previous step"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                )}
-                {onNext && (
-                  <Button
-                    size="sm"
-                    onClick={onNext}
-                    className="font-semibold cursor-pointer"
-                  >
-                    {isLastStep ? "Done" : "Next"}
-                  </Button>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
 
 export function DesktopProjectTile() {
   const {
@@ -329,103 +188,65 @@ export function DesktopProjectTile() {
         </div>
         {/* FTUX Tooltip positioned in the center of editor */}
         {shouldShowEditorTooltip && !isShowingHistory && (
-          <AnimatePresence>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{
-                duration: 0.3,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-80 z-[100]"
-            >
-              <motion.div
-                className="relative rounded-lg bg-popover border border-border shadow-2xl p-4"
-                initial={{ boxShadow: "0 0 0 0 rgba(0, 0, 0, 0)" }}
-                animate={{
-                  boxShadow: [
-                    "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                    "0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 12px 12px -5px rgba(0, 0, 0, 0.06)",
-                    "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                  ],
-                }}
-                transition={{
-                  boxShadow: {
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  },
-                }}
-              >
-                <div className="flex flex-col gap-4">
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-4">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Step {currentStepNumber} of 3
-                    </span>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-80 z-[100]">
+            <div className="relative rounded-lg bg-popover border border-border shadow-2xl p-4">
+              <div className="flex flex-col gap-4">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-4">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Step {currentStepNumber} of 3
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={skipFTUX}
+                    className="h-5 w-5 hover:bg-secondary cursor-pointer"
+                    aria-label="Skip tutorial"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Description */}
+                <p className="text-sm text-foreground leading-relaxed">
+                  <div>Store API keys, tokens, and sensitive data.</div>
+                  <div>Everything is end-to-end encrypted.</div>
+                </p>
+
+                {/* Actions */}
+                <div className="flex justify-between gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={skipFTUX}
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    Skip tutorial
+                  </Button>
+                  <div className="flex gap-2">
+                    {currentStepNumber > 1 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={previousStep}
+                        className="px-2 border cursor-pointer"
+                        aria-label="Previous step"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={skipFTUX}
-                      className="h-5 w-5 hover:bg-secondary cursor-pointer"
-                      aria-label="Skip tutorial"
+                      size="sm"
+                      onClick={nextStep}
+                      className="font-semibold cursor-pointer"
                     >
-                      <X className="h-4 w-4" />
+                      Next
                     </Button>
                   </div>
-
-                  {/* Description */}
-                  <motion.p
-                    className="text-sm text-foreground leading-relaxed"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <div>Store API keys, tokens, and sensitive data.</div>
-                    <div>Everything is end-to-end encrypted.</div>
-                  </motion.p>
-
-                  {/* Actions */}
-                  <motion.div
-                    className="flex justify-between gap-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.15 }}
-                  >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={skipFTUX}
-                      className="text-muted-foreground hover:text-foreground cursor-pointer"
-                    >
-                      Skip tutorial
-                    </Button>
-                    <div className="flex gap-2">
-                      {currentStepNumber > 1 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={previousStep}
-                          className="px-2 border cursor-pointer"
-                          aria-label="Previous step"
-                        >
-                          <ArrowLeft className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        onClick={nextStep}
-                        className="font-semibold cursor-pointer"
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </motion.div>
                 </div>
-              </motion.div>
-            </motion.div>
-          </AnimatePresence>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -526,36 +347,96 @@ function ProjectHeader() {
               <IconSettings className="size-5" />
             </Button>
             <div className="relative overflow-visible">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setIntegrationsDialogOpen(true);
-                  posthog.capture("integrations_button_clicked");
-                }}
-                aria-label="Integrations"
-                className="size-10 cursor-pointer"
-                tooltip="Integrations"
-              >
-                <IconPlugConnected className="size-5" />
-              </Button>
-              {shouldShowIntegrationsTooltip && (
-                <FTUXTooltipContent
-                  description={
-                    <div>
-                      Link external services like{" "}
-                      <GitHubIcon className="inline w-4 h-4 align-text-bottom" />{" "}
-                      GitHub to automatically sync your secrets.
+              <TooltipProvider>
+                <Tooltip open={shouldShowIntegrationsTooltip} delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setIntegrationsDialogOpen(true);
+                        posthog.capture("integrations_button_clicked");
+                      }}
+                      aria-label="Integrations"
+                      className="size-10 cursor-pointer"
+                      tooltip="Integrations"
+                    >
+                      <IconPlugConnected className="size-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="top"
+                    align="center"
+                    sideOffset={12}
+                    className="w-80 p-4 shadow-2xl"
+                    onPointerDownOutside={(e) => e.preventDefault()}
+                  >
+                    <TooltipArrow
+                      className="fill-border"
+                      width={12}
+                      height={6}
+                    />
+                    <div className="flex flex-col gap-4">
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-4">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Step {currentStepNumber} of 3
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={skipFTUX}
+                          className="h-5 w-5 hover:bg-secondary cursor-pointer"
+                          aria-label="Skip tutorial"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-sm text-foreground leading-relaxed">
+                        <div>
+                          Link external services like{" "}
+                          <GitHubIcon className="inline w-4 h-4 align-text-bottom" />{" "}
+                          GitHub to automatically sync your secrets.
+                        </div>
+                      </p>
+
+                      {/* Actions */}
+                      <div className="flex justify-between gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={skipFTUX}
+                          className="text-muted-foreground hover:text-foreground cursor-pointer"
+                        >
+                          Skip tutorial
+                        </Button>
+                        <div className="flex gap-2">
+                          {currentStepNumber > 1 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={previousStep}
+                              className="px-2 border cursor-pointer"
+                              aria-label="Previous step"
+                            >
+                              <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={nextStep}
+                            className="font-semibold cursor-pointer"
+                          >
+                            Done
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  }
-                  currentStep={currentStepNumber}
-                  onNext={nextStep}
-                  onBack={previousStep}
-                  onSkip={skipFTUX}
-                  position="top"
-                  isLastStep={true}
-                />
-              )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </>
         )}
@@ -592,26 +473,87 @@ function ProjectHeader() {
         {!isShowingHistory && (
           <div className="flex items-center gap-4">
             <div className="relative">
-              <SavePushButtonGroup />
-              {shouldShowSaveTooltip && (
-                <FTUXTooltipContent
-                  description={
-                    <>
-                      Click Save or press{" "}
-                      <Kbd className="inline-flex">
-                        <CommandIcon className="size-3" />
-                      </Kbd>{" "}
-                      + <Kbd className="inline-flex">Enter</Kbd>. Your data is
-                      encrypted before it ever leaves your device.
-                    </>
-                  }
-                  currentStep={currentStepNumber}
-                  onNext={nextStep}
-                  onBack={previousStep}
-                  onSkip={skipFTUX}
-                  position="top"
-                />
-              )}
+              <TooltipProvider>
+                <Tooltip open={shouldShowSaveTooltip} delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <SavePushButtonGroup />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="top"
+                    align="center"
+                    sideOffset={12}
+                    className="w-80 p-4 shadow-2xl"
+                    onPointerDownOutside={(e) => e.preventDefault()}
+                  >
+                    <TooltipArrow
+                      className="fill-border"
+                      width={12}
+                      height={6}
+                    />
+                    <div className="flex flex-col gap-4">
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-4">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Step {currentStepNumber} of 3
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={skipFTUX}
+                          className="h-5 w-5 hover:bg-secondary cursor-pointer"
+                          aria-label="Skip tutorial"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-sm text-foreground leading-relaxed">
+                        Click Save or press{" "}
+                        <Kbd className="inline-flex">
+                          <CommandIcon className="size-3" />
+                        </Kbd>{" "}
+                        + <Kbd className="inline-flex">Enter</Kbd>. Your data is
+                        encrypted before it ever leaves your device.
+                      </p>
+
+                      {/* Actions */}
+                      <div className="flex justify-between gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={skipFTUX}
+                          className="text-muted-foreground hover:text-foreground cursor-pointer"
+                        >
+                          Skip tutorial
+                        </Button>
+                        <div className="flex gap-2">
+                          {currentStepNumber > 1 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={previousStep}
+                              className="px-2 border cursor-pointer"
+                              aria-label="Previous step"
+                            >
+                              <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={nextStep}
+                            className="font-semibold cursor-pointer"
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <CopyAllButton />
           </div>
