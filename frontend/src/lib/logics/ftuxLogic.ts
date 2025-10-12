@@ -92,6 +92,7 @@ export const ftuxLogic = kea<ftuxLogicType>([
       if (completed === "true") {
         actions.setCurrentStep(FTUXStep.COMPLETED);
       } else {
+        posthog.capture("ftux_started");
         actions.setCurrentStep(FTUXStep.EDITOR);
       }
     },
@@ -115,6 +116,9 @@ export const ftuxLogic = kea<ftuxLogicType>([
     },
 
     skipFTUX: () => {
+      posthog.capture("ftux_skipped", {
+        current_step: values.currentStep,
+      });
       localStorage.setItem(FTUX_STORAGE_KEY, "true");
     },
 
