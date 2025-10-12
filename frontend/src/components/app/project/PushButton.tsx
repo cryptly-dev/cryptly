@@ -1,15 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { useActions, useValues } from "kea";
+import { CloudUpload } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
-import { CloudUpload } from "lucide-react";
 
 export function PushButton() {
-  const { isEditorDirty, isExternallyUpdated, isPushing, integrations } =
-    useValues(projectLogic);
+  const {
+    isEditorDirty,
+    isExternallyUpdated,
+    isPushing,
+    integrations,
+    currentUserRole,
+  } = useValues(projectLogic);
   const { pushToIntegrations } = useActions(projectLogic);
+  const isReadOnly = currentUserRole === ProjectMemberRole.Member;
 
   const push = () => {
     posthog.capture("push_button_clicked");
@@ -20,10 +27,16 @@ export function PushButton() {
 
   // Button is enabled when there are no unsaved changes and there are integrations
   const isEnabled =
-    !isEditorDirty && !isPushing && !isExternallyUpdated && hasIntegrations;
+    !isEditorDirty &&
+    !isPushing &&
+    !isExternallyUpdated &&
+    hasIntegrations &&
+    !isReadOnly;
 
   let tooltipDescription: string | undefined;
-  if (!hasIntegrations) {
+  if (isReadOnly) {
+    tooltipDescription = "You don't have permission to push";
+  } else if (!hasIntegrations) {
     tooltipDescription = "You have no integrations";
   } else if (isEditorDirty) {
     tooltipDescription = "Save your changes first";

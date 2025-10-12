@@ -1,3 +1,4 @@
+import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { cn } from "@/lib/utils";
 import { useActions, useValues } from "kea";
@@ -5,8 +6,10 @@ import { motion } from "motion/react";
 import posthog from "posthog-js";
 
 export function MobileSaveButton() {
-  const { isSubmitting, isEditorDirty } = useValues(projectLogic);
+  const { isSubmitting, isEditorDirty, currentUserRole } =
+    useValues(projectLogic);
   const { updateProjectContent } = useActions(projectLogic);
+  const isReadOnly = currentUserRole === ProjectMemberRole.Member;
 
   const update = () => {
     posthog.capture("save_button_clicked");
@@ -18,8 +21,12 @@ export function MobileSaveButton() {
       type="button"
       aria-label="Update"
       onClick={update}
-      disabled={isSubmitting || !isEditorDirty}
-      whileTap={isSubmitting || !isEditorDirty ? undefined : { scale: 0.95 }}
+      disabled={isSubmitting || !isEditorDirty || isReadOnly}
+      whileTap={
+        isSubmitting || !isEditorDirty || isReadOnly
+          ? undefined
+          : { scale: 0.95 }
+      }
       layout
       transition={{
         layout: { duration: 0.25, ease: [0.2, 0, 0, 1] },

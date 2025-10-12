@@ -8,6 +8,7 @@ interface BaseFileEditorProps {
   fontSize?: number;
   padding?: { top: number; bottom: number };
   lineNumbersMinChars?: number;
+  readOnly?: boolean;
 }
 
 export function BaseFileEditor({
@@ -17,6 +18,7 @@ export function BaseFileEditor({
   fontSize = 14,
   padding = { top: 16, bottom: 8 },
   lineNumbersMinChars,
+  readOnly = false,
 }: BaseFileEditorProps) {
   useEffect(() => {
     loader.init().then((monaco) => {
@@ -61,6 +63,8 @@ export function BaseFileEditor({
     selectionHighlight: false,
     renderLineHighlight: "none" as const,
     padding,
+    readOnly,
+    readOnlyMessage: { value: "Cannot edit as Member" },
     ...(lineNumbersMinChars && { lineNumbersMinChars }),
   };
 

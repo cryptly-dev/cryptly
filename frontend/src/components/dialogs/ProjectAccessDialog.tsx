@@ -62,18 +62,16 @@ function MemberItem({
     // Can't edit owner roles
     if (member.role === ProjectMemberRole.Owner) return false;
 
-    // Only owners and admins can edit admin roles
+    // Admins and owners can edit admin and member roles
     if (
-      member.role === ProjectMemberRole.Admin &&
-      currentUserRole !== ProjectMemberRole.Owner &&
-      currentUserRole !== ProjectMemberRole.Admin
-    )
-      return false;
+      currentUserRole === ProjectMemberRole.Owner ||
+      currentUserRole === ProjectMemberRole.Admin
+    ) {
+      return true;
+    }
 
-    // Only owners and admins can edit member roles
-    if (currentUserRole === ProjectMemberRole.Member) return false;
-
-    return true;
+    // Members can't edit any roles
+    return false;
   }, [member.id, member.role, userData?.id, currentUserRole]);
 
   const canRemove = useMemo(() => {

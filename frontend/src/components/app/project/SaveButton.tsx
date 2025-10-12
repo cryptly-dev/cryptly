@@ -1,4 +1,5 @@
 import { Kbd } from "@/components/ui/kbd";
+import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { cn } from "@/lib/utils";
 import { useActions, useValues } from "kea";
@@ -8,9 +9,11 @@ import posthog from "posthog-js";
 import { useState } from "react";
 
 export function UpdateButton() {
-  const { isSubmitting, isEditorDirty } = useValues(projectLogic);
+  const { isSubmitting, isEditorDirty, currentUserRole } =
+    useValues(projectLogic);
   const { updateProjectContent } = useActions(projectLogic);
   const { isExternallyUpdated } = useValues(projectLogic);
+  const isReadOnly = currentUserRole === ProjectMemberRole.Member;
 
   const [isHovered, setIsHovered] = useState(false);
 
@@ -20,7 +23,8 @@ export function UpdateButton() {
     setIsHovered(false);
   };
 
-  const showTooltip = isEditorDirty && !isSubmitting && !isExternallyUpdated;
+  const showTooltip =
+    isEditorDirty && !isSubmitting && !isExternallyUpdated && !isReadOnly;
 
   return (
     <div className="relative group">
@@ -28,8 +32,14 @@ export function UpdateButton() {
         type="button"
         aria-label="Save"
         onClick={update}
-        disabled={isSubmitting || !isEditorDirty || isExternallyUpdated}
-        whileTap={isSubmitting || !isEditorDirty ? undefined : { scale: 0.95 }}
+        disabled={
+          isSubmitting || !isEditorDirty || isExternallyUpdated || isReadOnly
+        }
+        whileTap={
+          isSubmitting || !isEditorDirty || isReadOnly
+            ? undefined
+            : { scale: 0.95 }
+        }
         layout
         transition={{
           layout: { duration: 0.25, ease: [0.2, 0, 0, 1] },
@@ -42,7 +52,7 @@ export function UpdateButton() {
         }}
         animate={{ scale: isHovered ? 1.05 : 1 }}
         onHoverStart={() => {
-          if (!isSubmitting && isEditorDirty) setIsHovered(true);
+          if (!isSubmitting && isEditorDirty && !isReadOnly) setIsHovered(true);
         }}
         onHoverEnd={() => setIsHovered(false)}
         className={cn(

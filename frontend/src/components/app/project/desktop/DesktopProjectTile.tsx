@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { Kbd } from "@/components/ui/kbd";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { authLogic } from "@/lib/logics/authLogic";
 import { commonLogic } from "@/lib/logics/commonLogic";
 import { ftuxLogic } from "@/lib/logics/ftuxLogic";
@@ -184,9 +185,11 @@ export function DesktopProjectTile() {
     inputValue,
     lastEditAuthor,
     isExternallyUpdated,
+    currentUserRole,
   } = useValues(projectLogic);
   const { userData } = useValues(authLogic);
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
+  const isReadOnly = currentUserRole === ProjectMemberRole.Member;
   const { shouldShowEditorTooltip, currentStepNumber } = useValues(ftuxLogic);
   const {
     startFTUX,
@@ -221,7 +224,8 @@ export function DesktopProjectTile() {
           !isSubmitting &&
           isEditorDirty &&
           !isShowingHistory &&
-          !isExternallyUpdated
+          !isExternallyUpdated &&
+          !isReadOnly
         ) {
           updateProjectContent();
         }
@@ -237,6 +241,7 @@ export function DesktopProjectTile() {
     inputValue,
     isShowingHistory,
     isExternallyUpdated,
+    isReadOnly,
   ]);
 
   // Update the current time every second to refresh the relative time display
@@ -300,6 +305,7 @@ export function DesktopProjectTile() {
               <FileEditor
                 value={inputValue}
                 onChange={(v) => setInputValue(v)}
+                readOnly={isReadOnly}
               />
               <AnimatePresence mode="wait">
                 {" "}
