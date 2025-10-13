@@ -7,6 +7,7 @@ import { IconFolder, IconPlus } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useValues } from "kea";
 import { motion } from "motion/react";
+import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 
 export function CreateFirstProjectView() {
@@ -94,6 +95,7 @@ function EmptyProjectsState() {
   } as const;
 
   const handleCreateProject = () => {
+    posthog.capture("add_project_button_clicked");
     setIsAddProjectDialogOpen(true);
   };
 
