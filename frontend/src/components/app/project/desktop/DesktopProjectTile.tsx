@@ -196,7 +196,7 @@ export function DesktopProjectTile() {
             <TooltipContent
               side="top"
               align="center"
-              sideOffset={-200}
+              sideOffset={-180}
               className="w-80 p-4 shadow-2xl"
               onPointerDownOutside={(e) => e.preventDefault()}
             >
@@ -378,7 +378,7 @@ function ProjectHeader() {
                   <TooltipContent
                     side="top"
                     align="center"
-                    sideOffset={12}
+                    sideOffset={6}
                     className="w-80 p-4 shadow-2xl"
                     onPointerDownOutside={(e) => e.preventDefault()}
                   >
@@ -490,7 +490,7 @@ function ProjectHeader() {
                   <TooltipContent
                     side="top"
                     align="center"
-                    sideOffset={12}
+                    sideOffset={6}
                     className="w-80 p-4 shadow-2xl"
                     onPointerDownOutside={(e) => e.preventDefault()}
                   >
