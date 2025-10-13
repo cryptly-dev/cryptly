@@ -108,7 +108,7 @@ describe('InvitationCoreController (reads)', () => {
   });
 
   describe('GET /projects/:projectId/invitations', () => {
-    it('gets invitations for project as owner', async () => {
+    it('gets invitations for project as admin', async () => {
       // given
       const { user, token, project } = await bootstrap.utils.projectUtils.setupOwner();
       const invitationA = await bootstrap.utils.invitationUtils.createInvitation(token, project.id);

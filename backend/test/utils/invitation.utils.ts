@@ -24,7 +24,7 @@ export class InvitationUtils {
         temporaryPublicKey: 'test-public-key',
         temporaryPrivateKey: 'test-private-key',
         temporarySecretsKey: 'test-server-passphrase',
-        role: Role.Member,
+        role: Role.Read,
         ...data,
         projectId,
       });

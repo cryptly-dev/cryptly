@@ -12,6 +12,7 @@ import { AcceptInvitationBody } from './dto/accept-invitation.body';
 import { CreateInvitationBody } from './dto/create-invitation.body';
 import { InvitationSerialized } from './entities/invitation.interface';
 import { InvitationSerializer } from './entities/invitation.serializer';
+import { ProjectAdminInvitationGuard } from './guards/project-admin-invitation.guard';
 
 @Controller('')
 @ApiTags('Invitations')
@@ -93,8 +94,7 @@ export class InvitationCoreController {
 
   @Delete('invitations/:id')
   @HttpCode(204)
-  @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Admin)
+  @UseGuards(ProjectAdminInvitationGuard)
   public async revoke(@Param('id') id: string): Promise<void> {
     await this.invitationWriteService.delete(id);
   }
