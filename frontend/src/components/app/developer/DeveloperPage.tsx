@@ -1,8 +1,16 @@
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useActions, useValues } from "kea";
 import { keyLogic } from "@/lib/logics/keyLogic";
 import { authLogic } from "@/lib/logics/authLogic";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { UserApi } from "@/lib/api/user.api";
 
 export function DeveloperPage() {
@@ -12,6 +20,9 @@ export function DeveloperPage() {
 
   const { loadUserData } = useActions(authLogic);
   const { jwtToken } = useValues(authLogic);
+
+  const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
+  const [hideNewAccountButton, setHideNewAccountButton] = useState(false);
 
   useEffect(() => {
     if (passphrase && userData?.privateKeyEncrypted) {
@@ -37,6 +48,8 @@ export function DeveloperPage() {
     await UserApi.deleteKeys(jwtToken);
     await loadUserData();
     await decryptPrivateKey();
+    setShowNewAccountDialog(false);
+    setHideNewAccountButton(true);
   };
 
   const simulateNewBrowser = async () => {
@@ -89,14 +102,59 @@ export function DeveloperPage() {
         </div>
 
         <div className="pt-2 flex gap-3">
-          <Button variant="secondary" onClick={simulateNewAccount}>
-            Simulate new account
-          </Button>
+          {!hideNewAccountButton && (
+            <Button
+              variant="secondary"
+              onClick={() => setShowNewAccountDialog(true)}
+            >
+              Simulate new account
+            </Button>
+          )}
           <Button variant="secondary" onClick={simulateNewBrowser}>
             Simulate new browser
           </Button>
         </div>
       </div>
+
+      <Dialog
+        open={showNewAccountDialog}
+        onOpenChange={setShowNewAccountDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Simulate New Account</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to simulate a new account?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+              <div className="text-sm font-medium text-destructive mb-2">
+                ⚠️ Warning: Destructive Action
+              </div>
+              <div className="text-sm text-muted-foreground">
+                This action will regenerate your encryption keys and make{" "}
+                <strong>all your current projects completely unusable</strong>.
+                You will lose access to all encrypted data. This action cannot
+                be undone.
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setShowNewAccountDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={simulateNewAccount}>
+              Confirm - Regenerate Keys
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
