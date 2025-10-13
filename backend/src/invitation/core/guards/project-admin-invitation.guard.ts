@@ -1,16 +1,10 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { ProjectReadService } from '../../../project/read/project-read.service';
 import { Role } from '../../../shared/types/role.enum';
 import { InvitationReadService } from '../../read/invitation-read.service';
 
 @Injectable()
-export class ProjectOwnerInvitationGuard implements CanActivate {
+export class ProjectAdminInvitationGuard implements CanActivate {
   public constructor(
     private readonly invitationReadService: InvitationReadService,
     private readonly projectReadService: ProjectReadService,
@@ -28,7 +22,7 @@ export class ProjectOwnerInvitationGuard implements CanActivate {
       const invitation = await this.invitationReadService.findById(invitationId);
       projectId = invitation.projectId;
     } else {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
     const project = await this.projectReadService.findById(projectId);

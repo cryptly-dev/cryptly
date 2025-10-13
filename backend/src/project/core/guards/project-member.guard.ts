@@ -15,7 +15,7 @@ export class ProjectMemberGuard implements CanActivate {
   public async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const userId = request.user?.id;
-    const projectId = request.params.projectId;
+    const projectId = request?.params?.projectId || request?.body?.projectId;
 
     const allowedRoles =
       this.reflector.getAllAndOverride<Role[]>(REQUIRE_ROLE_KEY, [

@@ -1,8 +1,8 @@
 import * as request from 'supertest';
-import { createTestApp } from '../utils/bootstrap';
-import { githubExternalConnectionClientMock } from '../utils/mocks/github-client-mock';
 import { GithubExternalConnectionClientService } from '../../src/external-connection/github/client/github-external-connection-client.service';
 import { Role } from '../../src/shared/types/role.enum';
+import { createTestApp } from '../utils/bootstrap';
+import { githubExternalConnectionClientMock } from '../utils/mocks/github-client-mock';
 
 describe('GithubExternalConnectionCoreController (integrations)', () => {
   let bootstrap: Awaited<ReturnType<typeof createTestApp>>;
@@ -147,11 +147,7 @@ describe('GithubExternalConnectionCoreController (integrations)', () => {
       const setupA = await bootstrap.utils.userUtils.createDefault();
       const setupB = await bootstrap.utils.userUtils.createDefault();
       const project = await bootstrap.utils.projectUtils.createProject(setupA.token);
-      await bootstrap.utils.projectUtils.addMemberToProject(
-        project.id,
-        setupB.user.id,
-        Role.Member,
-      );
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, setupB.user.id, Role.Read);
 
       const response = await request(bootstrap.app.getHttpServer())
         .post('/external-connections/github/integrations')
@@ -163,7 +159,7 @@ describe('GithubExternalConnectionCoreController (integrations)', () => {
         });
 
       expect(response.status).toEqual(403);
-      expect(response.body.message).toEqual('You are not the owner or admin of this project');
+      expect(response.body.message).toEqual('You are not an admin of this project');
     });
 
     it('returns 401 when not authenticated', async () => {
@@ -366,11 +362,7 @@ describe('GithubExternalConnectionCoreController (integrations)', () => {
         setupA.token,
         123456,
       );
-      await bootstrap.utils.projectUtils.addMemberToProject(
-        project.id,
-        setupB.user.id,
-        Role.Member,
-      );
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, setupB.user.id, Role.Read);
 
       githubExternalConnectionClientMock.getRepositoryInfoByInstallationIdAndRepositoryId.mockResolvedValue(
         {
@@ -399,7 +391,7 @@ describe('GithubExternalConnectionCoreController (integrations)', () => {
         .set('authorization', `Bearer ${setupB.token}`);
 
       expect(response.status).toEqual(403);
-      expect(response.body.message).toEqual('You are not the owner or admin of this project');
+      expect(response.body.message).toEqual('You are not an admin of this project');
     });
 
     it('returns 401 when not authenticated', async () => {
