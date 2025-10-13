@@ -587,12 +587,9 @@ function IntegrationsSection() {
                         {/* Provider and Installation selectors */}
                         <div className="flex gap-2 mb-3">
                           <Select value="github" disabled>
-                            <SelectTrigger className="w-[140px] bg-neutral-800/50 border-neutral-700">
+                            <SelectTrigger className=" bg-neutral-800/50 border-neutral-700">
                               <SelectValue>
-                                <div className="flex items-center gap-2">
-                                  <GitHubIcon className="h-4 w-4" />
-                                  <span>GitHub</span>
-                                </div>
+                                <GitHubIcon className="h-4 w-4" />
                               </SelectValue>
                             </SelectTrigger>
                           </Select>
@@ -646,7 +643,7 @@ function IntegrationsSection() {
                                     alt="cryptly"
                                     className="h-5 w-5 rounded-full"
                                   />
-                                  <span>cryptly-dev/cryptly</span>
+                                  <span>cryptly</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="cryptly-dev/docs">
@@ -656,7 +653,7 @@ function IntegrationsSection() {
                                     alt="docs"
                                     className="h-5 w-5 rounded-full"
                                   />
-                                  <span>cryptly-dev/docs</span>
+                                  <span>docs</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="cryptly-dev/api">
@@ -666,7 +663,7 @@ function IntegrationsSection() {
                                     alt="api"
                                     className="h-5 w-5 rounded-full"
                                   />
-                                  <span>cryptly-dev/api</span>
+                                  <span>api</span>
                                 </div>
                               </SelectItem>
                             </SelectContent>
