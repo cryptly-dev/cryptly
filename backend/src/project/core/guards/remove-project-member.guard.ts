@@ -22,15 +22,7 @@ export class RemoveProjectMemberGuard implements CanActivate {
       return true;
     }
 
-    if (userRole === Role.Owner) {
-      return true;
-    }
-
     if (userRole === Role.Admin) {
-      const roleToDelete = project.members.get(memberId);
-      if (roleToDelete === Role.Owner) {
-        throw new ForbiddenException('Admins cannot remove owners');
-      }
       return true;
     }
 

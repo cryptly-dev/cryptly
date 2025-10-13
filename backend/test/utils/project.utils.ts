@@ -37,7 +37,7 @@ export class ProjectUtils {
   public async addMemberToProject(
     projectId: string,
     memberId: string,
-    role: Role = Role.Member,
+    role: Role = Role.Read,
   ): Promise<void> {
     await this.projectModel.updateOne(
       { _id: new Types.ObjectId(projectId) },
@@ -60,29 +60,49 @@ export class ProjectUtils {
     return { user, token, project };
   }
 
+  public async setupAdmin() {
+    const { user, token } = await this.userUtils.createDefault();
+    const project = await this.createProject(token);
+
+    return { user, token, project };
+  }
+
   public async setupMember() {
-    const { user: owner, token: ownerToken } = await this.userUtils.createDefault({
-      email: 'owner@test.com',
+    const { user: admin, token: adminToken } = await this.userUtils.createDefault({
+      email: 'admin@test.com',
     });
     const { user: member, token: memberToken } = await this.userUtils.createDefault({
       email: 'member@test.com',
     });
-    const project = await this.createProject(ownerToken);
-    await this.addMemberToProject(project.id, member.id, Role.Member);
+    const project = await this.createProject(adminToken);
+    await this.addMemberToProject(project.id, member.id, Role.Read);
 
-    return { owner, member, token: memberToken, project };
+    return { admin, member, token: memberToken, project };
   }
 
-  public async setupAdmin() {
-    const { user: owner, token: ownerToken } = await this.userUtils.createDefault({
-      email: 'owner@test.com',
-    });
+  public async setupRead() {
     const { user: admin, token: adminToken } = await this.userUtils.createDefault({
       email: 'admin@test.com',
     });
-    const project = await this.createProject(ownerToken);
-    await this.addMemberToProject(project.id, admin.id, Role.Admin);
+    const { user: read, token: readToken } = await this.userUtils.createDefault({
+      email: 'read@test.com',
+    });
+    const project = await this.createProject(adminToken);
+    await this.addMemberToProject(project.id, read.id, Role.Read);
 
-    return { owner, admin, token: adminToken, project };
+    return { admin, read, token: readToken, project };
+  }
+
+  public async setupWrite() {
+    const { user: admin, token: adminToken } = await this.userUtils.createDefault({
+      email: 'admin@test.com',
+    });
+    const { user: write, token: writeToken } = await this.userUtils.createDefault({
+      email: 'write@test.com',
+    });
+    const project = await this.createProject(adminToken);
+    await this.addMemberToProject(project.id, write.id, Role.Write);
+
+    return { admin, write, token: writeToken, project };
   }
 }

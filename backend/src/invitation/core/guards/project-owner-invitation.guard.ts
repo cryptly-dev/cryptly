@@ -38,7 +38,7 @@ export class ProjectOwnerInvitationGuard implements CanActivate {
       throw new ForbiddenException();
     }
 
-    if (userRole === Role.Owner || userRole === Role.Admin) {
+    if (userRole === Role.Admin) {
       return true;
     }
 

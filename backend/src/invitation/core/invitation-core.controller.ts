@@ -12,7 +12,6 @@ import { AcceptInvitationBody } from './dto/accept-invitation.body';
 import { CreateInvitationBody } from './dto/create-invitation.body';
 import { InvitationSerialized } from './entities/invitation.interface';
 import { InvitationSerializer } from './entities/invitation.serializer';
-import { ProjectOwnerInvitationGuard } from './guards/project-owner-invitation.guard';
 
 @Controller('')
 @ApiTags('Invitations')
@@ -27,7 +26,7 @@ export class InvitationCoreController {
 
   @Get('projects/:projectId/invitations')
   @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Admin, Role.Owner)
+  @RequireRole(Role.Admin)
   @ApiResponse({ type: [InvitationSerialized] })
   public async findProjectInvitations(
     @Param('projectId') projectId: string,
@@ -49,7 +48,8 @@ export class InvitationCoreController {
 
   @Post('invitations')
   @ApiResponse({ type: InvitationSerialized })
-  @UseGuards(ProjectOwnerInvitationGuard)
+  @UseGuards(ProjectMemberGuard)
+  @RequireRole(Role.Admin)
   public async create(
     @CurrentUserId() userId: string,
     @Body() body: CreateInvitationBody,
@@ -93,7 +93,8 @@ export class InvitationCoreController {
 
   @Delete('invitations/:id')
   @HttpCode(204)
-  @UseGuards(ProjectOwnerInvitationGuard)
+  @UseGuards(ProjectMemberGuard)
+  @RequireRole(Role.Admin)
   public async revoke(@Param('id') id: string): Promise<void> {
     await this.invitationWriteService.delete(id);
   }

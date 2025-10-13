@@ -18,20 +18,96 @@ describe('InvitationCoreController (writes)', () => {
   });
 
   describe('POST /invitations', () => {
-    it('creates invitation when project owner', async () => {
+    it('creates write invitation when admin', async () => {
       // given
-      const { user: owner, token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { user: admin, token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
       const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
         email: 'invitee@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
 
       // when
       const response = await request(bootstrap.app.getHttpServer())
         .post('/invitations')
-        .set('authorization', `Bearer ${ownerToken}`)
+        .set('authorization', `Bearer ${adminToken}`)
+        .send({
+          projectId: project.id,
+          temporaryPublicKey: 'test-public-key',
+          temporaryPrivateKey: 'test-private-key',
+          temporarySecretsKey: 'test-secrets-key',
+          role: Role.Write,
+        });
+
+      // then
+      expect(response.status).toEqual(201);
+      expect(response.body).toEqual({
+        id: expect.any(String),
+        projectId: project.id,
+        author: {
+          id: admin.id,
+          email: admin.email,
+          avatarUrl: admin.avatarUrl,
+        },
+        role: Role.Write,
+        temporaryPublicKey: 'test-public-key',
+        temporaryPrivateKey: 'test-private-key',
+        temporarySecretsKey: 'test-secrets-key',
+        createdAt: expect.any(String),
+      });
+    });
+
+    it('creates read invitation when admin', async () => {
+      // given
+      const {
+        user: admin,
+        token: adminToken,
+        project,
+      } = await bootstrap.utils.projectUtils.setupAdmin();
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .post('/invitations')
+        .set('authorization', `Bearer ${adminToken}`)
+        .send({
+          projectId: project.id,
+          temporaryPublicKey: 'test-public-key',
+          temporaryPrivateKey: 'test-private-key',
+          temporarySecretsKey: 'test-secrets-key',
+          role: Role.Read,
+        });
+
+      // then
+      expect(response.status).toEqual(201);
+      expect(response.body).toEqual({
+        id: expect.any(String),
+        projectId: project.id,
+        author: {
+          id: admin.id,
+          email: admin.email,
+          avatarUrl: admin.avatarUrl,
+        },
+        role: Role.Read,
+        temporaryPublicKey: 'test-public-key',
+        temporaryPrivateKey: 'test-private-key',
+        temporarySecretsKey: 'test-secrets-key',
+        createdAt: expect.any(String),
+      });
+    });
+
+    it('creates admin invitation when admin', async () => {
+      // given
+      const {
+        user: admin,
+        token: adminToken,
+        project,
+      } = await bootstrap.utils.projectUtils.setupAdmin();
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .post('/invitations')
+        .set('authorization', `Bearer ${adminToken}`)
         .send({
           projectId: project.id,
           temporaryPublicKey: 'test-public-key',
@@ -46,74 +122,6 @@ describe('InvitationCoreController (writes)', () => {
         id: expect.any(String),
         projectId: project.id,
         author: {
-          id: owner.id,
-          email: owner.email,
-          avatarUrl: owner.avatarUrl,
-        },
-        role: Role.Admin,
-        temporaryPublicKey: 'test-public-key',
-        temporaryPrivateKey: 'test-private-key',
-        temporarySecretsKey: 'test-secrets-key',
-        createdAt: expect.any(String),
-      });
-    });
-
-    it('creates invitation as admin', async () => {
-      // given
-      const { admin, token: adminToken, project } = await bootstrap.utils.projectUtils.setupAdmin();
-
-      // when
-      const response = await request(bootstrap.app.getHttpServer())
-        .post('/invitations')
-        .set('authorization', `Bearer ${adminToken}`)
-        .send({
-          projectId: project.id,
-          temporaryPublicKey: 'test-public-key',
-          temporaryPrivateKey: 'test-private-key',
-          temporarySecretsKey: 'test-secrets-key',
-          role: Role.Member,
-        });
-
-      // then
-      expect(response.status).toEqual(201);
-      expect(response.body).toEqual({
-        id: expect.any(String),
-        projectId: project.id,
-        author: {
-          id: admin.id,
-          email: admin.email,
-          avatarUrl: admin.avatarUrl,
-        },
-        role: Role.Member,
-        temporaryPublicKey: 'test-public-key',
-        temporaryPrivateKey: 'test-private-key',
-        temporarySecretsKey: 'test-secrets-key',
-        createdAt: expect.any(String),
-      });
-    });
-
-    it('creates invitation as admin when role is admin', async () => {
-      // given
-      const { admin, token: adminToken, project } = await bootstrap.utils.projectUtils.setupAdmin();
-
-      // when
-      const response = await request(bootstrap.app.getHttpServer())
-        .post('/invitations')
-        .set('authorization', `Bearer ${adminToken}`)
-        .send({
-          projectId: project.id,
-          temporaryPublicKey: 'test-public-key',
-          temporaryPrivateKey: 'test-private-key',
-          temporarySecretsKey: 'test-secrets-key',
-          role: Role.Admin,
-        });
-
-      // then
-      expect(response.status).toEqual(201);
-      expect(response.body).toEqual({
-        id: expect.any(String),
-        projectId: project.id,
-        author: {
           id: admin.id,
           email: admin.email,
           avatarUrl: admin.avatarUrl,
@@ -126,18 +134,15 @@ describe('InvitationCoreController (writes)', () => {
       });
     });
 
-    it('does not create invitation when not project owner or admin', async () => {
+    it('does not create invitation when not project member', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
-      });
-      const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
-        email: 'invitee@test.com',
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
       const { token: otherToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'other@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
 
       // when
       const response = await request(bootstrap.app.getHttpServer())
@@ -154,24 +159,21 @@ describe('InvitationCoreController (writes)', () => {
       expect(response.status).toEqual(403);
     });
 
-    it('does not create invitation when a member but not owner', async () => {
+    it('does not create invitation when read/write member', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
-      const { user: member, token: memberToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'member@test.com',
+      const { user: writeUser, token: writeToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'write@test.com',
       });
-      const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
-        email: 'invitee@test.com',
-      });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
-      await bootstrap.utils.projectUtils.addMemberToProject(project.id, member.id);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, writeUser.id, Role.Write);
 
       // when
       const response = await request(bootstrap.app.getHttpServer())
         .post('/invitations')
-        .set('authorization', `Bearer ${memberToken}`)
+        .set('authorization', `Bearer ${writeToken}`)
         .send({
           projectId: project.id,
           temporaryPublicKey: 'test-public-key',
@@ -185,13 +187,13 @@ describe('InvitationCoreController (writes)', () => {
 
     it('does not create when not logged in', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
       const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
         email: 'invitee@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
 
       // when
       const response = await request(bootstrap.app.getHttpServer()).post('/invitations').send({
@@ -207,17 +209,17 @@ describe('InvitationCoreController (writes)', () => {
   });
 
   describe('POST /invitations/:id/accept', () => {
-    it('accepts invitation and adds user to project', async () => {
+    it('accepts invitation and adds user to project as read', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
       const { user: invitee, token: inviteeToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'invitee@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
       const invitation = await bootstrap.utils.invitationUtils.createInvitation(
-        ownerToken,
+        adminToken,
         project.id,
       );
 
@@ -239,23 +241,23 @@ describe('InvitationCoreController (writes)', () => {
         id: invitee.id,
         email: invitee.email,
         avatarUrl: invitee.avatarUrl,
-        role: 'member',
+        role: 'read',
       });
     });
 
-    it('accepts invitation and adds user to project as admin', async () => {
+    it('accepts invitation and adds user to project as write', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
       const { user: invitee, token: inviteeToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'invitee@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
       const invitation = await bootstrap.utils.invitationUtils.createInvitation(
-        ownerToken,
+        adminToken,
         project.id,
-        { role: Role.Admin },
+        { role: Role.Write },
       );
 
       // when
@@ -276,26 +278,26 @@ describe('InvitationCoreController (writes)', () => {
         id: invitee.id,
         email: invitee.email,
         avatarUrl: invitee.avatarUrl,
-        role: 'admin',
+        role: 'write',
       });
     });
 
     it('can read secrets after adding member', async () => {
       // given
-      const { user: owner, token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { user: admin, token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
       const { user: invitee, token: inviteeToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'invitee@test.com',
       });
 
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken, {
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken, {
         encryptedSecrets: 'passphrase',
-        encryptedSecretsKeys: { [owner.id]: 'owner-passphrase' },
+        encryptedSecretsKeys: { [admin.id]: 'admin-passphrase' },
         name: 'test-project',
       });
       const invitation = await bootstrap.utils.invitationUtils.createInvitation(
-        ownerToken,
+        adminToken,
         project.id,
       );
 
@@ -306,14 +308,14 @@ describe('InvitationCoreController (writes)', () => {
         .send({ newSecretsKey: 'invitee-passphrase' });
       const response = await request(bootstrap.app.getHttpServer())
         .get(`/projects/${project.id}`)
-        .set('authorization', `Bearer ${ownerToken}`);
+        .set('authorization', `Bearer ${adminToken}`);
 
       // then
       expect(response.status).toEqual(200);
       expect(response.body).toMatchObject({
         encryptedSecrets: 'passphrase',
         encryptedSecretsKeys: {
-          [owner.id]: 'owner-passphrase',
+          [admin.id]: 'admin-passphrase',
           [invitee.id]: 'invitee-passphrase',
         },
       });
@@ -321,8 +323,8 @@ describe('InvitationCoreController (writes)', () => {
 
     it('does not accept invitation twice', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
       const { token: inviteeToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'invitee@test.com',
@@ -330,9 +332,9 @@ describe('InvitationCoreController (writes)', () => {
       const { token: otherInviteeToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'other-invitee@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
       const invitation = await bootstrap.utils.invitationUtils.createInvitation(
-        ownerToken,
+        adminToken,
         project.id,
       );
       await request(bootstrap.app.getHttpServer())
@@ -352,15 +354,15 @@ describe('InvitationCoreController (writes)', () => {
 
     it('does not accept when not logged in', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
       const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
         email: 'invitee@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
       const invitation = await bootstrap.utils.invitationUtils.createInvitation(
-        ownerToken,
+        adminToken,
         project.id,
       );
 
@@ -389,47 +391,17 @@ describe('InvitationCoreController (writes)', () => {
   });
 
   describe('DELETE /invitations/:id', () => {
-    it('revokes invitation when project owner', async () => {
-      // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
-      });
-      const { token: inviteeToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'invitee@test.com',
-      });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
-      const invitation = await bootstrap.utils.invitationUtils.createInvitation(
-        ownerToken,
-        project.id,
-      );
-      await request(bootstrap.app.getHttpServer())
-        .delete(`/invitations/${invitation.id}`)
-        .set('authorization', `Bearer ${ownerToken}`);
-
-      // when
-      const response = await request(bootstrap.app.getHttpServer())
-        .delete(`/invitations/${invitation.id}`)
-        .set('authorization', `Bearer ${inviteeToken}`);
-
-      // then
-      expect(response.status).toEqual(404);
-    });
-
     it('revokes invitation when project admin', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
-      });
-      const { user: admin, token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'admin@test.com',
       });
       const { token: inviteeToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'invitee@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
-      await bootstrap.utils.projectUtils.addMemberToProject(project.id, admin.id, Role.Admin);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
       const invitation = await bootstrap.utils.invitationUtils.createInvitation(
-        ownerToken,
+        adminToken,
         project.id,
       );
       await request(bootstrap.app.getHttpServer())
@@ -445,10 +417,40 @@ describe('InvitationCoreController (writes)', () => {
       expect(response.status).toEqual(404);
     });
 
-    it('does not revoke invitation when not project owner', async () => {
+    it('revokes invitation when another admin', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { token: adminAToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'adminA@test.com',
+      });
+      const { user: adminB, token: adminBToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'adminB@test.com',
+      });
+      const { token: inviteeToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'invitee@test.com',
+      });
+      const project = await bootstrap.utils.projectUtils.createProject(adminAToken);
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, adminB.id, Role.Admin);
+      const invitation = await bootstrap.utils.invitationUtils.createInvitation(
+        adminAToken,
+        project.id,
+      );
+      await request(bootstrap.app.getHttpServer())
+        .delete(`/invitations/${invitation.id}`)
+        .set('authorization', `Bearer ${adminBToken}`);
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .delete(`/invitations/${invitation.id}`)
+        .set('authorization', `Bearer ${inviteeToken}`);
+
+      // then
+      expect(response.status).toEqual(404);
+    });
+
+    it('does not revoke invitation when not project member', async () => {
+      // given
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
       const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
         email: 'invitee@test.com',
@@ -456,9 +458,9 @@ describe('InvitationCoreController (writes)', () => {
       const { token: otherToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'other@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
       const invitation = await bootstrap.utils.invitationUtils.createInvitation(
-        ownerToken,
+        adminToken,
         project.id,
       );
 
@@ -471,28 +473,25 @@ describe('InvitationCoreController (writes)', () => {
       expect(response.status).toEqual(403);
     });
 
-    it('does not revoke when a member but not owner', async () => {
+    it('does not revoke when read/write but not admin', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
-      const { user: member, token: memberToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'member@test.com',
+      const { user: writeUser, token: writeToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'write@test.com',
       });
-      const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
-        email: 'invitee@test.com',
-      });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
-      await bootstrap.utils.projectUtils.addMemberToProject(project.id, member.id);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, writeUser.id, Role.Write);
       const invitation = await bootstrap.utils.invitationUtils.createInvitation(
-        ownerToken,
+        adminToken,
         project.id,
       );
 
       // when
       const response = await request(bootstrap.app.getHttpServer())
         .delete(`/invitations/${invitation.id}`)
-        .set('authorization', `Bearer ${memberToken}`);
+        .set('authorization', `Bearer ${writeToken}`);
 
       // then
       expect(response.status).toEqual(403);
@@ -500,15 +499,15 @@ describe('InvitationCoreController (writes)', () => {
 
     it('does not revoke when not logged in', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
       const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
         email: 'invitee@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
       const invitation = await bootstrap.utils.invitationUtils.createInvitation(
-        ownerToken,
+        adminToken,
         project.id,
       );
 
