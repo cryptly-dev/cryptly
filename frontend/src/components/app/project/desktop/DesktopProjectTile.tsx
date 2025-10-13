@@ -200,7 +200,7 @@ export function DesktopProjectTile() {
               className="w-80 p-4 shadow-2xl"
               onPointerDownOutside={(e) => e.preventDefault()}
             >
-              <TooltipArrow width={12} height={6} />
+              <TooltipArrow />
               <div className="flex flex-col gap-4">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4">
@@ -382,7 +382,7 @@ function ProjectHeader() {
                     className="w-80 p-4 shadow-2xl"
                     onPointerDownOutside={(e) => e.preventDefault()}
                   >
-                    <TooltipArrow width={12} height={6} />
+                    <TooltipArrow />
                     <div className="flex flex-col gap-4">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-4">
@@ -494,7 +494,7 @@ function ProjectHeader() {
                     className="w-80 p-4 shadow-2xl"
                     onPointerDownOutside={(e) => e.preventDefault()}
                   >
-                    <TooltipArrow width={12} height={6} />
+                    <TooltipArrow />
                     <div className="flex flex-col gap-4">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-4">
