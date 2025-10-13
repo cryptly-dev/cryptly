@@ -372,13 +372,26 @@ function GenerateNewInviteLinkSection() {
     );
   }
 
+  const roleDescriptions = {
+    read: "Users with this role can view project secrets, the project name, and connected integrations.",
+    write:
+      "Users with this role have all Read permissions, plus the ability to create, modify, and delete secrets.",
+    admin:
+      "Users with this role have all Write permissions, plus the ability to manage integrations, rename the project, delete the project, and invite new members.",
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <IconHexagonalPrism className="size-4 text-muted-foreground" />
         <h3 className="text-sm font-medium">Generate new invite link</h3>
       </div>
+
       <div className="grid gap-2">
+        <div className="p-3 bg-muted/20 rounded-md border border-dashed text-xs text-muted-foreground">
+          {roleDescriptions[selectedRole]}
+        </div>
+
         <div className="flex gap-2">
           <div className="relative flex-1">
             <input
@@ -424,6 +437,7 @@ function GenerateNewInviteLinkSection() {
             </SelectContent>
           </Select>
         </div>
+
         <div className="text-xs text-muted-foreground">
           This code will be required to accept the invitation. Each invite link
           can only be used by one person.
