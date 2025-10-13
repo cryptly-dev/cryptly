@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
-import { ProjectReadService } from '../../read/project-read.service';
 import { Role } from '../../../shared/types/role.enum';
+import { ProjectReadService } from '../../read/project-read.service';
 
 @Injectable()
 export class ProjectAdminGuard implements CanActivate {
@@ -17,7 +17,7 @@ export class ProjectAdminGuard implements CanActivate {
 
     const project = await this.projectReadService.findById(projectId);
 
-    if (project.members.get(userId) !== Role.Admin && project.members.get(userId) !== Role.Owner) {
+    if (project.members.get(userId) !== Role.Admin) {
       throw new ForbiddenException('You are not an admin of this project');
     }
 

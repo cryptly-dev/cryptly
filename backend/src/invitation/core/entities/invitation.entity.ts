@@ -12,7 +12,7 @@ export class InvitationEntity {
   @Prop({ type: [MongooseSchema.Types.ObjectId], ref: 'UserEntity' })
   public authorId: Types.ObjectId;
 
-  @Prop({ type: String, enum: Role, default: Role.Member })
+  @Prop({ type: String, enum: Role, default: Role.Read })
   public role: Role;
 
   @Prop()

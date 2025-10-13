@@ -48,7 +48,7 @@ export class ProjectCoreController {
 
   @Sse('projects/:projectId/events')
   @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Member, Role.Admin, Role.Owner)
+  @RequireRole(Role.Read, Role.Write, Role.Admin)
   @ApiBearerAuth()
   public streamEvents(
     @Param('projectId') projectId: string,
@@ -105,7 +105,7 @@ export class ProjectCoreController {
 
   @Get('projects/:projectId')
   @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Member, Role.Admin, Role.Owner)
+  @RequireRole(Role.Read, Role.Write, Role.Admin)
   @ApiResponse({ type: ProjectSerialized })
   public async findById(@Param('projectId') projectId: string): Promise<ProjectSerialized> {
     const project = await this.projectReadService.findById(projectId);
@@ -125,7 +125,7 @@ export class ProjectCoreController {
 
   @Get('projects/:projectId/history')
   @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Member, Role.Admin, Role.Owner)
+  @RequireRole(Role.Read, Role.Write, Role.Admin)
   @ApiResponse({ type: [ProjectSecretsVersionSerialized] })
   public async findHistoryById(
     @Param('projectId') projectId: string,
@@ -135,13 +135,17 @@ export class ProjectCoreController {
 
   @Patch('projects/:projectId')
   @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Admin, Role.Owner)
   @ApiResponse({ type: ProjectSerialized })
   public async update(
     @Param('projectId') projectId: string,
     @Body() body: UpdateProjectBody,
     @CurrentUserId() userId: string,
   ): Promise<ProjectSerialized> {
+    const project = await this.projectReadService.findById(projectId);
+    const userRole = project.members.get(userId)!;
+
+    this.validatePayloadPermissions(userRole, body);
+
     const updatedProject = await this.projectWriteService.update(projectId, body, userId);
     const memberIds = [...updatedProject.members.keys()];
     const members = await this.userReadService.readByIds(memberIds);
@@ -177,30 +181,34 @@ export class ProjectCoreController {
 
   @Patch('projects/:projectId/members/:memberId')
   @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Admin, Role.Owner)
+  @RequireRole(Role.Admin)
   @HttpCode(204)
   public async updateMemberRole(
     @Param('projectId') projectId: string,
     @Param('memberId') memberId: string,
     @Body() body: UpdateMemberRoleBody,
-    @CurrentUserId() userId: string,
   ): Promise<void> {
-    const project = await this.projectReadService.findById(projectId);
-    const currentUserRole = project.members.get(userId);
-    const targetMemberRole = project.members.get(memberId);
-
-    if (targetMemberRole === Role.Owner && currentUserRole !== Role.Owner) {
-      throw new ForbiddenException('Cannot change owner role');
-    }
-
     await this.projectWriteService.updateMemberRole(projectId, memberId, body.role);
   }
 
   @Delete('projects/:projectId')
   @UseGuards(ProjectMemberGuard)
-  @RequireRole(Role.Owner)
+  @RequireRole(Role.Admin)
   @HttpCode(204)
   public async delete(@Param('projectId') projectId: string): Promise<void> {
     await this.projectWriteService.delete(projectId);
+  }
+
+  private validatePayloadPermissions(userRole: Role, body: UpdateProjectBody): void {
+    if (userRole === Role.Read) {
+      throw new ForbiddenException('Read role cannot update project');
+    }
+
+    const isUpdatingOtherFields =
+      body.name !== undefined || body.encryptedSecretsKeys !== undefined;
+
+    if (userRole === Role.Write && isUpdatingOtherFields) {
+      throw new ForbiddenException('Write role can only update secrets');
+    }
   }
 }

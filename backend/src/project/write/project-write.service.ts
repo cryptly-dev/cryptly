@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, UpdateQuery } from 'mongoose';
-import { Role } from '../../shared/types/role.enum';
 import { ProjectSecretsVersionWriteService } from '../../project-secrets-version/write/project-secrets-version-write.service';
+import { Role } from '../../shared/types/role.enum';
 import { ProjectEntity } from '../core/entities/project.entity';
 import { ProjectNormalized } from '../core/entities/project.interface';
 import { ProjectSerializer } from '../core/entities/project.serializer';
@@ -19,7 +19,7 @@ export class ProjectWriteService {
   public async create(dto: CreateProjectDto, userId: string): Promise<ProjectNormalized> {
     const project = await this.projectModel.create({
       name: dto.name,
-      members: new Map([[userId, Role.Owner]]),
+      members: new Map([[userId, Role.Admin]]),
       encryptedSecretsKeys: dto.encryptedSecretsKeys,
     });
 

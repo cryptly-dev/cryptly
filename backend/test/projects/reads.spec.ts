@@ -34,7 +34,7 @@ describe('ProjectCoreController (reads)', () => {
       expect(response.body).toEqual({
         id: project.id,
         name: 'test-project',
-        members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'owner' }],
+        members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'admin' }],
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
         createdAt: expect.any(String),
@@ -42,20 +42,20 @@ describe('ProjectCoreController (reads)', () => {
       });
     });
 
-    it('gets project when a member', async () => {
-      const { user: owner, token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'owner@test.com',
+    it('gets project when a read member', async () => {
+      const { user: admin, token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
       });
-      const { user: member, token: memberToken } = await bootstrap.utils.userUtils.createDefault({
-        email: 'member@test.com',
+      const { user: readUser, token: readToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'read@test.com',
       });
-      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
-      await bootstrap.utils.projectUtils.addMemberToProject(project.id, member.id);
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, readUser.id);
 
       // when
       const response = await request(bootstrap.app.getHttpServer())
         .get(`/projects/${project.id}`)
-        .set('authorization', `Bearer ${memberToken}`);
+        .set('authorization', `Bearer ${readToken}`);
 
       // then
       expect(response.status).toEqual(200);
@@ -63,8 +63,8 @@ describe('ProjectCoreController (reads)', () => {
         id: project.id,
         name: 'test-project',
         members: [
-          { id: owner.id, email: owner.email, avatarUrl: owner.avatarUrl, role: 'owner' },
-          { id: member.id, email: member.email, avatarUrl: member.avatarUrl, role: 'member' },
+          { id: admin.id, email: admin.email, avatarUrl: admin.avatarUrl, role: 'admin' },
+          { id: readUser.id, email: readUser.email, avatarUrl: readUser.avatarUrl, role: 'read' },
         ],
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
@@ -139,7 +139,7 @@ describe('ProjectCoreController (reads)', () => {
           {
             id: projectA.id,
             name: 'project-a',
-            members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'owner' }],
+            members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'admin' }],
             encryptedSecretsKeys: {},
             encryptedSecrets: '',
             createdAt: expect.any(String),
@@ -148,7 +148,7 @@ describe('ProjectCoreController (reads)', () => {
           {
             id: projectB.id,
             name: 'project-b',
-            members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'owner' }],
+            members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'admin' }],
             encryptedSecretsKeys: {},
             encryptedSecrets: '',
             createdAt: expect.any(String),

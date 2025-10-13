@@ -11,23 +11,23 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CurrentUserId } from '../../../auth/core/decorators/current-user-id.decorator';
+import { ProjectMemberGuard } from '../../../project/core/guards/project-member.guard';
+import { ProjectReadService } from '../../../project/read/project-read.service';
+import { TokenResponse } from '../../../shared/responses/token.response';
+import { Role } from '../../../shared/types/role.enum';
 import { GithubRepositorySerialized } from '../client/dto/github-repository.dto';
 import { GithubExternalConnectionClientService } from '../client/github-external-connection-client.service';
-import { CurrentUserId } from '../../../auth/core/decorators/current-user-id.decorator';
-import { GithubInstallationWriteService } from '../write/github-installation-write.service';
 import { GithubInstallationReadService } from '../read/github-installation-read.service';
-import { CreateGithubInstallationBody } from './dto/create-github-installation.body';
-import { GithubInstallationSerializer } from './entities/github-installation.serializer';
-import { GithubInstallationSerialized } from './entities/github-installation.interface';
-import { CreateGithubIntegrationBody } from './dto/create-github-integration.body';
-import { GithubIntegrationSerialized } from './entities/github-integration.interface';
 import { GithubIntegrationReadService } from '../read/github-integration-read.service';
+import { GithubInstallationWriteService } from '../write/github-installation-write.service';
 import { GithubIntegrationWriteService } from '../write/github-integration-write.service';
+import { CreateGithubInstallationBody } from './dto/create-github-installation.body';
+import { CreateGithubIntegrationBody } from './dto/create-github-integration.body';
+import { GithubInstallationSerialized } from './entities/github-installation.interface';
+import { GithubInstallationSerializer } from './entities/github-installation.serializer';
+import { GithubIntegrationSerialized } from './entities/github-integration.interface';
 import { GithubIntegrationSerializer } from './entities/github-integration.serializer';
-import { TokenResponse } from '../../../shared/responses/token.response';
-import { ProjectReadService } from '../../../project/read/project-read.service';
-import { Role } from '../../../shared/types/role.enum';
-import { ProjectMemberGuard } from '../../../project/core/guards/project-member.guard';
 
 @Controller('')
 @ApiTags('Github external connections')
@@ -133,8 +133,8 @@ export class GithubExternalConnectionCoreController {
       throw new ForbiddenException('You are not a member of this project');
     }
 
-    if (role !== Role.Owner && role !== Role.Admin) {
-      throw new ForbiddenException('You are not the owner or admin of this project');
+    if (role !== Role.Admin) {
+      throw new ForbiddenException('You are not an admin of this project');
     }
 
     const existingIntegration = await this.integrationReadService.findByProjectIdAndRepositoryId({
@@ -244,8 +244,8 @@ export class GithubExternalConnectionCoreController {
       throw new ForbiddenException('You are not a member of this project');
     }
 
-    if (role !== Role.Owner && role !== Role.Admin) {
-      throw new ForbiddenException('You are not the owner or admin of this project');
+    if (role !== Role.Admin) {
+      throw new ForbiddenException('You are not an admin of this project');
     }
 
     await this.integrationWriteService.deleteById(integrationId);
