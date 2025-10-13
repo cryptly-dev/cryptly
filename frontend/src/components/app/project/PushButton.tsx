@@ -2,10 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { projectLogic } from "@/lib/logics/projectLogic";
-import { useActions, useValues } from "kea";
+import { useAsyncActions, useValues } from "kea";
 import { CloudUpload } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
+import { toast } from "sonner";
 
 export function PushButton() {
   const {
@@ -15,12 +16,23 @@ export function PushButton() {
     integrations,
     currentUserRole,
   } = useValues(projectLogic);
-  const { pushToIntegrations } = useActions(projectLogic);
+  const { pushToIntegrations } = useAsyncActions(projectLogic);
   const isReadOnly = currentUserRole === ProjectMemberRole.Read;
 
-  const push = () => {
+  const push = async () => {
     posthog.capture("push_button_clicked");
-    pushToIntegrations();
+    try {
+      await pushToIntegrations();
+      toast.success("Pushed to integrations", {
+        description:
+          "Your changes have been successfully pushed to all integrations.",
+      });
+    } catch (error) {
+      toast.error("Failed to push", {
+        description:
+          "There was an error pushing to integrations. Please try again.",
+      });
+    }
   };
 
   const hasIntegrations = integrations && integrations.length > 0;
