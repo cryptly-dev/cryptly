@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { projectLogic } from "@/lib/logics/projectLogic";
@@ -24,17 +25,19 @@ export function PushButton() {
     try {
       await pushToIntegrations();
       toast.custom((t) => (
-        <div className="bg-popover border border-border rounded-lg p-4 shadow-lg">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="size-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-              <h3 className="font-semibold text-foreground">
-                Synced with integrations
-              </h3>
+        <div className="bg-popover border border-border rounded-lg p-4 shadow-lg w-fit">
+          <div className="flex items-center gap-4">
+            <CheckCircle2 className="size-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+            <div className="text-foreground flex items-center gap-2 whitespace-nowrap">
+              <span>Synced with</span>
+              <span className="inline-flex items-center gap-1.5 bg-secondary/50 px-2 py-0.5 rounded text-sm">
+                <GitHubIcon className="size-4" />
+                GitHub
+              </span>
             </div>
             <button
               onClick={() => toast.dismiss(t)}
-              className="text-foreground/50 hover:text-foreground transition-colors"
+              className="text-foreground/50 hover:text-foreground transition-colors flex-shrink-0"
               aria-label="Close"
             >
               ✕
@@ -44,17 +47,19 @@ export function PushButton() {
       ));
     } catch (error) {
       toast.custom((t) => (
-        <div className="bg-popover border border-border rounded-lg p-4 shadow-lg">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <XCircle className="size-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-              <h3 className="font-semibold text-foreground">
-                Failed to sync with integrations
-              </h3>
+        <div className="bg-popover border border-border rounded-lg p-4 shadow-lg w-fit">
+          <div className="flex items-center gap-4">
+            <XCircle className="size-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+            <div className="text-foreground flex items-center gap-2 whitespace-nowrap">
+              <span>Failed to sync with</span>
+              <span className="inline-flex items-center gap-1.5 bg-secondary/50 px-2 py-0.5 rounded text-sm">
+                <GitHubIcon className="size-4" />
+                GitHub
+              </span>
             </div>
             <button
               onClick={() => toast.dismiss(t)}
-              className="text-foreground/50 hover:text-foreground transition-colors"
+              className="text-foreground/50 hover:text-foreground transition-colors flex-shrink-0"
               aria-label="Close"
             >
               ✕
