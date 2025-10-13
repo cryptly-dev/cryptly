@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ArchitectureRouteImport } from './routes/architecture'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteInviteIdRouteImport } from './routes/invite/$inviteId'
@@ -22,11 +21,6 @@ import { Route as AppCallbacksOauthGoogleRouteImport } from './routes/app/callba
 import { Route as AppCallbacksOauthGithubRouteImport } from './routes/app/callbacks/oauth/github'
 import { Route as AppCallbacksIntegrationsGithubRouteImport } from './routes/app/callbacks/integrations/github'
 
-const ArchitectureRoute = ArchitectureRouteImport.update({
-  id: '/architecture',
-  path: '/architecture',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -87,7 +81,6 @@ const AppCallbacksIntegrationsGithubRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/architecture': typeof ArchitectureRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
   '/app/me': typeof AppMeRoute
@@ -101,7 +94,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/architecture': typeof ArchitectureRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
   '/app/me': typeof AppMeRoute
@@ -116,7 +108,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/architecture': typeof ArchitectureRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
   '/app/me': typeof AppMeRoute
@@ -132,7 +123,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
-    | '/architecture'
     | '/app/developer'
     | '/app/login'
     | '/app/me'
@@ -146,7 +136,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/app'
-    | '/architecture'
     | '/app/developer'
     | '/app/login'
     | '/app/me'
@@ -160,7 +149,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
-    | '/architecture'
     | '/app/developer'
     | '/app/login'
     | '/app/me'
@@ -175,19 +163,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  ArchitectureRoute: typeof ArchitectureRoute
   InviteInviteIdRoute: typeof InviteInviteIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/architecture': {
-      id: '/architecture'
-      path: '/architecture'
-      fullPath: '/architecture'
-      preLoaderRoute: typeof ArchitectureRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -295,7 +275,6 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  ArchitectureRoute: ArchitectureRoute,
   InviteInviteIdRoute: InviteInviteIdRoute,
 }
 export const routeTree = rootRouteImport

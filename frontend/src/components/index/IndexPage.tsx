@@ -1,25 +1,7 @@
 import Beams from "@/components/Beams";
+import { Button } from "@/components/ui/button";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
-import { Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Check,
-  Fingerprint,
-  KeyRound,
-  Lock,
-  Server,
-  Shield,
-  Terminal,
-  Users,
-  CloudUpload,
-  Plug,
-  Sparkles,
-  Zap,
-} from "lucide-react";
-import { IconPlugConnected } from "@tabler/icons-react";
-import { motion } from "motion/react";
-import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -27,7 +9,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { IconPlugConnected } from "@tabler/icons-react";
+import { Link } from "@tanstack/react-router";
+import {
+  ArrowRight,
+  Check,
+  CloudUpload,
+  Fingerprint,
+  KeyRound,
+  Lock,
+  Plug,
+  Server,
+  Shield,
+  Sparkles,
+  Terminal,
+  Users,
+  Zap,
+} from "lucide-react";
+import { motion } from "motion/react";
+import { useState } from "react";
 
 export function IndexPage() {
   return (
@@ -119,7 +119,17 @@ export function IndexPage() {
           animate={{ opacity: 1 }}
           transition={{ duration: 2, delay: 1 }}
         >
-          <p className="text-sm">Scroll to explore</p>
+          <p
+            className="text-sm cursor-pointer hover:text-neutral-400 transition-colors"
+            onClick={() => {
+              const featuresSection = document.querySelector(
+                "section:nth-of-type(2)"
+              );
+              featuresSection?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Scroll to explore
+          </p>
         </motion.div>
       </section>
 
