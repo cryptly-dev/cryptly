@@ -454,7 +454,7 @@ function IntegrationsSection() {
             transition={{ duration: 0.8, ease: [0, 0.55, 0.45, 1] }}
           >
             {/* Pills */}
-            <div className="flex gap-3 mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 mb-8">
               <button
                 onClick={() => setSelectedTab("github")}
                 className={`inline-flex items-center gap-3 rounded-2xl border px-5 py-3 transition-all cursor-pointer ${
