@@ -9,6 +9,7 @@ import {
 import { authLogic } from "@/lib/logics/authLogic";
 import { keyLogic } from "@/lib/logics/keyLogic";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { useActions, useValues } from "kea";
 import { useEffect, useMemo, useState } from "react";
 
@@ -53,10 +54,37 @@ export function SetUpPassphraseDialog() {
             <DialogTitle>Set up your account passphrase</DialogTitle>
             <DialogDescription>
               You will be asked to enter this passphrase every time you try to
-              access your account from a different device. It can not be
-              recovered. We as admins have no way to recover it.
+              access your account from a different device.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="rounded-lg border-2 border-blue-500 bg-blue-50 dark:bg-blue-950/20 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <ShieldCheck className="size-5 text-blue-600 dark:text-blue-500 flex-shrink-0" />
+              <h3 className="text-base font-semibold text-blue-900 dark:text-blue-300">
+                Your passphrase ensures complete privacy
+              </h3>
+            </div>
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              This passphrase is what ensures that nobody (even us) can access
+              your secrets. Your data is encrypted end-to-end and only you hold
+              the key.
+            </p>
+          </div>
+
+          <div className="rounded-lg border-2 border-red-600 bg-red-50 dark:bg-red-950/20 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="size-5 text-red-600 dark:text-red-500 flex-shrink-0" />
+              <h3 className="text-base font-bold text-red-600 dark:text-red-500">
+                This passphrase cannot be recovered
+              </h3>
+            </div>
+            <p className="text-sm text-red-800 dark:text-red-300">
+              If you forget your passphrase, the only way to regain access to
+              your account is to remove it entirely. Make sure to store it
+              somewhere safe.
+            </p>
+          </div>
 
           <div className="grid gap-2">
             <label htmlFor="pp1" className="text-sm font-medium">
