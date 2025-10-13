@@ -3,7 +3,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { useAsyncActions, useValues } from "kea";
-import { CloudUpload } from "lucide-react";
+import { CheckCircle2, CloudUpload, XCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
 import { toast } from "sonner";
@@ -23,15 +23,45 @@ export function PushButton() {
     posthog.capture("push_button_clicked");
     try {
       await pushToIntegrations();
-      toast.success("Pushed to integrations", {
-        description:
-          "Your changes have been successfully pushed to all integrations.",
-      });
+      toast.custom((t) => (
+        <div className="bg-popover border border-border rounded-lg p-4 shadow-lg">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="size-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+              <h3 className="font-semibold text-foreground">
+                Synced with integrations
+              </h3>
+            </div>
+            <button
+              onClick={() => toast.dismiss(t)}
+              className="text-foreground/50 hover:text-foreground transition-colors"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      ));
     } catch (error) {
-      toast.error("Failed to push", {
-        description:
-          "There was an error pushing to integrations. Please try again.",
-      });
+      toast.custom((t) => (
+        <div className="bg-popover border border-border rounded-lg p-4 shadow-lg">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <XCircle className="size-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+              <h3 className="font-semibold text-foreground">
+                Failed to sync with integrations
+              </h3>
+            </div>
+            <button
+              onClick={() => toast.dismiss(t)}
+              className="text-foreground/50 hover:text-foreground transition-colors"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      ));
     }
   };
 
