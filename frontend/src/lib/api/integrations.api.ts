@@ -191,26 +191,29 @@ export class IntegrationsApi {
   ): Promise<void> {
     const secrets = dotenv.parse(content);
 
-    for (const integration of integrations) {
-      const publicKey = integration.githubRepositoryPublicKey;
+    await Promise.all(
+      integrations.map(async (integration) => {
+        const publicKey = integration.githubRepositoryPublicKey;
 
-      const githubToken = await this.getAccessToken(
-        jwtToken,
-        integration.installationEntityId
-      );
-      await Promise.all(
-        Object.entries(secrets).map(async ([key, value]) => {
-          const encryptedValue = await SodiumCrypto.encrypt(value, publicKey);
+        const githubToken = await this.getAccessToken(
+          jwtToken,
+          integration.installationEntityId
+        );
 
-          await this.pushSecret(githubToken, {
-            encryptedValue,
-            keyId: integration.githubRepositoryPublicKeyId,
-            owner: integration.repositoryData?.owner!,
-            repo: integration.repositoryData?.name!,
-            secretName: key,
-          });
-        })
-      );
-    }
+        await Promise.all(
+          Object.entries(secrets).map(async ([key, value]) => {
+            const encryptedValue = await SodiumCrypto.encrypt(value, publicKey);
+
+            await this.pushSecret(githubToken, {
+              encryptedValue,
+              keyId: integration.githubRepositoryPublicKeyId,
+              owner: integration.repositoryData?.owner!,
+              repo: integration.repositoryData?.name!,
+              secretName: key,
+            });
+          })
+        );
+      })
+    );
   }
 }
