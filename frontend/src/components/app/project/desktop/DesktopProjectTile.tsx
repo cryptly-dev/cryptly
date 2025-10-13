@@ -48,7 +48,7 @@ export function DesktopProjectTile() {
   } = useValues(projectLogic);
   const { userData } = useValues(authLogic);
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
-  const isReadOnly = currentUserRole === ProjectMemberRole.Member;
+  const isReadOnly = currentUserRole === ProjectMemberRole.Read;
   const { shouldShowEditorTooltip, currentStepNumber } = useValues(ftuxLogic);
   const {
     startFTUX,

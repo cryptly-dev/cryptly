@@ -30,9 +30,7 @@ function RenameProjectSection() {
   const [isRenaming, setIsRenaming] = useState(false);
   const [showRenameForm, setShowRenameForm] = useState(false);
 
-  const canRename =
-    currentUserRole === ProjectMemberRole.Owner ||
-    currentUserRole === ProjectMemberRole.Admin;
+  const canRename = currentUserRole === ProjectMemberRole.Admin;
 
   useEffect(() => {
     if (showRenameForm && projectData) {
@@ -61,12 +59,7 @@ function RenameProjectSection() {
         </div>
         <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
-            You are a <span className="font-medium underline">Member</span> of
-            this project.
-          </div>
-          <div className="text-sm text-muted-foreground mt-1">
-            Only{" "}
-            <span className="font-medium underline">Owners and Admins</span> can
+            Only <span className="font-medium underline">Admins</span> can
             rename projects.
           </div>
         </div>
@@ -153,7 +146,7 @@ function DangerZoneSection() {
     [projectData?.members, userData?.id]
   );
 
-  const isOwner = myRole === ProjectMemberRole.Owner;
+  const isAdmin = myRole === ProjectMemberRole.Admin;
 
   const handleDeleteProject = async () => {
     await deleteProject();
@@ -167,8 +160,8 @@ function DangerZoneSection() {
     });
   };
 
-  const actionText = isOwner ? "Delete project" : "Leave project";
-  const actionIcon = isOwner ? IconTrash : IconUserMinus;
+  const actionText = isAdmin ? "Delete project" : "Leave project";
+  const actionIcon = isAdmin ? IconTrash : IconUserMinus;
   const ActionIcon = actionIcon;
 
   return (
@@ -181,23 +174,23 @@ function DangerZoneSection() {
       {showDeleteConfirm ? (
         <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
           <div className="text-sm font-medium text-destructive mb-3">
-            {isOwner
+            {isAdmin
               ? "Are you sure you want to delete this project?"
               : "Are you sure you want to leave this project?"}
           </div>
           <div className="text-sm text-muted-foreground mb-4">
-            {isOwner
+            {isAdmin
               ? "This action cannot be undone. This will permanently delete the project and remove all members' access."
               : "You will lose access to this project and its secrets. You'll need a new invitation to rejoin."}
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={isOwner ? handleDeleteProject : handleLeaveProject}
+              onClick={isAdmin ? handleDeleteProject : handleLeaveProject}
               isLoading={deleteProjectLoading || isLoading}
               variant="destructive"
               className="cursor-pointer"
             >
-              {isOwner ? "Delete project" : "Leave project"}
+              {isAdmin ? "Delete project" : "Leave project"}
             </Button>
             <Button
               variant="ghost"
@@ -216,7 +209,7 @@ function DangerZoneSection() {
               {actionText}
             </div>
             <div className="text-xs text-muted-foreground">
-              {isOwner
+              {isAdmin
                 ? "Permanently delete this project for all members"
                 : "Remove yourself from this project"}
             </div>

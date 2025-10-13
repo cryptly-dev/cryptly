@@ -16,7 +16,7 @@ export function PushButton() {
     currentUserRole,
   } = useValues(projectLogic);
   const { pushToIntegrations } = useActions(projectLogic);
-  const isReadOnly = currentUserRole === ProjectMemberRole.Member;
+  const isReadOnly = currentUserRole === ProjectMemberRole.Read;
 
   const push = () => {
     posthog.capture("push_button_clicked");

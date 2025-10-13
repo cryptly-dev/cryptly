@@ -53,7 +53,7 @@ export function MobileProjectTile() {
   const { activeProject } = useProjects();
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
   const navigate = useNavigate();
-  const isReadOnly = currentUserRole === ProjectMemberRole.Member;
+  const isReadOnly = currentUserRole === ProjectMemberRole.Read;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
