@@ -9,7 +9,7 @@ export function MobileSaveButton() {
   const { isSubmitting, isEditorDirty, currentUserRole } =
     useValues(projectLogic);
   const { updateProjectContent } = useActions(projectLogic);
-  const isReadOnly = currentUserRole === ProjectMemberRole.Member;
+  const isReadOnly = currentUserRole === ProjectMemberRole.Read;
 
   const update = () => {
     posthog.capture("save_button_clicked");

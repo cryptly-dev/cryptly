@@ -59,49 +59,32 @@ function MemberItem({
     // Can't edit your own role
     if (member.id === userData?.id) return false;
 
-    // Can't edit owner roles
-    if (member.role === ProjectMemberRole.Owner) return false;
-
-    // Admins and owners can edit admin and member roles
-    if (
-      currentUserRole === ProjectMemberRole.Owner ||
-      currentUserRole === ProjectMemberRole.Admin
-    ) {
+    // Only admins can edit roles
+    if (currentUserRole === ProjectMemberRole.Admin) {
       return true;
     }
 
-    // Members can't edit any roles
     return false;
-  }, [member.id, member.role, userData?.id, currentUserRole]);
+  }, [member.id, userData?.id, currentUserRole]);
 
   const canRemove = useMemo(() => {
     // Can't remove yourself
     if (member.id === userData?.id) return false;
 
-    // Can't remove owner
-    if (member.role === ProjectMemberRole.Owner) return false;
-
-    // Only owners and admins can remove members
-    if (
-      currentUserRole !== ProjectMemberRole.Owner &&
-      currentUserRole !== ProjectMemberRole.Admin
-    )
-      return false;
+    // Only admins can remove members
+    if (currentUserRole !== ProjectMemberRole.Admin) return false;
 
     return true;
-  }, [member.id, member.role, userData?.id, currentUserRole]);
+  }, [member.id, userData?.id, currentUserRole]);
 
   const availableRoles = useMemo(() => {
     const roles = [];
 
-    if (
-      currentUserRole === ProjectMemberRole.Owner ||
-      currentUserRole === ProjectMemberRole.Admin
-    ) {
+    if (currentUserRole === ProjectMemberRole.Admin) {
+      roles.push({ value: ProjectMemberRole.Read, label: "Read" });
+      roles.push({ value: ProjectMemberRole.Write, label: "Write" });
       roles.push({ value: ProjectMemberRole.Admin, label: "Admin" });
     }
-
-    roles.push({ value: ProjectMemberRole.Member, label: "Member" });
 
     return roles;
   }, [currentUserRole]);
@@ -287,18 +270,12 @@ function ActiveInviteLinksSection() {
   );
 
   useEffect(() => {
-    if (
-      myRole === ProjectMemberRole.Owner ||
-      myRole === ProjectMemberRole.Admin
-    ) {
+    if (myRole === ProjectMemberRole.Admin) {
       loadInvitations();
     }
   }, [myRole]);
 
-  if (
-    myRole !== ProjectMemberRole.Owner &&
-    myRole !== ProjectMemberRole.Admin
-  ) {
+  if (myRole !== ProjectMemberRole.Admin) {
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
@@ -307,13 +284,8 @@ function ActiveInviteLinksSection() {
         </div>
         <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
-            You are a <span className="font-medium underline">Member</span> of
-            this project.
-          </div>
-          <div className="text-sm text-muted-foreground mt-1">
-            Only{" "}
-            <span className="font-medium underline">Owners and Admins</span> can
-            view invite links.
+            Only <span className="font-medium underline">Admins</span> can view
+            invite links.
           </div>
         </div>
       </div>
@@ -354,8 +326,8 @@ function GenerateNewInviteLinkSection() {
   const { createInvitation } = useAsyncActions(invitationsLogic);
   const [passphrase, setPassphrase] = useState("");
   const [showPassphrase, setShowPassphrase] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<"admin" | "member">(
-    "member"
+  const [selectedRole, setSelectedRole] = useState<"read" | "write" | "admin">(
+    "read"
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -366,12 +338,10 @@ function GenerateNewInviteLinkSection() {
   );
 
   const availableRoles = useMemo(() => {
-    if (
-      myRole === ProjectMemberRole.Owner ||
-      myRole === ProjectMemberRole.Admin
-    ) {
+    if (myRole === ProjectMemberRole.Admin) {
       return [
-        { value: "member" as const, label: "Member" },
+        { value: "read" as const, label: "Read" },
+        { value: "write" as const, label: "Write" },
         { value: "admin" as const, label: "Admin" },
       ];
     }
@@ -385,10 +355,7 @@ function GenerateNewInviteLinkSection() {
     setIsLoading(false);
   };
 
-  if (
-    myRole !== ProjectMemberRole.Owner &&
-    myRole !== ProjectMemberRole.Admin
-  ) {
+  if (myRole !== ProjectMemberRole.Admin) {
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
@@ -397,12 +364,7 @@ function GenerateNewInviteLinkSection() {
         </div>
         <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
-            You are a <span className="font-medium underline">Member</span> of
-            this project.
-          </div>
-          <div className="text-sm text-muted-foreground mt-1">
-            Only{" "}
-            <span className="font-medium underline">Owners and Admins</span> can
+            Only <span className="font-medium underline">Admins</span> can
             generate invite links.
           </div>
         </div>
@@ -446,7 +408,7 @@ function GenerateNewInviteLinkSection() {
           </div>
           <Select
             value={selectedRole}
-            onValueChange={(value: "admin" | "member") =>
+            onValueChange={(value: "read" | "write" | "admin") =>
               setSelectedRole(value)
             }
           >

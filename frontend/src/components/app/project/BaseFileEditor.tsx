@@ -64,7 +64,7 @@ export function BaseFileEditor({
     renderLineHighlight: "none" as const,
     padding,
     readOnly,
-    readOnlyMessage: { value: "Cannot edit as Member" },
+    readOnlyMessage: { value: "Read-only access" },
     ...(lineNumbersMinChars && { lineNumbersMinChars }),
   };
 

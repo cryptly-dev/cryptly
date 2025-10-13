@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -13,22 +14,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Combobox } from "@/components/ui/combobox";
-import { useProjects } from "@/lib/hooks/useProjects";
-import { integrationsLogic } from "@/lib/logics/integrationsLogic";
 import type { Integration } from "@/lib/api/integrations.api";
+import { ProjectMemberRole } from "@/lib/api/projects.api";
+import { useProjects } from "@/lib/hooks/useProjects";
+import { commonLogic } from "@/lib/logics/commonLogic";
+import { integrationsLogic } from "@/lib/logics/integrationsLogic";
+import { projectLogic } from "@/lib/logics/projectLogic";
 import {
-  IconLink,
-  IconTrash,
   IconBrandGithub,
+  IconLink,
   IconPlus,
+  IconTrash,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
-import { useState, useEffect } from "react";
-import { commonLogic } from "@/lib/logics/commonLogic";
 import posthog from "posthog-js";
-import { projectLogic } from "@/lib/logics/projectLogic";
-import { ProjectMemberRole } from "@/lib/api/projects.api";
+import { useEffect, useState } from "react";
 
 function repositoryFullName(dto: { name?: string; owner?: string }) {
   return `${dto.owner}/${dto.name}`;
@@ -44,9 +44,7 @@ function IntegrationListItem({ integration }: { integration: Integration }) {
   const { removeIntegration } = useActions(integrationsLogic);
   const { currentUserRole } = useValues(projectLogic);
 
-  const canDelete =
-    currentUserRole === ProjectMemberRole.Owner ||
-    currentUserRole === ProjectMemberRole.Admin;
+  const canDelete = currentUserRole === ProjectMemberRole.Admin;
 
   const handleRemoveIntegration = () => {
     setIsLoading(true);
@@ -125,9 +123,7 @@ function AddIntegrationSection() {
   const { setShouldReopenIntegrationsDialog } = useActions(commonLogic);
   const { currentUserRole } = useValues(projectLogic);
 
-  const canAddIntegration =
-    currentUserRole === ProjectMemberRole.Owner ||
-    currentUserRole === ProjectMemberRole.Admin;
+  const canAddIntegration = currentUserRole === ProjectMemberRole.Admin;
 
   // Reset repository selection when installation changes
   useEffect(() => {
@@ -181,13 +177,8 @@ function AddIntegrationSection() {
         </div>
         <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
-            You are a <span className="font-medium underline">Member</span> of
-            this project.
-          </div>
-          <div className="text-sm text-muted-foreground mt-1">
-            Only{" "}
-            <span className="font-medium underline">Owners and Admins</span> can
-            add integrations.
+            Only <span className="font-medium underline">Admins</span> can add
+            integrations.
           </div>
         </div>
       </div>

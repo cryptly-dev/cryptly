@@ -13,7 +13,7 @@ export function UpdateButton() {
     useValues(projectLogic);
   const { updateProjectContent } = useActions(projectLogic);
   const { isExternallyUpdated } = useValues(projectLogic);
-  const isReadOnly = currentUserRole === ProjectMemberRole.Member;
+  const isReadOnly = currentUserRole === ProjectMemberRole.Read;
 
   const [isHovered, setIsHovered] = useState(false);
 

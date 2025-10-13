@@ -1,9 +1,9 @@
 import axios from "axios";
 
 export enum ProjectMemberRole {
-  Owner = "owner",
+  Read = "read",
+  Write = "write",
   Admin = "admin",
-  Member = "member",
 }
 
 export interface ProjectMember {
@@ -152,15 +152,11 @@ export class ProjectsApi {
     projectId: string,
     dto: UpdateProjectDto
   ): Promise<Project> {
-    const response = await axios.patch<Project>(
-      `/projects/${projectId}`,
-      dto,
-      {
-        headers: {
-          Authorization: `Bearer ${jwtToken}`,
-        },
-      }
-    );
+    const response = await axios.patch<Project>(`/projects/${projectId}`, dto, {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
+    });
     return response.data;
   }
 

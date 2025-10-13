@@ -9,12 +9,12 @@ import {
   reducers,
 } from "kea";
 
-import type { invitationsLogicType } from "./invitationsLogicType";
-import { authLogic } from "./authLogic";
-import { InvitationsApi, type Invitation } from "../api/invitations.api";
 import { loaders } from "kea-loaders";
+import { InvitationsApi, type Invitation } from "../api/invitations.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
+import { authLogic } from "./authLogic";
+import type { invitationsLogicType } from "./invitationsLogicType";
 import { projectLogic } from "./projectLogic";
 
 export interface InvitationsLogicProps {
@@ -33,7 +33,10 @@ export const invitationsLogic = kea<invitationsLogicType>([
   }),
 
   actions({
-    createInvitation: (passphrase: string, role: "admin" | "member") => ({
+    createInvitation: (
+      passphrase: string,
+      role: "read" | "write" | "admin"
+    ) => ({
       passphrase,
       role,
     }),
