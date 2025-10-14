@@ -15,10 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Invitation } from "@/lib/api/invitations.api";
-import {
-  PersonalInvitationsApi,
-  type PersonalInvitation,
-} from "@/lib/api/personal-invitations.api";
+import type { PersonalInvitation } from "@/lib/api/personal-invitations.api";
 import {
   ProjectMemberRole,
   ProjectsApi,
@@ -209,7 +206,13 @@ type ActiveInvite =
   | { type: "link"; data: Invitation }
   | { type: "personal"; data: PersonalInvitation };
 
-function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
+function ActiveInviteItem({
+  invite,
+  onPersonalInviteDeleted,
+}: {
+  invite: ActiveInvite;
+  onPersonalInviteDeleted?: () => void;
+}) {
   const { deleteInvitation } = useAsyncActions(invitationsLogic);
   const { deletePersonalInvitation } = useActions(personalInvitationsLogic);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
@@ -227,6 +230,7 @@ function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
       await deleteInvitation(invite.data.id);
     } else {
       deletePersonalInvitation(invite.data.id);
+      onPersonalInviteDeleted?.();
     }
   };
 
@@ -308,7 +312,11 @@ function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
   );
 }
 
-function ActiveInvitesSection() {
+function ActiveInvitesSection({
+  onPersonalInviteDeleted,
+}: {
+  onPersonalInviteDeleted?: () => void;
+}) {
   const { projectData, userData } = useValues(projectLogic);
   const { invitations, invitationsLoading } = useValues(invitationsLogic);
   const { personalInvitations, personalInvitationsLoading } = useValues(
@@ -388,6 +396,7 @@ function ActiveInvitesSection() {
                   : `personal-${invite.data.id}`
               }
               invite={invite}
+              onPersonalInviteDeleted={onPersonalInviteDeleted}
             />
           ))}
         </div>
@@ -533,12 +542,12 @@ function SuggestedUserItem({
   user: SuggestedUser;
   onInviteSent?: () => void;
 }) {
-  const { jwtToken } = useValues(authLogic);
-  const { projectData } = useValues(projectLogic);
+  const { createPersonalInvitation } = useAsyncActions(
+    personalInvitationsLogic
+  );
   const [selectedRole, setSelectedRole] = useState<ProjectMemberRole>(
     ProjectMemberRole.Read
   );
-  const [isLoading, setIsLoading] = useState(false);
 
   const availableRoles = [
     { value: ProjectMemberRole.Read, label: "Read" },
@@ -547,24 +556,8 @@ function SuggestedUserItem({
   ];
 
   const handleInvite = async () => {
-    if (!jwtToken || !projectData) return;
-
-    setIsLoading(true);
-    try {
-      await PersonalInvitationsApi.createPersonalInvitation(
-        jwtToken,
-        projectData.id,
-        {
-          invitedUserId: user.id,
-          role: selectedRole,
-        }
-      );
-      onInviteSent?.();
-    } catch (error) {
-      console.error("Failed to send invitation:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    await createPersonalInvitation(user.id, selectedRole);
+    onInviteSent?.();
   };
 
   return (
@@ -603,8 +596,6 @@ function SuggestedUserItem({
         </Select>
         <Button
           onClick={handleInvite}
-          isLoading={isLoading}
-          disabled={isLoading}
           variant="ghost"
           size="sm"
           className="size-8 p-0 cursor-pointer"
@@ -617,9 +608,10 @@ function SuggestedUserItem({
   );
 }
 
-function SuggestedUsersSection() {
+function SuggestedUsersSection({ reloadKey }: { reloadKey?: number }) {
   const { projectData, userData } = useValues(projectLogic);
   const { jwtToken } = useValues(authLogic);
+  const { loadPersonalInvitations } = useActions(personalInvitationsLogic);
   const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -646,9 +638,14 @@ function SuggestedUsersSection() {
     }
   };
 
+  const handleInviteSent = () => {
+    loadSuggestedUsers();
+    loadPersonalInvitations();
+  };
+
   useEffect(() => {
     loadSuggestedUsers();
-  }, [myRole, jwtToken, projectData?.id, projectData?.members]);
+  }, [myRole, jwtToken, projectData?.id, projectData?.members, reloadKey]);
 
   if (myRole !== ProjectMemberRole.Admin) {
     return (
@@ -690,7 +687,7 @@ function SuggestedUsersSection() {
         <SuggestedUserItem
           key={user.id}
           user={user}
-          onInviteSent={loadSuggestedUsers}
+          onInviteSent={handleInviteSent}
         />
       ))}
     </div>
@@ -703,6 +700,11 @@ export function ProjectAccessDialog({
 }: ProjectAccessDialogProps) {
   const { projectData } = useValues(projectLogic);
   const { invitationsLoading } = useValues(invitationsLogic);
+  const [reloadSuggestedUsersKey, setReloadSuggestedUsersKey] = useState(0);
+
+  const handlePersonalInviteDeleted = () => {
+    setReloadSuggestedUsersKey((prev) => prev + 1);
+  };
 
   if (!projectData) {
     return null;
@@ -723,7 +725,9 @@ export function ProjectAccessDialog({
           </DialogHeader>
 
           <MembersSection />
-          <ActiveInvitesSection />
+          <ActiveInvitesSection
+            onPersonalInviteDeleted={handlePersonalInviteDeleted}
+          />
 
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -740,7 +744,7 @@ export function ProjectAccessDialog({
                 <GenerateNewInviteLinkSection />
               </TabsContent>
               <TabsContent value="suggested">
-                <SuggestedUsersSection />
+                <SuggestedUsersSection reloadKey={reloadSuggestedUsersKey} />
               </TabsContent>
             </Tabs>
           </div>
