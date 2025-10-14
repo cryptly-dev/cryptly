@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { SuggestedUser } from "./user.api";
 
 export enum ProjectMemberRole {
   Read = "read",
@@ -178,6 +179,21 @@ export class ProjectsApi {
     const response = await axios.patch<Project>(
       `/projects/${dto.projectId}/members/${dto.memberId}`,
       { role: dto.role },
+      {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      }
+    );
+    return response.data;
+  }
+
+  public static async getSuggestedUsers(
+    jwtToken: string,
+    projectId: string
+  ): Promise<SuggestedUser[]> {
+    const response = await axios.get<SuggestedUser[]>(
+      `/projects/${projectId}/suggested-users`,
       {
         headers: {
           Authorization: `Bearer ${jwtToken}`,

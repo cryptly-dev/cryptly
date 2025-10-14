@@ -51,16 +51,4 @@ export class UserApi {
       },
     });
   }
-
-  public static async getSuggestedUsers(
-    jwtToken: string
-  ): Promise<SuggestedUser[]> {
-    const response = await axios.get<SuggestedUser[]>("/users/suggested", {
-      headers: {
-        Authorization: `Bearer ${jwtToken}`,
-      },
-    });
-
-    return response.data;
-  }
 }

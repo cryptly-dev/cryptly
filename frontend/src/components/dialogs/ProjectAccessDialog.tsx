@@ -15,8 +15,13 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Invitation } from "@/lib/api/invitations.api";
-import { ProjectMemberRole, type ProjectMember } from "@/lib/api/projects.api";
-import { type SuggestedUser, UserApi } from "@/lib/api/user.api";
+import { PersonalInvitationsApi } from "@/lib/api/personal-invitations.api";
+import {
+  ProjectMemberRole,
+  ProjectsApi,
+  type ProjectMember,
+} from "@/lib/api/projects.api";
+import { type SuggestedUser } from "@/lib/api/user.api";
 import { authLogic } from "@/lib/logics/authLogic";
 import { invitationsLogic } from "@/lib/logics/invitationsLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
@@ -447,10 +452,19 @@ function GenerateNewInviteLinkSection() {
   );
 }
 
-function SuggestedUserItem({ user }: { user: SuggestedUser }) {
+function SuggestedUserItem({
+  user,
+  onInviteSent,
+}: {
+  user: SuggestedUser;
+  onInviteSent?: () => void;
+}) {
+  const { jwtToken } = useValues(authLogic);
+  const { projectData } = useValues(projectLogic);
   const [selectedRole, setSelectedRole] = useState<ProjectMemberRole>(
     ProjectMemberRole.Read
   );
+  const [isLoading, setIsLoading] = useState(false);
 
   const availableRoles = [
     { value: ProjectMemberRole.Read, label: "Read" },
@@ -458,9 +472,25 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
     { value: ProjectMemberRole.Admin, label: "Admin" },
   ];
 
-  const handleInvite = () => {
-    // TODO: Implement invite logic
-    console.log(`Inviting ${user.email} with role ${selectedRole}`);
+  const handleInvite = async () => {
+    if (!jwtToken || !projectData) return;
+
+    setIsLoading(true);
+    try {
+      await PersonalInvitationsApi.createPersonalInvitation(
+        jwtToken,
+        projectData.id,
+        {
+          invitedUserId: user.id,
+          role: selectedRole,
+        }
+      );
+      onInviteSent?.();
+    } catch (error) {
+      console.error("Failed to send invitation:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -499,6 +529,8 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
         </Select>
         <Button
           onClick={handleInvite}
+          isLoading={isLoading}
+          disabled={isLoading}
           variant="ghost"
           size="sm"
           className="size-8 p-0 cursor-pointer"
@@ -523,29 +555,26 @@ function SuggestedUsersSection() {
     [projectData?.members, userData?.id]
   );
 
+  const loadSuggestedUsers = async () => {
+    if (myRole !== ProjectMemberRole.Admin || !jwtToken || !projectData) return;
+
+    setIsLoading(true);
+    try {
+      const users = await ProjectsApi.getSuggestedUsers(
+        jwtToken,
+        projectData.id
+      );
+      setSuggestedUsers(users);
+    } catch (error) {
+      console.error("Failed to load suggested users:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadSuggestedUsers = async () => {
-      if (myRole !== ProjectMemberRole.Admin || !jwtToken) return;
-
-      setIsLoading(true);
-      try {
-        const users = await UserApi.getSuggestedUsers(jwtToken);
-        const existingMemberIds = new Set(
-          projectData?.members.map((m) => m.id) || []
-        );
-        const filteredUsers = users.filter(
-          (user) => !existingMemberIds.has(user.id)
-        );
-        setSuggestedUsers(filteredUsers);
-      } catch (error) {
-        console.error("Failed to load suggested users:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadSuggestedUsers();
-  }, [myRole, jwtToken, projectData?.members]);
+  }, [myRole, jwtToken, projectData?.id, projectData?.members]);
 
   if (myRole !== ProjectMemberRole.Admin) {
     return (
@@ -584,7 +613,11 @@ function SuggestedUsersSection() {
   return (
     <div className="space-y-2 max-h-96 overflow-y-auto">
       {suggestedUsers.map((user) => (
-        <SuggestedUserItem key={user.id} user={user} />
+        <SuggestedUserItem
+          key={user.id}
+          user={user}
+          onInviteSent={loadSuggestedUsers}
+        />
       ))}
     </div>
   );
