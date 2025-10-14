@@ -1,7 +1,9 @@
+import { Logger } from '@logdash/js-sdk';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './shared/filters/all-exceptions.filter';
 import { MetricsInterceptor } from './shared/posthog/metrics.interceptor';
 
 async function bootstrap() {
@@ -9,6 +11,7 @@ async function bootstrap() {
 
   app.enableCors({ origin: '*' });
 
+  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger)));
   app.useGlobalInterceptors(new MetricsInterceptor(app.get(Reflector)));
 
   const config = new DocumentBuilder()
