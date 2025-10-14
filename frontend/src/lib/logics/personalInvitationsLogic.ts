@@ -1,4 +1,13 @@
-import { actions, connect, kea, key, listeners, path, props } from "kea";
+import {
+  actions,
+  connect,
+  events,
+  kea,
+  key,
+  listeners,
+  path,
+  props,
+} from "kea";
 import { loaders } from "kea-loaders";
 import type { PersonalInvitation } from "../api/personal-invitations.api";
 import { PersonalInvitationsApi } from "../api/personal-invitations.api";
@@ -73,6 +82,12 @@ export const personalInvitationsLogic = kea<personalInvitationsLogicType>([
       await suggestedUsersLogic({
         projectId: props.projectId,
       }).asyncActions.loadSuggestedUsers();
+    },
+  })),
+
+  events(({ asyncActions }) => ({
+    afterMount: () => {
+      asyncActions.loadPersonalInvitations();
     },
   })),
 ]);

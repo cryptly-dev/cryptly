@@ -1,4 +1,4 @@
-import { connect, kea, key, path, props } from "kea";
+import { connect, events, kea, key, path, props } from "kea";
 import { loaders } from "kea-loaders";
 import { ProjectsApi } from "../api/projects.api";
 import type { SuggestedUser } from "../api/user.api";
@@ -36,5 +36,11 @@ export const suggestedUsersLogic = kea<suggestedUsersLogicType>([
         },
       },
     ],
+  })),
+
+  events(({ asyncActions }) => ({
+    afterMount: () => {
+      asyncActions.loadSuggestedUsers();
+    },
   })),
 ]);

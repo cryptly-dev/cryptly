@@ -617,7 +617,7 @@ function SuggestedUsersSection() {
     );
   }
 
-  if (suggestedUsersLoading) {
+  if (suggestedUsersLoading && suggestedUsers.length === 0) {
     return (
       <div className="text-center py-8 px-4">
         <div className="text-sm text-muted-foreground">
