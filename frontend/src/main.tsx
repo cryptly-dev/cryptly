@@ -44,8 +44,8 @@ axios.interceptors.response.use(
       // Clear auth token from localStorage
       localStorage.clear();
 
-      // Redirect to login page
-      window.location.href = "/app/login";
+      // Redirect to login page using router navigation (preserves history)
+      router.navigate({ to: "/app/login" });
     }
     return Promise.reject(error);
   }
