@@ -235,29 +235,35 @@ describe('ProjectCoreController (reads)', () => {
         email: 'user4@test.com',
       });
 
+      const projectProxy = await bootstrap.utils.projectUtils.createProject(token1);
       const project1 = await bootstrap.utils.projectUtils.createProject(token1);
       const project2 = await bootstrap.utils.projectUtils.createProject(token1);
       const project3 = await bootstrap.utils.projectUtils.createProject(token1);
+      const projectToInvite = await bootstrap.utils.projectUtils.createProject(token1);
 
-      await bootstrap.utils.projectUtils.addMemberToProject(project2.id, user2.id);
-      await bootstrap.utils.projectUtils.addMemberToProject(project3.id, user2.id);
+      await bootstrap.utils.projectUtils.addMemberToProject(projectProxy.id, user2.id);
+      await bootstrap.utils.projectUtils.addMemberToProject(projectProxy.id, user3.id);
+      await bootstrap.utils.projectUtils.addMemberToProject(projectProxy.id, user4.id);
 
+      // project 2
       await bootstrap.utils.projectUtils.addMemberToProject(project2.id, user3.id);
+      await bootstrap.utils.projectUtils.addMemberToProject(project2.id, user4.id);
 
+      // project 3
       await bootstrap.utils.projectUtils.addMemberToProject(project3.id, user4.id);
 
       // when
       const response = await request(bootstrap.app.getHttpServer())
-        .get(`/projects/${project1.id}/suggested-users`)
+        .get(`/projects/${projectToInvite.id}/suggested-users`)
         .set('authorization', `Bearer ${token1}`);
 
       // then
       expect(response.status).toEqual(200);
       expect(response.body).toHaveLength(3);
       expect(response.body[0]).toMatchObject({
-        id: user2.id,
-        email: user2.email,
-        avatarUrl: user2.avatarUrl,
+        id: user4.id,
+        email: user4.email,
+        avatarUrl: user4.avatarUrl,
       });
       expect(response.body[1]).toMatchObject({
         id: user3.id,
@@ -265,9 +271,9 @@ describe('ProjectCoreController (reads)', () => {
         avatarUrl: user3.avatarUrl,
       });
       expect(response.body[2]).toMatchObject({
-        id: user4.id,
-        email: user4.email,
-        avatarUrl: user4.avatarUrl,
+        id: user2.id,
+        email: user2.email,
+        avatarUrl: user2.avatarUrl,
       });
     });
 
@@ -403,32 +409,6 @@ describe('ProjectCoreController (reads)', () => {
 
       // then
       expect(response.status).toEqual(401);
-    });
-
-    it('excludes users without public keys', async () => {
-      // given
-      const { user: user1, token: token1 } = await bootstrap.utils.userUtils.createDefault({
-        email: 'user1@test.com',
-      });
-      const { user: user2 } = await bootstrap.utils.userUtils.createDefault({
-        email: 'user2@test.com',
-      });
-
-      await bootstrap.models.userModel.updateOne({ _id: user2.id }, { $unset: { publicKey: '' } });
-
-      const project1 = await bootstrap.utils.projectUtils.createProject(token1);
-      const project2 = await bootstrap.utils.projectUtils.createProject(token1);
-
-      await bootstrap.utils.projectUtils.addMemberToProject(project2.id, user2.id);
-
-      // when
-      const response = await request(bootstrap.app.getHttpServer())
-        .get(`/projects/${project1.id}/suggested-users`)
-        .set('authorization', `Bearer ${token1}`);
-
-      // then
-      expect(response.status).toEqual(200);
-      expect(response.body).toHaveLength(0);
     });
   });
 });

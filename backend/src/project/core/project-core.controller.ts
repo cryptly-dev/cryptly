@@ -162,7 +162,6 @@ export class ProjectCoreController {
     const users = await this.userReadService.readByIds(userIds);
 
     return users
-      .filter((user) => !!user.publicKey)
       .map((user) => ({
         user,
         count: userProjectCount.get(user.id) || 0,
