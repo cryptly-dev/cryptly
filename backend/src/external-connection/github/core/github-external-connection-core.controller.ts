@@ -125,7 +125,7 @@ export class GithubExternalConnectionCoreController {
     @Body() body: CreateGithubIntegrationBody,
     @CurrentUserId() currentUserId: string,
   ): Promise<GithubIntegrationSerialized> {
-    const project = await this.projectReadService.findById(body.projectId);
+    const project = await this.projectReadService.findByIdOrThrow(body.projectId);
 
     const role = project.members.get(currentUserId);
 
@@ -236,7 +236,7 @@ export class GithubExternalConnectionCoreController {
       throw new NotFoundException('Integration not found');
     }
 
-    const project = await this.projectReadService.findById(integration.projectId);
+    const project = await this.projectReadService.findByIdOrThrow(integration.projectId);
 
     const role = project.members.get(currentUserId);
 

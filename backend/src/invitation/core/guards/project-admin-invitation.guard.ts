@@ -25,7 +25,7 @@ export class ProjectAdminInvitationGuard implements CanActivate {
       throw new ForbiddenException();
     }
 
-    const project = await this.projectReadService.findById(projectId);
+    const project = await this.projectReadService.findByIdOrThrow(projectId);
     const userRole = project.members.get(userId);
 
     if (!userRole) {

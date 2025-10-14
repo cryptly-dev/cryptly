@@ -1,6 +1,7 @@
 import {
   actions,
   connect,
+  events,
   kea,
   key,
   listeners,
@@ -97,6 +98,12 @@ export const invitationsLogic = kea<invitationsLogicType>([
     deleteInvitation: async ({ invitationId }) => {
       await InvitationsApi.deleteInvitation(values.jwtToken!, invitationId);
       actions.loadInvitations();
+    },
+  })),
+
+  events(({ asyncActions }) => ({
+    afterMount: () => {
+      asyncActions.loadInvitations();
     },
   })),
 ]);

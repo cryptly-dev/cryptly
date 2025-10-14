@@ -18,7 +18,12 @@ export const FloatingDock = ({
   desktopClassName,
   mobileClassName,
 }: {
-  items: { title: string; icon: React.ReactNode; href: string }[];
+  items: {
+    title: string;
+    icon: React.ReactNode;
+    href: string;
+    badge?: number;
+  }[];
   desktopClassName?: string;
   mobileClassName?: string;
 }) => {
@@ -61,7 +66,12 @@ const FloatingDockMobile = ({
   loadingItem,
   onItemClick,
 }: {
-  items: { title: string; icon: React.ReactNode; href: string }[];
+  items: {
+    title: string;
+    icon: React.ReactNode;
+    href: string;
+    badge?: number;
+  }[];
   className?: string;
   loadingItem: string | null;
   onItemClick: () => void;
@@ -96,7 +106,7 @@ const FloatingDockMobile = ({
                   to={item.href}
                   key={item.title}
                   onClick={() => onItemClick()}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-900 active:scale-90 transition-transform"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-900 active:scale-90 transition-transform"
                 >
                   <div className="h-4 w-4">
                     {loadingItem === item.title ? (
@@ -105,6 +115,11 @@ const FloatingDockMobile = ({
                       item.icon
                     )}
                   </div>
+                  {item.badge && item.badge > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-semibold text-white">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               </motion.div>
             ))}
@@ -127,7 +142,12 @@ const FloatingDockDesktop = ({
   loadingItem,
   onItemClick,
 }: {
-  items: { title: string; icon: React.ReactNode; href: string }[];
+  items: {
+    title: string;
+    icon: React.ReactNode;
+    href: string;
+    badge?: number;
+  }[];
   className?: string;
   loadingItem: string | null;
   onItemClick: () => void;
@@ -149,6 +169,7 @@ const FloatingDockDesktop = ({
           {...item}
           isLoading={loadingItem === item.title}
           onItemClick={onItemClick}
+          badge={item.badge}
         />
       ))}
     </motion.div>
@@ -162,6 +183,7 @@ function IconContainer({
   href,
   isLoading,
   onItemClick,
+  badge,
 }: {
   mouseX: MotionValue;
   title: string;
@@ -169,6 +191,7 @@ function IconContainer({
   href: string;
   isLoading: boolean;
   onItemClick: () => void;
+  badge?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -243,6 +266,11 @@ function IconContainer({
         >
           {isLoading ? <IconLoader2 className="animate-spin" /> : icon}
         </motion.div>
+        {badge && badge > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-semibold text-white">
+            {badge}
+          </span>
+        )}
       </motion.div>
     </Link>
   );

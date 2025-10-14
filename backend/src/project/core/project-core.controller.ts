@@ -17,8 +17,10 @@ import { Types } from 'mongoose';
 import { Observable, filter, fromEvent, map } from 'rxjs';
 import { Role } from 'src/shared/types/role.enum';
 import { CurrentUserId } from '../../auth/core/decorators/current-user-id.decorator';
+import { PersonalInvitationReadService } from '../../personal-invitation/read/personal-invitation-read.service';
 import { ProjectSecretsVersionSerialized } from '../../project-secrets-version/core/entities/project-secrets-version.interface';
 import { ProjectSecretsVersionReadService } from '../../project-secrets-version/read/project-secrets-version-read.service';
+import { UserPartialSerialized } from '../../user/core/entities/user.interface';
 import { UserSerializer } from '../../user/core/entities/user.serializer';
 import { UserReadService } from '../../user/read/user-read.service';
 import { RequireRole } from '../decorators/require-project-role.decorator';
@@ -33,6 +35,7 @@ import { ProjectSerialized } from './entities/project.interface';
 import { ProjectSerializer } from './entities/project.serializer';
 import { ProjectMemberGuard } from './guards/project-member.guard';
 import { RemoveProjectMemberGuard } from './guards/remove-project-member.guard';
+import { AddEncryptedSecretsKeyBody } from './dto/add-encrypted-secrets-key.body';
 
 @Controller('')
 @ApiTags('Projects')
@@ -43,6 +46,7 @@ export class ProjectCoreController {
     private readonly projectReadService: ProjectReadService,
     private readonly userReadService: UserReadService,
     private readonly projectSecretsVersionReadService: ProjectSecretsVersionReadService,
+    private readonly personalInvitationReadService: PersonalInvitationReadService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -108,7 +112,7 @@ export class ProjectCoreController {
   @RequireRole(Role.Read, Role.Write, Role.Admin)
   @ApiResponse({ type: ProjectSerialized })
   public async findById(@Param('projectId') projectId: string): Promise<ProjectSerialized> {
-    const project = await this.projectReadService.findById(projectId);
+    const project = await this.projectReadService.findByIdOrThrow(projectId);
     const memberIds = [...project.members.keys()];
     const members = await this.userReadService.readByIds(memberIds);
     const membersHydrated = members.map(UserSerializer.serializePartial);
@@ -121,6 +125,50 @@ export class ProjectCoreController {
       membersHydrated,
       latestVersion.encryptedSecrets,
     );
+  }
+
+  @Get('projects/:projectId/suggested-users')
+  @UseGuards(ProjectMemberGuard)
+  @RequireRole(Role.Admin)
+  @ApiResponse({ type: [UserPartialSerialized] })
+  public async getSuggestedUsers(
+    @CurrentUserId() userId: string,
+    @Param('projectId') projectId: string,
+  ): Promise<UserPartialSerialized[]> {
+    const projects = await this.projectReadService.findUserProjects(userId);
+    const project = await this.projectReadService.findByIdOrThrow(projectId);
+    const personalInvitations = await this.personalInvitationReadService.findByProjectId(projectId);
+
+    const userProjectCount = new Map<string, number>();
+
+    for (const proj of projects) {
+      for (const [memberId] of proj.members.entries()) {
+        if (memberId === userId) {
+          continue;
+        }
+
+        const currentCount = userProjectCount.get(memberId) || 0;
+        userProjectCount.set(memberId, currentCount + 1);
+      }
+    }
+
+    const existingMemberIds = new Set(project.members.keys());
+    const invitedUserIds = new Set(personalInvitations.map((inv) => inv.invitedUserId));
+
+    const userIds = Array.from(userProjectCount.keys()).filter(
+      (id) => !existingMemberIds.has(id) && !invitedUserIds.has(id),
+    );
+
+    const users = await this.userReadService.readByIds(userIds);
+
+    return users
+      .filter((user) => !!user.publicKey)
+      .map((user) => ({
+        user,
+        count: userProjectCount.get(user.id) || 0,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .map(({ user }) => UserSerializer.serializePartial(user));
   }
 
   @Get('projects/:projectId/history')
@@ -141,7 +189,7 @@ export class ProjectCoreController {
     @Body() body: UpdateProjectBody,
     @CurrentUserId() userId: string,
   ): Promise<ProjectSerialized> {
-    const project = await this.projectReadService.findById(projectId);
+    const project = await this.projectReadService.findByIdOrThrow(projectId);
     const userRole = project.members.get(userId)!;
 
     this.validatePayloadPermissions(userRole, body);
@@ -166,6 +214,21 @@ export class ProjectCoreController {
       { ...updatedProject, updatedAt: latestVersion.updatedAt },
       membersHydrated,
       latestVersion.encryptedSecrets,
+    );
+  }
+
+  @Post('projects/:projectId/encrypted-secrets-keys')
+  @UseGuards(ProjectMemberGuard)
+  @RequireRole(Role.Admin)
+  @HttpCode(204)
+  public async addEncryptedSecretsKey(
+    @Param('projectId') projectId: string,
+    @Body() body: AddEncryptedSecretsKeyBody,
+  ): Promise<void> {
+    await this.projectWriteService.addEncryptedSecretsKey(
+      projectId,
+      body.userId,
+      body.encryptedSecretsKey,
     );
   }
 
@@ -204,8 +267,7 @@ export class ProjectCoreController {
       throw new ForbiddenException('Read role cannot update project');
     }
 
-    const isUpdatingOtherFields =
-      body.name !== undefined || body.encryptedSecretsKeys !== undefined;
+    const isUpdatingOtherFields = body.name !== undefined;
 
     if (userRole === Role.Write && isUpdatingOtherFields) {
       throw new ForbiddenException('Write role can only update secrets');

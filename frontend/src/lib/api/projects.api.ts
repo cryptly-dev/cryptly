@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { SuggestedUser } from "./user.api";
 
 export enum ProjectMemberRole {
   Read = "read",
@@ -185,5 +186,40 @@ export class ProjectsApi {
       }
     );
     return response.data;
+  }
+
+  public static async getSuggestedUsers(
+    jwtToken: string,
+    projectId: string
+  ): Promise<SuggestedUser[]> {
+    const response = await axios.get<SuggestedUser[]>(
+      `/projects/${projectId}/suggested-users`,
+      {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      }
+    );
+    return response.data;
+  }
+
+  public static async addEncryptedSecretsKey(
+    jwtToken: string,
+    projectId: string,
+    userId: string,
+    encryptedSecretsKey: string
+  ): Promise<void> {
+    await axios.post(
+      `/projects/${projectId}/encrypted-secrets-keys`,
+      {
+        userId,
+        encryptedSecretsKey,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      }
+    );
   }
 }

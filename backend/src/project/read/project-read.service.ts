@@ -9,7 +9,7 @@ import { ProjectSerializer } from '../core/entities/project.serializer';
 export class ProjectReadService {
   constructor(@InjectModel(ProjectEntity.name) private projectModel: Model<ProjectEntity>) {}
 
-  public async findById(id: string): Promise<ProjectNormalized> {
+  public async findByIdOrThrow(id: string): Promise<ProjectNormalized> {
     const project = await this.projectModel.findById(id).exec();
 
     if (!project) {

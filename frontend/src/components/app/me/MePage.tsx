@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { PersonalInvitesSection } from "@/components/me/PersonalInvitesSection";
 import { authLogic } from "@/lib/logics/authLogic";
 import { useNavigate } from "@tanstack/react-router";
 import { useActions, useValues } from "kea";
@@ -69,6 +70,8 @@ export function MePage() {
                 </p>
               </div>
             </div>
+
+            <PersonalInvitesSection />
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
