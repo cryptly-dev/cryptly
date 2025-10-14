@@ -39,6 +39,7 @@ describe('PersonalInvitationCoreController (writes)', () => {
       expect(response.body).toEqual({
         id: expect.any(String),
         projectId: project.id,
+        projectName: project.name,
         author: {
           id: admin.id,
           email: admin.email,
