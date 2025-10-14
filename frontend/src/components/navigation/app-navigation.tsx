@@ -1,4 +1,5 @@
 import { authLogic } from "@/lib/logics/authLogic";
+import { myPersonalInvitationsLogic } from "@/lib/logics/myPersonalInvitationsLogic";
 import { useLocation } from "@tanstack/react-router";
 import { useValues } from "kea";
 import { Code, Home, LogIn, User } from "lucide-react";
@@ -13,6 +14,7 @@ function AppNavigationImpl() {
   const isAppRoute = location.href.startsWith("/app");
 
   const { isLoggedIn } = useValues(authLogic);
+  const { myPersonalInvitations } = useValues(myPersonalInvitationsLogic);
 
   const isDeveloper = useFeatureFlagEnabled("developer");
 
@@ -56,6 +58,7 @@ function AppNavigationImpl() {
               <User className="h-full w-full text-neutral-500 dark:text-neutral-300" />
             ),
             href: "/app/me",
+            badge: myPersonalInvitations?.length || 0,
           },
         ]
       : []),

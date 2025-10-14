@@ -13,7 +13,7 @@ export interface SuggestedUser {
   id: string;
   email: string;
   avatarUrl: string;
-  publicKey: string;
+  publicKey?: string;
 }
 
 export interface UpdateUserDto {

@@ -14,6 +14,7 @@ import { ProjectMemberGuard } from 'src/project/core/guards/project-member.guard
 import { RequireRole } from 'src/project/decorators/require-project-role.decorator';
 import { Role } from 'src/shared/types/role.enum';
 import { CurrentUserId } from '../../auth/core/decorators/current-user-id.decorator';
+import { ProjectReadService } from '../../project/read/project-read.service';
 import { ProjectWriteService } from '../../project/write/project-write.service';
 import { UserReadService } from '../../user/read/user-read.service';
 import { PersonalInvitationReadService } from '../read/personal-invitation-read.service';
@@ -29,6 +30,7 @@ export class PersonalInvitationCoreController {
   constructor(
     private readonly personalInvitationWriteService: PersonalInvitationWriteService,
     private readonly personalInvitationReadService: PersonalInvitationReadService,
+    private readonly projectReadService: ProjectReadService,
     private readonly projectWriteService: ProjectWriteService,
     private readonly userReadService: UserReadService,
   ) {}
@@ -46,16 +48,23 @@ export class PersonalInvitationCoreController {
     const allUserIds = [...new Set([...authorIds, ...invitedUserIds])];
     const users = await this.userReadService.readByIds(allUserIds);
 
+    const projectIds = [...new Set(invitations.map((i) => i.projectId))];
+    const projects = await Promise.all(
+      projectIds.map((id) => this.projectReadService.findByIdOrThrow(id)),
+    );
+    const projectsMap = new Map(projects.map((p) => [p.id, p.name]));
+
     return invitations
       .map((invitation) => {
         const author = users.find((u) => u.id === invitation.authorId);
         const invitedUser = users.find((u) => u.id === invitation.invitedUserId);
+        const projectName = projectsMap.get(invitation.projectId);
 
-        if (!author || !invitedUser) {
+        if (!author || !invitedUser || !projectName) {
           return null;
         }
 
-        return PersonalInvitationSerializer.serialize(invitation, author, invitedUser);
+        return PersonalInvitationSerializer.serialize(invitation, author, invitedUser, projectName);
       })
       .filter((i) => i !== null);
   }
@@ -69,16 +78,23 @@ export class PersonalInvitationCoreController {
     const authorIds = invitations.map((i) => i.authorId);
     const users = await this.userReadService.readByIds([...authorIds, userId]);
 
+    const projectIds = [...new Set(invitations.map((i) => i.projectId))];
+    const projects = await Promise.all(
+      projectIds.map((id) => this.projectReadService.findByIdOrThrow(id)),
+    );
+    const projectsMap = new Map(projects.map((p) => [p.id, p.name]));
+
     return invitations
       .map((invitation) => {
         const author = users.find((u) => u.id === invitation.authorId);
         const invitedUser = users.find((u) => u.id === invitation.invitedUserId);
+        const projectName = projectsMap.get(invitation.projectId);
 
-        if (!author || !invitedUser) {
+        if (!author || !invitedUser || !projectName) {
           return null;
         }
 
-        return PersonalInvitationSerializer.serialize(invitation, author, invitedUser);
+        return PersonalInvitationSerializer.serialize(invitation, author, invitedUser, projectName);
       })
       .filter((i) => i !== null);
   }
@@ -99,8 +115,9 @@ export class PersonalInvitationCoreController {
     });
     const author = await this.userReadService.readByIdOrThrow(userId);
     const invitedUser = await this.userReadService.readByIdOrThrow(body.invitedUserId);
+    const project = await this.projectReadService.findByIdOrThrow(projectId);
 
-    return PersonalInvitationSerializer.serialize(invitation, author, invitedUser);
+    return PersonalInvitationSerializer.serialize(invitation, author, invitedUser, project.name);
   }
 
   @Post('personal-invitations/:personalInvitationId/accept')

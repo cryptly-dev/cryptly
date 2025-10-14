@@ -5,6 +5,7 @@ import type { SuggestedUser } from "./user.api";
 export interface PersonalInvitation {
   id: string;
   projectId: string;
+  projectName: string;
   author: SuggestedUser;
   invitedUser: SuggestedUser;
   role: ProjectMemberRole;

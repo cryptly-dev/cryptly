@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsObject } from 'class-validator';
 import { IsString, MaxLength } from 'class-validator';
-import { ENCRYPTED_SECRETS_MAX_LENGTH } from 'src/shared/constants/validation';
 
 export class AddEncryptedSecretsKeyBody {
   @ApiProperty()
@@ -10,6 +8,6 @@ export class AddEncryptedSecretsKeyBody {
 
   @ApiProperty()
   @IsString()
-  @MaxLength(200)
+  @MaxLength(1000)
   public encryptedSecretsKey: string;
 }

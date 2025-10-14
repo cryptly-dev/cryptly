@@ -404,5 +404,31 @@ describe('ProjectCoreController (reads)', () => {
       // then
       expect(response.status).toEqual(401);
     });
+
+    it('excludes users without public keys', async () => {
+      // given
+      const { user: user1, token: token1 } = await bootstrap.utils.userUtils.createDefault({
+        email: 'user1@test.com',
+      });
+      const { user: user2 } = await bootstrap.utils.userUtils.createDefault({
+        email: 'user2@test.com',
+      });
+
+      await bootstrap.models.userModel.updateOne({ _id: user2.id }, { $unset: { publicKey: '' } });
+
+      const project1 = await bootstrap.utils.projectUtils.createProject(token1);
+      const project2 = await bootstrap.utils.projectUtils.createProject(token1);
+
+      await bootstrap.utils.projectUtils.addMemberToProject(project2.id, user2.id);
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .get(`/projects/${project1.id}/suggested-users`)
+        .set('authorization', `Bearer ${token1}`);
+
+      // then
+      expect(response.status).toEqual(200);
+      expect(response.body).toHaveLength(0);
+    });
   });
 });

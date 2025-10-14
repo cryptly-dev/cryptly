@@ -23,7 +23,7 @@ export class UserPartialSerialized {
   @ApiProperty()
   public avatarUrl: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   public publicKey?: string;
 }
 

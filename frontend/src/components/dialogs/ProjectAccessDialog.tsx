@@ -536,9 +536,13 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
   ];
 
   const handleInvite = async () => {
+    if (!user.publicKey) {
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await createPersonalInvitation(user.id, selectedRole);
+      await createPersonalInvitation(user.id, user.publicKey, selectedRole);
     } finally {
       setIsLoading(false);
     }
@@ -581,7 +585,7 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
         <Button
           onClick={handleInvite}
           isLoading={isLoading}
-          disabled={isLoading}
+          disabled={isLoading || !user.publicKey}
           variant="ghost"
           size="sm"
           className="size-8 p-0 cursor-pointer"

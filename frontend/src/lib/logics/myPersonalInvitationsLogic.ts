@@ -3,6 +3,7 @@ import { loaders } from "kea-loaders";
 import type { PersonalInvitation } from "../api/personal-invitations.api";
 import { PersonalInvitationsApi } from "../api/personal-invitations.api";
 import { authLogic } from "./authLogic";
+import { projectsLogic } from "./projectsLogic";
 
 import type { myPersonalInvitationsLogicType } from "./myPersonalInvitationsLogicType";
 
@@ -11,6 +12,7 @@ export const myPersonalInvitationsLogic = kea<myPersonalInvitationsLogicType>([
 
   connect({
     values: [authLogic, ["jwtToken"]],
+    actions: [projectsLogic, ["loadProjects"]],
   }),
 
   actions({
@@ -33,13 +35,14 @@ export const myPersonalInvitationsLogic = kea<myPersonalInvitationsLogicType>([
     ],
   })),
 
-  listeners(({ asyncActions, values }) => ({
+  listeners(({ asyncActions, actions, values }) => ({
     acceptPersonalInvitation: async ({ invitationId }) => {
       await PersonalInvitationsApi.acceptPersonalInvitation(
         values.jwtToken!,
         invitationId
       );
       await asyncActions.loadMyPersonalInvitations();
+      actions.loadProjects();
     },
     rejectPersonalInvitation: async ({ invitationId }) => {
       await PersonalInvitationsApi.rejectPersonalInvitation(

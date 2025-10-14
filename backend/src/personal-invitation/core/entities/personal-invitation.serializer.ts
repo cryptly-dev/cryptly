@@ -21,10 +21,12 @@ export class PersonalInvitationSerializer {
     normalized: PersonalInvitationNormalized,
     author: UserPartialSerialized,
     invitedUser: UserPartialSerialized,
+    projectName: string,
   ): PersonalInvitationSerialized {
     return {
       id: normalized.id,
       projectId: normalized.projectId,
+      projectName,
       role: normalized.role,
       author: {
         id: author.id,

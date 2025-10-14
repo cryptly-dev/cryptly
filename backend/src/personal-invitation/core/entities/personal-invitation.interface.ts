@@ -18,6 +18,9 @@ export class PersonalInvitationSerialized {
   @ApiProperty()
   public projectId: string;
 
+  @ApiProperty()
+  public projectName: string;
+
   @ApiProperty({ type: UserPartialSerialized })
   public author: UserPartialSerialized;
 
