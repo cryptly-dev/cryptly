@@ -15,7 +15,10 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Invitation } from "@/lib/api/invitations.api";
-import { PersonalInvitationsApi } from "@/lib/api/personal-invitations.api";
+import {
+  PersonalInvitationsApi,
+  type PersonalInvitation,
+} from "@/lib/api/personal-invitations.api";
 import {
   ProjectMemberRole,
   ProjectsApi,
@@ -24,6 +27,7 @@ import {
 import { type SuggestedUser } from "@/lib/api/user.api";
 import { authLogic } from "@/lib/logics/authLogic";
 import { invitationsLogic } from "@/lib/logics/invitationsLogic";
+import { personalInvitationsLogic } from "@/lib/logics/personalInvitationsLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
 import { getRelativeTime } from "@/lib/utils";
@@ -201,8 +205,13 @@ function MembersSection() {
   );
 }
 
-function ActiveInviteLinkItem({ invitation }: { invitation: Invitation }) {
+type ActiveInvite =
+  | { type: "link"; data: Invitation }
+  | { type: "personal"; data: PersonalInvitation };
+
+function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
   const { deleteInvitation } = useAsyncActions(invitationsLogic);
+  const { deletePersonalInvitation } = useActions(personalInvitationsLogic);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -212,51 +221,85 @@ function ActiveInviteLinkItem({ invitation }: { invitation: Invitation }) {
     setTimeout(() => setCopiedLinkId(null), 1_000);
   };
 
-  const handleRevokeLink = async (invitationId: string) => {
+  const handleRevoke = async () => {
     setIsLoading(true);
-    await deleteInvitation(invitationId);
+    if (invite.type === "link") {
+      await deleteInvitation(invite.data.id);
+    } else {
+      deletePersonalInvitation(invite.data.id);
+    }
   };
 
   return (
-    <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-md">
+    <div className="flex items-center gap-3 p-2 rounded-md bg-muted/30">
+      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden">
+        {invite.type === "personal" ? (
+          invite.data.invitedUser.avatarUrl ? (
+            <img
+              src={invite.data.invitedUser.avatarUrl}
+              alt={invite.data.invitedUser.email}
+              className="size-8 rounded-full object-cover"
+            />
+          ) : (
+            invite.data.invitedUser.email.charAt(0).toUpperCase()
+          )
+        ) : (
+          <IconLink className="size-4" />
+        )}
+      </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-foreground/90 mb-1">
-          Invite link
+        <div className="text-sm font-medium truncate">
+          {invite.type === "personal"
+            ? invite.data.invitedUser.email
+            : "Invite link"}
         </div>
         <div className="text-xs text-muted-foreground">
-          Created {getRelativeTime(invitation.createdAt)} • ID:{" "}
-          {invitation.id.slice(-8)}
+          {invite.type === "personal" ? (
+            <>
+              {invite.data.role} • Created{" "}
+              {getRelativeTime(invite.data.createdAt)}
+            </>
+          ) : (
+            <>
+              Created {getRelativeTime(invite.data.createdAt)} • ID:{" "}
+              {invite.data.id.slice(-8)}
+            </>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-1 shrink-0">
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() =>
-            handleCopyLink(
-              invitation.id,
-              `${import.meta.env.VITE_APP_URL}/invite/${invitation.id}`
-            )
-          }
-          className="size-8 p-0 cursor-pointer"
-          aria-label="Copy link"
-        >
-          {copiedLinkId === invitation.id ? (
-            <IconCheck className="size-4 text-green-600" />
-          ) : (
-            <IconCopy className="size-4" />
-          )}
-        </Button>
+        {invite.type === "link" && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() =>
+              handleCopyLink(
+                invite.data.id,
+                `${import.meta.env.VITE_APP_URL}/invite/${invite.data.id}`
+              )
+            }
+            className="size-8 p-0 cursor-pointer"
+            aria-label="Copy link"
+          >
+            {copiedLinkId === invite.data.id ? (
+              <IconCheck className="size-4 text-green-600" />
+            ) : (
+              <IconCopy className="size-4" />
+            )}
+          </Button>
+        )}
         <Button
           isLoading={isLoading}
           type="button"
           size="sm"
           variant="ghost"
-          onClick={() => handleRevokeLink(invitation.id)}
+          onClick={handleRevoke}
           disabled={isLoading}
           className="size-8 p-0 text-destructive hover:text-destructive cursor-pointer"
-          aria-label="Revoke link"
+          aria-label={
+            invite.type === "link" ? "Revoke link" : "Revoke invitation"
+          }
         >
           <IconTrash className="size-4" />
         </Button>
@@ -265,10 +308,14 @@ function ActiveInviteLinkItem({ invitation }: { invitation: Invitation }) {
   );
 }
 
-function ActiveInviteLinksSection() {
+function ActiveInvitesSection() {
   const { projectData, userData } = useValues(projectLogic);
   const { invitations, invitationsLoading } = useValues(invitationsLogic);
+  const { personalInvitations, personalInvitationsLoading } = useValues(
+    personalInvitationsLogic
+  );
   const { loadInvitations } = useActions(invitationsLogic);
+  const { loadPersonalInvitations } = useActions(personalInvitationsLogic);
 
   const myRole = useMemo(
     () =>
@@ -279,48 +326,75 @@ function ActiveInviteLinksSection() {
   useEffect(() => {
     if (myRole === ProjectMemberRole.Admin) {
       loadInvitations();
+      loadPersonalInvitations();
     }
   }, [myRole]);
+
+  const allInvites = useMemo((): ActiveInvite[] => {
+    const linkInvites: ActiveInvite[] =
+      invitations?.map((inv) => ({ type: "link" as const, data: inv })) || [];
+    const personalInvites: ActiveInvite[] =
+      personalInvitations?.map((inv) => ({
+        type: "personal" as const,
+        data: inv,
+      })) || [];
+    return [...linkInvites, ...personalInvites].sort(
+      (a, b) =>
+        new Date(b.data.createdAt).getTime() -
+        new Date(a.data.createdAt).getTime()
+    );
+  }, [invitations, personalInvitations]);
 
   if (myRole !== ProjectMemberRole.Admin) {
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <IconLink className="size-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium">Active invite links</h3>
+          <IconUserPlus className="size-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium">Active invites</h3>
         </div>
         <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
             Only <span className="font-medium underline">Admins</span> can view
-            invite links.
+            active invites.
           </div>
         </div>
       </div>
     );
   }
 
+  const isLoading =
+    (invitationsLoading && !invitations) ||
+    (personalInvitationsLoading && !personalInvitations);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <IconLink className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Active invite links</h3>
+        <IconUserPlus className="size-4 text-muted-foreground" />
+        <h3 className="text-sm font-medium">Active invites</h3>
       </div>
-      {invitationsLoading && !invitations ? (
+      {isLoading ? (
         <div className="text-center py-8 px-4">
           <div className="text-sm text-muted-foreground">
-            Loading invitations...
+            Loading invites...
           </div>
         </div>
-      ) : invitations && invitations.length > 0 ? (
+      ) : allInvites.length > 0 ? (
         <div className="space-y-2 max-h-48 overflow-y-auto">
-          {invitations.map((invitation: Invitation) => (
-            <ActiveInviteLinkItem key={invitation.id} invitation={invitation} />
+          {allInvites.map((invite) => (
+            <ActiveInviteItem
+              key={
+                invite.type === "link"
+                  ? `link-${invite.data.id}`
+                  : `personal-${invite.data.id}`
+              }
+              invite={invite}
+            />
           ))}
         </div>
       ) : (
         <div className="text-center py-8 px-4">
           <div className="text-sm text-muted-foreground mb-2">
-            No invite links created yet
+            No active invites
           </div>
         </div>
       )}
@@ -649,7 +723,7 @@ export function ProjectAccessDialog({
           </DialogHeader>
 
           <MembersSection />
-          <ActiveInviteLinksSection />
+          <ActiveInvitesSection />
 
           <div className="space-y-3">
             <div className="flex items-center gap-2">
