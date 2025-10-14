@@ -9,8 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { authLogic } from "@/lib/logics/authLogic";
 import { IconPlugConnected } from "@tabler/icons-react";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
+import { useValues } from "kea";
 import {
   ArrowRight,
   Check,
@@ -30,6 +32,18 @@ import { motion } from "motion/react";
 import { useState } from "react";
 
 export function IndexPage() {
+  const navigate = useNavigate();
+  const { isLoggedIn } = useValues(authLogic);
+
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isLoggedIn) {
+      navigate({ to: "/app/project" });
+    } else {
+      navigate({ to: "/app/login" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black tracking-wide">
       {/* Hero Section with Beams */}
@@ -74,13 +88,13 @@ export function IndexPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0, 0.55, 0.45, 1], delay: 0.4 }}
           >
-            <Link
-              to="/app/project"
-              className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-white text-black px-8 py-3 font-semibold shadow-2xl transition-all hover:scale-105 hover:shadow-white/25"
+            <button
+              onClick={handleDashboardClick}
+              className="cursor-pointer group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-white text-black px-8 py-3 font-semibold shadow-2xl transition-all hover:scale-105 hover:shadow-white/25"
             >
               <span>Dashboard</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
+            </button>
 
             <a
               href="https://github.com/cryptly-dev/cryptly"
@@ -306,13 +320,13 @@ export function IndexPage() {
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
-                to="/app/project"
+              <button
+                onClick={handleDashboardClick}
                 className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-white text-black px-8 py-3 font-semibold shadow-2xl transition-all hover:scale-105 hover:shadow-white/25"
               >
                 <span>Start using Cryptly</span>
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
+              </button>
             </div>
 
             <div className="mt-12 flex items-center justify-center gap-2 sm:gap-8 text-xs sm:text-sm text-neutral-500">
