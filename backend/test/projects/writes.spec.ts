@@ -6,6 +6,7 @@ import { ProjectCoreController } from '../../src/project/core/project-core.contr
 import { ENCRYPTED_SECRETS_MAX_LENGTH } from '../../src/shared/constants/validation';
 import { Role } from '../../src/shared/types/role.enum';
 import { createTestApp } from '../utils/bootstrap';
+import { describe } from 'node:test';
 
 describe('ProjectCoreController (writes)', () => {
   let bootstrap: Awaited<ReturnType<typeof createTestApp>>;
@@ -698,6 +699,74 @@ describe('ProjectCoreController (writes)', () => {
       // when
       const response = await request(bootstrap.app.getHttpServer()).get(
         `/projects/${project.id}/events`,
+      );
+
+      // then
+      expect(response.status).toEqual(401);
+    });
+  });
+
+  describe('POST /projects/:projectId/encrypted-secrets-keys', () => {
+    it('adds encrypted secrets key as admin', async () => {
+      // given
+      const { token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      const { user: otherUser } = await bootstrap.utils.userUtils.createDefault({
+        email: 'other@test.com',
+      });
+
+      const project = await bootstrap.utils.projectUtils.createProject(token);
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .post(`/projects/${project.id}/encrypted-secrets-keys`)
+        .set('authorization', `Bearer ${token}`)
+        .send({ userId: otherUser.id, encryptedSecretsKey: 'encryptedSecretsKey' });
+
+      // then
+      expect(response.status).toEqual(204);
+      const updatedProject = await bootstrap.utils.projectUtils.getProject(project.id, token);
+      expect(updatedProject.encryptedSecretsKeys).toEqual({
+        [otherUser.id]: 'encryptedSecretsKey',
+      });
+    });
+
+    it('does not add encrypted secrets key when not admin', async () => {
+      // given
+      const { token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      const { user: writeUser, token: writeToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'write@test.com',
+      });
+
+      const { user: otherUser } = await bootstrap.utils.userUtils.createDefault({
+        email: 'other@test.com',
+      });
+
+      const project = await bootstrap.utils.projectUtils.createProject(token);
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, writeUser.id, Role.Write);
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .post(`/projects/${project.id}/encrypted-secrets-keys`)
+        .set('authorization', `Bearer ${writeToken}`)
+        .send({ userId: otherUser.id, encryptedSecretsKey: 'encryptedSecretsKey' });
+
+      // then
+      expect(response.status).toEqual(403);
+    });
+
+    it('does not add encrypted secrets key when not logged in', async () => {
+      // given
+      const { project } = await bootstrap.utils.projectUtils.setupOwner();
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer()).post(
+        `/projects/${project.id}/encrypted-secrets-keys`,
       );
 
       // then

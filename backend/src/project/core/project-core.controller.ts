@@ -33,6 +33,7 @@ import { ProjectSerialized } from './entities/project.interface';
 import { ProjectSerializer } from './entities/project.serializer';
 import { ProjectMemberGuard } from './guards/project-member.guard';
 import { RemoveProjectMemberGuard } from './guards/remove-project-member.guard';
+import { AddEncryptedSecretsKeyBody } from './dto/add-encrypted-secrets-key.body';
 
 @Controller('')
 @ApiTags('Projects')
@@ -166,6 +167,21 @@ export class ProjectCoreController {
       { ...updatedProject, updatedAt: latestVersion.updatedAt },
       membersHydrated,
       latestVersion.encryptedSecrets,
+    );
+  }
+
+  @Post('projects/:projectId/encrypted-secrets-keys')
+  @UseGuards(ProjectMemberGuard)
+  @RequireRole(Role.Admin)
+  @HttpCode(204)
+  public async addEncryptedSecretsKey(
+    @Param('projectId') projectId: string,
+    @Body() body: AddEncryptedSecretsKeyBody,
+  ): Promise<void> {
+    await this.projectWriteService.addEncryptedSecretsKey(
+      projectId,
+      body.userId,
+      body.encryptedSecretsKey,
     );
   }
 

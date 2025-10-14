@@ -158,4 +158,15 @@ export class ProjectWriteService {
 
     return project;
   }
+
+  public async addEncryptedSecretsKey(
+    projectId: string,
+    userId: string,
+    encryptedSecretsKey: string,
+  ): Promise<void> {
+    await this.projectModel.updateOne(
+      { _id: new Types.ObjectId(projectId) },
+      { $set: { [`encryptedSecretsKeys.${userId}`]: encryptedSecretsKey } },
+    );
+  }
 }
