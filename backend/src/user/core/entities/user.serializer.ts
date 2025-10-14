@@ -34,6 +34,7 @@ export class UserSerializer {
       id: normalized.id,
       email: normalized.email,
       avatarUrl: normalized.avatarUrl,
+      publicKey: normalized.publicKey,
     };
   }
 }

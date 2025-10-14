@@ -10,6 +10,7 @@ import { InvitationWriteModule } from '../write/invitation-write.module';
 import { InvitationEntity, InvitationSchema } from './entities/invitation.entity';
 import { ProjectAdminInvitationGuard } from './guards/project-admin-invitation.guard';
 import { InvitationCoreController } from './invitation-core.controller';
+import { PROJECT_MEMBER_GUARD_REQUIRED_IMPORTS } from 'src/project/core/guards/project-member.guard';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { InvitationCoreController } from './invitation-core.controller';
     ProjectReadModule,
     ProjectWriteModule,
     UserReadModule,
+    ...PROJECT_MEMBER_GUARD_REQUIRED_IMPORTS,
   ],
   providers: [ProjectAdminInvitationGuard],
   controllers: [InvitationCoreController],

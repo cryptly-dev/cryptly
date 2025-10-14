@@ -49,6 +49,32 @@ export class ProjectWriteService {
     );
   }
 
+  public async addEncryptedSecretKeyWithoutAddingMember(
+    projectId: string,
+    memberId: string,
+    serverPassphrase: string,
+  ): Promise<void> {
+    await this.projectModel.updateOne(
+      { _id: new Types.ObjectId(projectId) },
+      { $set: { [`encryptedSecretsKeys.${memberId}`]: serverPassphrase } },
+    );
+  }
+
+  public async addMemberWithoutSettingSecretsKey(
+    projectId: string,
+    memberId: string,
+    role: Role,
+  ): Promise<void> {
+    await this.projectModel.updateOne(
+      { _id: new Types.ObjectId(projectId) },
+      {
+        $set: {
+          [`members.${memberId}`]: role,
+        },
+      },
+    );
+  }
+
   public async updateMemberRole(projectId: string, memberId: string, role: Role): Promise<void> {
     await this.projectModel.updateOne(
       { _id: new Types.ObjectId(projectId) },
@@ -104,9 +130,6 @@ export class ProjectWriteService {
     return {
       $set: {
         ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.encryptedSecretsKeys && {
-          encryptedSecretsKeys: dto.encryptedSecretsKeys,
-        }),
       },
     };
   }
@@ -134,5 +157,23 @@ export class ProjectWriteService {
     }
 
     return project;
+  }
+
+  public async addEncryptedSecretsKey(
+    projectId: string,
+    userId: string,
+    encryptedSecretsKey: string,
+  ): Promise<void> {
+    await this.projectModel.updateOne(
+      { _id: new Types.ObjectId(projectId) },
+      { $set: { [`encryptedSecretsKeys.${userId}`]: encryptedSecretsKey } },
+    );
+  }
+
+  public async removeEncryptedSecretsKey(projectId: string, userId: string): Promise<void> {
+    await this.projectModel.updateOne(
+      { _id: new Types.ObjectId(projectId) },
+      { $unset: { [`encryptedSecretsKeys.${userId}`]: '' } },
+    );
   }
 }

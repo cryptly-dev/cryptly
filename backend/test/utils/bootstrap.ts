@@ -29,6 +29,9 @@ import { GithubExternalConnectionUtils } from './github-external-connection.util
 import { ProjectEntity } from '../../src/project/core/entities/project.entity';
 import { GithubIntegrationEntity } from '../../src/external-connection/github/core/entities/github-integration.entity';
 import { GithubInstallationEntity } from '../../src/external-connection/github/core/entities/github-installation.entity';
+import { PersonalInvitationCoreModule } from '../../src/personal-invitation/core/personal-invitation-core.module';
+import { PersonalInvitationUtils } from './personal-invitation.utils';
+import { PersonalInvitationEntity } from '../../src/personal-invitation/core/entities/personal-invitation.entity';
 
 export interface TestApp {
   app: INestApplication;
@@ -38,11 +41,13 @@ export interface TestApp {
     projectModel: Model<ProjectEntity>;
     githubIntegrationModel: Model<GithubIntegrationEntity>;
     githubInstallationModel: Model<GithubInstallationEntity>;
+    personalInvitationModel: Model<PersonalInvitationEntity>;
   };
   utils: {
     userUtils: UserUtils;
     projectUtils: ProjectUtils;
     invitationUtils: InvitationUtils;
+    personalInvitationUtils: PersonalInvitationUtils;
     githubExternalConnectionUtils: GithubExternalConnectionUtils;
   };
   methods: {
@@ -59,6 +64,7 @@ export async function createTestApp(): Promise<TestApp> {
       UserCoreModule,
       ProjectCoreModule,
       InvitationCoreModule,
+      PersonalInvitationCoreModule,
       ScheduleModule.forRoot(),
       EventEmitterModule.forRoot(),
       AuthCoreModule,
@@ -98,6 +104,9 @@ export async function createTestApp(): Promise<TestApp> {
   const githubInstallationModel: Model<GithubInstallationEntity> = module.get(
     getModelToken(GithubInstallationEntity.name),
   );
+  const personalInvitationModel: Model<PersonalInvitationEntity> = module.get(
+    getModelToken(PersonalInvitationEntity.name),
+  );
 
   const clearDatabase = async () => {
     await Promise.all([
@@ -105,6 +114,7 @@ export async function createTestApp(): Promise<TestApp> {
       projectModel.deleteMany({}),
       githubIntegrationModel.deleteMany({}),
       githubInstallationModel.deleteMany({}),
+      personalInvitationModel.deleteMany({}),
     ]);
   };
 
@@ -133,11 +143,13 @@ export async function createTestApp(): Promise<TestApp> {
       projectModel,
       githubIntegrationModel,
       githubInstallationModel,
+      personalInvitationModel,
     },
     utils: {
       userUtils: userUtils,
       projectUtils: projectUtils,
       invitationUtils: new InvitationUtils(app),
+      personalInvitationUtils: new PersonalInvitationUtils(app),
       githubExternalConnectionUtils: new GithubExternalConnectionUtils(app),
     },
     methods: {

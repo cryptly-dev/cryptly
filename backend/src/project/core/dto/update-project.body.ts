@@ -13,11 +13,6 @@ export class UpdateProjectBody {
   public name?: string;
 
   @ApiProperty({ required: false })
-  @IsObject()
-  @IsOptional()
-  public encryptedSecretsKeys?: Record<string, string>;
-
-  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   @MaxLength(ENCRYPTED_SECRETS_MAX_LENGTH)

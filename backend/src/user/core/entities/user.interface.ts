@@ -5,11 +5,11 @@ export class UserPartialNormalized {
   public id: string;
   public email: string;
   public avatarUrl: string;
+  public publicKey?: string;
 }
 
 export class UserNormalized extends UserPartialNormalized {
   public authMethod: AuthMethod;
-  public publicKey?: string;
   public privateKeyEncrypted?: string;
 }
 
@@ -22,14 +22,14 @@ export class UserPartialSerialized {
 
   @ApiProperty()
   public avatarUrl: string;
+
+  @ApiPropertyOptional()
+  public publicKey?: string;
 }
 
 export class UserSerialized extends UserPartialSerialized {
   @ApiProperty({ enum: AuthMethod })
   public authMethod: AuthMethod;
-
-  @ApiPropertyOptional()
-  public publicKey?: string;
 
   @ApiPropertyOptional()
   public privateKeyEncrypted?: string;

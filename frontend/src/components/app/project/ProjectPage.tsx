@@ -4,9 +4,11 @@ import { useProjects } from "@/lib/hooks/useProjects";
 import { authLogic } from "@/lib/logics/authLogic";
 import { integrationsLogic } from "@/lib/logics/integrationsLogic";
 import { invitationsLogic } from "@/lib/logics/invitationsLogic";
+import { personalInvitationsLogic } from "@/lib/logics/personalInvitationsLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
+import { suggestedUsersLogic } from "@/lib/logics/suggestedUsersLogic";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { BindLogic, useValues } from "kea";
 import { useEffect, useState } from "react";
@@ -48,7 +50,11 @@ export function ProjectPage() {
       <BindLogic logic={invitationsLogic} props={{ projectId }}>
         <BindLogic logic={projectSettingsLogic} props={{ projectId }}>
           <BindLogic logic={integrationsLogic} props={{ projectId }}>
-            <ProjectPageContent />
+            <BindLogic logic={personalInvitationsLogic} props={{ projectId }}>
+              <BindLogic logic={suggestedUsersLogic} props={{ projectId }}>
+                <ProjectPageContent />
+              </BindLogic>
+            </BindLogic>
           </BindLogic>
         </BindLogic>
       </BindLogic>
