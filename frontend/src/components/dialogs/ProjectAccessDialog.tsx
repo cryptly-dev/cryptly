@@ -13,8 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Invitation } from "@/lib/api/invitations.api";
 import { ProjectMemberRole, type ProjectMember } from "@/lib/api/projects.api";
+import { type SuggestedUser, UserApi } from "@/lib/api/user.api";
 import { authLogic } from "@/lib/logics/authLogic";
 import { invitationsLogic } from "@/lib/logics/invitationsLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
@@ -25,10 +27,10 @@ import {
   IconCopy,
   IconEye,
   IconEyeOff,
-  IconHexagonalPrism,
   IconLink,
   IconTrash,
   IconUsers,
+  IconUserPlus,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
 import { useEffect, useMemo, useState } from "react";
@@ -357,16 +359,10 @@ function GenerateNewInviteLinkSection() {
 
   if (myRole !== ProjectMemberRole.Admin) {
     return (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <IconHexagonalPrism className="size-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium">Generate new invite link</h3>
-        </div>
-        <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
-          <div className="text-sm text-muted-foreground">
-            Only <span className="font-medium underline">Admins</span> can
-            generate invite links.
-          </div>
+      <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
+        <div className="text-sm text-muted-foreground">
+          Only <span className="font-medium underline">Admins</span> can
+          generate invite links.
         </div>
       </div>
     );
@@ -382,11 +378,6 @@ function GenerateNewInviteLinkSection() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <IconHexagonalPrism className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Generate new invite link</h3>
-      </div>
-
       <div className="grid gap-2">
         <div className="p-3 bg-muted/20 rounded-md border border-dashed text-xs text-muted-foreground">
           {roleDescriptions[selectedRole]}
@@ -456,6 +447,149 @@ function GenerateNewInviteLinkSection() {
   );
 }
 
+function SuggestedUserItem({ user }: { user: SuggestedUser }) {
+  const [selectedRole, setSelectedRole] = useState<ProjectMemberRole>(
+    ProjectMemberRole.Read
+  );
+
+  const availableRoles = [
+    { value: ProjectMemberRole.Read, label: "Read" },
+    { value: ProjectMemberRole.Write, label: "Write" },
+    { value: ProjectMemberRole.Admin, label: "Admin" },
+  ];
+
+  const handleInvite = () => {
+    // TODO: Implement invite logic
+    console.log(`Inviting ${user.email} with role ${selectedRole}`);
+  };
+
+  return (
+    <div className="flex items-center gap-3 p-2 rounded-md bg-muted/30">
+      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden">
+        {user.avatarUrl ? (
+          <img
+            src={user.avatarUrl}
+            alt={user.email}
+            className="size-8 rounded-full object-cover"
+          />
+        ) : (
+          user.email.charAt(0).toUpperCase()
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs text-muted-foreground truncate">
+          {user.email}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Select
+          value={selectedRole}
+          onValueChange={(value: ProjectMemberRole) => setSelectedRole(value)}
+        >
+          <SelectTrigger className="w-24 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {availableRoles.map((role) => (
+              <SelectItem key={role.value} value={role.value}>
+                {role.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          onClick={handleInvite}
+          variant="ghost"
+          size="sm"
+          className="size-8 p-0 cursor-pointer"
+          aria-label={`Invite ${user.email}`}
+        >
+          <IconUserPlus className="size-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function SuggestedUsersSection() {
+  const { projectData, userData } = useValues(projectLogic);
+  const { jwtToken } = useValues(authLogic);
+  const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const myRole = useMemo(
+    () =>
+      projectData?.members.find((member) => member.id === userData?.id)?.role,
+    [projectData?.members, userData?.id]
+  );
+
+  useEffect(() => {
+    const loadSuggestedUsers = async () => {
+      if (myRole !== ProjectMemberRole.Admin || !jwtToken) return;
+
+      setIsLoading(true);
+      try {
+        const users = await UserApi.getSuggestedUsers(jwtToken);
+        const existingMemberIds = new Set(
+          projectData?.members.map((m) => m.id) || []
+        );
+        const filteredUsers = users.filter(
+          (user) => !existingMemberIds.has(user.id)
+        );
+        setSuggestedUsers(filteredUsers);
+      } catch (error) {
+        console.error("Failed to load suggested users:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSuggestedUsers();
+  }, [myRole, jwtToken, projectData?.members]);
+
+  if (myRole !== ProjectMemberRole.Admin) {
+    return (
+      <div className="space-y-3">
+        <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
+          <div className="text-sm text-muted-foreground">
+            Only <span className="font-medium underline">Admins</span> can view
+            suggested users.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-8 px-4">
+        <div className="text-sm text-muted-foreground">
+          Loading suggested users...
+        </div>
+      </div>
+    );
+  }
+
+  if (suggestedUsers.length === 0) {
+    return (
+      <div className="text-center py-8 px-4 bg-muted/20 rounded-md border border-dashed">
+        <div className="text-sm text-muted-foreground">
+          No suggested users found. Suggested users are people you've worked
+          with in other projects.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 max-h-96 overflow-y-auto">
+      {suggestedUsers.map((user) => (
+        <SuggestedUserItem key={user.id} user={user} />
+      ))}
+    </div>
+  );
+}
+
 export function ProjectAccessDialog({
   open,
   onOpenChange,
@@ -483,7 +617,26 @@ export function ProjectAccessDialog({
 
           <MembersSection />
           <ActiveInviteLinksSection />
-          <GenerateNewInviteLinkSection />
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <IconUserPlus className="size-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium">Invite people</h3>
+            </div>
+
+            <Tabs defaultValue="invite-link" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="invite-link">Invite link</TabsTrigger>
+                <TabsTrigger value="suggested">Suggested users</TabsTrigger>
+              </TabsList>
+              <TabsContent value="invite-link">
+                <GenerateNewInviteLinkSection />
+              </TabsContent>
+              <TabsContent value="suggested">
+                <SuggestedUsersSection />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

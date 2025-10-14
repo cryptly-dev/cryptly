@@ -9,6 +9,12 @@ export interface User {
   privateKeyEncrypted?: string;
 }
 
+export interface SuggestedUser {
+  id: string;
+  email: string;
+  avatarUrl: string;
+}
+
 export interface UpdateUserDto {
   publicKey?: string;
   privateKeyEncrypted?: string;
@@ -44,5 +50,17 @@ export class UserApi {
         Authorization: `Bearer ${jwtToken}`,
       },
     });
+  }
+
+  public static async getSuggestedUsers(
+    jwtToken: string
+  ): Promise<SuggestedUser[]> {
+    const response = await axios.get<SuggestedUser[]>("/users/suggested", {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
+    });
+
+    return response.data;
   }
 }
