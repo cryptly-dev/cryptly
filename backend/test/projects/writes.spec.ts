@@ -94,9 +94,6 @@ describe('ProjectCoreController (writes)', () => {
         .set('authorization', `Bearer ${token}`)
         .send({
           name: 'new-name',
-          encryptedSecretsKeys: {
-            [user.id]: 'new-passphrase',
-          },
           encryptedSecrets: 'new-secrets',
         });
 
@@ -105,9 +102,6 @@ describe('ProjectCoreController (writes)', () => {
       expect(response.body).toMatchObject({
         id: project.id,
         name: 'new-name',
-        encryptedSecretsKeys: {
-          [user.id]: 'new-passphrase',
-        },
         encryptedSecrets: 'new-secrets',
       });
     });
@@ -133,9 +127,6 @@ describe('ProjectCoreController (writes)', () => {
         .patch(`/projects/${project.id}`)
         .set('authorization', `Bearer ${readToken}`)
         .send({
-          encryptedSecretsKeys: {
-            [readUser.id]: 'new-passphrase',
-          },
           encryptedSecrets: 'new-secrets',
         });
 

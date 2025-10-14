@@ -108,7 +108,7 @@ export class ProjectCoreController {
   @RequireRole(Role.Read, Role.Write, Role.Admin)
   @ApiResponse({ type: ProjectSerialized })
   public async findById(@Param('projectId') projectId: string): Promise<ProjectSerialized> {
-    const project = await this.projectReadService.findById(projectId);
+    const project = await this.projectReadService.findByIdOrThrow(projectId);
     const memberIds = [...project.members.keys()];
     const members = await this.userReadService.readByIds(memberIds);
     const membersHydrated = members.map(UserSerializer.serializePartial);
@@ -141,7 +141,7 @@ export class ProjectCoreController {
     @Body() body: UpdateProjectBody,
     @CurrentUserId() userId: string,
   ): Promise<ProjectSerialized> {
-    const project = await this.projectReadService.findById(projectId);
+    const project = await this.projectReadService.findByIdOrThrow(projectId);
     const userRole = project.members.get(userId)!;
 
     this.validatePayloadPermissions(userRole, body);
@@ -204,8 +204,7 @@ export class ProjectCoreController {
       throw new ForbiddenException('Read role cannot update project');
     }
 
-    const isUpdatingOtherFields =
-      body.name !== undefined || body.encryptedSecretsKeys !== undefined;
+    const isUpdatingOtherFields = body.name !== undefined;
 
     if (userRole === Role.Write && isUpdatingOtherFields) {
       throw new ForbiddenException('Write role can only update secrets');

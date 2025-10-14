@@ -5,6 +5,7 @@ import { ProjectEventModule } from '../events/project-event.module';
 import { ProjectReadModule } from '../read/project-read.module';
 import { ProjectWriteModule } from '../write/project-write.module';
 import { ProjectCoreController } from './project-core.controller';
+import { PROJECT_MEMBER_GUARD_REQUIRED_IMPORTS } from './guards/project-member.guard';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ProjectCoreController } from './project-core.controller';
     UserReadModule,
     ProjectSecretsVersionReadModule,
     ProjectEventModule,
+    ...PROJECT_MEMBER_GUARD_REQUIRED_IMPORTS,
   ],
   controllers: [ProjectCoreController],
 })

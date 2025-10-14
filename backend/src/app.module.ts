@@ -8,6 +8,7 @@ import { GoogleAuthModule } from './auth/google/google-auth.module';
 import { LocalAuthModule } from './auth/local/local-auth.module';
 import { HealthModule } from './health/health.module';
 import { InvitationCoreModule } from './invitation/core/invitation-core.module';
+import { PersonalInvitationCoreModule } from './personal-invitation/core/personal-invitation-core.module';
 import { ProjectSecretsVersionCoreModule } from './project-secrets-version/core/project-secrets-version-core.module';
 import { ProjectCoreModule } from './project/core/project-core.module';
 import { getEnvConfig } from './shared/config/env-config';
@@ -22,6 +23,7 @@ import { GithubExternalConnectionCoreModule } from './external-connection/github
     ProjectCoreModule,
     ProjectSecretsVersionCoreModule,
     InvitationCoreModule,
+    PersonalInvitationCoreModule,
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     AuthCoreModule,
