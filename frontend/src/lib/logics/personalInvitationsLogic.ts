@@ -5,6 +5,7 @@ import { PersonalInvitationsApi } from "../api/personal-invitations.api";
 import { ProjectMemberRole } from "../api/projects.api";
 import { authLogic } from "./authLogic";
 import { projectLogic } from "./projectLogic";
+import { suggestedUsersLogic } from "./suggestedUsersLogic";
 
 import type { personalInvitationsLogicType } from "./personalInvitationsLogicType";
 
@@ -19,9 +20,9 @@ export const personalInvitationsLogic = kea<personalInvitationsLogicType>([
 
   key((props) => props.projectId),
 
-  connect({
+  connect(() => ({
     values: [authLogic, ["jwtToken"], projectLogic, ["projectData"]],
-  }),
+  })),
 
   actions({
     createPersonalInvitation: (
@@ -48,7 +49,7 @@ export const personalInvitationsLogic = kea<personalInvitationsLogicType>([
     ],
   })),
 
-  listeners(({ actions, values, props }) => ({
+  listeners(({ asyncActions, values, props }) => ({
     createPersonalInvitation: async ({ invitedUserId, role }) => {
       await PersonalInvitationsApi.createPersonalInvitation(
         values.jwtToken!,
@@ -58,16 +59,20 @@ export const personalInvitationsLogic = kea<personalInvitationsLogicType>([
           role,
         }
       );
-      actions.loadPersonalInvitations();
+      await asyncActions.loadPersonalInvitations();
+      await suggestedUsersLogic({
+        projectId: props.projectId,
+      }).asyncActions.loadSuggestedUsers();
     },
     deletePersonalInvitation: async ({ invitationId }) => {
-      console.log("deleting personal invitation");
       await PersonalInvitationsApi.deletePersonalInvitation(
         values.jwtToken!,
         invitationId
       );
-      console.log("personal invitation deleted");
-      actions.loadPersonalInvitations();
+      await asyncActions.loadPersonalInvitations();
+      await suggestedUsersLogic({
+        projectId: props.projectId,
+      }).asyncActions.loadSuggestedUsers();
     },
   })),
 ]);
