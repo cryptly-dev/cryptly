@@ -129,6 +129,12 @@ export class PersonalInvitationCoreController {
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Admin)
   public async delete(@Param('personalInvitationId') id: string): Promise<void> {
+    const invitation = await this.personalInvitationReadService.findByIdOrThrow(id);
+
     await this.personalInvitationWriteService.delete(id);
+    await this.projectWriteService.removeEncryptedSecretsKey(
+      invitation.projectId.toString(),
+      invitation.invitedUserId,
+    );
   }
 }

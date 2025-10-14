@@ -27,7 +27,6 @@ export const suggestedUsersLogic = kea<suggestedUsersLogicType>([
       [] as SuggestedUser[],
       {
         loadSuggestedUsers: async () => {
-          console.log("Loading suggested users");
           const users = await ProjectsApi.getSuggestedUsers(
             values.jwtToken!,
             props.projectId

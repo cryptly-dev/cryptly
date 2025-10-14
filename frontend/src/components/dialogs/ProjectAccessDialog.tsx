@@ -527,6 +527,7 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
   const [selectedRole, setSelectedRole] = useState<ProjectMemberRole>(
     ProjectMemberRole.Read
   );
+  const [isLoading, setIsLoading] = useState(false);
 
   const availableRoles = [
     { value: ProjectMemberRole.Read, label: "Read" },
@@ -535,7 +536,12 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
   ];
 
   const handleInvite = async () => {
-    await createPersonalInvitation(user.id, selectedRole);
+    setIsLoading(true);
+    try {
+      await createPersonalInvitation(user.id, selectedRole);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -574,6 +580,8 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
         </Select>
         <Button
           onClick={handleInvite}
+          isLoading={isLoading}
+          disabled={isLoading}
           variant="ghost"
           size="sm"
           className="size-8 p-0 cursor-pointer"

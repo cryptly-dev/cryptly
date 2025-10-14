@@ -365,6 +365,48 @@ describe('PersonalInvitationCoreController (writes)', () => {
       expect(updatedInvitation).toBeNull();
     });
 
+    it('removes only invited user encrypted secrets key and keeps others', async () => {
+      const { user: admin, token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
+      });
+      const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
+        email: 'invitee@test.com',
+      });
+      const { user: otherMember } = await bootstrap.utils.userUtils.createDefault({
+        email: 'other@test.com',
+      });
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken, {
+        name: 'test-project',
+        encryptedSecretsKeys: {
+          [admin.id]: 'admin-key',
+          [invitee.id]: 'invitee-key',
+          [otherMember.id]: 'other-key',
+        },
+        encryptedSecrets: '',
+      });
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, otherMember.id, Role.Read);
+      const invitation = await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(
+        adminToken,
+        invitee.id,
+        project.id,
+      );
+
+      await request(bootstrap.app.getHttpServer())
+        .delete(`/personal-invitations/${invitation.id}`)
+        .set('authorization', `Bearer ${adminToken}`);
+
+      const updatedProject = await bootstrap.models.projectModel.findById(project.id);
+
+      const encryptedSecretsKeysObject = Object.fromEntries(
+        updatedProject?.encryptedSecretsKeys as any,
+      );
+
+      expect(encryptedSecretsKeysObject).toEqual({
+        [admin.id]: 'admin-key',
+        [otherMember.id]: 'other-key',
+      });
+    });
+
     it('does not revoke invitation when not project member', async () => {
       const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'admin@test.com',

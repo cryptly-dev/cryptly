@@ -46,7 +46,6 @@ export const personalInvitationsLogic = kea<personalInvitationsLogicType>([
       [] as PersonalInvitation[],
       {
         loadPersonalInvitations: async () => {
-          console.log("loading personal invitations");
           const invitations =
             await PersonalInvitationsApi.getProjectPersonalInvitations(
               values.jwtToken!,

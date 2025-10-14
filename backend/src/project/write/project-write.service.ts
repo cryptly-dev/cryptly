@@ -169,4 +169,11 @@ export class ProjectWriteService {
       { $set: { [`encryptedSecretsKeys.${userId}`]: encryptedSecretsKey } },
     );
   }
+
+  public async removeEncryptedSecretsKey(projectId: string, userId: string): Promise<void> {
+    await this.projectModel.updateOne(
+      { _id: new Types.ObjectId(projectId) },
+      { $unset: { [`encryptedSecretsKeys.${userId}`]: '' } },
+    );
+  }
 }

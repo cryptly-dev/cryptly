@@ -52,7 +52,10 @@ export class ProjectMemberGuard implements CanActivate {
       throw new ForbiddenException('Project not found');
     }
 
-    const userRole = project.members.get(userId);
+    let userRole: Role | undefined;
+    try {
+      userRole = project.members.get(userId);
+    } catch {}
 
     if (!userRole) {
       throw new ForbiddenException('You are not a member of this project');

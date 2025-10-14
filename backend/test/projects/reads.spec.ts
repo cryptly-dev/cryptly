@@ -239,14 +239,12 @@ describe('ProjectCoreController (reads)', () => {
       const project2 = await bootstrap.utils.projectUtils.createProject(token1);
       const project3 = await bootstrap.utils.projectUtils.createProject(token1);
 
-      await bootstrap.utils.projectUtils.addMemberToProject(project1.id, user2.id);
       await bootstrap.utils.projectUtils.addMemberToProject(project2.id, user2.id);
       await bootstrap.utils.projectUtils.addMemberToProject(project3.id, user2.id);
 
-      await bootstrap.utils.projectUtils.addMemberToProject(project1.id, user3.id);
       await bootstrap.utils.projectUtils.addMemberToProject(project2.id, user3.id);
 
-      await bootstrap.utils.projectUtils.addMemberToProject(project1.id, user4.id);
+      await bootstrap.utils.projectUtils.addMemberToProject(project3.id, user4.id);
 
       // when
       const response = await request(bootstrap.app.getHttpServer())
@@ -255,13 +253,18 @@ describe('ProjectCoreController (reads)', () => {
 
       // then
       expect(response.status).toEqual(200);
-      expect(response.body).toHaveLength(2);
+      expect(response.body).toHaveLength(3);
       expect(response.body[0]).toMatchObject({
+        id: user2.id,
+        email: user2.email,
+        avatarUrl: user2.avatarUrl,
+      });
+      expect(response.body[1]).toMatchObject({
         id: user3.id,
         email: user3.email,
         avatarUrl: user3.avatarUrl,
       });
-      expect(response.body[1]).toMatchObject({
+      expect(response.body[2]).toMatchObject({
         id: user4.id,
         email: user4.email,
         avatarUrl: user4.avatarUrl,
