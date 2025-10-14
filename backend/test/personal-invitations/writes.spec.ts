@@ -477,4 +477,129 @@ describe('PersonalInvitationCoreController (writes)', () => {
       expect(response.status).toEqual(401);
     });
   });
+
+  describe('POST /personal-invitations/:id/reject', () => {
+    it('rejects invitation when invited user', async () => {
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
+      });
+      const { user: invitee, token: inviteeToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'invitee@test.com',
+      });
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
+      const invitation = await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(
+        adminToken,
+        invitee.id,
+        project.id,
+      );
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .post(`/personal-invitations/${invitation.id}/reject`)
+        .set('authorization', `Bearer ${inviteeToken}`);
+
+      const updatedInvitation = await bootstrap.models.personalInvitationModel.findOne({
+        _id: invitation.id,
+      });
+
+      expect(response.status).toEqual(204);
+      expect(updatedInvitation).toBeNull();
+    });
+
+    it('removes encrypted secrets key when rejecting invitation', async () => {
+      const { user: admin, token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
+      });
+      const { user: invitee, token: inviteeToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'invitee@test.com',
+      });
+      const { user: otherMember } = await bootstrap.utils.userUtils.createDefault({
+        email: 'other@test.com',
+      });
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken, {
+        name: 'test-project',
+        encryptedSecretsKeys: {
+          [admin.id]: 'admin-key',
+          [invitee.id]: 'invitee-key',
+          [otherMember.id]: 'other-key',
+        },
+        encryptedSecrets: '',
+      });
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, otherMember.id, Role.Read);
+      const invitation = await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(
+        adminToken,
+        invitee.id,
+        project.id,
+      );
+
+      await request(bootstrap.app.getHttpServer())
+        .post(`/personal-invitations/${invitation.id}/reject`)
+        .set('authorization', `Bearer ${inviteeToken}`);
+
+      const updatedProject = await bootstrap.models.projectModel.findById(project.id);
+      const encryptedSecretsKeysObject = Object.fromEntries(
+        updatedProject?.encryptedSecretsKeys as any,
+      );
+
+      expect(encryptedSecretsKeysObject).toEqual({
+        [admin.id]: 'admin-key',
+        [otherMember.id]: 'other-key',
+      });
+    });
+
+    it('does not reject invitation when not the invited user', async () => {
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
+      });
+      const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
+        email: 'invitee@test.com',
+      });
+      const { token: otherToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'other@test.com',
+      });
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
+      const invitation = await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(
+        adminToken,
+        invitee.id,
+        project.id,
+      );
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .post(`/personal-invitations/${invitation.id}/reject`)
+        .set('authorization', `Bearer ${otherToken}`);
+
+      expect(response.status).toEqual(403);
+    });
+
+    it('does not reject when not logged in', async () => {
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
+      });
+      const { user: invitee } = await bootstrap.utils.userUtils.createDefault({
+        email: 'invitee@test.com',
+      });
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
+      const invitation = await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(
+        adminToken,
+        invitee.id,
+        project.id,
+      );
+
+      const response = await request(bootstrap.app.getHttpServer()).post(
+        `/personal-invitations/${invitation.id}/reject`,
+      );
+
+      expect(response.status).toEqual(401);
+    });
+
+    it('returns 404 if invitation not found', async () => {
+      const { token } = await bootstrap.utils.userUtils.createDefault();
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .post(`/personal-invitations/60f7eabc1234567890abcdef/reject`)
+        .set('authorization', `Bearer ${token}`)
+        .send();
+
+      expect(response.status).toEqual(404);
+    });
+  });
 });

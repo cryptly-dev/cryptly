@@ -137,4 +137,23 @@ export class PersonalInvitationCoreController {
       invitation.invitedUserId,
     );
   }
+
+  @Post('personal-invitations/:personalInvitationId/reject')
+  @HttpCode(204)
+  public async reject(
+    @Param('personalInvitationId') id: string,
+    @CurrentUserId() userId: string,
+  ): Promise<void> {
+    const invitation = await this.personalInvitationReadService.findByIdOrThrow(id);
+
+    if (invitation.invitedUserId !== userId) {
+      throw new ForbiddenException('You are not the invited user');
+    }
+
+    await this.personalInvitationWriteService.delete(id);
+    await this.projectWriteService.removeEncryptedSecretsKey(
+      invitation.projectId.toString(),
+      invitation.invitedUserId,
+    );
+  }
 }

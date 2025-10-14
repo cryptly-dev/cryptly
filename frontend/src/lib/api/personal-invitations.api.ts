@@ -88,4 +88,19 @@ export class PersonalInvitationsApi {
       },
     });
   }
+
+  public static async rejectPersonalInvitation(
+    jwtToken: string,
+    personalInvitationId: string
+  ): Promise<void> {
+    await axios.post(
+      `/personal-invitations/${personalInvitationId}/reject`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      }
+    );
+  }
 }
