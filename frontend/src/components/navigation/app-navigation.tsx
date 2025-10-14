@@ -58,7 +58,7 @@ function AppNavigationImpl() {
               <User className="h-full w-full text-neutral-500 dark:text-neutral-300" />
             ),
             href: "/app/me",
-            badge: myPersonalInvitations?.length || 0,
+            badge: myPersonalInvitations?.length || undefined,
           },
         ]
       : []),

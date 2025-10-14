@@ -36,6 +36,7 @@ import {
   IconUserPlus,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
+import posthog from "posthog-js";
 import { useEffect, useMemo, useState } from "react";
 
 interface ProjectAccessDialogProps {
@@ -543,6 +544,7 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
     setIsLoading(true);
     try {
       await createPersonalInvitation(user.id, user.publicKey, selectedRole);
+      posthog.capture("personal_invitation_created");
     } finally {
       setIsLoading(false);
     }

@@ -3,6 +3,7 @@ import { myPersonalInvitationsLogic } from "@/lib/logics/myPersonalInvitationsLo
 import { getRelativeTime } from "@/lib/utils";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useAsyncActions, useValues } from "kea";
+import posthog from "posthog-js";
 import { useState } from "react";
 
 function PersonalInviteItem({
@@ -26,6 +27,7 @@ function PersonalInviteItem({
     setAcceptLoading(true);
     try {
       await acceptPersonalInvitation(invitation.id);
+      posthog.capture("personal_invitation_accepted");
     } finally {
       setAcceptLoading(false);
     }
@@ -35,6 +37,7 @@ function PersonalInviteItem({
     setRejectLoading(true);
     try {
       await rejectPersonalInvitation(invitation.id);
+      posthog.capture("personal_invitation_rejected");
     } finally {
       setRejectLoading(false);
     }
