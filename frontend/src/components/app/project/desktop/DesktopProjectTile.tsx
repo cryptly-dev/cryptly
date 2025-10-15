@@ -75,7 +75,7 @@ export function DesktopProjectTile() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
         posthog.capture("save_button_clicked");
         event.preventDefault();
         event.stopPropagation();
@@ -518,9 +518,8 @@ function ProjectHeader() {
                         <Kbd className="inline-flex !text-white">
                           <CommandIcon className="size-3 !text-white" />
                         </Kbd>{" "}
-                        + <Kbd className="inline-flex !text-white">Enter</Kbd>.
-                        Your data is encrypted before it ever leaves your
-                        device.
+                        + <Kbd className="inline-flex !text-white">S</Kbd>. Your
+                        data is encrypted before it ever leaves your device.
                       </p>
 
                       {/* Actions */}
