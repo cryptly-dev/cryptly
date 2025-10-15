@@ -5,11 +5,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { useActions, useValues } from "kea";
 import { motion } from "motion/react";
 import { useEffect } from "react";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export function MePage() {
   const navigate = useNavigate();
   const { userData, isLoggedIn } = useValues(authLogic);
-  const { loadUserData, logout } = useActions(authLogic);
+  const { loadUserData } = useActions(authLogic);
+  const { logout } = useAuth();
 
   useEffect(() => {
     if (!isLoggedIn) {

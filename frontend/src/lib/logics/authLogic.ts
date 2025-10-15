@@ -41,6 +41,7 @@ export const authLogic = kea<authLogicType>([
       {
         setJwtToken: (_, { jwtToken }) => jwtToken,
         reset: () => null,
+        logout: () => null,
       },
     ],
     userData: [
@@ -48,6 +49,7 @@ export const authLogic = kea<authLogicType>([
       {
         setUserData: (_, { userData }) => userData,
         reset: () => null,
+        logout: () => null,
       },
     ],
   }),

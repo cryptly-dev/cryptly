@@ -33,6 +33,7 @@ export const keyLogic = kea<keyLogicType>([
     // listeners
     setUpPassphrase: (passphrase: string) => ({ passphrase }),
     decryptPrivateKey: true,
+    reset: true,
   }),
 
   reducers({
@@ -46,6 +47,7 @@ export const keyLogic = kea<keyLogicType>([
           _: string | null,
           { passphrase }: { passphrase: string }
         ) => passphrase,
+        reset: () => null,
       },
     ],
     privateKeyDecrypted: [
@@ -58,6 +60,7 @@ export const keyLogic = kea<keyLogicType>([
           _: string | null,
           { privateKeyDecrypted }: { privateKeyDecrypted: string | null }
         ) => privateKeyDecrypted,
+        reset: () => null,
       },
     ],
   }),

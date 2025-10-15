@@ -6,17 +6,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { authLogic } from "@/lib/logics/authLogic";
 import { keyLogic } from "@/lib/logics/keyLogic";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { useActions, useValues } from "kea";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export function SetUpPassphraseDialog() {
   const { shouldSetUpPassphrase } = useValues(keyLogic);
   const { setUpPassphrase } = useActions(keyLogic);
-  const { logout } = useActions(authLogic);
+  const { logout } = useAuth();
 
   const [pass1, setPass1] = useState("");
   const [pass2, setPass2] = useState("");
