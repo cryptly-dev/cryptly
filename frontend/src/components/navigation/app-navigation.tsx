@@ -2,7 +2,7 @@ import { authLogic } from "@/lib/logics/authLogic";
 import { myPersonalInvitationsLogic } from "@/lib/logics/myPersonalInvitationsLogic";
 import { useLocation } from "@tanstack/react-router";
 import { useValues } from "kea";
-import { Code, Home, LogIn, User } from "lucide-react";
+import { Code, Home, LogIn, Search, User } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { memo } from "react";
 import { FloatingDock } from "./floating-dock";
@@ -40,6 +40,13 @@ function AppNavigationImpl() {
               <Home className="h-full w-full text-neutral-500 dark:text-neutral-300" />
             ),
             href: `/app/project/`,
+          },
+          {
+            title: "Search",
+            icon: (
+              <Search className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+            ),
+            href: `/app/search`,
           },
           ...(isDeveloper
             ? [
