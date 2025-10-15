@@ -24,17 +24,14 @@ export interface SearchResult {
   score: number;
 }
 
-// Calculate similarity score between two strings using fuzzy matching
 function calculateSimilarity(query: string, text: string): number {
   const queryLower = query.toLowerCase();
   const textLower = text.toLowerCase();
 
-  // Exact match
   if (textLower.includes(queryLower)) {
     return 1.0;
   }
 
-  // Calculate Levenshtein distance based similarity
   const words = queryLower.split(/\s+/);
   let maxScore = 0;
 
@@ -43,7 +40,6 @@ function calculateSimilarity(query: string, text: string): number {
       maxScore = Math.max(maxScore, 0.7);
     }
 
-    // Check for partial matches
     const textWords = textLower.split(/[_\s-]+/);
     for (const textWord of textWords) {
       if (textWord.includes(word) || word.includes(textWord)) {
@@ -107,7 +103,6 @@ export const searchLogic = kea<searchLogicType>([
 
           const allSecrets: Secret[] = [];
 
-          // Fetch and decrypt all projects
           for (const project of projects) {
             try {
               const projectData = await ProjectsApi.getProject(
@@ -115,22 +110,18 @@ export const searchLogic = kea<searchLogicType>([
                 project.id
               );
 
-              // Decrypt project key
               const projectKeyDecrypted = await AsymmetricCrypto.decrypt(
                 projectData?.encryptedSecretsKeys![userId]!,
                 privateKey
               );
 
-              // Decrypt content
               const contentDecrypted = await SymmetricCrypto.decrypt(
                 projectData?.encryptedSecrets!,
                 projectKeyDecrypted
               );
 
-              // Parse dotenv format
               const parsed = parse(contentDecrypted);
 
-              // Add all secrets from this project
               for (const [key, value] of Object.entries(parsed)) {
                 allSecrets.push({
                   name: key,
@@ -144,7 +135,6 @@ export const searchLogic = kea<searchLogicType>([
                 `Error loading secrets for project ${project.id}:`,
                 error
               );
-              // Continue with other projects even if one fails
             }
           }
 
@@ -164,19 +154,18 @@ export const searchLogic = kea<searchLogicType>([
           return [];
         }
 
-        // Calculate similarity scores for all secrets
         const results = secrets
           .map((secret) => ({
             secret,
             score: Math.max(
               calculateSimilarity(searchQuery, secret.name),
-              calculateSimilarity(searchQuery, secret.value) * 0.8, // Value matches weighted slightly lower
-              calculateSimilarity(searchQuery, secret.projectName) * 0.6 // Project name matches weighted even lower
+              calculateSimilarity(searchQuery, secret.value) * 0.8,
+              calculateSimilarity(searchQuery, secret.projectName) * 0.6
             ),
           }))
-          .filter((result) => result.score > 0.3) // Only show results with decent similarity
+          .filter((result) => result.score > 0.3)
           .sort((a, b) => b.score - a.score)
-          .slice(0, 5); // Top 5 results
+          .slice(0, 5);
 
         return results;
       },
