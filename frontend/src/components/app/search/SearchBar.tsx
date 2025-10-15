@@ -13,7 +13,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
       </div>
       <input
         type="text"
-        placeholder="Search secret name, project name or secret value"
+        placeholder="Search by secret key, value or project name"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="flex w-full rounded-xl border border-input bg-card pl-12 p-3 text-lg ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-lg"
