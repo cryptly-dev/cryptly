@@ -57,7 +57,7 @@ export function MobileProjectTile() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
         event.preventDefault();
         event.stopPropagation();
         if (

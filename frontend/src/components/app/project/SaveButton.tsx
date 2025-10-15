@@ -91,7 +91,7 @@ export function UpdateButton() {
               <CommandIcon className="size-3" />
             </Kbd>
             <span>+</span>
-            <Kbd>Enter</Kbd>
+            <Kbd>S</Kbd>
           </motion.div>
         )}
       </AnimatePresence>
