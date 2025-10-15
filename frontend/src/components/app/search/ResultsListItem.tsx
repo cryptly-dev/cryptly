@@ -1,5 +1,8 @@
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
+import { Check, Copy } from "lucide-react";
+import { useState } from "react";
 import type { SearchResult } from "@/lib/logics/searchLogic";
+import { Button } from "@/components/ui/button";
 
 interface ResultsListItemProps {
   result: SearchResult;
@@ -7,6 +10,18 @@ interface ResultsListItemProps {
 }
 
 export function ResultsListItem({ result, index }: ResultsListItemProps) {
+  const [showCopied, setShowCopied] = useState(false);
+
+  const copyValue = async () => {
+    try {
+      await navigator.clipboard.writeText(result.secret.value);
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -35,6 +50,43 @@ export function ResultsListItem({ result, index }: ResultsListItemProps) {
             Project: {result.secret.projectName}
           </p>
         </div>
+        <Button
+          variant="outline"
+          onClick={copyValue}
+          aria-label="Copy secret value"
+          className="cursor-pointer h-8 w-8 p-0 bg-secondary/50 hover:bg-secondary flex-shrink-0"
+          tooltip={showCopied ? "Copied!" : "Copy value"}
+        >
+          <AnimatePresence mode="popLayout" initial={false}>
+            {showCopied ? (
+              <motion.div
+                key="check"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{
+                  duration: 0.2,
+                  ease: "easeInOut",
+                }}
+              >
+                <Check className="size-4 text-green-500" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="copy"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{
+                  duration: 0.2,
+                  ease: "easeInOut",
+                }}
+              >
+                <Copy className="size-4" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Button>
       </div>
     </motion.div>
   );

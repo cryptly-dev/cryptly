@@ -176,7 +176,7 @@ export const searchLogic = kea<searchLogicType>([
           }))
           .filter((result) => result.score > 0.3) // Only show results with decent similarity
           .sort((a, b) => b.score - a.score)
-          .slice(0, 10); // Top 10 results
+          .slice(0, 5); // Top 5 results
 
         return results;
       },
