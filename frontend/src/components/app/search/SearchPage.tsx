@@ -5,8 +5,7 @@ import { SearchBar } from "./SearchBar";
 import { ResultsList } from "./ResultsList";
 
 export function SearchPage() {
-  const { searchQuery, searchResults, secrets, secretsLoading } =
-    useValues(searchLogic);
+  const { searchQuery, searchResults, secrets, state } = useValues(searchLogic);
   const { setSearchQuery } = useActions(searchLogic);
 
   return (
@@ -19,7 +18,7 @@ export function SearchPage() {
       >
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
-        {secretsLoading ? (
+        {state === "loading" ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-muted border-t-primary mb-4"></div>
             <p className="text-muted-foreground">Loading secrets...</p>

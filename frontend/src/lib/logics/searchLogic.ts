@@ -17,6 +17,8 @@ export interface Secret {
   projectName: string;
 }
 
+export type SearchState = "loading" | "loaded";
+
 export interface SearchResult {
   secret: Secret;
   score: number;
@@ -70,6 +72,7 @@ export const searchLogic = kea<searchLogicType>([
 
   actions({
     setSearchQuery: (query: string) => ({ query }),
+    setState: (state: SearchState) => ({ state }),
     loadAllSecrets: true,
   }),
 
@@ -80,9 +83,15 @@ export const searchLogic = kea<searchLogicType>([
         setSearchQuery: (_, { query }) => query,
       },
     ],
+    state: [
+      "loading" as SearchState,
+      {
+        setState: (_, { state }) => state,
+      },
+    ],
   }),
 
-  loaders(({ values }) => ({
+  loaders(({ values, actions }) => ({
     secrets: [
       [] as Secret[],
       {
@@ -138,6 +147,8 @@ export const searchLogic = kea<searchLogicType>([
               // Continue with other projects even if one fails
             }
           }
+
+          actions.setState("loaded");
 
           return allSecrets;
         },
