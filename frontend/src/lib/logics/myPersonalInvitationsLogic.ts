@@ -6,6 +6,7 @@ import { authLogic } from "./authLogic";
 import { projectsLogic } from "./projectsLogic";
 
 import type { myPersonalInvitationsLogicType } from "./myPersonalInvitationsLogicType";
+import { subscriptions } from "kea-subscriptions";
 
 export const myPersonalInvitationsLogic = kea<myPersonalInvitationsLogicType>([
   path(["src", "lib", "logics", "myPersonalInvitationsLogic"]),
@@ -53,9 +54,21 @@ export const myPersonalInvitationsLogic = kea<myPersonalInvitationsLogicType>([
     },
   })),
 
-  events(({ asyncActions }) => ({
+  events(({ asyncActions, values }) => ({
     afterMount: () => {
+      if (!values.jwtToken) {
+        return;
+      }
       asyncActions.loadMyPersonalInvitations();
+    },
+  })),
+
+  subscriptions(({ actions }) => ({
+    jwtToken: (jwtToken) => {
+      if (!jwtToken) {
+        return;
+      }
+      actions.loadMyPersonalInvitations();
     },
   })),
 ]);

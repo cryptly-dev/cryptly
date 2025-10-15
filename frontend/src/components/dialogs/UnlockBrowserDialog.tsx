@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { authLogic } from "@/lib/logics/authLogic";
 import { keyLogic } from "@/lib/logics/keyLogic";
 import {
@@ -13,13 +14,13 @@ import {
   IconEye,
   IconEyeOff,
 } from "@tabler/icons-react";
-import { useActions, useAsyncActions, useValues } from "kea";
+import { useAsyncActions, useValues } from "kea";
 import { useEffect, useState } from "react";
 
 export function UnlockBrowserDialog() {
   const { browserIsUnlocked, shouldSetUpPassphrase } = useValues(keyLogic);
   const { isLoggedIn } = useValues(authLogic);
-  const { logout } = useActions(authLogic);
+  const { logout } = useAuth();
   const { setPassphrase, decryptPrivateKey } = useAsyncActions(keyLogic);
 
   const [passphrase, setLocalPassphrase] = useState("");
