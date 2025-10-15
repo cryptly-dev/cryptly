@@ -28,8 +28,11 @@ export function ResultsListItem({ result, index }: ResultsListItemProps) {
               {Math.round(result.score * 100)}%
             </span>
           </div>
-          <p className="font-mono text-xs text-muted-foreground truncate">
+          <p className="font-mono text-xs text-muted-foreground truncate mb-1">
             {result.secret.value}
+          </p>
+          <p className="text-xs text-muted-foreground/70">
+            Project: {result.secret.projectName}
           </p>
         </div>
       </div>

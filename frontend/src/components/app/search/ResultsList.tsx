@@ -1,5 +1,6 @@
 import type { SearchResult } from "@/lib/logics/searchLogic";
 import { ResultsListItem } from "./ResultsListItem";
+import { motion } from "motion/react";
 
 interface ResultsListProps {
   results: SearchResult[];
@@ -40,10 +41,15 @@ export function ResultsList({
 
   // Empty State
   return (
-    <div className="text-center py-12">
+    <motion.div
+      className="text-center py-12"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: [0, 0.55, 0.45, 1] }}
+    >
       <p className="text-muted-foreground">
         Start typing to search through {secretsCount} secrets
       </p>
-    </div>
+    </motion.div>
   );
 }

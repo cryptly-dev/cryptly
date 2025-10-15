@@ -5,7 +5,8 @@ import { SearchBar } from "./SearchBar";
 import { ResultsList } from "./ResultsList";
 
 export function SearchPage() {
-  const { searchQuery, searchResults, secrets } = useValues(searchLogic);
+  const { searchQuery, searchResults, secrets, secretsLoading } =
+    useValues(searchLogic);
   const { setSearchQuery } = useActions(searchLogic);
 
   return (
@@ -17,11 +18,19 @@ export function SearchPage() {
         transition={{ duration: 1, ease: [0, 1, 0, 1] }}
       >
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        <ResultsList
-          results={searchResults}
-          searchQuery={searchQuery}
-          secretsCount={secrets.length}
-        />
+
+        {secretsLoading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-muted border-t-primary mb-4"></div>
+            <p className="text-muted-foreground">Loading secrets...</p>
+          </div>
+        ) : (
+          <ResultsList
+            results={searchResults}
+            searchQuery={searchQuery}
+            secretsCount={secrets.length}
+          />
+        )}
       </motion.div>
     </div>
   );

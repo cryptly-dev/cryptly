@@ -1,17 +1,20 @@
-import { actions, kea, path, reducers, selectors } from "kea";
+import { actions, connect, kea, path, reducers, selectors } from "kea";
+import { loaders } from "kea-loaders";
+import { subscriptions } from "kea-subscriptions";
+import { parse } from "dotenv";
 import type { searchLogicType } from "./searchLogicType";
-
-// Hardcoded secrets as base
-const SECRETS = [
-  { name: "MONGO_URL", value: "mongo url" },
-  { name: "POSTGRES_URL", value: "postgres url" },
-  { name: "BANK_PASSWORD", value: "bank password" },
-  { name: "JWT_SECRET", value: "this is jwt secret" },
-];
+import { projectsLogic } from "./projectsLogic";
+import { keyLogic } from "./keyLogic";
+import { authLogic } from "./authLogic";
+import { ProjectsApi } from "../api/projects.api";
+import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
+import { SymmetricCrypto } from "../crypto/crypto.symmetric";
 
 export interface Secret {
   name: string;
   value: string;
+  projectId: string;
+  projectName: string;
 }
 
 export interface SearchResult {
@@ -53,8 +56,21 @@ function calculateSimilarity(query: string, text: string): number {
 export const searchLogic = kea<searchLogicType>([
   path(["src", "lib", "logics", "searchLogic"]),
 
+  connect({
+    values: [
+      projectsLogic,
+      ["projects"],
+      keyLogic,
+      ["privateKeyDecrypted"],
+      authLogic,
+      ["userData", "jwtToken"],
+    ],
+    actions: [projectsLogic, ["loadProjects"]],
+  }),
+
   actions({
     setSearchQuery: (query: string) => ({ query }),
+    loadAllSecrets: true,
   }),
 
   reducers({
@@ -66,9 +82,70 @@ export const searchLogic = kea<searchLogicType>([
     ],
   }),
 
-  selectors({
-    secrets: [() => [], () => SECRETS],
+  loaders(({ values }) => ({
+    secrets: [
+      [] as Secret[],
+      {
+        loadAllSecrets: async (): Promise<Secret[]> => {
+          const projects = values.projects;
+          const privateKey = values.privateKeyDecrypted;
+          const jwtToken = values.jwtToken;
+          const userId = values.userData?.id;
 
+          if (!projects || !privateKey || !jwtToken || !userId) {
+            return [];
+          }
+
+          const allSecrets: Secret[] = [];
+
+          // Fetch and decrypt all projects
+          for (const project of projects) {
+            try {
+              const projectData = await ProjectsApi.getProject(
+                jwtToken,
+                project.id
+              );
+
+              // Decrypt project key
+              const projectKeyDecrypted = await AsymmetricCrypto.decrypt(
+                projectData?.encryptedSecretsKeys![userId]!,
+                privateKey
+              );
+
+              // Decrypt content
+              const contentDecrypted = await SymmetricCrypto.decrypt(
+                projectData?.encryptedSecrets!,
+                projectKeyDecrypted
+              );
+
+              // Parse dotenv format
+              const parsed = parse(contentDecrypted);
+
+              // Add all secrets from this project
+              for (const [key, value] of Object.entries(parsed)) {
+                allSecrets.push({
+                  name: key,
+                  value: value || "",
+                  projectId: project.id,
+                  projectName: project.name,
+                });
+              }
+            } catch (error) {
+              console.error(
+                `Error loading secrets for project ${project.id}:`,
+                error
+              );
+              // Continue with other projects even if one fails
+            }
+          }
+
+          return allSecrets;
+        },
+      },
+    ],
+  })),
+
+  selectors({
     searchResults: [
       (s) => [s.searchQuery, s.secrets],
       (searchQuery: string, secrets: Secret[]): SearchResult[] => {
@@ -82,7 +159,8 @@ export const searchLogic = kea<searchLogicType>([
             secret,
             score: Math.max(
               calculateSimilarity(searchQuery, secret.name),
-              calculateSimilarity(searchQuery, secret.value) * 0.8 // Value matches weighted slightly lower
+              calculateSimilarity(searchQuery, secret.value) * 0.8, // Value matches weighted slightly lower
+              calculateSimilarity(searchQuery, secret.projectName) * 0.6 // Project name matches weighted even lower
             ),
           }))
           .filter((result) => result.score > 0.3) // Only show results with decent similarity
@@ -93,4 +171,17 @@ export const searchLogic = kea<searchLogicType>([
       },
     ],
   }),
+
+  subscriptions(({ actions, values }) => ({
+    projects: (projects) => {
+      if (projects && values.privateKeyDecrypted) {
+        actions.loadAllSecrets();
+      }
+    },
+    privateKeyDecrypted: (privateKey) => {
+      if (privateKey && values.projects) {
+        actions.loadAllSecrets();
+      }
+    },
+  })),
 ]);
