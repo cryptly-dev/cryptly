@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { pipeline, FeatureExtractionPipeline } from "@xenova/transformers";
 import { Search } from "lucide-react";
 
 // Hardcoded secrets as base
@@ -11,173 +10,82 @@ const SECRETS = [
   { name: "JWT_SECRET", value: "this is jwt secret" },
 ];
 
-interface SecretWithEmbedding {
+interface Secret {
   name: string;
   value: string;
-  embedding: number[];
 }
 
-// Calculate cosine similarity between two vectors
-function cosineSimilarity(a: number[], b: number[]): number {
-  const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
-  const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-  const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-  return dotProduct / (magnitudeA * magnitudeB);
+// Calculate similarity score between two strings using fuzzy matching
+function calculateSimilarity(query: string, text: string): number {
+  const queryLower = query.toLowerCase();
+  const textLower = text.toLowerCase();
+
+  // Exact match
+  if (textLower.includes(queryLower)) {
+    return 1.0;
+  }
+
+  // Calculate Levenshtein distance based similarity
+  const words = queryLower.split(/\s+/);
+  let maxScore = 0;
+
+  for (const word of words) {
+    if (textLower.includes(word)) {
+      maxScore = Math.max(maxScore, 0.7);
+    }
+
+    // Check for partial matches
+    const textWords = textLower.split(/[_\s-]+/);
+    for (const textWord of textWords) {
+      if (textWord.includes(word) || word.includes(textWord)) {
+        maxScore = Math.max(maxScore, 0.5);
+      }
+    }
+  }
+
+  return maxScore;
 }
 
 export function SearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [embedder, setEmbedder] = useState<FeatureExtractionPipeline | null>(
-    null
-  );
-  const [secretsWithEmbeddings, setSecretsWithEmbeddings] = useState<
-    SecretWithEmbedding[]
-  >([]);
   const [searchResults, setSearchResults] = useState<
-    Array<{ secret: SecretWithEmbedding; score: number }>
+    Array<{ secret: Secret; score: number }>
   >([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSearching, setIsSearching] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState("");
-
-  // Initialize the model and generate embeddings
-  useEffect(() => {
-    let cancelled = false;
-
-    const init = async () => {
-      try {
-        setLoadingProgress("Loading embedding model...");
-
-        // Load the embedding model
-        const pipe = await pipeline(
-          "feature-extraction",
-          "keeeeenw/MicroLlama-text-embedding",
-          {
-            progress_callback: (progress: any) => {
-              if (progress.status === "progress") {
-                setLoadingProgress(
-                  `Loading model: ${Math.round(progress.progress)}%`
-                );
-              }
-            },
-          }
-        );
-
-        if (cancelled) return;
-        setEmbedder(pipe);
-
-        setLoadingProgress("Generating embeddings for secrets...");
-
-        // Generate embeddings for all secrets
-        const secretsWithEmb: SecretWithEmbedding[] = [];
-        for (let i = 0; i < SECRETS.length; i++) {
-          if (cancelled) return;
-
-          const secret = SECRETS[i];
-          setLoadingProgress(
-            `Generating embeddings: ${i + 1}/${SECRETS.length}`
-          );
-
-          const output = await pipe(secret.name, {
-            pooling: "mean",
-            normalize: true,
-          });
-
-          const embedding = Array.from(output.data) as number[];
-          secretsWithEmb.push({
-            ...secret,
-            embedding,
-          });
-        }
-
-        if (cancelled) return;
-        setSecretsWithEmbeddings(secretsWithEmb);
-        setIsLoading(false);
-        setLoadingProgress("");
-      } catch (error) {
-        console.error("Error initializing embeddings:", error);
-        setLoadingProgress("Error loading model. Please refresh.");
-      }
-    };
-
-    init();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Perform search when query changes
   useEffect(() => {
-    if (
-      !searchQuery.trim() ||
-      !embedder ||
-      secretsWithEmbeddings.length === 0
-    ) {
+    if (!searchQuery.trim()) {
       setSearchResults([]);
       return;
     }
 
-    const performSearch = async () => {
-      setIsSearching(true);
-      try {
-        // Check for exact match first
-        const exactMatches = secretsWithEmbeddings.filter((secret) =>
-          secret.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+    const performSearch = () => {
+      // Calculate similarity scores for all secrets
+      const results = SECRETS.map((secret) => ({
+        secret,
+        score: Math.max(
+          calculateSimilarity(searchQuery, secret.name),
+          calculateSimilarity(searchQuery, secret.value) * 0.8 // Value matches weighted slightly lower
+        ),
+      }))
+        .filter((result) => result.score > 0.3) // Only show results with decent similarity
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10); // Top 10 results
 
-        if (exactMatches.length > 0) {
-          setSearchResults(
-            exactMatches.map((secret) => ({ secret, score: 1.0 }))
-          );
-          setIsSearching(false);
-          return;
-        }
-
-        // Perform semantic search
-        const output = await embedder(searchQuery, {
-          pooling: "mean",
-          normalize: true,
-        });
-        const queryEmbedding = Array.from(output.data) as number[];
-
-        // Calculate similarities
-        const results = secretsWithEmbeddings
-          .map((secret) => ({
-            secret,
-            score: cosineSimilarity(queryEmbedding, secret.embedding),
-          }))
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 10); // Top 10 results
-
-        setSearchResults(results);
-      } catch (error) {
-        console.error("Error performing search:", error);
-      } finally {
-        setIsSearching(false);
-      }
+      setSearchResults(results);
     };
 
     const debounceTimer = setTimeout(performSearch, 300);
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, embedder, secretsWithEmbeddings]);
-
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0, 1, 0, 1] },
-    },
-  } as const;
+  }, [searchQuery]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen p-4 pt-20">
       <motion.div
-        className="w-full max-w-3xl"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
+        className="w-full max-w-3xl mx-auto"
+        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 1, ease: [0, 1, 0, 1] }}
       >
         {/* Search Input */}
         <div className="relative mb-8">
@@ -186,38 +94,26 @@ export function SearchPage() {
           </div>
           <input
             type="text"
-            placeholder="Search exact secret name or do semantic search"
+            placeholder="Search secret name, project name or secret value"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            disabled={isLoading}
-            className="flex h-auto w-full rounded-xl border border-input bg-card px-3 pl-12 py-6 text-lg ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-lg"
+            className="flex w-full rounded-xl border border-input bg-card pl-12 p-3 text-lg ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-lg"
           />
         </div>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-muted border-t-primary mb-4"></div>
-            <p className="text-muted-foreground">{loadingProgress}</p>
-          </div>
-        )}
-
-        {/* Searching State */}
-        {isSearching && !isLoading && (
-          <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-muted border-t-primary"></div>
-          </div>
-        )}
-
         {/* Search Results */}
-        {!isLoading && !isSearching && searchResults.length > 0 && (
+        {searchResults.length > 0 && (
           <div className="space-y-3">
             {searchResults.map((result, index) => (
               <motion.div
                 key={result.secret.name}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+                transition={{
+                  delay: index * 0.05,
+                  duration: 0.5,
+                  ease: [0, 1, 0, 1],
+                }}
                 className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -241,19 +137,16 @@ export function SearchPage() {
         )}
 
         {/* No Results */}
-        {!isLoading &&
-          !isSearching &&
-          searchQuery &&
-          searchResults.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                No secrets found matching your query.
-              </p>
-            </div>
-          )}
+        {searchQuery && searchResults.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              No secrets found matching your query.
+            </p>
+          </div>
+        )}
 
         {/* Empty State */}
-        {!isLoading && !searchQuery && (
+        {!searchQuery && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               Start typing to search through {SECRETS.length} secrets
