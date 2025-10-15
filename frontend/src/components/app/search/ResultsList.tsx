@@ -16,7 +16,7 @@ export function ResultsList({
   // Search Results
   if (results.length > 0) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 ph-no-capture">
         {results.map((result, index) => (
           <ResultsListItem
             key={result.secret.name}
