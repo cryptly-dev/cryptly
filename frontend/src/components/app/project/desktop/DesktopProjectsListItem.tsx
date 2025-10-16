@@ -30,16 +30,16 @@ export function DesktopProjectsListItem({
         aria-label={`Open project ${project.name}`}
         className="absolute inset-0 rounded-xl cursor-pointer"
       />
-      <div className="flex items-center gap-2 flex-1 min-w-0 relative pointer-events-none">
-        <div
-          onPointerDown={(e) => {
-            dragControls.start(e);
-          }}
-          className="cursor-grab active:cursor-grabbing touch-none flex items-center relative z-10 pointer-events-auto"
-        >
-          <GripVertical className="w-4 h-4 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
-        </div>
-        <span className="font-medium truncate block">{project.name}</span>
+      <span className="font-medium truncate block relative pointer-events-none">
+        {project.name}
+      </span>
+      <div
+        onPointerDown={(e) => {
+          dragControls.start(e);
+        }}
+        className="cursor-grab active:cursor-grabbing touch-none flex items-center relative z-10 pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground/60" />
       </div>
     </div>
   );
