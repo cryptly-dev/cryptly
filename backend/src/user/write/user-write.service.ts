@@ -32,6 +32,10 @@ export class UserWriteService {
       updateQuery.privateKeyEncrypted = dto.privateKeyEncrypted;
     }
 
+    if (dto.projectsOrder) {
+      updateQuery.projectsOrder = dto.projectsOrder;
+    }
+
     const user = await this.userModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
       updateQuery,

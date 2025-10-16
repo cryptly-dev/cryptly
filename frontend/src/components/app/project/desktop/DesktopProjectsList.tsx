@@ -10,7 +10,7 @@ import DesktopProjectsListItem from "./DesktopProjectsListItem";
 import posthog from "posthog-js";
 
 export function DesktopProjectsList() {
-  const { sortedProjects, projectsLoading } = useValues(projectsLogic);
+  const { projects, projectsLoading } = useValues(projectsLogic);
   const { reorderProjects } = useActions(projectsLogic);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAddProjectButtonHovered, setAddProjectButtonHovered] =
@@ -48,7 +48,7 @@ export function DesktopProjectsList() {
     },
   } as const;
 
-  if (!sortedProjects || (!sortedProjects.length && projectsLoading)) {
+  if (!projects || (!projects.length && projectsLoading)) {
     return null;
   }
 
@@ -71,7 +71,7 @@ export function DesktopProjectsList() {
         >
           <div className="flex items-center justify-center gap-2">
             <span>Projects</span>
-            <span className="text-sm">({sortedProjects.length})</span>
+            <span className="text-sm">({projects.length})</span>
           </div>
           <motion.button
             type="button"
@@ -92,7 +92,7 @@ export function DesktopProjectsList() {
         </motion.h2>
         <Reorder.Group
           axis="y"
-          values={sortedProjects}
+          values={projects}
           onReorder={reorderProjects}
           className="space-y-2 px-3 pb-3"
           as="nav"
@@ -100,7 +100,7 @@ export function DesktopProjectsList() {
           initial="hidden"
           animate="visible"
         >
-          {sortedProjects.map((project) => {
+          {projects.map((project) => {
             const isActive = project.id === activeProject?.id;
 
             return (
