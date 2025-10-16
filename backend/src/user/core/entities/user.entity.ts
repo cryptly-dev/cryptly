@@ -21,6 +21,9 @@ export class UserEntity {
   @Prop({ required: false })
   privateKeyEncrypted?: string;
 
+  @Prop({ type: [String], default: [] })
+  projectsOrder: string[];
+
   @Prop()
   createdAt: Date;
 

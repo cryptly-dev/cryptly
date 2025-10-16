@@ -17,6 +17,7 @@ import { CurrentUserId } from '../../auth/core/decorators/current-user-id.decora
 import { ProjectReadService } from '../../project/read/project-read.service';
 import { ProjectWriteService } from '../../project/write/project-write.service';
 import { UserReadService } from '../../user/read/user-read.service';
+import { UserWriteService } from '../../user/write/user-write.service';
 import { PersonalInvitationReadService } from '../read/personal-invitation-read.service';
 import { PersonalInvitationWriteService } from '../write/personal-invitation-write.service';
 import { CreatePersonalInvitationBody } from './dto/create-personal-invitation.body';
@@ -33,6 +34,7 @@ export class PersonalInvitationCoreController {
     private readonly projectReadService: ProjectReadService,
     private readonly projectWriteService: ProjectWriteService,
     private readonly userReadService: UserReadService,
+    private readonly userWriteService: UserWriteService,
   ) {}
 
   @Get('projects/:projectId/personal-invitations')
@@ -115,6 +117,7 @@ export class PersonalInvitationCoreController {
     });
     const author = await this.userReadService.readByIdOrThrow(userId);
     const invitedUser = await this.userReadService.readByIdOrThrow(body.invitedUserId);
+
     const project = await this.projectReadService.findByIdOrThrow(projectId);
 
     return PersonalInvitationSerializer.serialize(invitation, author, invitedUser, project.name);
@@ -137,6 +140,8 @@ export class PersonalInvitationCoreController {
       userId,
       invitation.role,
     );
+
+    await this.userWriteService.addToProjectsOrder(userId, invitation.projectId.toString());
 
     await this.personalInvitationWriteService.delete(id);
   }

@@ -385,6 +385,7 @@ describe('PersonalInvitationCoreController (writes)', () => {
         },
         encryptedSecrets: '',
       });
+
       await bootstrap.utils.projectUtils.addMemberToProject(project.id, otherMember.id, Role.Read);
       const invitation = await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(
         adminToken,
@@ -398,11 +399,7 @@ describe('PersonalInvitationCoreController (writes)', () => {
 
       const updatedProject = await bootstrap.models.projectModel.findById(project.id);
 
-      const encryptedSecretsKeysObject = Object.fromEntries(
-        updatedProject?.encryptedSecretsKeys as any,
-      );
-
-      expect(encryptedSecretsKeysObject).toEqual({
+      expect(updatedProject?.encryptedSecretsKeys).toEqual({
         [admin.id]: 'admin-key',
         [otherMember.id]: 'other-key',
       });
@@ -537,11 +534,8 @@ describe('PersonalInvitationCoreController (writes)', () => {
         .set('authorization', `Bearer ${inviteeToken}`);
 
       const updatedProject = await bootstrap.models.projectModel.findById(project.id);
-      const encryptedSecretsKeysObject = Object.fromEntries(
-        updatedProject?.encryptedSecretsKeys as any,
-      );
 
-      expect(encryptedSecretsKeysObject).toEqual({
+      expect(updatedProject?.encryptedSecretsKeys).toEqual({
         [admin.id]: 'admin-key',
         [otherMember.id]: 'other-key',
       });

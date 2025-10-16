@@ -19,11 +19,10 @@ export class ProjectSerializer {
     membersDetails: UserPartialSerialized[],
     latestSecrets: string,
   ): ProjectSerialized {
-    const membersMap = new Map(membersDetails.map((m) => [m.id, m]));
     const members: ProjectMemberSerialized[] = [];
 
-    for (const [userId, role] of normalized.members.entries()) {
-      const userDetails = membersMap.get(userId);
+    for (const [userId, role] of Object.entries(normalized.members)) {
+      const userDetails = membersDetails.find((m) => m.id === userId);
       if (userDetails) {
         members.push({
           id: userDetails.id,

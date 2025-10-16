@@ -127,7 +127,7 @@ export class GithubExternalConnectionCoreController {
   ): Promise<GithubIntegrationSerialized> {
     const project = await this.projectReadService.findByIdOrThrow(body.projectId);
 
-    const role = project.members.get(currentUserId);
+    const role = project.members[currentUserId];
 
     if (!role) {
       throw new ForbiddenException('You are not a member of this project');
@@ -238,7 +238,7 @@ export class GithubExternalConnectionCoreController {
 
     const project = await this.projectReadService.findByIdOrThrow(integration.projectId);
 
-    const role = project.members.get(currentUserId);
+    const role = project.members[currentUserId];
 
     if (!role) {
       throw new ForbiddenException('You are not a member of this project');
