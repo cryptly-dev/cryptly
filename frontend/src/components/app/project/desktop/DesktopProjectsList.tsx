@@ -1,15 +1,16 @@
 import AddProjectDialog from "@/components/dialogs/AddProjectDialog";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
-import { useValues } from "kea";
+import { useActions, useValues } from "kea";
 import { Plus } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, Reorder } from "motion/react";
 import { useState } from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
 import posthog from "posthog-js";
 
 export function DesktopProjectsList() {
-  const { projects, projectsLoading } = useValues(projectsLogic);
+  const { sortedProjects, projectsLoading } = useValues(projectsLogic);
+  const { reorderProjects } = useActions(projectsLogic);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAddProjectButtonHovered, setAddProjectButtonHovered] =
     useState(false);
@@ -41,7 +42,7 @@ export function DesktopProjectsList() {
     },
   } as const;
 
-  if (!projects || (!projects.length && projectsLoading)) {
+  if (!sortedProjects || (!sortedProjects.length && projectsLoading)) {
     return null;
   }
 
@@ -64,7 +65,7 @@ export function DesktopProjectsList() {
         >
           <div className="flex items-center justify-center gap-2">
             <span>Projects</span>
-            <span className="text-sm">({projects.length})</span>
+            <span className="text-sm">({sortedProjects.length})</span>
           </div>
           <motion.button
             type="button"
@@ -83,24 +84,43 @@ export function DesktopProjectsList() {
             </div>
           </motion.button>
         </motion.h2>
-        <motion.nav
+        <Reorder.Group
+          axis="y"
+          values={sortedProjects}
+          onReorder={reorderProjects}
           className="space-y-2 px-3 pb-3"
-          variants={listVariants}
-          layout
+          as="nav"
         >
-          {projects.map((project) => {
+          {sortedProjects.map((project) => {
             const isActive = project.id === activeProject?.id;
 
             return (
-              <motion.div key={project.id} variants={itemVariants} layout>
+              <Reorder.Item
+                key={project.id}
+                value={project}
+                className="list-none"
+                initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 500,
+                  damping: 30,
+                  mass: 0.5,
+                }}
+                drag="y"
+              >
                 <DesktopProjectsListItem
                   project={project}
                   isActive={isActive}
                 />
-              </motion.div>
+              </Reorder.Item>
             );
           })}
-        </motion.nav>
+        </Reorder.Group>
       </motion.div>
       <AddProjectDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
     </motion.div>
