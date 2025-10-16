@@ -18,7 +18,7 @@ export function DesktopProjectsListItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center justify-between rounded-xl p-3 text-sm transition border",
+        "group relative flex items-center justify-between rounded-xl p-3 text-sm transition border select-none",
         isActive
           ? "bg-primary/10 text-primary border-primary/20"
           : "border-transparent hover:bg-accent hover:text-accent-foreground"
