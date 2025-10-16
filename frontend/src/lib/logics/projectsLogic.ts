@@ -1,12 +1,4 @@
-import {
-  actions,
-  connect,
-  kea,
-  listeners,
-  path,
-  reducers,
-  selectors,
-} from "kea";
+import { actions, connect, kea, listeners, path, selectors } from "kea";
 
 import { loaders } from "kea-loaders";
 import { subscriptions } from "kea-subscriptions";
@@ -32,7 +24,6 @@ export const projectsLogic = kea<projectsLogicType>([
     readProjectById: (projectId: string) => ({ projectId }),
     loadProjects: true,
     deleteProject: (projectId: string) => ({ projectId }),
-    reorderProjects: (projects: Project[]) => ({ projects }),
     finalizeProjectsOrder: (projects: Project[]) => ({ projects }),
   }),
 
@@ -47,18 +38,6 @@ export const projectsLogic = kea<projectsLogicType>([
       },
     ],
   })),
-
-  reducers({
-    projects: [
-      undefined as Project[] | undefined,
-      {
-        reorderProjects: (
-          _: Project[] | undefined,
-          { projects }: { projects: Project[] }
-        ) => projects,
-      },
-    ],
-  }),
 
   selectors({
     readProjectById: [

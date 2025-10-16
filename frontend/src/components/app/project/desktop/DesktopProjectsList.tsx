@@ -5,22 +5,22 @@ import type { Project } from "@/lib/api/projects.api";
 import { useActions, useValues } from "kea";
 import { Plus } from "lucide-react";
 import { motion, Reorder, useDragControls } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
 import posthog from "posthog-js";
 
 export function DesktopProjectsList() {
   const { projects, projectsLoading } = useValues(projectsLogic);
-  const { reorderProjects, finalizeProjectsOrder } = useActions(projectsLogic);
+  const { finalizeProjectsOrder } = useActions(projectsLogic);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAddProjectButtonHovered, setAddProjectButtonHovered] =
     useState(false);
-  const projectsRef = useRef(projects);
+  const [localProjects, setLocalProjects] = useState(projects);
 
   const { activeProject } = useProjects();
 
   useEffect(() => {
-    projectsRef.current = projects;
+    setLocalProjects(projects);
   }, [projects]);
 
   const containerVariants = {
@@ -53,7 +53,7 @@ export function DesktopProjectsList() {
     },
   } as const;
 
-  if (!projects || (!projects.length && projectsLoading)) {
+  if (!localProjects || (!localProjects.length && projectsLoading)) {
     return null;
   }
 
@@ -76,7 +76,7 @@ export function DesktopProjectsList() {
         >
           <div className="flex items-center justify-center gap-2">
             <span>Projects</span>
-            <span className="text-sm">({projects.length})</span>
+            <span className="text-sm">({localProjects.length})</span>
           </div>
           <motion.button
             type="button"
@@ -97,15 +97,17 @@ export function DesktopProjectsList() {
         </motion.h2>
         <Reorder.Group
           axis="y"
-          values={projects}
-          onReorder={reorderProjects}
+          values={localProjects}
+          onReorder={(newOrder) => {
+            setLocalProjects(newOrder);
+          }}
           className="space-y-2 px-3 pb-3"
           as="nav"
           variants={listVariants}
           initial="hidden"
           animate="visible"
         >
-          {projects.map((project) => {
+          {localProjects.map((project) => {
             const isActive = project.id === activeProject?.id;
 
             return (
@@ -115,9 +117,7 @@ export function DesktopProjectsList() {
                 isActive={isActive}
                 itemVariants={itemVariants}
                 onDragEnd={() => {
-                  if (projectsRef.current) {
-                    finalizeProjectsOrder(projectsRef.current);
-                  }
+                  finalizeProjectsOrder(localProjects);
                 }}
               />
             );
