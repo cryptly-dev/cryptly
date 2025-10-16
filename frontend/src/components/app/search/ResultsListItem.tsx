@@ -3,6 +3,7 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import type { SearchResult } from "@/lib/logics/searchLogic";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "@tanstack/react-router";
 
 interface ResultsListItemProps {
   result: SearchResult;
@@ -11,8 +12,10 @@ interface ResultsListItemProps {
 
 export function ResultsListItem({ result, index }: ResultsListItemProps) {
   const [showCopied, setShowCopied] = useState(false);
+  const navigate = useNavigate();
 
-  const copyValue = async () => {
+  const copyValue = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
       await navigator.clipboard.writeText(result.secret.value);
       setShowCopied(true);
@@ -20,6 +23,13 @@ export function ResultsListItem({ result, index }: ResultsListItemProps) {
     } catch (err) {
       console.error("Failed to copy:", err);
     }
+  };
+
+  const handleClick = () => {
+    navigate({
+      to: "/app/project/$projectId",
+      params: { projectId: result.secret.projectId },
+    });
   };
 
   return (
@@ -31,7 +41,8 @@ export function ResultsListItem({ result, index }: ResultsListItemProps) {
         duration: 0.2,
         ease: [0, 0.55, 0.45, 1],
       }}
-      className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors"
+      onClick={handleClick}
+      className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
@@ -39,15 +50,12 @@ export function ResultsListItem({ result, index }: ResultsListItemProps) {
             <h3 className="font-mono text-sm font-semibold text-foreground truncate">
               {result.secret.name}
             </h3>
-            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-              {Math.round(result.score * 100)}%
+            <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-md font-medium">
+              {result.secret.projectName}
             </span>
           </div>
-          <p className="font-mono text-xs text-muted-foreground truncate mb-1">
+          <p className="font-mono text-xs text-muted-foreground truncate">
             {result.secret.value}
-          </p>
-          <p className="text-xs text-muted-foreground/70">
-            Project: {result.secret.projectName}
           </p>
         </div>
         <Button
