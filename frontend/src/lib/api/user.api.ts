@@ -19,6 +19,7 @@ export interface SuggestedUser {
 export interface UpdateUserDto {
   publicKey?: string;
   privateKeyEncrypted?: string;
+  projectsOrder?: string[];
 }
 
 export class UserApi {
@@ -51,5 +52,20 @@ export class UserApi {
         Authorization: `Bearer ${jwtToken}`,
       },
     });
+  }
+
+  public static async updateProjectsOrder(
+    jwtToken: string,
+    projectsOrder: string[]
+  ): Promise<void> {
+    await axios.patch(
+      "/users/me",
+      { projectsOrder },
+      {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      }
+    );
   }
 }

@@ -15,6 +15,7 @@ export class UserSerializer {
       avatarUrl: entity.avatarUrl,
       privateKeyEncrypted: entity.privateKeyEncrypted,
       publicKey: entity.publicKey,
+      projectsOrder: entity.projectsOrder || [],
     };
   }
 

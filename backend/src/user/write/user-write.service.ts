@@ -32,6 +32,10 @@ export class UserWriteService {
       updateQuery.privateKeyEncrypted = dto.privateKeyEncrypted;
     }
 
+    if (dto.projectsOrder) {
+      updateQuery.projectsOrder = dto.projectsOrder;
+    }
+
     const user = await this.userModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
       updateQuery,
@@ -49,6 +53,27 @@ export class UserWriteService {
     await this.userModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
       { $unset: { publicKey: null, privateKeyEncrypted: null } },
+    );
+  }
+
+  public async updateProjectsOrder(id: string, projectIds: string[]): Promise<void> {
+    await this.userModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(id) },
+      { projectsOrder: projectIds },
+    );
+  }
+
+  public async addToProjectsOrder(id: string, projectId: string): Promise<void> {
+    await this.userModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(id) },
+      { $push: { projectsOrder: projectId } },
+    );
+  }
+
+  public async removeFromProjectsOrder(id: string, projectId: string): Promise<void> {
+    await this.userModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(id) },
+      { $pull: { projectsOrder: projectId } },
     );
   }
 }

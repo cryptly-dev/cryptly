@@ -1,20 +1,27 @@
 import AddProjectDialog from "@/components/dialogs/AddProjectDialog";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
-import { useValues } from "kea";
+import type { Project } from "@/lib/api/projects.api";
+import { useActions, useValues } from "kea";
 import { Plus } from "lucide-react";
-import { motion } from "motion/react";
-import { useState } from "react";
+import { motion, Reorder, useDragControls } from "motion/react";
+import { useEffect, useState } from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
 import posthog from "posthog-js";
 
 export function DesktopProjectsList() {
   const { projects, projectsLoading } = useValues(projectsLogic);
+  const { finalizeProjectsOrder } = useActions(projectsLogic);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAddProjectButtonHovered, setAddProjectButtonHovered] =
     useState(false);
+  const [localProjects, setLocalProjects] = useState(projects);
 
   const { activeProject } = useProjects();
+
+  useEffect(() => {
+    setLocalProjects(projects);
+  }, [projects]);
 
   const containerVariants = {
     hidden: { opacity: 0, y: 300, scale: 0.5 },
@@ -28,7 +35,12 @@ export function DesktopProjectsList() {
 
   const listVariants = {
     hidden: {},
-    visible: { transition: { staggerChildren: 0.04, delayChildren: 0.1 } },
+    visible: {
+      transition: {
+        staggerChildren: 0.04,
+        delayChildren: 0.1,
+      },
+    },
   } as const;
 
   const itemVariants = {
@@ -41,7 +53,7 @@ export function DesktopProjectsList() {
     },
   } as const;
 
-  if (!projects || (!projects.length && projectsLoading)) {
+  if (!localProjects || (!localProjects.length && projectsLoading)) {
     return null;
   }
 
@@ -64,7 +76,7 @@ export function DesktopProjectsList() {
         >
           <div className="flex items-center justify-center gap-2">
             <span>Projects</span>
-            <span className="text-sm">({projects.length})</span>
+            <span className="text-sm">({localProjects.length})</span>
           </div>
           <motion.button
             type="button"
@@ -83,26 +95,67 @@ export function DesktopProjectsList() {
             </div>
           </motion.button>
         </motion.h2>
-        <motion.nav
+        <Reorder.Group
+          axis="y"
+          values={localProjects}
+          onReorder={(newOrder) => {
+            setLocalProjects(newOrder);
+          }}
           className="space-y-2 px-3 pb-3"
+          as="nav"
           variants={listVariants}
-          layout
+          initial="hidden"
+          animate="visible"
         >
-          {projects.map((project) => {
+          {localProjects.map((project) => {
             const isActive = project.id === activeProject?.id;
 
             return (
-              <motion.div key={project.id} variants={itemVariants} layout>
-                <DesktopProjectsListItem
-                  project={project}
-                  isActive={isActive}
-                />
-              </motion.div>
+              <ProjectListItem
+                key={project.id}
+                project={project}
+                isActive={isActive}
+                itemVariants={itemVariants}
+                onDragEnd={() => {
+                  finalizeProjectsOrder(localProjects);
+                }}
+              />
             );
           })}
-        </motion.nav>
+        </Reorder.Group>
       </motion.div>
       <AddProjectDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
     </motion.div>
+  );
+}
+
+function ProjectListItem({
+  project,
+  isActive,
+  itemVariants,
+  onDragEnd,
+}: {
+  project: Project;
+  isActive: boolean;
+  itemVariants: any;
+  onDragEnd: () => void;
+}) {
+  const dragControls = useDragControls();
+
+  return (
+    <Reorder.Item
+      value={project}
+      className="list-none"
+      variants={itemVariants}
+      dragListener={false}
+      dragControls={dragControls}
+      onDragEnd={onDragEnd}
+    >
+      <DesktopProjectsListItem
+        project={project}
+        isActive={isActive}
+        dragControls={dragControls}
+      />
+    </Reorder.Item>
   );
 }
