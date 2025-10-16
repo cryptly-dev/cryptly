@@ -105,7 +105,7 @@ export const projectsLogic = kea<projectsLogicType>([
       await ProjectsApi.deleteProject(values.jwtToken!, projectId);
       await asyncActions.loadProjects();
     },
-    reorderProjects: async ({ projects }) => {
+    finalizeProjectsOrder: async ({ projects }) => {
       const projectIds = projects.map((p) => p.id);
       await UserApi.updateProjectsOrder(values.jwtToken!, projectIds);
     },

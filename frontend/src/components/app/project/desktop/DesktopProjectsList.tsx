@@ -5,18 +5,23 @@ import type { Project } from "@/lib/api/projects.api";
 import { useActions, useValues } from "kea";
 import { Plus } from "lucide-react";
 import { motion, Reorder, useDragControls } from "motion/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
 import posthog from "posthog-js";
 
 export function DesktopProjectsList() {
   const { projects, projectsLoading } = useValues(projectsLogic);
-  const { reorderProjects } = useActions(projectsLogic);
+  const { reorderProjects, finalizeProjectsOrder } = useActions(projectsLogic);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAddProjectButtonHovered, setAddProjectButtonHovered] =
     useState(false);
+  const projectsRef = useRef(projects);
 
   const { activeProject } = useProjects();
+
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
 
   const containerVariants = {
     hidden: { opacity: 0, y: 300, scale: 0.5 },
@@ -109,6 +114,11 @@ export function DesktopProjectsList() {
                 project={project}
                 isActive={isActive}
                 itemVariants={itemVariants}
+                onDragEnd={() => {
+                  if (projectsRef.current) {
+                    finalizeProjectsOrder(projectsRef.current);
+                  }
+                }}
               />
             );
           })}
@@ -123,10 +133,12 @@ function ProjectListItem({
   project,
   isActive,
   itemVariants,
+  onDragEnd,
 }: {
   project: Project;
   isActive: boolean;
   itemVariants: any;
+  onDragEnd: () => void;
 }) {
   const dragControls = useDragControls();
 
@@ -137,6 +149,7 @@ function ProjectListItem({
       variants={itemVariants}
       dragListener={false}
       dragControls={dragControls}
+      onDragEnd={onDragEnd}
     >
       <DesktopProjectsListItem
         project={project}
