@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PersonalInvitationReadModule } from '../../personal-invitation/read/personal-invitation-read.module';
 import { ProjectSecretsVersionReadModule } from '../../project-secrets-version/read/project-secrets-version-read.module';
 import { UserReadModule } from '../../user/read/user-read.module';
+import { UserWriteModule } from '../../user/write/user-write.module';
 import { ProjectEventModule } from '../events/project-event.module';
 import { ProjectReadModule } from '../read/project-read.module';
 import { ProjectWriteModule } from '../write/project-write.module';
@@ -13,6 +14,7 @@ import { PROJECT_MEMBER_GUARD_REQUIRED_IMPORTS } from './guards/project-member.g
     ProjectWriteModule,
     ProjectReadModule,
     UserReadModule,
+    UserWriteModule,
     ProjectSecretsVersionReadModule,
     PersonalInvitationReadModule,
     ProjectEventModule,

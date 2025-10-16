@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 
 export class UpdateUserBody {
   @IsOptional()
@@ -11,4 +11,10 @@ export class UpdateUserBody {
   @IsString()
   @ApiProperty({ required: false })
   public privateKeyEncrypted?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @ApiProperty({ required: false, type: [String] })
+  public projectsOrder?: string[];
 }

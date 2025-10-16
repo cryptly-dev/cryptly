@@ -23,6 +23,7 @@ import { ProjectSecretsVersionReadService } from '../../project-secrets-version/
 import { UserPartialSerialized } from '../../user/core/entities/user.interface';
 import { UserSerializer } from '../../user/core/entities/user.serializer';
 import { UserReadService } from '../../user/read/user-read.service';
+import { UserWriteService } from '../../user/write/user-write.service';
 import { RequireRole } from '../decorators/require-project-role.decorator';
 import { SecretsUpdatedEvent } from '../events/definitions/secrets-updated.event';
 import { ProjectEvent } from '../events/project-events.enum';
@@ -45,6 +46,7 @@ export class ProjectCoreController {
     private readonly projectWriteService: ProjectWriteService,
     private readonly projectReadService: ProjectReadService,
     private readonly userReadService: UserReadService,
+    private readonly userWriteService: UserWriteService,
     private readonly projectSecretsVersionReadService: ProjectSecretsVersionReadService,
     private readonly personalInvitationReadService: PersonalInvitationReadService,
     private readonly eventEmitter: EventEmitter2,
@@ -68,8 +70,12 @@ export class ProjectCoreController {
   @Get('users/me/projects')
   @ApiResponse({ type: [ProjectSerialized] })
   public async findUserProjects(@CurrentUserId() userId: string): Promise<ProjectSerialized[]> {
-    const projects = await this.projectReadService.findUserProjects(userId);
-    const memberIds = [...new Set(projects.flatMap((p) => [...p.members.keys()]))];
+    const [projects, user] = await Promise.all([
+      this.projectReadService.findUserProjects(userId),
+      this.userReadService.readByIdOrThrow(userId),
+    ]);
+
+    const memberIds = [...new Set(projects.flatMap((p) => Object.keys(p.members)))];
     const members = await this.userReadService.readByIds(memberIds);
     const membersHydrated = members.map(UserSerializer.serializePartial);
     const latestVersions = await this.projectSecretsVersionReadService.findManyLatestByProjectIds(
@@ -77,13 +83,22 @@ export class ProjectCoreController {
     );
     const latestVersionsMap = new Map(latestVersions.map((v) => [v.projectId.toString(), v]));
 
-    return projects.map((p) =>
+    const serializedProjects = projects.map((p) =>
       ProjectSerializer.serialize(
         { ...p, updatedAt: latestVersionsMap.get(p.id)!!.updatedAt },
         membersHydrated,
         latestVersionsMap.get(p.id)!!.encryptedSecrets,
       ),
     );
+
+    const projectsMap = new Map(serializedProjects.map((p) => [p.id, p]));
+    const orderedProjects = user.projectsOrder
+      .map((id) => projectsMap.get(id))
+      .filter((p): p is ProjectSerialized => p !== undefined);
+
+    const remainingProjects = serializedProjects.filter((p) => !user.projectsOrder.includes(p.id));
+
+    return [...orderedProjects, ...remainingProjects];
   }
 
   @Post('projects')
@@ -101,6 +116,8 @@ export class ProjectCoreController {
       userId,
     );
 
+    await this.userWriteService.addToProjectsOrder(userId, project.id);
+
     const members = await this.userReadService.readByIds([userId]);
     const membersHydrated = members.map(UserSerializer.serializePartial);
 
@@ -113,7 +130,7 @@ export class ProjectCoreController {
   @ApiResponse({ type: ProjectSerialized })
   public async findById(@Param('projectId') projectId: string): Promise<ProjectSerialized> {
     const project = await this.projectReadService.findByIdOrThrow(projectId);
-    const memberIds = [...project.members.keys()];
+    const memberIds = Object.keys(project.members);
     const members = await this.userReadService.readByIds(memberIds);
     const membersHydrated = members.map(UserSerializer.serializePartial);
     const latestVersion = await this.projectSecretsVersionReadService.findLatestByProjectId(
@@ -142,7 +159,7 @@ export class ProjectCoreController {
     const userProjectCount = new Map<string, number>();
 
     for (const proj of projects) {
-      for (const [memberId] of proj.members.entries()) {
+      for (const [memberId] of Object.entries(proj.members)) {
         if (memberId === userId) {
           continue;
         }
@@ -152,7 +169,7 @@ export class ProjectCoreController {
       }
     }
 
-    const existingMemberIds = new Set(project.members.keys());
+    const existingMemberIds = new Set(Object.keys(project.members));
     const invitedUserIds = new Set(personalInvitations.map((inv) => inv.invitedUserId));
 
     const userIds = Array.from(userProjectCount.keys()).filter(
@@ -189,12 +206,12 @@ export class ProjectCoreController {
     @CurrentUserId() userId: string,
   ): Promise<ProjectSerialized> {
     const project = await this.projectReadService.findByIdOrThrow(projectId);
-    const userRole = project.members.get(userId)!;
+    const userRole = project.members[userId]!;
 
     this.validatePayloadPermissions(userRole, body);
 
     const updatedProject = await this.projectWriteService.update(projectId, body, userId);
-    const memberIds = [...updatedProject.members.keys()];
+    const memberIds = Object.keys(updatedProject.members);
     const members = await this.userReadService.readByIds(memberIds);
     const membersHydrated = members.map(UserSerializer.serializePartial);
     const latestVersion = await this.projectSecretsVersionReadService.findLatestByProjectId(
@@ -239,6 +256,7 @@ export class ProjectCoreController {
     @Param('memberId') memberId: string,
   ): Promise<void> {
     await this.projectWriteService.removeMember(projectId, memberId);
+    await this.userWriteService.removeFromProjectsOrder(memberId, projectId);
   }
 
   @Patch('projects/:projectId/members/:memberId')

@@ -10,7 +10,7 @@ export class ProjectReadService {
   constructor(@InjectModel(ProjectEntity.name) private projectModel: Model<ProjectEntity>) {}
 
   public async findByIdOrThrow(id: string): Promise<ProjectNormalized> {
-    const project = await this.projectModel.findById(id).exec();
+    const project = await this.projectModel.findById(id).lean<ProjectEntity>().exec();
 
     if (!project) {
       throw new NotFoundException(`Project not found`);

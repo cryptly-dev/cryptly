@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ProjectReadModule } from '../../project/read/project-read.module';
 import { ProjectWriteModule } from '../../project/write/project-write.module';
 import { UserReadModule } from '../../user/read/user-read.module';
+import { UserWriteModule } from '../../user/write/user-write.module';
 import { PersonalInvitationReadModule } from '../read/personal-invitation-read.module';
 import { PersonalInvitationWriteModule } from '../write/personal-invitation-write.module';
 import {
@@ -21,6 +22,7 @@ import { PersonalInvitationCoreController } from './personal-invitation-core.con
     ProjectReadModule,
     ProjectWriteModule,
     UserReadModule,
+    UserWriteModule,
   ],
   controllers: [PersonalInvitationCoreController],
 })

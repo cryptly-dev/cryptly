@@ -11,6 +11,7 @@ export class UserPartialNormalized {
 export class UserNormalized extends UserPartialNormalized {
   public authMethod: AuthMethod;
   public privateKeyEncrypted?: string;
+  public projectsOrder: string[];
 }
 
 export class UserPartialSerialized {

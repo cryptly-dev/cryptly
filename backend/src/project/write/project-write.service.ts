@@ -19,7 +19,7 @@ export class ProjectWriteService {
   public async create(dto: CreateProjectDto, userId: string): Promise<ProjectNormalized> {
     const project = await this.projectModel.create({
       name: dto.name,
-      members: new Map([[userId, Role.Admin]]),
+      members: { [userId]: Role.Admin },
       encryptedSecretsKeys: dto.encryptedSecretsKeys,
     });
 

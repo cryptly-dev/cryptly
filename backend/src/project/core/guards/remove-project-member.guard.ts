@@ -16,7 +16,7 @@ export class RemoveProjectMemberGuard implements CanActivate {
     }
 
     const project = await this.projectReadService.findByIdOrThrow(projectId);
-    const userRole = project.members.get(userId);
+    const userRole = project.members[userId];
 
     if (userId === memberId) {
       return true;

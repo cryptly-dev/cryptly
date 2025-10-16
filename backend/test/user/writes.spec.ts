@@ -47,5 +47,35 @@ describe('User writes (e2e)', () => {
       // then
       expect(response.status).toEqual(HttpStatus.UNAUTHORIZED);
     });
+
+    it('updates projectsOrder', async () => {
+      // given
+      const { user, token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      const project1 = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'project-1',
+        encryptedSecrets: '',
+        encryptedSecretsKeys: {},
+      });
+
+      const project2 = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'project-2',
+        encryptedSecrets: '',
+        encryptedSecretsKeys: {},
+      });
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .patch(`/users/me`)
+        .set('authorization', `Bearer ${token}`)
+        .send({ projectsOrder: [project2.id, project1.id] });
+
+      // then
+      expect(response.status).toEqual(HttpStatus.OK);
+      const userFromDb = await bootstrap.models.userModel.findById(user.id).lean();
+      expect(userFromDb?.projectsOrder).toEqual([project2.id, project1.id]);
+    });
   });
 });

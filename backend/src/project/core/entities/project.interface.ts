@@ -8,7 +8,7 @@ export type EnvName = Branded<string, 'EnvName'>;
 export class ProjectNormalized {
   public id: string;
   public name: string;
-  public members: Map<string, Role>;
+  public members: Record<string, Role>;
   public encryptedSecretsKeys: Record<string, string>;
   public createdAt: Date;
   public updatedAt: Date;

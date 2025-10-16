@@ -773,4 +773,174 @@ describe('ProjectCoreController (writes)', () => {
       expect(response.status).toEqual(401);
     });
   });
+
+  describe('Projects Order', () => {
+    it('adds project to projectsOrder when creating project', async () => {
+      // given
+      const { user, token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      // when
+      const project1 = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'project-1',
+        encryptedSecrets: '',
+        encryptedSecretsKeys: {},
+      });
+
+      const project2 = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'project-2',
+        encryptedSecrets: '',
+        encryptedSecretsKeys: {},
+      });
+
+      // then
+      const userFromDb = await bootstrap.models.userModel.findById(user.id).lean();
+      expect(userFromDb?.projectsOrder).toEqual([project1.id, project2.id]);
+    });
+
+    it('returns projects in correct order based on projectsOrder', async () => {
+      // given
+      const { token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      const project1 = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'project-1',
+        encryptedSecrets: '',
+        encryptedSecretsKeys: {},
+      });
+
+      const project2 = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'project-2',
+        encryptedSecrets: '',
+        encryptedSecretsKeys: {},
+      });
+
+      const project3 = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'project-3',
+        encryptedSecrets: '',
+        encryptedSecretsKeys: {},
+      });
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .get('/users/me/projects')
+        .set('authorization', `Bearer ${token}`);
+
+      // then
+      expect(response.status).toEqual(200);
+      expect(response.body.map((p: any) => p.id)).toEqual([project1.id, project2.id, project3.id]);
+    });
+
+    it('adds project to projectsOrder when accepting link invitation', async () => {
+      // given
+      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'owner@test.com',
+      });
+      const { user: invitedUser, token: invitedToken } =
+        await bootstrap.utils.userUtils.createDefault({
+          email: 'invited@test.com',
+        });
+
+      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+
+      const invitation = await bootstrap.utils.invitationUtils.createInvitation(
+        ownerToken,
+        project.id,
+        { role: Role.Read },
+      );
+
+      // when
+      await request(bootstrap.app.getHttpServer())
+        .post(`/invitations/${invitation.id}/accept`)
+        .set('authorization', `Bearer ${invitedToken}`)
+        .send({ newSecretsKey: 'encryptedKey' });
+
+      // then
+      const userFromDb = await bootstrap.models.userModel.findById(invitedUser.id).lean();
+      expect(userFromDb?.projectsOrder).toContain(project.id);
+    });
+
+    it('adds project to projectsOrder when accepting personal invitation', async () => {
+      // given
+      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'owner@test.com',
+      });
+      const { user: invitedUser, token: invitedToken } =
+        await bootstrap.utils.userUtils.createDefault({
+          email: 'invited@test.com',
+        });
+
+      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const invitation = await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(
+        ownerToken,
+        invitedUser.id,
+        project.id,
+        { role: Role.Read },
+      );
+
+      // when
+      await request(bootstrap.app.getHttpServer())
+        .post(`/personal-invitations/${invitation.id}/accept`)
+        .set('authorization', `Bearer ${invitedToken}`);
+
+      // then
+      const userFromDb = await bootstrap.models.userModel.findById(invitedUser.id).lean();
+      expect(userFromDb?.projectsOrder).toContain(project.id);
+    });
+
+    it('removes project from projectsOrder when leaving project', async () => {
+      // given
+      const { user, token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      const project = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'project-1',
+        encryptedSecrets: '',
+        encryptedSecretsKeys: {},
+      });
+
+      // when
+      await request(bootstrap.app.getHttpServer())
+        .delete(`/projects/${project.id}/members/${user.id}`)
+        .set('authorization', `Bearer ${token}`);
+
+      // then
+      const userFromDb = await bootstrap.models.userModel.findById(user.id).lean();
+      expect(userFromDb?.projectsOrder).not.toContain(project.id);
+    });
+
+    it('removes project from projectsOrder when kicked from project', async () => {
+      // given
+      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'owner@test.com',
+      });
+      const { user: member, token: memberToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'member@test.com',
+      });
+
+      const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
+      const invitation = await bootstrap.utils.invitationUtils.createInvitation(
+        ownerToken,
+        project.id,
+        { role: Role.Read },
+      );
+
+      await request(bootstrap.app.getHttpServer())
+        .post(`/invitations/${invitation.id}/accept`)
+        .set('authorization', `Bearer ${memberToken}`)
+        .send({ newSecretsKey: 'encryptedKey' });
+
+      // when
+      await request(bootstrap.app.getHttpServer())
+        .delete(`/projects/${project.id}/members/${member.id}`)
+        .set('authorization', `Bearer ${ownerToken}`);
+
+      // then
+      const userFromDb = await bootstrap.models.userModel.findById(member.id).lean();
+      expect(userFromDb?.projectsOrder).not.toContain(project.id);
+    });
+  });
 });

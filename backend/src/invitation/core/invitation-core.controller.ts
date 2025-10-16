@@ -6,6 +6,7 @@ import { Role } from 'src/shared/types/role.enum';
 import { CurrentUserId } from '../../auth/core/decorators/current-user-id.decorator';
 import { ProjectWriteService } from '../../project/write/project-write.service';
 import { UserReadService } from '../../user/read/user-read.service';
+import { UserWriteService } from '../../user/write/user-write.service';
 import { InvitationReadService } from '../read/invitation-read.service';
 import { InvitationWriteService } from '../write/invitation-write.service';
 import { AcceptInvitationBody } from './dto/accept-invitation.body';
@@ -23,6 +24,7 @@ export class InvitationCoreController {
     private readonly invitationReadService: InvitationReadService,
     private readonly projectWriteService: ProjectWriteService,
     private readonly userReadService: UserReadService,
+    private readonly userWriteService: UserWriteService,
   ) {}
 
   @Get('projects/:projectId/invitations')
@@ -88,6 +90,8 @@ export class InvitationCoreController {
       body.newSecretsKey,
       invitation.role,
     );
+
+    await this.userWriteService.addToProjectsOrder(userId, invitation.projectId.toString());
 
     await this.invitationWriteService.delete(id);
   }

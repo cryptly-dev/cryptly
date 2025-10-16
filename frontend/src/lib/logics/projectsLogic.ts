@@ -3,6 +3,7 @@ import { actions, connect, kea, listeners, path, selectors } from "kea";
 import { loaders } from "kea-loaders";
 import { subscriptions } from "kea-subscriptions";
 import { ProjectsApi, type Project } from "../api/projects.api";
+import { UserApi } from "../api/user.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
 import { authLogic } from "./authLogic";
@@ -23,6 +24,7 @@ export const projectsLogic = kea<projectsLogicType>([
     readProjectById: (projectId: string) => ({ projectId }),
     loadProjects: true,
     deleteProject: (projectId: string) => ({ projectId }),
+    finalizeProjectsOrder: (projects: Project[]) => ({ projects }),
   }),
 
   loaders(({ values }) => ({
@@ -49,7 +51,7 @@ export const projectsLogic = kea<projectsLogicType>([
     ],
   }),
 
-  listeners(({ values, asyncActions, actions }) => ({
+  listeners(({ values, asyncActions }) => ({
     addProject: async ({ project, navigateCallback }): Promise<void> => {
       const projectKey = await SymmetricCrypto.generateProjectKey();
 
@@ -80,7 +82,11 @@ export const projectsLogic = kea<projectsLogicType>([
     },
     deleteProject: async ({ projectId }): Promise<void> => {
       await ProjectsApi.deleteProject(values.jwtToken!, projectId);
-      await actions.loadProjects();
+      await asyncActions.loadProjects();
+    },
+    finalizeProjectsOrder: async ({ projects }) => {
+      const projectIds = projects.map((p) => p.id);
+      await UserApi.updateProjectsOrder(values.jwtToken!, projectIds);
     },
   })),
 
