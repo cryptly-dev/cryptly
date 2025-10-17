@@ -1,12 +1,12 @@
-import { actions, connect, events, kea, listeners, path } from "kea";
+import { actions, connect, kea, listeners, path } from "kea";
 import { loaders } from "kea-loaders";
 import type { PersonalInvitation } from "../api/personal-invitations.api";
 import { PersonalInvitationsApi } from "../api/personal-invitations.api";
 import { authLogic } from "./authLogic";
 import { projectsLogic } from "./projectsLogic";
 
-import type { myPersonalInvitationsLogicType } from "./myPersonalInvitationsLogicType";
 import { subscriptions } from "kea-subscriptions";
+import type { myPersonalInvitationsLogicType } from "./myPersonalInvitationsLogicType";
 
 export const myPersonalInvitationsLogic = kea<myPersonalInvitationsLogicType>([
   path(["src", "lib", "logics", "myPersonalInvitationsLogic"]),
@@ -51,15 +51,6 @@ export const myPersonalInvitationsLogic = kea<myPersonalInvitationsLogicType>([
         invitationId
       );
       await asyncActions.loadMyPersonalInvitations();
-    },
-  })),
-
-  events(({ asyncActions, values }) => ({
-    afterMount: () => {
-      if (!values.jwtToken) {
-        return;
-      }
-      asyncActions.loadMyPersonalInvitations();
     },
   })),
 
