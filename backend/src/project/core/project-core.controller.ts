@@ -29,14 +29,15 @@ import { SecretsUpdatedEvent } from '../events/definitions/secrets-updated.event
 import { ProjectEvent } from '../events/project-events.enum';
 import { ProjectReadService } from '../read/project-read.service';
 import { ProjectWriteService } from '../write/project-write.service';
+import { AddEncryptedSecretsKeyBody } from './dto/add-encrypted-secrets-key.body';
 import { CreateProjectBody } from './dto/create-project.body';
+import { ProjectSearchResponse } from './dto/project-search.response';
 import { UpdateMemberRoleBody } from './dto/update-member-role.body';
 import { UpdateProjectBody } from './dto/update-project.body';
 import { ProjectSerialized } from './entities/project.interface';
 import { ProjectSerializer } from './entities/project.serializer';
 import { ProjectMemberGuard } from './guards/project-member.guard';
 import { RemoveProjectMemberGuard } from './guards/remove-project-member.guard';
-import { AddEncryptedSecretsKeyBody } from './dto/add-encrypted-secrets-key.body';
 
 @Controller('')
 @ApiTags('Projects')
@@ -99,6 +100,25 @@ export class ProjectCoreController {
     const remainingProjects = serializedProjects.filter((p) => !user.projectsOrder.includes(p.id));
 
     return [...orderedProjects, ...remainingProjects];
+  }
+
+  @Get('users/me/projects/search')
+  @ApiResponse({ type: [ProjectSearchResponse] })
+  public async findUserProjectsForSearch(
+    @CurrentUserId() userId: string,
+  ): Promise<ProjectSearchResponse[]> {
+    const projects = await this.projectReadService.findUserProjects(userId);
+    const latestVersions = await this.projectSecretsVersionReadService.findManyLatestByProjectIds(
+      projects.map((p) => new Types.ObjectId(p.id)),
+    );
+    const latestVersionsMap = new Map(latestVersions.map((v) => [v.projectId.toString(), v]));
+
+    return projects.map((p) => ({
+      id: p.id,
+      name: p.name,
+      encryptedSecretsKeys: p.encryptedSecretsKeys,
+      encryptedSecrets: latestVersionsMap.get(p.id)!!.encryptedSecrets,
+    }));
   }
 
   @Post('projects')

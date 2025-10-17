@@ -1,14 +1,21 @@
-import { actions, connect, kea, path, reducers, selectors } from "kea";
+import { parse } from "dotenv";
+import {
+  actions,
+  connect,
+  kea,
+  listeners,
+  path,
+  reducers,
+  selectors,
+} from "kea";
 import { loaders } from "kea-loaders";
 import { subscriptions } from "kea-subscriptions";
-import { parse } from "dotenv";
-import type { searchLogicType } from "./searchLogicType";
-import { projectsLogic } from "./projectsLogic";
-import { keyLogic } from "./keyLogic";
-import { authLogic } from "./authLogic";
 import { ProjectsApi } from "../api/projects.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
+import { authLogic } from "./authLogic";
+import { keyLogic } from "./keyLogic";
+import type { searchLogicType } from "./searchLogicType";
 
 export interface Secret {
   name: string;
@@ -56,14 +63,11 @@ export const searchLogic = kea<searchLogicType>([
 
   connect({
     values: [
-      projectsLogic,
-      ["projects"],
       keyLogic,
       ["privateKeyDecrypted"],
       authLogic,
       ["userData", "jwtToken"],
     ],
-    actions: [projectsLogic, ["loadProjects"]],
   }),
 
   actions({
@@ -92,55 +96,55 @@ export const searchLogic = kea<searchLogicType>([
       [] as Secret[],
       {
         loadAllSecrets: async (): Promise<Secret[]> => {
-          const projects = values.projects;
           const privateKey = values.privateKeyDecrypted;
           const jwtToken = values.jwtToken;
           const userId = values.userData?.id;
 
-          if (!projects || !privateKey || !jwtToken || !userId) {
+          if (!privateKey || !jwtToken || !userId) {
             return [];
           }
 
-          const allSecrets: Secret[] = [];
+          try {
+            const searchProjects = await ProjectsApi.searchProjects(jwtToken);
+            const allSecrets: Secret[] = [];
 
-          for (const project of projects) {
-            try {
-              const projectData = await ProjectsApi.getProject(
-                jwtToken,
-                project.id
-              );
+            for (const project of searchProjects) {
+              try {
+                const projectKeyDecrypted = await AsymmetricCrypto.decrypt(
+                  project.encryptedSecretsKeys[userId],
+                  privateKey
+                );
 
-              const projectKeyDecrypted = await AsymmetricCrypto.decrypt(
-                projectData?.encryptedSecretsKeys![userId]!,
-                privateKey
-              );
+                const contentDecrypted = await SymmetricCrypto.decrypt(
+                  project.encryptedSecrets,
+                  projectKeyDecrypted
+                );
 
-              const contentDecrypted = await SymmetricCrypto.decrypt(
-                projectData?.encryptedSecrets!,
-                projectKeyDecrypted
-              );
+                const parsed = parse(contentDecrypted);
 
-              const parsed = parse(contentDecrypted);
-
-              for (const [key, value] of Object.entries(parsed)) {
-                allSecrets.push({
-                  name: key,
-                  value: value || "",
-                  projectId: project.id,
-                  projectName: project.name,
-                });
+                for (const [key, value] of Object.entries(parsed)) {
+                  allSecrets.push({
+                    name: key,
+                    value: value || "",
+                    projectId: project.id,
+                    projectName: project.name,
+                  });
+                }
+              } catch (error) {
+                console.error(
+                  `Error loading secrets for project ${project.id}:`,
+                  error
+                );
               }
-            } catch (error) {
-              console.error(
-                `Error loading secrets for project ${project.id}:`,
-                error
-              );
             }
+
+            actions.setState("loaded");
+            return allSecrets;
+          } catch (error) {
+            console.error("Error loading search projects:", error);
+            actions.setState("loaded");
+            return [];
           }
-
-          actions.setState("loaded");
-
-          return allSecrets;
         },
       },
     ],
@@ -172,14 +176,40 @@ export const searchLogic = kea<searchLogicType>([
     ],
   }),
 
-  subscriptions(({ actions, values }) => ({
-    projects: (projects) => {
-      if (projects && values.privateKeyDecrypted) {
+  listeners(({ actions, values }) => ({
+    afterMount: () => {
+      if (
+        values.privateKeyDecrypted &&
+        values.jwtToken &&
+        values.userData &&
+        values.secrets.length === 0 &&
+        !values.secretsLoading
+      ) {
         actions.loadAllSecrets();
       }
     },
+  })),
+
+  subscriptions(({ actions, values }) => ({
     privateKeyDecrypted: (privateKey) => {
-      if (privateKey && values.projects) {
+      if (
+        privateKey &&
+        values.jwtToken &&
+        values.userData &&
+        values.secrets.length === 0 &&
+        !values.secretsLoading
+      ) {
+        actions.loadAllSecrets();
+      }
+    },
+    userData: (userData) => {
+      if (
+        userData &&
+        values.privateKeyDecrypted &&
+        values.jwtToken &&
+        values.secrets.length === 0 &&
+        !values.secretsLoading
+      ) {
         actions.loadAllSecrets();
       }
     },

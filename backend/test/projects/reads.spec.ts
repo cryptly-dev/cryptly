@@ -183,6 +183,111 @@ describe('ProjectCoreController (reads)', () => {
     });
   });
 
+  describe('GET /users/me/projects/search', () => {
+    it('gets projects search data for user', async () => {
+      const { token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+      const projectA = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'project-a',
+        encryptedSecretsKeys: { user1: 'key1' },
+        encryptedSecrets: 'encrypted-data-a',
+      });
+      const projectB = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'project-b',
+        encryptedSecretsKeys: { user1: 'key2' },
+        encryptedSecrets: 'encrypted-data-b',
+      });
+
+      const { token: tokenB } = await bootstrap.utils.userUtils.createDefault({
+        email: 'testB@test.com',
+      });
+      await bootstrap.utils.projectUtils.createProject(tokenB, {
+        name: 'project-c',
+        encryptedSecretsKeys: {},
+        encryptedSecrets: 'encrypted-data-c',
+      });
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .get(`/users/me/projects/search`)
+        .set('authorization', `Bearer ${token}`);
+
+      expect(response.status).toEqual(200);
+      expect(response.body).toHaveLength(2);
+      expect(response.body).toEqual(
+        expect.arrayContaining([
+          {
+            id: projectA.id,
+            name: 'project-a',
+            encryptedSecretsKeys: { user1: 'key1' },
+            encryptedSecrets: 'encrypted-data-a',
+          },
+          {
+            id: projectB.id,
+            name: 'project-b',
+            encryptedSecretsKeys: { user1: 'key2' },
+            encryptedSecrets: 'encrypted-data-b',
+          },
+        ]),
+      );
+    });
+
+    it('returns empty array when no projects', async () => {
+      const { token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .get(`/users/me/projects/search`)
+        .set('authorization', `Bearer ${token}`);
+
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual([]);
+    });
+
+    it('does not get when not logged in', async () => {
+      const response = await request(bootstrap.app.getHttpServer()).get(
+        `/users/me/projects/search`,
+      );
+
+      expect(response.status).toEqual(401);
+    });
+
+    it('returns latest encrypted secrets', async () => {
+      const { token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+      const project = await bootstrap.utils.projectUtils.createProject(token, {
+        name: 'test-project',
+        encryptedSecretsKeys: { user1: 'key1' },
+        encryptedSecrets: 'v1',
+      });
+
+      await request(bootstrap.app.getHttpServer())
+        .patch(`/projects/${project.id}`)
+        .set('authorization', `Bearer ${token}`)
+        .send({ encryptedSecrets: 'v2' });
+
+      await request(bootstrap.app.getHttpServer())
+        .patch(`/projects/${project.id}`)
+        .set('authorization', `Bearer ${token}`)
+        .send({ encryptedSecrets: 'v3' });
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .get(`/users/me/projects/search`)
+        .set('authorization', `Bearer ${token}`);
+
+      expect(response.status).toEqual(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0]).toEqual({
+        id: project.id,
+        name: 'test-project',
+        encryptedSecretsKeys: { user1: 'key1' },
+        encryptedSecrets: 'v3',
+      });
+    });
+  });
+
   describe('GET /projects/:projectId/history', () => {
     it('gets project history', async () => {
       // given

@@ -68,6 +68,13 @@ export interface UpdateMemberRoleDto {
   role: ProjectMemberRole;
 }
 
+export interface ProjectSearchResponse {
+  id: string;
+  name: string;
+  encryptedSecretsKeys: Record<string, string>;
+  encryptedSecrets: string;
+}
+
 export class ProjectsApi {
   public static async getProject(
     jwtToken: string,
@@ -104,6 +111,21 @@ export class ProjectsApi {
         Authorization: `Bearer ${jwtToken}`,
       },
     });
+
+    return response.data;
+  }
+
+  public static async searchProjects(
+    jwtToken: string
+  ): Promise<ProjectSearchResponse[]> {
+    const response = await axios.get<ProjectSearchResponse[]>(
+      "/users/me/projects/search",
+      {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      }
+    );
 
     return response.data;
   }
