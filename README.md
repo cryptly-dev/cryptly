@@ -70,6 +70,8 @@ When a new project is created, a random symmetric encryption key is generated cl
 
 ### Secure project sharing
 
+#### Using link
+
 The project sharing mechanism employs a temporary asymmetric key pair to facilitate secure transfer:
 
 1. A temporary RSA-OAEP key pair is generated for the invitation
@@ -78,6 +80,15 @@ The project sharing mechanism employs a temporary asymmetric key pair to facilit
 4. When a recipient claims the invitation, they provide the invitation code to decrypt the temporary private key
 5. The temporary private key is used to decrypt the project's symmetric key
 6. Finally, the project key is re-encrypted using the recipient's public key
+
+#### Invite existing account
+
+When inviting an existing account directly, the process is streamlined as the recipient's public key is already available:
+
+1. The project's symmetric key is encrypted directly using the recipient's stored public key
+2. A new encrypted project key version is created for the recipient
+3. No invitation code is required as the recipient can immediately decrypt using their private key
+4. The recipient gains instant access to the project upon invitation acceptance
 
 This cryptographic workflow ensures end-to-end encryption throughout the entire project lifecycle, maintaining zero-knowledge architecture where the server cannot access plaintext data at any point.
 
