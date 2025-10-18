@@ -42,11 +42,11 @@ export function MePage() {
     try {
       await UserApi.updateMe(jwtToken, { displayName: displayNameInput });
       await loadUserData();
-      setIsEditingDisplayName(false);
     } catch (error) {
       console.error("Failed to update display name:", error);
     } finally {
       setIsSaving(false);
+      setIsEditingDisplayName(false);
     }
   };
 
@@ -96,54 +96,52 @@ export function MePage() {
           <div className="space-y-6">
             <div className="space-y-4">
               <div className="p-4 bg-muted/50 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Display Name
-                  </label>
-                  {!isEditingDisplayName && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditingDisplayName(true)}
-                      className="h-6 px-2"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
+                <label className="text-sm font-medium text-muted-foreground block mb-2">
+                  Display Name
+                </label>
                 {isEditingDisplayName ? (
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 items-center h-[34px]">
                     <Input
                       value={displayNameInput}
                       onChange={(e) => setDisplayNameInput(e.target.value)}
                       placeholder="Enter display name"
-                      className="flex-1"
+                      className="flex-1 h-[34px] text-lg"
                       maxLength={200}
                       disabled={isSaving}
                     />
                     <Button
-                      variant="ghost"
+                      variant="default"
                       size="sm"
                       onClick={handleSaveDisplayName}
-                      disabled={isSaving}
-                      className="h-9 px-2"
+                      isLoading={isSaving}
+                      className="h-[34px] w-[34px] p-0 cursor-pointer"
                     >
-                      <Check className="h-4 w-4 text-green-600" />
+                      <Check className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleCancelEdit}
                       disabled={isSaving}
-                      className="h-9 px-2"
+                      className="h-[34px] w-[34px] p-0 cursor-pointer"
                     >
-                      <X className="h-4 w-4 text-red-600" />
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-lg font-medium text-card-foreground mt-1">
-                    {userData.displayName}
-                  </p>
+                  <div className="flex items-center justify-between h-[34px]">
+                    <p className="text-lg font-medium text-card-foreground">
+                      {userData.displayName}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingDisplayName(true)}
+                      className="h-[34px] w-[34px] p-0 cursor-pointer"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
                 )}
               </div>
 
