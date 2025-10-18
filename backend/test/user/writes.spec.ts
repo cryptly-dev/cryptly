@@ -77,5 +77,26 @@ describe('User writes (e2e)', () => {
       const userFromDb = await bootstrap.models.userModel.findById(user.id).lean();
       expect(userFromDb?.projectsOrder).toEqual([project2.id, project1.id]);
     });
+
+    it('updates displayName', async () => {
+      // given
+      const { user, token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .patch(`/users/me`)
+        .set('authorization', `Bearer ${token}`)
+        .send({ displayName: 'John Doe' });
+
+      // then
+      expect(response.status).toEqual(HttpStatus.OK);
+      expect(response.body).toMatchObject({
+        displayName: 'John Doe',
+      });
+      const userFromDb = await bootstrap.models.userModel.findById(user.id).lean();
+      expect(userFromDb?.displayName).toEqual('John Doe');
+    });
   });
 });

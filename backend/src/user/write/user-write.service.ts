@@ -24,6 +24,10 @@ export class UserWriteService {
   public async update(id: string, dto: UpdateUserDto): Promise<UserNormalized> {
     const updateQuery: UpdateQuery<UserEntity> = {};
 
+    if (dto.displayName !== undefined) {
+      updateQuery.displayName = dto.displayName;
+    }
+
     if (dto.publicKey) {
       updateQuery.publicKey = dto.publicKey;
     }
