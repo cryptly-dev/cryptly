@@ -17,7 +17,7 @@
 
 ## 👫 Community
 
-[![](https://dcbadge.limes.pink/api/server/https://discord.gg/FwzmtYkc)](https://dcbadge.limes.pink/api/server/https://discord.gg/FwzmtYkc)
+[![](https://dcbadge.limes.pink/api/server/https://discord.gg/FwzmtYkc)](https://discord.gg/FwzmtYkc)
 
 ## ⭐ Features
 
