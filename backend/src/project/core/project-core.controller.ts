@@ -14,7 +14,7 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
-import { Observable, filter, fromEvent, map } from 'rxjs';
+import { Observable, filter, finalize, fromEvent, map } from 'rxjs';
 import { Role } from 'src/shared/types/role.enum';
 import { CurrentUserId } from '../../auth/core/decorators/current-user-id.decorator';
 import { PersonalInvitationReadService } from '../../personal-invitation/read/personal-invitation-read.service';
@@ -65,6 +65,9 @@ export class ProjectCoreController {
       map((data: SecretsUpdatedEvent) => ({
         data,
       })),
+      finalize(() => {
+        console.log(`Client disconnected from project ${projectId} events`);
+      }),
     );
   }
 
