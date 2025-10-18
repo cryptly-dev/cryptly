@@ -27,6 +27,7 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
     sendMessageToAll: (message: any) => ({ message }),
     requestUnlock: true,
     setUnlockRequestPrivateKey: (privateKey: string | null) => ({ privateKey }),
+    setUnlockRequestPin: (pin: string | null) => ({ pin }),
     openMessageStream: true,
     closeMessageStream: true,
     setMessageConnection: (connection: EventSourceWrapper | null) => ({
@@ -49,6 +50,12 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
       null as string | null,
       {
         setUnlockRequestPrivateKey: (_, { privateKey }) => privateKey,
+      },
+    ],
+    unlockRequestPin: [
+      null as string | null,
+      {
+        setUnlockRequestPin: (_, { pin }) => pin,
       },
     ],
     messageConnection: [
@@ -138,11 +145,15 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
       const keyPair = await AsymmetricCrypto.generateKeyPair();
       actions.setUnlockRequestPrivateKey(keyPair.privateKey);
 
+      const pin = Math.floor(100000 + Math.random() * 900000).toString();
+      actions.setUnlockRequestPin(pin);
+
       const requesterDeviceId = getDeviceId();
       const message = {
         type: "request",
         publicKey: keyPair.publicKey,
         requesterDeviceId,
+        pin,
         timestamp: new Date().toISOString(),
       };
 

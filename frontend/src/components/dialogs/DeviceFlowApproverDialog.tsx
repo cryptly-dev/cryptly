@@ -109,6 +109,20 @@ export function DeviceFlowApproverDialog() {
               </div>
             </div>
 
+            {lastMessage.pin && (
+              <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Verification PIN:
+                </p>
+                <p className="text-3xl font-mono font-bold text-primary tracking-wider text-center">
+                  {lastMessage.pin}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  Check if this PIN matches on the requesting device
+                </p>
+              </div>
+            )}
+
             <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
               <p className="text-sm text-amber-900 dark:text-amber-100">
                 By approving, you will share your passphrase with the requesting

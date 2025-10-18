@@ -151,7 +151,7 @@ export function UnlockBrowserDialog() {
 }
 
 function ConnectedDevicesSection() {
-  const { devices } = useValues(deviceFlowRequesterLogic);
+  const { devices, unlockRequestPin } = useValues(deviceFlowRequesterLogic);
   const { requestUnlock } = useActions(deviceFlowRequesterLogic);
   const [isSending, setIsSending] = useState(false);
 
@@ -190,17 +190,27 @@ function ConnectedDevicesSection() {
         {devices.map((device) => (
           <div
             key={device.deviceId}
-            className="flex items-center justify-between p-2 text-sm bg-muted/50 rounded-md"
+            className="p-2 text-sm bg-muted/50 rounded-md"
           >
             <span className="text-foreground">
               {device.deviceName || "Unknown Device"}
             </span>
-            <span className="text-xs text-muted-foreground">
-              {formatLastActivity(device.lastActivityDate)}
-            </span>
           </div>
         ))}
       </div>
+      {unlockRequestPin && (
+        <div className="mt-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+          <p className="text-xs text-muted-foreground mb-1">
+            Verification PIN:
+          </p>
+          <p className="text-2xl font-mono font-bold text-primary tracking-wider">
+            {unlockRequestPin}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Verify this PIN matches on your other device
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -233,18 +243,4 @@ function ReceivedMessageSection() {
       </div>
     </div>
   );
-}
-
-function formatLastActivity(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (seconds < 5) {
-    return "now";
-  } else if (seconds < 60) {
-    return `${seconds}s ago`;
-  } else {
-    return "offline";
-  }
 }
