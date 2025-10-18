@@ -22,7 +22,7 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
     loadDevices: true,
     startRefreshing: true,
     stopRefreshing: true,
-    setRefreshInterval: (intervalId: NodeJS.Timeout | null) => ({ intervalId }),
+    setRefreshInterval: (intervalId: any) => ({ intervalId }),
     sendMessage: (deviceId: string, message: any) => ({ deviceId, message }),
     sendMessageToAll: (message: any) => ({ message }),
     requestUnlock: true,
@@ -41,7 +41,7 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
 
   reducers({
     refreshInterval: [
-      null as NodeJS.Timeout | null,
+      null as any,
       {
         setRefreshInterval: (_, { intervalId }) => intervalId,
       },
@@ -219,6 +219,8 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
       if (!values.jwtToken) {
         return;
       }
+      actions.closeMessageStream();
+      actions.stopRequester();
       actions.loadDevices();
       actions.startRefreshing();
       actions.openMessageStream();

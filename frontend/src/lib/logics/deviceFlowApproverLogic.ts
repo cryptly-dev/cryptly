@@ -164,6 +164,8 @@ export const deviceFlowApproverLogic = kea<deviceFlowApproverLogicType>([
       if (!jwtToken) {
         return;
       }
+      actions.stopPinging();
+      actions.closeMessageStream();
       actions.ping();
       actions.startPinging();
       actions.openMessageStream();

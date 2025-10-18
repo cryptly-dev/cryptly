@@ -248,7 +248,7 @@ export const projectLogic = kea<projectLogicType>([
     ],
   })),
 
-  selectors(({ values, actions }) => ({
+  selectors(({ values }) => ({
     isEditorDirty: [
       (s) => [s.inputValue, s.projectData, s.projectDataLoading],
       (inputValue, projectData, projectDataLoading) =>
