@@ -119,19 +119,21 @@ function MemberItem({
         {member.avatarUrl ? (
           <img
             src={member.avatarUrl}
-            alt={member.email}
+            alt={member.displayName || member.email || "User"}
             className="size-8 rounded-full object-cover"
           />
         ) : (
-          member.email.charAt(0).toUpperCase()
+          (member.displayName || member.email || "?").charAt(0).toUpperCase()
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">
-          {member.id === userData?.id ? "You" : "Other member"}
+          {member.id === userData?.id
+            ? "You"
+            : member.displayName || member.email || "Unknown"}
         </div>
         <div className="text-xs text-muted-foreground truncate">
-          {member.email}
+          {member.email || "No email"}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -166,7 +168,9 @@ function MemberItem({
             variant="ghost"
             size="sm"
             className="size-8 p-0 text-destructive hover:text-destructive cursor-pointer"
-            aria-label={`Remove ${member.email} from project`}
+            aria-label={`Remove ${
+              member.displayName || member.email || "member"
+            } from project`}
           >
             <IconTrash className="size-4" />
           </Button>

@@ -9,8 +9,9 @@ export enum ProjectMemberRole {
 
 export interface ProjectMember {
   id: string;
-  email: string;
+  email?: string;
   avatarUrl: string;
+  displayName?: string;
   role: ProjectMemberRole;
 }
 

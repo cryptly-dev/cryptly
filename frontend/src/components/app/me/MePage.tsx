@@ -1,17 +1,23 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PersonalInvitesSection } from "@/components/me/PersonalInvitesSection";
 import { authLogic } from "@/lib/logics/authLogic";
 import { useNavigate } from "@tanstack/react-router";
-import { useActions, useValues } from "kea";
+import { useAsyncActions, useValues } from "kea";
 import { motion } from "motion/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { UserApi } from "@/lib/api/user.api";
+import { Pencil, Check, X } from "lucide-react";
 
 export function MePage() {
   const navigate = useNavigate();
-  const { userData, isLoggedIn } = useValues(authLogic);
-  const { loadUserData } = useActions(authLogic);
+  const { userData, isLoggedIn, jwtToken } = useValues(authLogic);
+  const { loadUserData } = useAsyncActions(authLogic);
   const { logout } = useAuth();
+  const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
+  const [displayNameInput, setDisplayNameInput] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -22,6 +28,32 @@ export function MePage() {
   useEffect(() => {
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    if (userData?.displayName) {
+      setDisplayNameInput(userData.displayName);
+    }
+  }, [userData?.displayName]);
+
+  const handleSaveDisplayName = async () => {
+    if (!jwtToken) return;
+
+    setIsSaving(true);
+    try {
+      await UserApi.updateMe(jwtToken, { displayName: displayNameInput });
+      await loadUserData();
+      setIsEditingDisplayName(false);
+    } catch (error) {
+      console.error("Failed to update display name:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setDisplayNameInput(userData?.displayName || "");
+    setIsEditingDisplayName(false);
+  };
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20, scale: 0.9 },
@@ -63,6 +95,58 @@ export function MePage() {
 
           <div className="space-y-6">
             <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Display Name
+                  </label>
+                  {!isEditingDisplayName && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingDisplayName(true)}
+                      className="h-6 px-2"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                {isEditingDisplayName ? (
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      value={displayNameInput}
+                      onChange={(e) => setDisplayNameInput(e.target.value)}
+                      placeholder="Enter display name"
+                      className="flex-1"
+                      maxLength={200}
+                      disabled={isSaving}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSaveDisplayName}
+                      disabled={isSaving}
+                      className="h-9 px-2"
+                    >
+                      <Check className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelEdit}
+                      disabled={isSaving}
+                      className="h-9 px-2"
+                    >
+                      <X className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-lg font-medium text-card-foreground mt-1">
+                    {userData.displayName || "Not set"}
+                  </p>
+                )}
+              </div>
+
               <div className="p-4 bg-muted/50 rounded-lg">
                 <label className="text-sm font-medium text-muted-foreground">
                   Email Address
