@@ -8,29 +8,29 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 const ADJECTIVES = [
-  'Happy',
-  'Cheerful',
-  'Excited',
-  'Playful',
-  'Curious',
-  'Energetic',
-  'Friendly',
-  'Jolly',
-  'Bright',
-  'Swift',
+  'happy',
+  'cheerful',
+  'excited',
+  'playful',
+  'curious',
+  'energetic',
+  'friendly',
+  'jolly',
+  'bright',
+  'swift',
 ];
 
 const ANIMALS = [
-  'Koala',
-  'Kangaroo',
-  'Capybara',
-  'Penguin',
-  'Otter',
-  'Panda',
-  'Dolphin',
-  'Raccoon',
-  'Sloth',
-  'Hedgehog',
+  'koala',
+  'kangaroo',
+  'capybara',
+  'penguin',
+  'otter',
+  'panda',
+  'dolphin',
+  'raccoon',
+  'sloth',
+  'hedgehog',
 ];
 
 @Injectable()

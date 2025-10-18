@@ -110,6 +110,7 @@ export function MePage() {
                       disabled={isSaving}
                     />
                     <Button
+                      key={"confirm"}
                       variant="default"
                       size="sm"
                       onClick={handleSaveDisplayName}
@@ -119,6 +120,7 @@ export function MePage() {
                       <Check className="h-4 w-4" />
                     </Button>
                     <Button
+                      key={"cancel"}
                       variant="ghost"
                       size="sm"
                       onClick={handleCancelEdit}
