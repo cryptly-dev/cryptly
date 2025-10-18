@@ -102,7 +102,7 @@ export function AcceptInvitationPage() {
                 <div>
                   <div className="text-sm font-medium">Joining as</div>
                   <div className="text-sm text-muted-foreground">
-                    {userData?.displayName || userData?.email}
+                    {userData?.displayName}
                   </div>
                 </div>
               </div>

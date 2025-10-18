@@ -17,7 +17,7 @@ export class UserSerializer {
       authMethod: entity.authMethod,
       email: entity.email,
       avatarUrl: entity.avatarUrl,
-      displayName: entity.displayName || entity.email.split('@')[0],
+      displayName: entity.displayName,
       privateKeyEncrypted: entity.privateKeyEncrypted,
       publicKey: entity.publicKey,
       projectsOrder: entity.projectsOrder || [],
@@ -28,27 +28,37 @@ export class UserSerializer {
     normalized: UserNormalized,
     params?: UserSerializerParams,
   ): UserSerialized {
-    return {
+    const result: UserSerialized = {
       id: normalized.id,
       authMethod: normalized.authMethod,
-      ...(params?.showEmailAddress && { email: normalized.email }),
       avatarUrl: normalized.avatarUrl,
       displayName: normalized.displayName,
       privateKeyEncrypted: normalized.privateKeyEncrypted,
       publicKey: normalized.publicKey,
     };
+
+    if (params?.showEmailAddress) {
+      result.email = normalized.email;
+    }
+
+    return result;
   }
 
   public static serializePartial(
     normalized: UserPartialNormalized,
     params?: UserSerializerParams,
   ): UserPartialSerialized {
-    return {
+    const result: UserPartialSerialized = {
       id: normalized.id,
-      ...(params?.showEmailAddress && { email: normalized.email }),
       avatarUrl: normalized.avatarUrl,
       displayName: normalized.displayName,
       publicKey: normalized.publicKey,
     };
+
+    if (params?.showEmailAddress) {
+      result.email = normalized.email;
+    }
+
+    return result;
   }
 }

@@ -51,7 +51,7 @@ export function MePage() {
   };
 
   const handleCancelEdit = () => {
-    setDisplayNameInput(userData?.displayName || "");
+    setDisplayNameInput(userData?.displayName ?? "");
     setIsEditingDisplayName(false);
   };
 
