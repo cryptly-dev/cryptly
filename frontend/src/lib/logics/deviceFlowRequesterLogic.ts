@@ -2,6 +2,7 @@ import { actions, connect, events, kea, listeners, path, reducers } from "kea";
 import { loaders } from "kea-loaders";
 import { DeviceFlowApi, type Device } from "../api/device-flow.api";
 import { authLogic } from "./authLogic";
+import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import type { deviceFlowRequesterLogicType } from "./deviceFlowRequesterLogicType";
 
 const REFRESH_INTERVAL_MS = 1000;
@@ -20,6 +21,8 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
     setRefreshInterval: (intervalId: NodeJS.Timeout | null) => ({ intervalId }),
     sendMessage: (deviceId: string, message: any) => ({ deviceId, message }),
     sendMessageToAll: (message: any) => ({ message }),
+    requestUnlock: true,
+    setUnlockRequestPrivateKey: (privateKey: string | null) => ({ privateKey }),
   }),
 
   reducers({
@@ -27,6 +30,12 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
       null as NodeJS.Timeout | null,
       {
         setRefreshInterval: (_, { intervalId }) => intervalId,
+      },
+    ],
+    unlockRequestPrivateKey: [
+      null as string | null,
+      {
+        setUnlockRequestPrivateKey: (_, { privateKey }) => privateKey,
       },
     ],
   }),
@@ -87,6 +96,27 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
       if (!values.jwtToken) {
         return;
       }
+
+      const devices = values.devices;
+      await Promise.all(
+        devices.map((device) =>
+          DeviceFlowApi.sendMessage(values.jwtToken!, device.deviceId, message)
+        )
+      );
+    },
+    requestUnlock: async () => {
+      if (!values.jwtToken) {
+        return;
+      }
+
+      const keyPair = await AsymmetricCrypto.generateKeyPair();
+      actions.setUnlockRequestPrivateKey(keyPair.privateKey);
+
+      const message = {
+        type: "unlock-request",
+        publicKey: keyPair.publicKey,
+        timestamp: new Date().toISOString(),
+      };
 
       const devices = values.devices;
       await Promise.all(

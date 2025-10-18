@@ -134,17 +134,13 @@ export function UnlockBrowserDialog() {
 
 function ConnectedDevicesSection() {
   const { devices } = useValues(deviceFlowRequesterLogic);
-  const { sendMessageToAll } = useActions(deviceFlowRequesterLogic);
+  const { requestUnlock } = useActions(deviceFlowRequesterLogic);
   const [isSending, setIsSending] = useState(false);
 
-  const handleSendTestMessage = async () => {
+  const handleRequestUnlock = async () => {
     setIsSending(true);
     try {
-      await sendMessageToAll({
-        type: "test",
-        message: "Test message from unlock dialog",
-        timestamp: new Date().toISOString(),
-      });
+      await requestUnlock();
     } finally {
       setTimeout(() => setIsSending(false), 1000);
     }
@@ -164,12 +160,12 @@ function ConnectedDevicesSection() {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleSendTestMessage}
+          onClick={handleRequestUnlock}
           disabled={isSending}
           className="cursor-pointer"
         >
           <IconSend className="size-3 mr-1" />
-          Send Test
+          Request unlock
         </Button>
       </div>
       <div className="space-y-2 max-h-32 overflow-y-auto">
