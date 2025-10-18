@@ -95,25 +95,8 @@ export function DeviceFlowApproverDialog() {
 
         {isUnlockRequest ? (
           <div className="py-4 space-y-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground mb-2">
-                Request details:
-              </p>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Time:</span>
-                  <span className="font-medium">
-                    {new Date(lastMessage.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-
             {lastMessage.pin && (
               <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Verification PIN:
-                </p>
                 <p className="text-3xl font-mono font-bold text-primary tracking-wider text-center">
                   {lastMessage.pin}
                 </p>
