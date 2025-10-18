@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { APPROVERS_LIST, DeviceEvent } from '../events/device-event.enum';
+import { DeviceMessageEvent } from './dto/device-message.event';
 import { Device } from './dto/device.interface';
-import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class DeviceFlowService {
   private devices: Record<string, Record<string, Device>> = {};
-  private readonly STALE_DEVICE_THRESHOLD_MS = 10000;
 
-  public ping(userId: string, deviceId: string, deviceName?: string): void {
+  public constructor(private readonly eventEmitter: EventEmitter2) {}
+
+  public connectApprover(userId: string, deviceId: string, deviceName: string): void {
     if (!this.devices[userId]) {
       this.devices[userId] = {};
     }
@@ -17,9 +20,26 @@ export class DeviceFlowService {
       deviceName,
       lastActivityDate: new Date(),
     };
+
+    this.broadcastDevicesChanged(userId, deviceId);
   }
 
-  public getDevices(userId: string): Device[] {
+  public disconnectApprover(userId: string, deviceId: string): void {
+    const userDevices = this.devices[userId];
+    if (!userDevices) {
+      return;
+    }
+
+    delete userDevices[deviceId];
+
+    if (Object.keys(userDevices).length === 0) {
+      delete this.devices[userId];
+    }
+
+    this.broadcastDevicesChanged(userId, deviceId);
+  }
+
+  public getApprovers(userId: string): Device[] {
     const userDevices = this.devices[userId];
     if (!userDevices) {
       return [];
@@ -28,24 +48,11 @@ export class DeviceFlowService {
     return Object.values(userDevices);
   }
 
-  @Cron(CronExpression.EVERY_SECOND)
-  public removeStaleDevices(): void {
-    const now = new Date();
-    const threshold = now.getTime() - this.STALE_DEVICE_THRESHOLD_MS;
-
-    for (const userId in this.devices) {
-      const userDevices = this.devices[userId];
-
-      for (const deviceId in userDevices) {
-        const device = userDevices[deviceId];
-        if (device.lastActivityDate.getTime() < threshold) {
-          delete userDevices[deviceId];
-        }
-      }
-
-      if (Object.keys(userDevices).length === 0) {
-        delete this.devices[userId];
-      }
-    }
+  private broadcastDevicesChanged(targetUserId: string, targetDeviceId: string): void {
+    const event = new DeviceMessageEvent(targetDeviceId, targetUserId, {
+      type: APPROVERS_LIST,
+      approvers: this.getApprovers(targetUserId),
+    });
+    this.eventEmitter.emit(DeviceEvent.DevicesChanged, event);
   }
 }

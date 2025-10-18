@@ -1,11 +1,19 @@
+import { firstValueFrom, take, toArray } from 'rxjs';
 import * as request from 'supertest';
+import { DeviceFlowController } from '../../src/auth/device-flow/device-flow.controller';
+import { DeviceFlowService } from '../../src/auth/device-flow/device-flow.service';
+import { DeviceFlowRole } from '../../src/auth/device-flow/dto/device-flow-role.enum';
 import { createTestApp } from '../utils/bootstrap';
 
 describe('DeviceFlowController (writes)', () => {
   let bootstrap: Awaited<ReturnType<typeof createTestApp>>;
+  let deviceFlowService: DeviceFlowService;
+  let deviceFlowController: DeviceFlowController;
 
   beforeAll(async () => {
     bootstrap = await createTestApp();
+    deviceFlowService = bootstrap.module.get(DeviceFlowService);
+    deviceFlowController = bootstrap.module.get(DeviceFlowController);
   });
 
   beforeEach(async () => {
@@ -16,63 +24,178 @@ describe('DeviceFlowController (writes)', () => {
     await bootstrap.methods.afterAll();
   });
 
-  describe('POST /auth/device-flow/ping', () => {
-    it('successfully pings with deviceId and deviceName', async () => {
-      const { token } = await bootstrap.utils.userUtils.createDefault({
+  describe('SSE auth/device-flow/messages', () => {
+    it('streams message from the requester to the approver', async () => {
+      // Given
+      const { token, user } = await bootstrap.utils.userUtils.createDefault({
         email: 'test@test.com',
       });
 
-      const response = await request(bootstrap.app.getHttpServer())
-        .post('/auth/device-flow/ping')
-        .send({ deviceId: 'device-1', deviceName: 'My Device' })
+      const approverStream$ = addApproverDevice(user.id);
+
+      const approvalRequest = { type: 'auth-request', from: 'requester-device-id' };
+
+      const approvalRequestPromise = firstValueFrom(approverStream$);
+
+      // When
+      await request(bootstrap.app.getHttpServer())
+        .post('/auth/device-flow/send-message')
+        .query({ role: 'requester' })
+        .send({ deviceId: 'approver-device-id', message: approvalRequest })
         .set('authorization', `Bearer ${token}`);
 
-      expect(response.status).toEqual(201);
+      // Then
+      const receivedRequest = await approvalRequestPromise;
+      expect(receivedRequest.data).toEqual(approvalRequest);
     });
 
-    it('successfully pings with only deviceId', async () => {
-      const { token } = await bootstrap.utils.userUtils.createDefault({
+    it('streams initial approvers devices list to the requester', async () => {
+      // Given
+      const { user } = await bootstrap.utils.userUtils.createDefault({
         email: 'test@test.com',
       });
 
-      const response = await request(bootstrap.app.getHttpServer())
-        .post('/auth/device-flow/ping')
-        .send({ deviceId: 'device-1' })
-        .set('authorization', `Bearer ${token}`);
+      addApproverDevice(user.id);
 
-      expect(response.status).toEqual(201);
+      const requesterStream$ = deviceFlowController.streamMessages(
+        user.id,
+        'requester-device-id',
+        DeviceFlowRole.Requester,
+        'Requester Device',
+      );
+
+      const devicesListPromise = firstValueFrom(requesterStream$);
+
+      // When
+      const receivedData = await devicesListPromise;
+
+      // Then
+      expect(receivedData.data.type).toEqual('approvers-list');
+      expect(receivedData.data.approvers).toHaveLength(1);
+      expect(receivedData.data.approvers[0].deviceId).toEqual('approver-device-id');
+      expect(receivedData.data.approvers[0].deviceName).toEqual('Approver Device');
     });
 
-    it('updates lastActivityDate when pinging same device twice', async () => {
-      const { token } = await bootstrap.utils.userUtils.createDefault({
+    it('streams approver device added to the requester', async () => {
+      // Given
+      const { user } = await bootstrap.utils.userUtils.createDefault({
         email: 'test@test.com',
       });
 
+      const requesterStream$ = deviceFlowController.streamMessages(
+        user.id,
+        'requester-device-id',
+        DeviceFlowRole.Requester,
+        'Requester Device',
+      );
+
+      const devicesListPromise = firstValueFrom(requesterStream$.pipe(take(2), toArray()));
+
+      // When
+      addApproverDevice(user.id);
+
+      // Then
+      const receivedData = await devicesListPromise;
+      expect(receivedData[0].data).toEqual({ type: 'approvers-list', approvers: [] });
+      expect(receivedData[1].data).toEqual({
+        type: 'approvers-list',
+        approvers: [
+          {
+            deviceId: 'approver-device-id',
+            deviceName: 'Approver Device',
+            lastActivityDate: expect.any(Date),
+          },
+        ],
+      });
+    });
+
+    it('streams device removed from the requester', async () => {
+      // Given
+      const { user } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      addApproverDevice(user.id);
+
+      const requesterStream$ = deviceFlowController.streamMessages(
+        user.id,
+        'requester-device-id',
+        DeviceFlowRole.Requester,
+        'Requester Device',
+      );
+
+      const devicesListPromise = firstValueFrom(requesterStream$.pipe(take(2), toArray()));
+
+      // When
+      deviceFlowService.disconnectApprover(user.id, 'approver-device-id');
+
+      // Then
+      const receivedData = await devicesListPromise;
+      expect(receivedData[0].data.approvers).toHaveLength(1);
+      expect(receivedData[1].data.approvers).toHaveLength(0);
+    });
+
+    it('streams message from the approver to the requester', async () => {
+      // Given
+      const { token, user } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      addApproverDevice(user.id);
+
+      const requesterStream$ = deviceFlowController.streamMessages(
+        user.id,
+        'requester-device-id',
+        DeviceFlowRole.Requester,
+        'Requester Device',
+      );
+
+      const approvalMessage = { type: 'auth-approved' };
+      const approvalPromise = firstValueFrom(requesterStream$.pipe(take(2), toArray()));
+
+      // When
       await request(bootstrap.app.getHttpServer())
-        .post('/auth/device-flow/ping')
-        .send({ deviceId: 'device-1', deviceName: 'First Name' })
+        .post('/auth/device-flow/send-message')
+        .query({ role: 'approver' })
+        .send({ deviceId: 'requester-device-id', message: approvalMessage })
         .set('authorization', `Bearer ${token}`);
 
-      await request(bootstrap.app.getHttpServer())
-        .post('/auth/device-flow/ping')
-        .send({ deviceId: 'device-1', deviceName: 'Updated Name' })
-        .set('authorization', `Bearer ${token}`);
-
-      const response = await request(bootstrap.app.getHttpServer())
-        .get('/auth/device-flow/devices')
-        .set('authorization', `Bearer ${token}`);
-
-      expect(response.status).toEqual(200);
-      expect(response.body.devices).toHaveLength(1);
-      expect(response.body.devices[0].deviceName).toEqual('Updated Name');
+      // Then
+      const allValues = await approvalPromise;
+      expect(allValues).toHaveLength(2);
+      expect(allValues[0].data.type).toEqual('approvers-list');
+      expect(allValues[1].data).toEqual(approvalMessage);
     });
 
     it('returns 401 when not logged in', async () => {
-      const response = await request(bootstrap.app.getHttpServer())
-        .post('/auth/device-flow/ping')
-        .send({ deviceId: 'device-1' });
+      // When
+      const response = await request(bootstrap.app.getHttpServer()).get(
+        '/auth/device-flow/messages',
+      );
 
-      expect(response.status).toEqual(401);
+      // Then
+      expect(response.status).toBe(401);
     });
   });
+
+  describe('POST auth/device-flow/send-message', () => {
+    it('returns 401 when not logged in', async () => {
+      // When
+      const response = await request(bootstrap.app.getHttpServer()).post(
+        '/auth/device-flow/send-message',
+      );
+
+      // Then
+      expect(response.status).toBe(401);
+    });
+  });
+
+  function addApproverDevice(userId: string) {
+    return deviceFlowController.streamMessages(
+      userId,
+      'approver-device-id',
+      DeviceFlowRole.Approver,
+      'Approver Device',
+    );
+  }
 });

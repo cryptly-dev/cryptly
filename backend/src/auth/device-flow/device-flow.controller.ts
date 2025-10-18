@@ -1,13 +1,13 @@
-import { Body, Controller, Get, Post, Query, Sse } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Post, Query, Sse } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Observable, fromEvent, filter, map } from 'rxjs';
+import { ApiTags } from '@nestjs/swagger';
+import { Observable, filter, finalize, fromEvent, map, merge, startWith } from 'rxjs';
 import { CurrentUserId } from '../core/decorators/current-user-id.decorator';
+import { APPROVERS_LIST, DeviceEvent } from '../events/device-event.enum';
 import { DeviceFlowService } from './device-flow.service';
-import { PingBody } from './dto/ping.body';
-import { DevicesResponse } from './dto/devices.response';
-import { SendMessageBody } from './dto/send-message.body';
+import { DeviceFlowRole } from './dto/device-flow-role.enum';
 import { DeviceMessageEvent } from './dto/device-message.event';
+import { SendMessageBody } from './dto/send-message.body';
 
 @Controller('auth/device-flow')
 @ApiTags('Auth (device-flow)')
@@ -17,24 +17,40 @@ export class DeviceFlowController {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  @Post('ping')
-  public async ping(@CurrentUserId() userId: string, @Body() payload: PingBody): Promise<void> {
-    this.deviceFlowService.ping(userId, payload.deviceId, payload.deviceName);
-  }
-
-  @Get('devices')
-  @ApiResponse({ type: DevicesResponse })
-  public async getDevices(@CurrentUserId() userId: string): Promise<DevicesResponse> {
-    const devices = this.deviceFlowService.getDevices(userId);
-    return { devices };
-  }
-
   @Sse('messages')
   public streamMessages(
     @CurrentUserId() userId: string,
     @Query('deviceId') deviceId: string,
+    @Query('role') role: DeviceFlowRole,
+    @Query('deviceName') deviceName: string,
   ): Observable<{ data: any }> {
-    return fromEvent(this.eventEmitter, 'device.message').pipe(
+    const isApprover = role === DeviceFlowRole.Approver;
+
+    if (isApprover) {
+      this.deviceFlowService.connectApprover(userId, deviceId, deviceName);
+      return this.requests$(userId, deviceId);
+    } else {
+      return merge(this.approvals$(userId, deviceId), this.devices$(userId));
+    }
+  }
+
+  private requests$(userId: string, deviceId: string): Observable<{ data: any }> {
+    const stream$ = fromEvent(this.eventEmitter, DeviceEvent.ApprovalRequest).pipe(
+      filter((event: DeviceMessageEvent) => {
+        return event.userId === userId && event.deviceId === deviceId;
+      }),
+      map((event: DeviceMessageEvent) => ({ data: event.message })),
+    );
+
+    return stream$.pipe(
+      finalize(() => {
+        this.deviceFlowService.disconnectApprover(userId, deviceId);
+      }),
+    );
+  }
+
+  private approvals$(userId: string, deviceId: string): Observable<{ data: any }> {
+    return fromEvent(this.eventEmitter, DeviceEvent.LoginApproved).pipe(
       filter((event: DeviceMessageEvent) => {
         return event.userId === userId && event.deviceId === deviceId;
       }),
@@ -44,12 +60,28 @@ export class DeviceFlowController {
     );
   }
 
+  private devices$(userId: string): Observable<{ data: any }> {
+    const approvers = this.deviceFlowService.getApprovers(userId);
+    const initialEvent = { data: { type: APPROVERS_LIST, approvers } };
+
+    return fromEvent(this.eventEmitter, DeviceEvent.DevicesChanged).pipe(
+      filter((event: DeviceMessageEvent) => {
+        return event.userId === userId;
+      }),
+      map((event: DeviceMessageEvent) => ({ data: event.message })),
+      startWith(initialEvent),
+    );
+  }
+
   @Post('send-message')
   public async sendMessage(
     @CurrentUserId() userId: string,
+    @Query('role') role: DeviceFlowRole,
     @Body() payload: SendMessageBody,
   ): Promise<void> {
+    const eventType =
+      role === DeviceFlowRole.Approver ? DeviceEvent.LoginApproved : DeviceEvent.ApprovalRequest;
     const event = new DeviceMessageEvent(payload.deviceId, userId, payload.message);
-    this.eventEmitter.emit('device.message', event);
+    this.eventEmitter.emit(eventType, event);
   }
 }
