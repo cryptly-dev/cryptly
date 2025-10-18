@@ -14,6 +14,7 @@ import { keyLogic } from "./keyLogic";
 import { EventSourceWrapper } from "./EventSourceWrapper";
 import { getDeviceId, getDeviceName } from "../utils";
 import type { deviceFlowApproverLogicType } from "./deviceFlowApproverLogicType";
+import { subscriptions } from "kea-subscriptions";
 
 const PING_INTERVAL_MS = 5000;
 
@@ -151,14 +152,21 @@ export const deviceFlowApproverLogic = kea<deviceFlowApproverLogicType>([
   })),
 
   events(({ actions }) => ({
-    afterMount: () => {
-      actions.ping();
-      actions.startPinging();
-      actions.openMessageStream();
-    },
+    afterMount: () => {},
     beforeUnmount: () => {
       actions.stopPinging();
       actions.closeMessageStream();
+    },
+  })),
+
+  subscriptions(({ actions }) => ({
+    jwtToken: (jwtToken) => {
+      if (!jwtToken) {
+        return;
+      }
+      actions.ping();
+      actions.startPinging();
+      actions.openMessageStream();
     },
   })),
 ]);
