@@ -17,7 +17,7 @@ import {
   IconDevices,
   IconSend,
 } from "@tabler/icons-react";
-import { useActions, useAsyncActions, useValues, BindLogic } from "kea";
+import { useActions, useAsyncActions, useValues } from "kea";
 import { useEffect, useState } from "react";
 
 export function UnlockBrowserDialog() {
@@ -105,9 +105,8 @@ export function UnlockBrowserDialog() {
           )}
         </div>
 
-        <BindLogic logic={deviceFlowRequesterLogic} props={{}}>
-          <ConnectedDevicesSection />
-        </BindLogic>
+        <ConnectedDevicesSection />
+        <ReceivedMessageSection />
 
         <div className="flex justify-end gap-2 pt-2">
           <Button
@@ -182,6 +181,36 @@ function ConnectedDevicesSection() {
             </span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function ReceivedMessageSection() {
+  const { receivedMessage } = useValues(deviceFlowRequesterLogic);
+  const { clearReceivedMessage } = useActions(deviceFlowRequesterLogic);
+
+  if (!receivedMessage) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-medium">Received Message</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearReceivedMessage}
+          className="cursor-pointer h-6 text-xs"
+        >
+          Clear
+        </Button>
+      </div>
+      <div className="bg-muted/50 p-3 rounded-md">
+        <pre className="text-xs overflow-auto max-h-32">
+          {JSON.stringify(receivedMessage, null, 2)}
+        </pre>
       </div>
     </div>
   );

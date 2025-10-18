@@ -2,8 +2,12 @@ import { actions, connect, events, kea, listeners, path, reducers } from "kea";
 import { loaders } from "kea-loaders";
 import { DeviceFlowApi, type Device } from "../api/device-flow.api";
 import { authLogic } from "./authLogic";
+import { keyLogic } from "./keyLogic";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
+import { EventSourceWrapper } from "./EventSourceWrapper";
+import { getDeviceId } from "../utils";
 import type { deviceFlowRequesterLogicType } from "./deviceFlowRequesterLogicType";
+import { subscriptions } from "kea-subscriptions";
 
 const REFRESH_INTERVAL_MS = 1000;
 
@@ -12,6 +16,7 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
 
   connect({
     values: [authLogic, ["jwtToken"]],
+    actions: [keyLogic, ["setPassphrase", "decryptPrivateKey"]],
   }),
 
   actions({
@@ -23,6 +28,13 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
     sendMessageToAll: (message: any) => ({ message }),
     requestUnlock: true,
     setUnlockRequestPrivateKey: (privateKey: string | null) => ({ privateKey }),
+    openMessageStream: true,
+    closeMessageStream: true,
+    setMessageConnection: (connection: EventSourceWrapper | null) => ({
+      connection,
+    }),
+    handleMessage: (message: any) => ({ message }),
+    clearReceivedMessage: true,
   }),
 
   reducers({
@@ -38,6 +50,20 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
         setUnlockRequestPrivateKey: (_, { privateKey }) => privateKey,
       },
     ],
+    messageConnection: [
+      null as EventSourceWrapper | null,
+      {
+        setMessageConnection: (_, { connection }) => connection,
+        closeMessageStream: () => null,
+      },
+    ],
+    receivedMessage: [
+      null as any,
+      {
+        handleMessage: (_, { message }) => message,
+        clearReceivedMessage: () => null,
+      },
+    ],
   }),
 
   loaders(({ values }) => ({
@@ -48,8 +74,11 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
           if (!values.jwtToken) {
             return [];
           }
+          console.log("Loading devices");
 
           const devices = await DeviceFlowApi.getDevices(values.jwtToken);
+
+          console.log("Devices loaded:", devices);
 
           return devices;
         },
@@ -57,13 +86,21 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
     ],
   })),
 
-  events(({ actions }) => ({
-    afterMount: () => {
+  subscriptions(({ actions }) => ({
+    jwtToken: (jwtToken) => {
+      if (!jwtToken) {
+        return;
+      }
       actions.loadDevices();
       actions.startRefreshing();
+      actions.openMessageStream();
     },
+  })),
+
+  events(({ actions }) => ({
     beforeUnmount: () => {
       actions.stopRefreshing();
+      actions.closeMessageStream();
     },
   })),
 
@@ -112,9 +149,11 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
       const keyPair = await AsymmetricCrypto.generateKeyPair();
       actions.setUnlockRequestPrivateKey(keyPair.privateKey);
 
+      const requesterDeviceId = getDeviceId();
       const message = {
-        type: "unlock-request",
+        type: "request",
         publicKey: keyPair.publicKey,
+        requesterDeviceId,
         timestamp: new Date().toISOString(),
       };
 
@@ -124,6 +163,78 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
           DeviceFlowApi.sendMessage(values.jwtToken!, device.deviceId, message)
         )
       );
+    },
+    openMessageStream: () => {
+      if (!values.jwtToken || values.messageConnection) {
+        return;
+      }
+
+      const requesterDeviceId = getDeviceId();
+      const eventSource = new EventSourceWrapper({
+        url: `${
+          import.meta.env.VITE_API_URL
+        }/auth/device-flow/messages?deviceId=${requesterDeviceId}`,
+        fetch: (input, init) =>
+          fetch(input, {
+            ...(init || {}),
+            headers: {
+              ...(init?.headers || {}),
+              Authorization: `Bearer ${values.jwtToken}`,
+            },
+          }),
+      });
+
+      console.log("Message stream opened for deviceId:", requesterDeviceId);
+
+      eventSource.onMessage((event) => {
+        try {
+          const message = JSON.parse(event.data);
+
+          console.log(message);
+          if (message.type === "approve") {
+            actions.handleMessage(message);
+          }
+        } catch (e) {
+          console.error("Failed to parse message:", e);
+        }
+      });
+
+      eventSource.onError(() => {
+        eventSource.close();
+        actions.setMessageConnection(null);
+
+        setTimeout(() => {
+          if (values.jwtToken) {
+            actions.openMessageStream();
+          }
+        }, 3000);
+      });
+
+      actions.setMessageConnection(eventSource);
+    },
+    closeMessageStream: () => {
+      values.messageConnection?.close();
+    },
+    handleMessage: async ({ message }) => {
+      if (message.type === "approve" && message.approved) {
+        if (!message.encryptedPassphrase || !values.unlockRequestPrivateKey) {
+          return;
+        }
+
+        try {
+          const decryptedPassphrase = await AsymmetricCrypto.decrypt(
+            message.encryptedPassphrase,
+            values.unlockRequestPrivateKey
+          );
+
+          actions.setPassphrase(decryptedPassphrase);
+          await actions.decryptPrivateKey();
+
+          actions.clearReceivedMessage();
+        } catch (error) {
+          console.error("Failed to decrypt passphrase:", error);
+        }
+      }
     },
   })),
 ]);
