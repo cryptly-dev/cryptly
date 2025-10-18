@@ -25,6 +25,9 @@ export function UnlockBrowserDialog() {
   const { isLoggedIn } = useValues(authLogic);
   const { logout } = useAuth();
   const { setPassphrase, decryptPrivateKey } = useAsyncActions(keyLogic);
+  const { startRequester, stopRequester } = useActions(
+    deviceFlowRequesterLogic
+  );
 
   const [passphrase, setLocalPassphrase] = useState("");
   const [showPassphrase, setShowPassphrase] = useState(false);
@@ -42,6 +45,18 @@ export function UnlockBrowserDialog() {
       setIsError(false);
     }
   }, [browserIsUnlocked]);
+
+  useEffect(() => {
+    if (open) {
+      startRequester();
+    } else {
+      stopRequester();
+    }
+
+    return () => {
+      stopRequester();
+    };
+  }, [open, startRequester, stopRequester]);
 
   const handleUnlock = async () => {
     setSubmitting(true);

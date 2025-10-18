@@ -7,7 +7,6 @@ import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { EventSourceWrapper } from "./EventSourceWrapper";
 import { getDeviceId } from "../utils";
 import type { deviceFlowRequesterLogicType } from "./deviceFlowRequesterLogicType";
-import { subscriptions } from "kea-subscriptions";
 
 const REFRESH_INTERVAL_MS = 1000;
 
@@ -35,6 +34,8 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
     }),
     handleMessage: (message: any) => ({ message }),
     clearReceivedMessage: true,
+    startRequester: true,
+    stopRequester: true,
   }),
 
   reducers({
@@ -86,21 +87,9 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
     ],
   })),
 
-  subscriptions(({ actions }) => ({
-    jwtToken: (jwtToken) => {
-      if (!jwtToken) {
-        return;
-      }
-      actions.loadDevices();
-      actions.startRefreshing();
-      actions.openMessageStream();
-    },
-  })),
-
   events(({ actions }) => ({
     beforeUnmount: () => {
-      actions.stopRefreshing();
-      actions.closeMessageStream();
+      actions.stopRequester();
     },
   })),
 
@@ -214,6 +203,18 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
     },
     closeMessageStream: () => {
       values.messageConnection?.close();
+    },
+    startRequester: () => {
+      if (!values.jwtToken) {
+        return;
+      }
+      actions.loadDevices();
+      actions.startRefreshing();
+      actions.openMessageStream();
+    },
+    stopRequester: () => {
+      actions.stopRefreshing();
+      actions.closeMessageStream();
     },
     handleMessage: async ({ message }) => {
       if (message.type === "approve" && message.approved) {
