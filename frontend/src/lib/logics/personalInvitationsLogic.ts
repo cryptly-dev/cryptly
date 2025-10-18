@@ -32,6 +32,7 @@ export const personalInvitationsLogic = kea<personalInvitationsLogicType>([
 
   connect(() => ({
     values: [authLogic, ["jwtToken"], projectLogic, ["projectData"]],
+    selectors: [projectLogic, ["currentUserRole"]],
   })),
 
   actions({

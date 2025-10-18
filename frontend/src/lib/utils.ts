@@ -52,3 +52,45 @@ export function withTimeout<T>(p: Promise<T>, ms: number) {
     new Promise<T>((resolve) => setTimeout(resolve, ms) as any),
   ]);
 }
+
+export function getDeviceId(): string {
+  let deviceId = localStorage.getItem("deviceId");
+  if (!deviceId) {
+    deviceId = generateDeviceId();
+    localStorage.setItem("deviceId", deviceId);
+  }
+  return deviceId;
+}
+
+export function getDeviceName(): string {
+  const userAgent = navigator.userAgent;
+  let deviceName = "Unknown Device";
+
+  if (userAgent.includes("Windows")) {
+    deviceName = "Windows";
+  } else if (userAgent.includes("Mac")) {
+    deviceName = "Mac";
+  } else if (userAgent.includes("Linux")) {
+    deviceName = "Linux";
+  } else if (userAgent.includes("Android")) {
+    deviceName = "Android";
+  } else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) {
+    deviceName = "iOS";
+  }
+
+  if (userAgent.includes("Chrome")) {
+    deviceName += " - Chrome";
+  } else if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) {
+    deviceName += " - Safari";
+  } else if (userAgent.includes("Firefox")) {
+    deviceName += " - Firefox";
+  } else if (userAgent.includes("Edge")) {
+    deviceName += " - Edge";
+  }
+
+  return deviceName;
+}
+
+function generateDeviceId(): string {
+  return `device-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+}
