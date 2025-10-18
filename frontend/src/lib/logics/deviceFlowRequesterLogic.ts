@@ -82,11 +82,8 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
           if (!values.jwtToken) {
             return [];
           }
-          console.log("Loading devices");
 
           const devices = await DeviceFlowApi.getDevices(values.jwtToken);
-
-          console.log("Devices loaded:", devices);
 
           return devices;
         },
@@ -184,13 +181,10 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
           }),
       });
 
-      console.log("Message stream opened for deviceId:", requesterDeviceId);
-
       eventSource.onMessage((event) => {
         try {
           const message = JSON.parse(event.data);
 
-          console.log(message);
           if (message.type === "approve") {
             actions.handleMessage(message);
           }

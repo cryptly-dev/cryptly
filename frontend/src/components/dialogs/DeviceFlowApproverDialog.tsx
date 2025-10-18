@@ -85,7 +85,7 @@ export function DeviceFlowApproverDialog() {
               <IconDeviceMobile className="size-6 text-primary" />
             </div>
             <div>
-              <DialogTitle>Device Sign-In Request</DialogTitle>
+              <DialogTitle>Device sign in request</DialogTitle>
               <DialogDescription>
                 Another device is trying to sign in
               </DialogDescription>
@@ -101,7 +101,7 @@ export function DeviceFlowApproverDialog() {
                   {lastMessage.pin}
                 </p>
                 <p className="text-sm text-muted-foreground mt-2 text-center">
-                  Check if this PIN matches on the requesting device
+                  Verify this PIN matches on your other device
                 </p>
               </div>
             )}
