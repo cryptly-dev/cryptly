@@ -119,19 +119,19 @@ function MemberItem({
         {member.avatarUrl ? (
           <img
             src={member.avatarUrl}
-            alt={member.email}
+            alt={member.displayName}
             className="size-8 rounded-full object-cover"
           />
         ) : (
-          member.email.charAt(0).toUpperCase()
+          member.displayName.charAt(0).toUpperCase()
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">
-          {member.id === userData?.id ? "You" : "Other member"}
+          {member.id === userData?.id ? "You" : member.displayName}
         </div>
         <div className="text-xs text-muted-foreground truncate">
-          {member.email}
+          {member.id === userData?.id ? userData?.email : member.displayName}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -166,7 +166,7 @@ function MemberItem({
             variant="ghost"
             size="sm"
             className="size-8 p-0 text-destructive hover:text-destructive cursor-pointer"
-            aria-label={`Remove ${member.email} from project`}
+            aria-label={`Remove ${member.displayName} from project`}
           >
             <IconTrash className="size-4" />
           </Button>
@@ -232,11 +232,11 @@ function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
           invite.data.invitedUser.avatarUrl ? (
             <img
               src={invite.data.invitedUser.avatarUrl}
-              alt={invite.data.invitedUser.email}
+              alt={invite.data.invitedUser.displayName}
               className="size-8 rounded-full object-cover"
             />
           ) : (
-            invite.data.invitedUser.email.charAt(0).toUpperCase()
+            invite.data.invitedUser.displayName.charAt(0).toUpperCase()
           )
         ) : (
           <IconLink className="size-4" />
@@ -245,7 +245,7 @@ function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">
           {invite.type === "personal"
-            ? invite.data.invitedUser.email
+            ? invite.data.invitedUser.displayName
             : "Invite link"}
         </div>
         <div className="text-xs text-muted-foreground">
@@ -556,16 +556,16 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
         {user.avatarUrl ? (
           <img
             src={user.avatarUrl}
-            alt={user.email}
+            alt={user.displayName}
             className="size-8 rounded-full object-cover"
           />
         ) : (
-          user.email.charAt(0).toUpperCase()
+          user.displayName.charAt(0).toUpperCase()
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-xs text-muted-foreground truncate">
-          {user.email}
+          {user.displayName}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -591,7 +591,7 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
           variant="ghost"
           size="sm"
           className="size-8 p-0 cursor-pointer"
-          aria-label={`Invite ${user.email}`}
+          aria-label={`Invite ${user.displayName}`}
         >
           <IconUserPlus className="size-4" />
         </Button>

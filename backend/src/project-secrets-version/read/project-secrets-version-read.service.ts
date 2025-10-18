@@ -69,7 +69,7 @@ export class ProjectSecretsVersionReadService {
       .map((id) => id.toString());
 
     const authors = await this.userReadService.readByIds(authorIds);
-    const authorsPartial = authors.map(UserSerializer.serializePartial);
+    const authorsPartial = authors.map((user) => UserSerializer.serializePartial(user));
 
     return ProjectSecretsVersionSerializer.serializeMany(versions, authorsPartial);
   }

@@ -30,13 +30,13 @@ export class PersonalInvitationSerializer {
       role: normalized.role,
       author: {
         id: author.id,
-        email: author.email,
         avatarUrl: author.avatarUrl,
+        displayName: author.displayName,
       },
       invitedUser: {
         id: invitedUser.id,
-        email: invitedUser.email,
         avatarUrl: invitedUser.avatarUrl,
+        displayName: invitedUser.displayName,
       },
       createdAt: normalized.createdAt.toISOString(),
     };

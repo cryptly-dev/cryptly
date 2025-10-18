@@ -2,21 +2,24 @@ import axios from "axios";
 
 export interface User {
   id: string;
-  email: string;
+  email?: string;
   authMethod: string;
   avatarUrl: string;
+  displayName: string;
   publicKey?: string;
   privateKeyEncrypted?: string;
 }
 
 export interface SuggestedUser {
   id: string;
-  email: string;
+  email?: string;
   avatarUrl: string;
+  displayName: string;
   publicKey?: string;
 }
 
 export interface UpdateUserDto {
+  displayName?: string;
   publicKey?: string;
   privateKeyEncrypted?: string;
   projectsOrder?: string[];

@@ -69,13 +69,13 @@ export function MobileHistoryView() {
               >
                 <img
                   src={patch.author.avatarUrl || DEFAULT_AVATAR}
-                  alt={`Avatar for ${patch.author.email}`}
+                  alt={`Avatar for ${patch.author.displayName}`}
                   className="w-6 h-6 rounded-full flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="font-medium truncate">
-                      {patch.author.email}
+                      {patch.author.displayName}
                     </span>
                     <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
                       {getRelativeTime(patch.createdAt)}

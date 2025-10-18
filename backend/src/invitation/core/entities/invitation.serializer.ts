@@ -26,8 +26,8 @@ export class InvitationSerializer {
       role: normalized.role,
       author: {
         id: author.id,
-        email: author.email,
         avatarUrl: author.avatarUrl,
+        displayName: author.displayName,
       },
       temporaryPublicKey: normalized.temporaryPublicKey,
       temporaryPrivateKey: normalized.temporaryPrivateKey,

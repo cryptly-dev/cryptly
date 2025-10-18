@@ -68,11 +68,11 @@ export function DesktopHistoryView() {
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <img
                       src={patch.author.avatarUrl || DEFAULT_AVATAR}
-                      alt={patch.author.email}
+                      alt={patch.author.displayName}
                       className="w-6 h-6 rounded-full object-cover flex-shrink-0"
                     />
                     <p className="text-sm font-medium truncate flex-1 min-w-0">
-                      {patch.author.email}
+                      {patch.author.displayName}
                     </p>
                   </div>
                   <span

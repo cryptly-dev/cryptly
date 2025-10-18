@@ -25,7 +25,7 @@ export class UserCoreController {
   public async readCurrentUser(@CurrentUserId() userId: string): Promise<UserSerialized> {
     const user = await this.userReadService.readByIdOrThrow(userId);
 
-    return UserSerializer.serialize(user);
+    return UserSerializer.serialize(user, { showEmailAddress: true });
   }
 
   @Patch('me')
@@ -36,7 +36,7 @@ export class UserCoreController {
   ): Promise<UserSerialized> {
     const user = await this.userWriteService.update(userId, body);
 
-    return UserSerializer.serialize(user);
+    return UserSerializer.serialize(user, { showEmailAddress: true });
   }
 
   // todo: this is a temporary endpoint - IT SHOULD BE REMOVED
