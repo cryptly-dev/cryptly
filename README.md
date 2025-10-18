@@ -15,6 +15,8 @@
     <a href="https://cryptly.dev">cryptly.dev</a>
 </div>
 
+## 👫 Community
+
 [![](https://dcbadge.limes.pink/api/server/https://discord.gg/FwzmtYkc)](https://dcbadge.limes.pink/api/server/https://discord.gg/FwzmtYkc)
 
 ## ⭐ Features
