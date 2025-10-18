@@ -15,6 +15,8 @@
     <a href="https://cryptly.dev">cryptly.dev</a>
 </div>
 
+[![](https://dcbadge.limes.pink/api/server/https://discord.gg/FwzmtYkc)](https://dcbadge.limes.pink/api/server/https://discord.gg/FwzmtYkc)
+
 ## ⭐ Features
 
 - **🔒 End-to-end encryption** - Your secrets are encrypted on the client side, server never sees plaintext
