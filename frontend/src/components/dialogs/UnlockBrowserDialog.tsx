@@ -9,24 +9,34 @@ import {
 import { useAuth } from "@/lib/hooks/useAuth";
 import { authLogic } from "@/lib/logics/authLogic";
 import { keyLogic } from "@/lib/logics/keyLogic";
+import { deviceFlowRequesterLogic } from "@/lib/logics/deviceFlowRequesterLogic";
 import {
   IconExclamationCircle,
   IconEye,
   IconEyeOff,
+  IconDevices,
+  IconSend,
 } from "@tabler/icons-react";
-import { useAsyncActions, useValues } from "kea";
-import { useEffect, useState } from "react";
+import { useActions, useAsyncActions, useValues } from "kea";
+import { useEffect, useMemo, useState } from "react";
 
 export function UnlockBrowserDialog() {
   const { browserIsUnlocked, shouldSetUpPassphrase } = useValues(keyLogic);
   const { isLoggedIn } = useValues(authLogic);
   const { logout } = useAuth();
   const { setPassphrase, decryptPrivateKey } = useAsyncActions(keyLogic);
+  const { startRequester, stopRequester } = useActions(
+    deviceFlowRequesterLogic
+  );
 
   const [passphrase, setLocalPassphrase] = useState("");
   const [showPassphrase, setShowPassphrase] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isError, setIsError] = useState(false);
+
+  const open = useMemo(() => {
+    return !browserIsUnlocked && isLoggedIn && !shouldSetUpPassphrase;
+  }, [browserIsUnlocked, isLoggedIn, shouldSetUpPassphrase]);
 
   useEffect(() => {
     if (browserIsUnlocked) {
@@ -35,6 +45,18 @@ export function UnlockBrowserDialog() {
       setIsError(false);
     }
   }, [browserIsUnlocked]);
+
+  useEffect(() => {
+    if (open) {
+      startRequester();
+    } else {
+      stopRequester();
+    }
+
+    return () => {
+      stopRequester();
+    };
+  }, [open, startRequester, stopRequester]);
 
   const handleUnlock = async () => {
     setSubmitting(true);
@@ -52,7 +74,7 @@ export function UnlockBrowserDialog() {
   };
 
   return (
-    <Dialog open={!browserIsUnlocked && isLoggedIn && !shouldSetUpPassphrase}>
+    <Dialog open={open}>
       <DialogContent showCloseButton={false} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Unlock this browser</DialogTitle>
@@ -102,6 +124,9 @@ export function UnlockBrowserDialog() {
           )}
         </div>
 
+        <ConnectedDevicesSection />
+        <ReceivedMessageSection />
+
         <div className="flex justify-end gap-2 pt-2">
           <Button
             type="button"
@@ -122,5 +147,100 @@ export function UnlockBrowserDialog() {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ConnectedDevicesSection() {
+  const { devices, unlockRequestPin } = useValues(deviceFlowRequesterLogic);
+  const { requestUnlock } = useActions(deviceFlowRequesterLogic);
+  const [isSending, setIsSending] = useState(false);
+
+  const handleRequestUnlock = async () => {
+    setIsSending(true);
+    try {
+      await requestUnlock();
+    } finally {
+      setTimeout(() => setIsSending(false), 1000);
+    }
+  };
+
+  if (devices.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <IconDevices className="size-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Connected Devices</span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRequestUnlock}
+          disabled={isSending}
+          className="cursor-pointer"
+        >
+          <IconSend className="size-3 mr-1" />
+          Request unlock
+        </Button>
+      </div>
+      <div className="space-y-2 max-h-32 overflow-y-auto">
+        {devices.map((device) => (
+          <div
+            key={device.deviceId}
+            className="p-2 text-sm bg-muted/50 rounded-md"
+          >
+            <span className="text-foreground">
+              {device.deviceName || "Unknown Device"}
+            </span>
+          </div>
+        ))}
+      </div>
+      {unlockRequestPin && (
+        <div className="mt-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+          <p className="text-xs text-muted-foreground mb-1">
+            Verification PIN:
+          </p>
+          <p className="text-2xl font-mono font-bold text-primary tracking-wider">
+            {unlockRequestPin}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Verify this PIN matches on your other device
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReceivedMessageSection() {
+  const { receivedMessage } = useValues(deviceFlowRequesterLogic);
+  const { clearReceivedMessage } = useActions(deviceFlowRequesterLogic);
+
+  if (!receivedMessage) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-medium">Received Message</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearReceivedMessage}
+          className="cursor-pointer h-6 text-xs"
+        >
+          Clear
+        </Button>
+      </div>
+      <div className="bg-muted/50 p-3 rounded-md">
+        <pre className="text-xs overflow-auto max-h-32">
+          {JSON.stringify(receivedMessage, null, 2)}
+        </pre>
+      </div>
+    </div>
   );
 }
