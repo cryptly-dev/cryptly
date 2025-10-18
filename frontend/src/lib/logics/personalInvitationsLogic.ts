@@ -14,10 +14,11 @@ import { PersonalInvitationsApi } from "../api/personal-invitations.api";
 import { ProjectMemberRole, ProjectsApi } from "../api/projects.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { authLogic } from "./authLogic";
-import { projectLogic } from "./projectLogic";
+import { projectLogic, type DecryptedProject } from "./projectLogic";
 import { suggestedUsersLogic } from "./suggestedUsersLogic";
 
 import type { personalInvitationsLogicType } from "./personalInvitationsLogicType";
+import { subscriptions } from "kea-subscriptions";
 
 export interface PersonalInvitationsLogicProps {
   projectId: string;
@@ -32,6 +33,7 @@ export const personalInvitationsLogic = kea<personalInvitationsLogicType>([
 
   connect(() => ({
     values: [authLogic, ["jwtToken"], projectLogic, ["projectData"]],
+    selectors: [projectLogic, ["currentUserRole"]],
   })),
 
   actions({

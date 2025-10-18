@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Device } from './dto/device.interface';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class DeviceFlowService {
@@ -27,6 +28,7 @@ export class DeviceFlowService {
     return Object.values(userDevices);
   }
 
+  @Cron(CronExpression.EVERY_SECOND)
   public removeStaleDevices(): void {
     const now = new Date();
     const threshold = now.getTime() - this.STALE_DEVICE_THRESHOLD_MS;

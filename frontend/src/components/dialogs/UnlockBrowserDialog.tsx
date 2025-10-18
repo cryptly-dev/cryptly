@@ -9,12 +9,14 @@ import {
 import { useAuth } from "@/lib/hooks/useAuth";
 import { authLogic } from "@/lib/logics/authLogic";
 import { keyLogic } from "@/lib/logics/keyLogic";
+import { deviceFlowRequesterLogic } from "@/lib/logics/deviceFlowRequesterLogic";
 import {
   IconExclamationCircle,
   IconEye,
   IconEyeOff,
+  IconDevices,
 } from "@tabler/icons-react";
-import { useAsyncActions, useValues } from "kea";
+import { useAsyncActions, useValues, BindLogic } from "kea";
 import { useEffect, useState } from "react";
 
 export function UnlockBrowserDialog() {
@@ -102,6 +104,10 @@ export function UnlockBrowserDialog() {
           )}
         </div>
 
+        <BindLogic logic={deviceFlowRequesterLogic} props={{}}>
+          <ConnectedDevicesSection />
+        </BindLogic>
+
         <div className="flex justify-end gap-2 pt-2">
           <Button
             type="button"
@@ -123,4 +129,50 @@ export function UnlockBrowserDialog() {
       </DialogContent>
     </Dialog>
   );
+}
+
+function ConnectedDevicesSection() {
+  const { devices } = useValues(deviceFlowRequesterLogic);
+
+  if (devices.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <div className="flex items-center gap-2 mb-3">
+        <IconDevices className="size-4 text-muted-foreground" />
+        <span className="text-sm font-medium">Connected Devices</span>
+      </div>
+      <div className="space-y-2 max-h-32 overflow-y-auto">
+        {devices.map((device) => (
+          <div
+            key={device.deviceId}
+            className="flex items-center justify-between p-2 text-sm bg-muted/50 rounded-md"
+          >
+            <span className="text-foreground">
+              {device.deviceName || "Unknown Device"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {formatLastActivity(device.lastActivityDate)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function formatLastActivity(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (seconds < 5) {
+    return "now";
+  } else if (seconds < 60) {
+    return `${seconds}s ago`;
+  } else {
+    return "offline";
+  }
 }
