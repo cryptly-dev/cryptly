@@ -18,7 +18,7 @@ import {
   IconSend,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export function UnlockBrowserDialog() {
   const { browserIsUnlocked, shouldSetUpPassphrase } = useValues(keyLogic);
@@ -30,6 +30,10 @@ export function UnlockBrowserDialog() {
   const [showPassphrase, setShowPassphrase] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isError, setIsError] = useState(false);
+
+  const open = useMemo(() => {
+    return !browserIsUnlocked && isLoggedIn && !shouldSetUpPassphrase;
+  }, [browserIsUnlocked, isLoggedIn, shouldSetUpPassphrase]);
 
   useEffect(() => {
     if (browserIsUnlocked) {
@@ -55,7 +59,7 @@ export function UnlockBrowserDialog() {
   };
 
   return (
-    <Dialog open={!browserIsUnlocked && isLoggedIn && !shouldSetUpPassphrase}>
+    <Dialog open={open}>
       <DialogContent showCloseButton={false} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Unlock this browser</DialogTitle>
