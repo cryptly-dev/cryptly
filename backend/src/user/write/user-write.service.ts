@@ -7,15 +7,48 @@ import { UserSerializer } from '../core/entities/user.serializer';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+const ADJECTIVES = [
+  'Happy',
+  'Cheerful',
+  'Excited',
+  'Playful',
+  'Curious',
+  'Energetic',
+  'Friendly',
+  'Jolly',
+  'Bright',
+  'Swift',
+];
+
+const ANIMALS = [
+  'Koala',
+  'Kangaroo',
+  'Capybara',
+  'Penguin',
+  'Otter',
+  'Panda',
+  'Dolphin',
+  'Raccoon',
+  'Sloth',
+  'Hedgehog',
+];
+
 @Injectable()
 export class UserWriteService {
   constructor(@InjectModel(UserEntity.name) private userModel: Model<UserEntity>) {}
+
+  private generateRandomDisplayName(): string {
+    const randomAdjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+    const randomAnimal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+    return `${randomAdjective} ${randomAnimal}`;
+  }
 
   public async create(dto: CreateUserDto): Promise<UserNormalized> {
     const user = await this.userModel.create({
       email: dto.email,
       authMethod: dto.authMethod,
       avatarUrl: dto.avatarUrl,
+      displayName: this.generateRandomDisplayName(),
     });
 
     return UserSerializer.normalize(user);

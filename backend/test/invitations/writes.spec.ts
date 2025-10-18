@@ -47,7 +47,7 @@ describe('InvitationCoreController (writes)', () => {
         projectId: project.id,
         author: {
           id: admin.id,
-          email: admin.email,
+          displayName: admin.displayName,
           avatarUrl: admin.avatarUrl,
         },
         role: Role.Write,
@@ -85,7 +85,7 @@ describe('InvitationCoreController (writes)', () => {
         projectId: project.id,
         author: {
           id: admin.id,
-          email: admin.email,
+          displayName: admin.displayName,
           avatarUrl: admin.avatarUrl,
         },
         role: Role.Read,
@@ -123,7 +123,7 @@ describe('InvitationCoreController (writes)', () => {
         projectId: project.id,
         author: {
           id: admin.id,
-          email: admin.email,
+          displayName: admin.displayName,
           avatarUrl: admin.avatarUrl,
         },
         role: Role.Admin,

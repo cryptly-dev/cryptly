@@ -45,12 +45,12 @@ describe('PersonalInvitationCoreController (reads)', () => {
       );
       expect(response.body[0].author).toEqual({
         id: user.id,
-        email: user.email,
+        displayName: user.displayName,
         avatarUrl: user.avatarUrl,
       });
       expect(response.body[0].invitedUser).toEqual({
         id: invitedUser.id,
-        email: invitedUser.email,
+        displayName: invitedUser.displayName,
         avatarUrl: invitedUser.avatarUrl,
       });
     });

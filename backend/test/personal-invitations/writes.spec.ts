@@ -42,12 +42,12 @@ describe('PersonalInvitationCoreController (writes)', () => {
         projectName: project.name,
         author: {
           id: admin.id,
-          email: admin.email,
+          displayName: admin.displayName,
           avatarUrl: admin.avatarUrl,
         },
         invitedUser: {
           id: invitee.id,
-          email: invitee.email,
+          displayName: invitee.displayName,
           avatarUrl: invitee.avatarUrl,
         },
         role: Role.Read,

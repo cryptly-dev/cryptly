@@ -26,7 +26,7 @@ export class UserUtils {
     user: UserNormalized;
     token: string;
   }> {
-    const email = params?.email || `test-user-${Math.random()}@example.com`;
+    const email = params?.email || `test@example.com`;
     const displayName = email.split('@')[0];
 
     const user = await this.userModel.create({
