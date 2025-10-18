@@ -142,7 +142,7 @@ export function MePage() {
                   </div>
                 ) : (
                   <p className="text-lg font-medium text-card-foreground mt-1">
-                    {userData.displayName || "Not set"}
+                    {userData.displayName}
                   </p>
                 )}
               </div>

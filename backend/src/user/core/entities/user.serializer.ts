@@ -17,7 +17,7 @@ export class UserSerializer {
       authMethod: entity.authMethod,
       email: entity.email,
       avatarUrl: entity.avatarUrl,
-      displayName: entity.displayName,
+      displayName: entity.displayName || entity.email.split('@')[0],
       privateKeyEncrypted: entity.privateKeyEncrypted,
       publicKey: entity.publicKey,
       projectsOrder: entity.projectsOrder || [],

@@ -11,7 +11,7 @@ export interface ProjectMember {
   id: string;
   email?: string;
   avatarUrl: string;
-  displayName?: string;
+  displayName: string;
   role: ProjectMemberRole;
 }
 

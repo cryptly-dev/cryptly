@@ -5,7 +5,7 @@ export interface User {
   email?: string;
   authMethod: string;
   avatarUrl: string;
-  displayName?: string;
+  displayName: string;
   publicKey?: string;
   privateKeyEncrypted?: string;
 }
@@ -14,7 +14,7 @@ export interface SuggestedUser {
   id: string;
   email?: string;
   avatarUrl: string;
-  displayName?: string;
+  displayName: string;
   publicKey?: string;
 }
 

@@ -5,7 +5,7 @@ export class UserPartialNormalized {
   public id: string;
   public email?: string;
   public avatarUrl: string;
-  public displayName?: string;
+  public displayName: string;
   public publicKey?: string;
 }
 
@@ -25,8 +25,8 @@ export class UserPartialSerialized {
   @ApiProperty()
   public avatarUrl: string;
 
-  @ApiPropertyOptional()
-  public displayName?: string;
+  @ApiProperty()
+  public displayName: string;
 
   @ApiPropertyOptional()
   public publicKey?: string;
