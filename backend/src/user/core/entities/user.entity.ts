@@ -15,6 +15,9 @@ export class UserEntity {
   @Prop()
   avatarUrl: string;
 
+  @Prop()
+  displayName: string;
+
   @Prop({ required: false })
   publicKey?: string;
 

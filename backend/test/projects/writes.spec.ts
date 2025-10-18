@@ -41,7 +41,9 @@ describe('ProjectCoreController (writes)', () => {
       expect(response.body).toEqual({
         id: expect.any(String),
         name: 'test-project',
-        members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'admin' }],
+        members: [
+          { id: user.id, avatarUrl: user.avatarUrl, displayName: user.displayName, role: 'admin' },
+        ],
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
         createdAt: expect.any(String),
@@ -244,7 +246,9 @@ describe('ProjectCoreController (writes)', () => {
       expect(response.body).toEqual({
         id: project.id,
         name: 'test-project',
-        members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'admin' }],
+        members: [
+          { id: user.id, avatarUrl: user.avatarUrl, displayName: user.displayName, role: 'admin' },
+        ],
         encryptedSecretsKeys: {},
         encryptedSecrets: 'new-secrets',
         createdAt: expect.any(String),
@@ -276,8 +280,13 @@ describe('ProjectCoreController (writes)', () => {
       expect(response.status).toEqual(204);
       const updatedProject = await bootstrap.utils.projectUtils.getProject(project.id, adminToken);
       expect(updatedProject.members).toEqual([
-        { id: admin.id, email: admin.email, avatarUrl: admin.avatarUrl, role: 'admin' },
-        { id: readUser.id, email: readUser.email, avatarUrl: readUser.avatarUrl, role: 'write' },
+        { id: admin.id, avatarUrl: admin.avatarUrl, displayName: admin.displayName, role: 'admin' },
+        {
+          id: readUser.id,
+          avatarUrl: readUser.avatarUrl,
+          displayName: readUser.displayName,
+          role: 'write',
+        },
       ]);
     });
 
@@ -321,8 +330,13 @@ describe('ProjectCoreController (writes)', () => {
       expect(response.status).toEqual(204);
       const updatedProject = await bootstrap.utils.projectUtils.getProject(project.id, adminToken);
       expect(updatedProject.members).toEqual([
-        { id: admin.id, email: admin.email, avatarUrl: admin.avatarUrl, role: 'admin' },
-        { id: readUser.id, email: readUser.email, avatarUrl: readUser.avatarUrl, role: 'admin' },
+        { id: admin.id, avatarUrl: admin.avatarUrl, displayName: admin.displayName, role: 'admin' },
+        {
+          id: readUser.id,
+          avatarUrl: readUser.avatarUrl,
+          displayName: readUser.displayName,
+          role: 'admin',
+        },
       ]);
     });
   });
@@ -441,7 +455,7 @@ describe('ProjectCoreController (writes)', () => {
       expect(response.status).toEqual(204);
       const updatedProject = await bootstrap.utils.projectUtils.getProject(project.id, adminToken);
       expect(updatedProject.members).toEqual([
-        { id: admin.id, email: admin.email, avatarUrl: admin.avatarUrl, role: 'admin' },
+        { id: admin.id, avatarUrl: admin.avatarUrl, displayName: admin.displayName, role: 'admin' },
       ]);
     });
 
@@ -465,7 +479,12 @@ describe('ProjectCoreController (writes)', () => {
       expect(response.status).toEqual(204);
       const updatedProject = await bootstrap.utils.projectUtils.getProject(project.id, adminAToken);
       expect(updatedProject.members).toEqual([
-        { id: adminA.id, email: adminA.email, avatarUrl: adminA.avatarUrl, role: 'admin' },
+        {
+          id: adminA.id,
+          avatarUrl: adminA.avatarUrl,
+          displayName: adminA.displayName,
+          role: 'admin',
+        },
       ]);
     });
 
@@ -489,7 +508,7 @@ describe('ProjectCoreController (writes)', () => {
       expect(response.status).toEqual(204);
       const updatedProject = await bootstrap.utils.projectUtils.getProject(project.id, adminToken);
       expect(updatedProject.members).toEqual([
-        { id: admin.id, email: admin.email, avatarUrl: admin.avatarUrl, role: 'admin' },
+        { id: admin.id, avatarUrl: admin.avatarUrl, displayName: admin.displayName, role: 'admin' },
       ]);
     });
 
@@ -513,7 +532,7 @@ describe('ProjectCoreController (writes)', () => {
       expect(response.status).toEqual(204);
       const updatedProject = await bootstrap.utils.projectUtils.getProject(project.id, adminToken);
       expect(updatedProject.members).toEqual([
-        { id: admin.id, email: admin.email, avatarUrl: admin.avatarUrl, role: 'admin' },
+        { id: admin.id, avatarUrl: admin.avatarUrl, displayName: admin.displayName, role: 'admin' },
       ]);
     });
 
@@ -648,8 +667,8 @@ describe('ProjectCoreController (writes)', () => {
         newEncryptedSecrets: 'new-secrets-for-sse',
         user: {
           id: user.id,
-          email: user.email,
           avatarUrl: user.avatarUrl,
+          displayName: user.displayName,
         },
       });
 
@@ -657,8 +676,8 @@ describe('ProjectCoreController (writes)', () => {
         newEncryptedSecrets: 'new-secrets-for-sse-2',
         user: {
           id: user.id,
-          email: user.email,
           avatarUrl: user.avatarUrl,
+          displayName: user.displayName,
         },
       });
     });

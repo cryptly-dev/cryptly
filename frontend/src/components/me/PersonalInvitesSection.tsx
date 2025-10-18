@@ -13,7 +13,7 @@ function PersonalInviteItem({
     id: string;
     projectId: string;
     projectName: string;
-    author: { email: string; avatarUrl: string };
+    author: { displayName: string; avatarUrl: string };
     role: string;
     createdAt: string;
   };
@@ -49,11 +49,11 @@ function PersonalInviteItem({
         {invitation.author.avatarUrl ? (
           <img
             src={invitation.author.avatarUrl}
-            alt={invitation.author.email}
+            alt={invitation.author.displayName}
             className="size-10 rounded-full object-cover"
           />
         ) : (
-          invitation.author.email.charAt(0).toUpperCase()
+          invitation.author.displayName.charAt(0).toUpperCase()
         )}
       </div>
       <div className="flex-1 min-w-0">
@@ -61,7 +61,7 @@ function PersonalInviteItem({
           {invitation.projectName}
         </div>
         <div className="text-xs text-muted-foreground truncate">
-          {invitation.author.email} • {invitation.role} •{" "}
+          {invitation.author.displayName} • {invitation.role} •{" "}
           {getRelativeTime(invitation.createdAt)}
         </div>
       </div>

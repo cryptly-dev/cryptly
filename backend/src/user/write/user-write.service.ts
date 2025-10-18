@@ -7,15 +7,48 @@ import { UserSerializer } from '../core/entities/user.serializer';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+const ADJECTIVES = [
+  'happy',
+  'cheerful',
+  'excited',
+  'playful',
+  'curious',
+  'energetic',
+  'friendly',
+  'jolly',
+  'bright',
+  'swift',
+];
+
+const ANIMALS = [
+  'koala',
+  'kangaroo',
+  'capybara',
+  'penguin',
+  'otter',
+  'panda',
+  'dolphin',
+  'raccoon',
+  'sloth',
+  'hedgehog',
+];
+
 @Injectable()
 export class UserWriteService {
   constructor(@InjectModel(UserEntity.name) private userModel: Model<UserEntity>) {}
+
+  private generateRandomDisplayName(): string {
+    const randomAdjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+    const randomAnimal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+    return `${randomAdjective} ${randomAnimal}`;
+  }
 
   public async create(dto: CreateUserDto): Promise<UserNormalized> {
     const user = await this.userModel.create({
       email: dto.email,
       authMethod: dto.authMethod,
       avatarUrl: dto.avatarUrl,
+      displayName: this.generateRandomDisplayName(),
     });
 
     return UserSerializer.normalize(user);
@@ -23,6 +56,10 @@ export class UserWriteService {
 
   public async update(id: string, dto: UpdateUserDto): Promise<UserNormalized> {
     const updateQuery: UpdateQuery<UserEntity> = {};
+
+    if (dto.displayName !== undefined) {
+      updateQuery.displayName = dto.displayName;
+    }
 
     if (dto.publicKey) {
       updateQuery.publicKey = dto.publicKey;

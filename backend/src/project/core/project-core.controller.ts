@@ -78,7 +78,7 @@ export class ProjectCoreController {
 
     const memberIds = [...new Set(projects.flatMap((p) => Object.keys(p.members)))];
     const members = await this.userReadService.readByIds(memberIds);
-    const membersHydrated = members.map(UserSerializer.serializePartial);
+    const membersHydrated = members.map((user) => UserSerializer.serializePartial(user));
     const latestVersions = await this.projectSecretsVersionReadService.findManyLatestByProjectIds(
       projects.map((p) => new Types.ObjectId(p.id)),
     );
@@ -139,7 +139,7 @@ export class ProjectCoreController {
     await this.userWriteService.addToProjectsOrder(userId, project.id);
 
     const members = await this.userReadService.readByIds([userId]);
-    const membersHydrated = members.map(UserSerializer.serializePartial);
+    const membersHydrated = members.map((user) => UserSerializer.serializePartial(user));
 
     return ProjectSerializer.serialize(project, membersHydrated, body.encryptedSecrets);
   }
@@ -152,7 +152,7 @@ export class ProjectCoreController {
     const project = await this.projectReadService.findByIdOrThrow(projectId);
     const memberIds = Object.keys(project.members);
     const members = await this.userReadService.readByIds(memberIds);
-    const membersHydrated = members.map(UserSerializer.serializePartial);
+    const membersHydrated = members.map((user) => UserSerializer.serializePartial(user));
     const latestVersion = await this.projectSecretsVersionReadService.findLatestByProjectId(
       new Types.ObjectId(projectId),
     );
@@ -233,7 +233,7 @@ export class ProjectCoreController {
     const updatedProject = await this.projectWriteService.update(projectId, body, userId);
     const memberIds = Object.keys(updatedProject.members);
     const members = await this.userReadService.readByIds(memberIds);
-    const membersHydrated = members.map(UserSerializer.serializePartial);
+    const membersHydrated = members.map((user) => UserSerializer.serializePartial(user));
     const latestVersion = await this.projectSecretsVersionReadService.findLatestByProjectId(
       new Types.ObjectId(projectId),
     );

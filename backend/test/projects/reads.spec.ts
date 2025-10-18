@@ -34,7 +34,9 @@ describe('ProjectCoreController (reads)', () => {
       expect(response.body).toEqual({
         id: project.id,
         name: 'test-project',
-        members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'admin' }],
+        members: [
+          { id: user.id, avatarUrl: user.avatarUrl, displayName: user.displayName, role: 'admin' },
+        ],
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
         createdAt: expect.any(String),
@@ -63,8 +65,18 @@ describe('ProjectCoreController (reads)', () => {
         id: project.id,
         name: 'test-project',
         members: [
-          { id: admin.id, email: admin.email, avatarUrl: admin.avatarUrl, role: 'admin' },
-          { id: readUser.id, email: readUser.email, avatarUrl: readUser.avatarUrl, role: 'read' },
+          {
+            id: admin.id,
+            avatarUrl: admin.avatarUrl,
+            displayName: admin.displayName,
+            role: 'admin',
+          },
+          {
+            id: readUser.id,
+            avatarUrl: readUser.avatarUrl,
+            displayName: readUser.displayName,
+            role: 'read',
+          },
         ],
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
@@ -139,7 +151,14 @@ describe('ProjectCoreController (reads)', () => {
           {
             id: projectA.id,
             name: 'project-a',
-            members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'admin' }],
+            members: [
+              {
+                id: user.id,
+                avatarUrl: user.avatarUrl,
+                displayName: user.displayName,
+                role: 'admin',
+              },
+            ],
             encryptedSecretsKeys: {},
             encryptedSecrets: '',
             createdAt: expect.any(String),
@@ -148,7 +167,14 @@ describe('ProjectCoreController (reads)', () => {
           {
             id: projectB.id,
             name: 'project-b',
-            members: [{ id: user.id, email: user.email, avatarUrl: user.avatarUrl, role: 'admin' }],
+            members: [
+              {
+                id: user.id,
+                avatarUrl: user.avatarUrl,
+                displayName: user.displayName,
+                role: 'admin',
+              },
+            ],
             encryptedSecretsKeys: {},
             encryptedSecrets: '',
             createdAt: expect.any(String),
@@ -367,18 +393,18 @@ describe('ProjectCoreController (reads)', () => {
       expect(response.body).toHaveLength(3);
       expect(response.body[0]).toMatchObject({
         id: user4.id,
-        email: user4.email,
         avatarUrl: user4.avatarUrl,
+        displayName: user4.displayName,
       });
       expect(response.body[1]).toMatchObject({
         id: user3.id,
-        email: user3.email,
         avatarUrl: user3.avatarUrl,
+        displayName: user3.displayName,
       });
       expect(response.body[2]).toMatchObject({
         id: user2.id,
-        email: user2.email,
         avatarUrl: user2.avatarUrl,
+        displayName: user2.displayName,
       });
     });
 

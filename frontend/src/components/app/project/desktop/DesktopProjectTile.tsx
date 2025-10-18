@@ -70,7 +70,7 @@ export function DesktopProjectTile() {
       return null;
     }
 
-    return lastEditAuthor?.email;
+    return lastEditAuthor?.displayName;
   }, [lastEditAuthor, userData]);
 
   useEffect(() => {
@@ -183,7 +183,7 @@ export function DesktopProjectTile() {
                           transition={{ ease: "easeInOut", duration: 0.1 }}
                         >
                           <span className="rounded bg-background/100 px-2 py-0.5 text-xs text-muted-foreground shadow-sm">
-                            Changed by {changedBy.split("@")[0]}{" "}
+                            Changed by {changedBy}{" "}
                             {getRelativeTime(projectData.updatedAt)}
                           </span>
                         </motion.div>

@@ -3,8 +3,9 @@ import { AuthMethod } from '../enum/auth-method.enum';
 
 export class UserPartialNormalized {
   public id: string;
-  public email: string;
+  public email?: string;
   public avatarUrl: string;
+  public displayName: string;
   public publicKey?: string;
 }
 
@@ -18,11 +19,14 @@ export class UserPartialSerialized {
   @ApiProperty()
   public id: string;
 
-  @ApiProperty()
-  public email: string;
+  @ApiPropertyOptional()
+  public email?: string;
 
   @ApiProperty()
   public avatarUrl: string;
+
+  @ApiProperty()
+  public displayName: string;
 
   @ApiPropertyOptional()
   public publicKey?: string;

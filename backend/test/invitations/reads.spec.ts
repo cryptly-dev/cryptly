@@ -40,7 +40,7 @@ describe('InvitationCoreController (reads)', () => {
         projectId: project.id,
         author: {
           id: admin.id,
-          email: admin.email,
+          displayName: admin.displayName,
           avatarUrl: admin.avatarUrl,
         },
         role: Role.Read,
@@ -127,7 +127,7 @@ describe('InvitationCoreController (reads)', () => {
       );
       expect(response.body[0].author).toEqual({
         id: user.id,
-        email: user.email,
+        displayName: user.displayName,
         avatarUrl: user.avatarUrl,
       });
     });
@@ -165,7 +165,7 @@ describe('InvitationCoreController (reads)', () => {
       );
       expect(response.body[0].author).toEqual({
         id: user.id,
-        email: user.email,
+        displayName: user.displayName,
         avatarUrl: user.avatarUrl,
       });
     });
