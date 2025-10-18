@@ -15,8 +15,9 @@ import {
   IconEye,
   IconEyeOff,
   IconDevices,
+  IconSend,
 } from "@tabler/icons-react";
-import { useAsyncActions, useValues, BindLogic } from "kea";
+import { useActions, useAsyncActions, useValues, BindLogic } from "kea";
 import { useEffect, useState } from "react";
 
 export function UnlockBrowserDialog() {
@@ -133,6 +134,21 @@ export function UnlockBrowserDialog() {
 
 function ConnectedDevicesSection() {
   const { devices } = useValues(deviceFlowRequesterLogic);
+  const { sendMessageToAll } = useActions(deviceFlowRequesterLogic);
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSendTestMessage = async () => {
+    setIsSending(true);
+    try {
+      await sendMessageToAll({
+        type: "test",
+        message: "Test message from unlock dialog",
+        timestamp: new Date().toISOString(),
+      });
+    } finally {
+      setTimeout(() => setIsSending(false), 1000);
+    }
+  };
 
   if (devices.length === 0) {
     return null;
@@ -140,9 +156,21 @@ function ConnectedDevicesSection() {
 
   return (
     <div className="mt-4 border-t pt-4">
-      <div className="flex items-center gap-2 mb-3">
-        <IconDevices className="size-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Connected Devices</span>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <IconDevices className="size-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Connected Devices</span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSendTestMessage}
+          disabled={isSending}
+          className="cursor-pointer"
+        >
+          <IconSend className="size-3 mr-1" />
+          Send Test
+        </Button>
       </div>
       <div className="space-y-2 max-h-32 overflow-y-auto">
         {devices.map((device) => (

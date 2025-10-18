@@ -1,7 +1,17 @@
-import { actions, connect, events, kea, listeners, path, reducers } from "kea";
+import {
+  actions,
+  connect,
+  events,
+  kea,
+  listeners,
+  path,
+  reducers,
+  selectors,
+} from "kea";
 import { DeviceFlowApi } from "../api/device-flow.api";
 import { authLogic } from "./authLogic";
 import { keyLogic } from "./keyLogic";
+import { EventSourceWrapper } from "./EventSourceWrapper";
 import type { deviceFlowApproverLogicType } from "./deviceFlowApproverLogicType";
 
 const PING_INTERVAL_MS = 5000;
@@ -23,6 +33,13 @@ export const deviceFlowApproverLogic = kea<deviceFlowApproverLogicType>([
     startPinging: true,
     stopPinging: true,
     setPingInterval: (intervalId: any) => ({ intervalId }),
+    openMessageStream: true,
+    closeMessageStream: true,
+    setMessageConnection: (connection: EventSourceWrapper | null) => ({
+      connection,
+    }),
+    handleMessage: (message: any) => ({ message }),
+    clearMessage: true,
   }),
 
   reducers({
@@ -31,6 +48,27 @@ export const deviceFlowApproverLogic = kea<deviceFlowApproverLogicType>([
       {
         setPingInterval: (_, { intervalId }) => intervalId,
       },
+    ],
+    messageConnection: [
+      null as EventSourceWrapper | null,
+      {
+        setMessageConnection: (_, { connection }) => connection,
+        closeMessageStream: () => null,
+      },
+    ],
+    lastMessage: [
+      null as any,
+      {
+        handleMessage: (_, { message }) => message,
+        clearMessage: () => null,
+      },
+    ],
+  }),
+
+  selectors({
+    hasNewMessage: [
+      (s) => [s.lastMessage],
+      (lastMessage) => lastMessage !== null,
     ],
   }),
 
@@ -62,15 +100,62 @@ export const deviceFlowApproverLogic = kea<deviceFlowApproverLogicType>([
         actions.setPingInterval(null);
       }
     },
+    openMessageStream: () => {
+      if (!values.jwtToken || values.messageConnection) {
+        return;
+      }
+
+      const deviceId = getDeviceId();
+      const eventSource = new EventSourceWrapper({
+        url: `${
+          import.meta.env.VITE_API_URL
+        }/auth/device-flow/messages?deviceId=${deviceId}`,
+        fetch: (input, init) =>
+          fetch(input, {
+            ...(init || {}),
+            headers: {
+              ...(init?.headers || {}),
+              Authorization: `Bearer ${values.jwtToken}`,
+            },
+          }),
+      });
+
+      eventSource.onMessage((event) => {
+        try {
+          const message = JSON.parse(event.data);
+          actions.handleMessage(message);
+        } catch (e) {
+          console.error("Failed to parse message:", e);
+        }
+      });
+
+      eventSource.onError(() => {
+        eventSource.close();
+        actions.setMessageConnection(null);
+
+        setTimeout(() => {
+          if (values.isLoggedIn) {
+            actions.openMessageStream();
+          }
+        }, 3000);
+      });
+
+      actions.setMessageConnection(eventSource);
+    },
+    closeMessageStream: () => {
+      values.messageConnection?.close();
+    },
   })),
 
   events(({ actions }) => ({
     afterMount: () => {
       actions.ping();
       actions.startPinging();
+      actions.openMessageStream();
     },
     beforeUnmount: () => {
       actions.stopPinging();
+      actions.closeMessageStream();
     },
   })),
 ]);

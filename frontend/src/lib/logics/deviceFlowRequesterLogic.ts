@@ -18,6 +18,8 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
     startRefreshing: true,
     stopRefreshing: true,
     setRefreshInterval: (intervalId: NodeJS.Timeout | null) => ({ intervalId }),
+    sendMessage: (deviceId: string, message: any) => ({ deviceId, message }),
+    sendMessageToAll: (message: any) => ({ message }),
   }),
 
   reducers({
@@ -73,6 +75,25 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
         clearInterval(values.refreshInterval);
         actions.setRefreshInterval(null);
       }
+    },
+    sendMessage: async ({ deviceId, message }) => {
+      if (!values.jwtToken) {
+        return;
+      }
+
+      await DeviceFlowApi.sendMessage(values.jwtToken, deviceId, message);
+    },
+    sendMessageToAll: async ({ message }) => {
+      if (!values.jwtToken) {
+        return;
+      }
+
+      const devices = values.devices;
+      await Promise.all(
+        devices.map((device) =>
+          DeviceFlowApi.sendMessage(values.jwtToken!, device.deviceId, message)
+        )
+      );
     },
   })),
 ]);

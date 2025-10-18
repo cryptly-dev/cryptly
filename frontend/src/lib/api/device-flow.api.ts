@@ -32,4 +32,20 @@ export class DeviceFlowApi {
 
     return response.data.devices;
   }
+
+  public static async sendMessage(
+    token: string,
+    deviceId: string,
+    message: any
+  ): Promise<void> {
+    await axios.post(
+      "/auth/device-flow/send-message",
+      { deviceId, message },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  }
 }
