@@ -215,8 +215,8 @@ describe('PersonalInvitationCoreController (writes)', () => {
 
       expect(updatedProject.members).toContainEqual({
         id: invitee.id,
-        email: invitee.email,
         avatarUrl: invitee.avatarUrl,
+        displayName: invitee.displayName,
         role: Role.Read,
       });
     });
@@ -250,8 +250,8 @@ describe('PersonalInvitationCoreController (writes)', () => {
 
       expect(updatedProject.members).toContainEqual({
         id: invitee.id,
-        email: invitee.email,
         avatarUrl: invitee.avatarUrl,
+        displayName: invitee.displayName,
         role: Role.Write,
       });
     });

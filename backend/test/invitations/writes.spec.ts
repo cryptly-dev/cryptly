@@ -239,8 +239,8 @@ describe('InvitationCoreController (writes)', () => {
 
       expect(updatedProject.members).toContainEqual({
         id: invitee.id,
-        email: invitee.email,
         avatarUrl: invitee.avatarUrl,
+        displayName: invitee.displayName,
         role: 'read',
       });
     });
@@ -276,8 +276,8 @@ describe('InvitationCoreController (writes)', () => {
 
       expect(updatedProject.members).toContainEqual({
         id: invitee.id,
-        email: invitee.email,
         avatarUrl: invitee.avatarUrl,
+        displayName: invitee.displayName,
         role: 'write',
       });
     });

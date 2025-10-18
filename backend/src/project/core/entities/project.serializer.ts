@@ -24,12 +24,7 @@ export class ProjectSerializer {
     for (const [userId, role] of Object.entries(normalized.members)) {
       const userDetails = membersDetails.find((m) => m.id === userId);
       if (userDetails) {
-        members.push({
-          id: userDetails.id,
-          email: userDetails.email,
-          avatarUrl: userDetails.avatarUrl,
-          role,
-        });
+        members.push({ ...userDetails, role });
       }
     }
 
