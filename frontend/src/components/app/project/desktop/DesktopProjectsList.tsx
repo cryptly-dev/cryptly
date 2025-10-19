@@ -24,7 +24,7 @@ export function DesktopProjectsList() {
   }, [projects]);
 
   const containerVariants = {
-    hidden: { opacity: 0, y: 100, scale: 0.9 },
+    hidden: { opacity: 0, y: 200, scale: 0.7 },
     visible: {
       opacity: 1,
       y: 0,
