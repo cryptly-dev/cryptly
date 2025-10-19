@@ -29,6 +29,7 @@ export function OAuthCallbackPage({
   useEffect(() => {
     posthog.capture("logged_in", {
       method,
+      email: userData?.email,
     });
     afterLogin(userData);
   }, [userData, afterLogin]);
