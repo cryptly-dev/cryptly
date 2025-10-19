@@ -7,41 +7,17 @@ export interface Device {
 }
 
 export class DeviceFlowApi {
-  public static async ping(
-    token: string,
-    deviceId: string,
-    deviceName?: string
-  ): Promise<void> {
-    await axios.post(
-      "/auth/device-flow/ping",
-      { deviceId, deviceName },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-  }
-
-  public static async getDevices(token: string): Promise<Device[]> {
-    const response = await axios.get("/auth/device-flow/devices", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    return response.data.devices;
-  }
-
   public static async sendMessage(
     token: string,
-    deviceId: string,
-    message: any
+    role: "requester" | "approver",
+    message: any,
+    targetDeviceId: string
   ): Promise<void> {
     await axios.post(
       "/auth/device-flow/send-message",
-      { deviceId, message },
+      { deviceId: targetDeviceId, message },
       {
+        params: { role },
         headers: {
           Authorization: `Bearer ${token}`,
         },
