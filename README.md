@@ -30,26 +30,6 @@
 - **🔑 Multiple auth ooptions** - Login with Google, GitHub, or local development mode
 - **📦 Project organization** - Organize secrets by projects for better management
 
-## 🚀 Quick Start
-
-### Local Development
-
-Get up and running in one command:
-
-```bash
-make local
-```
-
-This will:
-
-- Install all dependencies (npm + pnpm)
-- Set up environment files automatically
-- Start MongoDB in Docker (port 2137)
-- Launch backend on `http://localhost:3000`
-- Launch frontend on `http://localhost:5173`
-
-> **Note:** Local development mode includes simplified authentication - just enter any email to log in!
-
 ## 🔐 Encryption Architecture
 
 ### User key pair generation
@@ -91,6 +71,26 @@ When inviting an existing account directly, the process is streamlined as the re
 4. The recipient gains instant access to the project upon invitation acceptance
 
 This cryptographic workflow ensures end-to-end encryption throughout the entire project lifecycle, maintaining zero-knowledge architecture where the server cannot access plaintext data at any point.
+
+## 🚀 Quick Start
+
+### Local Development
+
+Get up and running in one command:
+
+```bash
+make local
+```
+
+This will:
+
+- Install all dependencies (npm + pnpm)
+- Set up environment files automatically
+- Start MongoDB in Docker (port 2137)
+- Launch backend on `http://localhost:3000`
+- Launch frontend on `http://localhost:5173`
+
+> **Note:** Local development mode includes simplified authentication - just enter any email to log in!
 
 ## 🤝 Contributing
 
