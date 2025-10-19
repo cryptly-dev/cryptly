@@ -23,6 +23,7 @@ export const FloatingDock = ({
     icon: React.ReactNode;
     href: string;
     badge?: number;
+    isActive?: boolean;
   }[];
   desktopClassName?: string;
   mobileClassName?: string;
@@ -71,6 +72,7 @@ const FloatingDockMobile = ({
     icon: React.ReactNode;
     href: string;
     badge?: number;
+    isActive?: boolean;
   }[];
   className?: string;
   loadingItem: string | null;
@@ -115,6 +117,9 @@ const FloatingDockMobile = ({
                       item.icon
                     )}
                   </div>
+                  {/* {item.isActive && (
+                    <div className="absolute bottom-0 h-0.5 w-0.5 rounded-full bg-white opacity-80" />
+                  )} */}
                   {item.badge && item.badge > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-semibold text-white">
                       {item.badge}
@@ -147,6 +152,7 @@ const FloatingDockDesktop = ({
     icon: React.ReactNode;
     href: string;
     badge?: number;
+    isActive?: boolean;
   }[];
   className?: string;
   loadingItem: string | null;
@@ -170,6 +176,7 @@ const FloatingDockDesktop = ({
           isLoading={loadingItem === item.title}
           onItemClick={onItemClick}
           badge={item.badge}
+          isActive={item.isActive}
         />
       ))}
     </motion.div>
@@ -184,6 +191,7 @@ function IconContainer({
   isLoading,
   onItemClick,
   badge,
+  isActive,
 }: {
   mouseX: MotionValue;
   title: string;
@@ -192,6 +200,7 @@ function IconContainer({
   isLoading: boolean;
   onItemClick: () => void;
   badge?: number;
+  isActive?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -266,6 +275,14 @@ function IconContainer({
         >
           {isLoading ? <IconLoader2 className="animate-spin" /> : icon}
         </motion.div>
+        {isActive && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.8 }}
+            transition={{ duration: 0.2 }}
+            className="absolute -bottom-1.5 h-0.5 w-3 rounded-full bg-white"
+          />
+        )}
         {badge && badge > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-semibold text-white">
             {badge}

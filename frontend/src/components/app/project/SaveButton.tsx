@@ -67,10 +67,10 @@ export function UpdateButton() {
               aria-label="Saving"
               className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/60 border-t-transparent"
             />
-            <span>Saving...</span>
+            <motion.span layout>Saving...</motion.span>
           </>
         ) : !isEditorDirty ? (
-          <span>Saved</span>
+          <motion.span layout>Saved</motion.span>
         ) : (
           <span>Save</span>
         )}
