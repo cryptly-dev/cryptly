@@ -6,8 +6,6 @@
   <a href="https://discord.gg/FwzmtYkc"><img src="https://dcbadge.limes.pink/api/server/https://discord.gg/FwzmtYkc" alt="discord chat"></a>
 </p>
 
-<br/>
-
 # Cryptly 🔑
 
 <div>
