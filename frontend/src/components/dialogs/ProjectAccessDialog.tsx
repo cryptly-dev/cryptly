@@ -682,7 +682,11 @@ export function ProjectAccessDialog({
           <DialogHeader>
             <DialogTitle>Project access</DialogTitle>
             <DialogDescription>
-              Invite others to collaborate on "{projectData.name}".
+              Invite others to collaborate on{" "}
+              <span className="font-medium text-foreground">
+                {projectData.name}
+              </span>
+              .
             </DialogDescription>
           </DialogHeader>
 

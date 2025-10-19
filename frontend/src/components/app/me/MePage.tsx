@@ -73,7 +73,7 @@ export function MePage() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <motion.div
-          className="bg-card rounded-xl shadow-lg border border-border p-8"
+          className="bg-card/60 backdrop-blur shadow-sm rounded-xl border border-border p-8"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -84,13 +84,10 @@ export function MePage() {
                 <img
                   src={userData?.avatarUrl}
                   alt="User Avatar"
-                  className="w-16 h-16 rounded-full"
+                  className="w-20 h-20 rounded-full"
                 />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-card-foreground mb-2">
-              Your Profile
-            </h1>
           </div>
 
           <div className="space-y-6">
