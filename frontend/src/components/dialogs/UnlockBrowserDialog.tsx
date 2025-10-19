@@ -6,15 +6,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { Device } from "@/lib/api/device-flow.api";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { authLogic } from "@/lib/logics/authLogic";
-import { keyLogic } from "@/lib/logics/keyLogic";
 import { deviceFlowRequesterLogic } from "@/lib/logics/deviceFlowRequesterLogic";
+import { keyLogic } from "@/lib/logics/keyLogic";
 import {
+  IconDevices,
   IconExclamationCircle,
   IconEye,
   IconEyeOff,
-  IconDevices,
   IconSend,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
@@ -167,14 +168,14 @@ export function UnlockBrowserDialog() {
 }
 
 function ConnectedDevicesSection() {
-  const { devices, unlockRequestPin } = useValues(deviceFlowRequesterLogic);
-  const { requestUnlock } = useActions(deviceFlowRequesterLogic);
+  const { approvers, unlockRequestPin } = useValues(deviceFlowRequesterLogic);
+  const { requestUnlock } = useAsyncActions(deviceFlowRequesterLogic);
   const [isSending, setIsSending] = useState(false);
 
-  const handleRequestUnlock = async () => {
+  const handleRequestUnlock = async (deviceId: string) => {
     setIsSending(true);
     try {
-      await requestUnlock();
+      await requestUnlock(deviceId);
     } finally {
       setTimeout(() => setIsSending(false), 1000);
     }
@@ -187,7 +188,7 @@ function ConnectedDevicesSection() {
         <span className="text-sm font-medium">Connected Devices</span>
       </div>
 
-      {devices.length === 0 ? (
+      {approvers.length === 0 ? (
         <div className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-lg relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent animate-shimmer"></div>
           <div className="flex items-start gap-3 relative">
@@ -208,10 +209,10 @@ function ConnectedDevicesSection() {
       ) : (
         <>
           <div className="space-y-2 max-h-32 overflow-y-auto">
-            {devices.map((device) => (
+            {approvers.map((approver) => (
               <DeviceItem
-                key={device.deviceId}
-                device={device}
+                key={approver.deviceId}
+                device={approver}
                 onRequestUnlock={handleRequestUnlock}
                 isSending={isSending}
               />
@@ -238,8 +239,8 @@ function DeviceItem({
   onRequestUnlock,
   isSending,
 }: {
-  device: any;
-  onRequestUnlock: () => Promise<void>;
+  device: Device;
+  onRequestUnlock: (deviceId: string) => Promise<void>;
   isSending: boolean;
 }) {
   return (
@@ -255,7 +256,7 @@ function DeviceItem({
       <Button
         variant="outline"
         size="sm"
-        onClick={onRequestUnlock}
+        onClick={() => onRequestUnlock(device.deviceId)}
         disabled={isSending}
         className="cursor-pointer"
       >

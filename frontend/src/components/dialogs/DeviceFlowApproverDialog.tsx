@@ -6,11 +6,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AsymmetricCrypto } from "@/lib/crypto/crypto.asymmetric";
 import { deviceFlowApproverLogic } from "@/lib/logics/deviceFlowApproverLogic";
 import { deviceFlowRequesterLogic } from "@/lib/logics/deviceFlowRequesterLogic";
 import { keyLogic } from "@/lib/logics/keyLogic";
-import { AsymmetricCrypto } from "@/lib/crypto/crypto.asymmetric";
-import { IconDeviceMobile, IconCheck, IconX } from "@tabler/icons-react";
+import { IconCheck, IconDeviceMobile, IconX } from "@tabler/icons-react";
 import { useActions, useValues } from "kea";
 import { useState } from "react";
 
@@ -39,12 +39,16 @@ export function DeviceFlowApproverDialog() {
         lastMessage.publicKey
       );
 
-      await sendMessage(lastMessage.requesterDeviceId, {
-        type: "approve",
-        approved: true,
-        encryptedPassphrase,
-        timestamp: new Date().toISOString(),
-      });
+      await sendMessage(
+        lastMessage.requesterDeviceId,
+        {
+          type: "approve",
+          approved: true,
+          encryptedPassphrase,
+          timestamp: new Date().toISOString(),
+        },
+        "approver"
+      );
 
       clearMessage();
     } catch (error) {
@@ -61,11 +65,15 @@ export function DeviceFlowApproverDialog() {
 
     setIsProcessing(true);
     try {
-      await sendMessage(lastMessage.requesterDeviceId, {
-        type: "approve",
-        approved: false,
-        timestamp: new Date().toISOString(),
-      });
+      await sendMessage(
+        lastMessage.requesterDeviceId,
+        {
+          type: "approve",
+          approved: false,
+          timestamp: new Date().toISOString(),
+        },
+        "approver"
+      );
 
       clearMessage();
     } finally {
