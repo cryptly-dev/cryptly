@@ -24,7 +24,7 @@ export function DesktopProjectsList() {
   }, [projects]);
 
   const containerVariants = {
-    hidden: { opacity: 0, y: 300, scale: 0.5 },
+    hidden: { opacity: 0, y: 100, scale: 0.9 },
     visible: {
       opacity: 1,
       y: 0,
@@ -69,7 +69,7 @@ export function DesktopProjectsList() {
         layout="position"
       >
         <motion.h2
-          className="font-semibold text-muted-foreground tracking-wide flex items-center justify-between p-4 mb-2 sticky top-0 bg-card/60 backdrop-blur z-10"
+          className="font-semibold text-muted-foreground tracking-wide flex items-center justify-between p-4 sticky top-0 bg-gradient-to-b from-card/60 via-transparent to-transparent z-10"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.5, ease: [0, 1, 0, 1], delay: 0.2 }}

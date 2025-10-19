@@ -61,6 +61,9 @@ export function IndexPage() {
           />
         </div>
 
+        <div className="absolute bottom-0 h-64 bg-gradient-to-t from-black to-transparent w-full z-0 pointer-events-none"></div>
+        <div className="absolute top-0 h-64 bg-gradient-to-b from-black to-transparent w-full z-0 pointer-events-none"></div>
+
         <motion.div
           className="relative z-10 mt-20 w-full max-w-6xl mx-auto px-6"
           initial={{ opacity: 0, y: 100, scale: 0.5 }}
@@ -77,9 +80,9 @@ export function IndexPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0, 0.55, 0.45, 1], delay: 0.2 }}
           >
-            Zero-knowledge secrets management
+            Share your environment secrets
             <br />
-            where even we can't access your data
+            without possibility of 3rd parties getting involved (even us)
           </motion.p>
 
           <motion.div
@@ -93,7 +96,7 @@ export function IndexPage() {
               className="cursor-pointer group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-white text-black px-8 py-3 font-semibold shadow-2xl transition-all hover:scale-105 hover:shadow-white/25"
             >
               <span>Dashboard</span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </button>
 
             <a
@@ -103,7 +106,7 @@ export function IndexPage() {
               className="group inline-flex items-center justify-center gap-2 rounded-full border border-neutral-700 bg-neutral-900/70 px-8 py-3 font-semibold text-white transition-all hover:border-neutral-600 hover:bg-neutral-800/70"
             >
               <GitHubIcon className="h-5 w-5" />
-              <span>Source</span>
+              <span>Source Code</span>
             </a>
           </motion.div>
         </motion.div>
@@ -115,15 +118,15 @@ export function IndexPage() {
         >
           <div className="flex items-center gap-1 sm:gap-2">
             <Check className="h-4 w-4 text-green-600" />
+            <span>E2E Encrypted</span>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Check className="h-4 w-4 text-green-600" />
             <span>Free Forever</span>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <Check className="h-4 w-4 text-green-600" />
-            <span>Open Source</span>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Check className="h-4 w-4 text-green-600" />
-            <span>E2E Encrypted</span>
+            <span>100% Open Source</span>
           </div>
         </motion.div>
 
@@ -152,7 +155,7 @@ export function IndexPage() {
         <div className="mx-auto max-w-6xl">
           <motion.div
             className="mb-16 text-center"
-            initial={{ opacity: 0, y: 100, scale: 0.5 }}
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 2, ease: [0, 1, 0, 1] }}
@@ -169,35 +172,35 @@ export function IndexPage() {
           <ul className="grid grid-cols-1 grid-rows-none gap-4 md:grid-cols-12 md:grid-rows-3 lg:gap-4 xl:max-h-[34rem] xl:grid-rows-2">
             <GridItem
               area="md:[grid-area:1/1/2/7] xl:[grid-area:1/1/2/5]"
-              icon={<Lock className="h-5 w-5 text-neutral-400" />}
+              icon={<Lock className="h-5 w-5 text-green-600" />}
               title="End-to-end encryption"
               description="All encryption happens in your browser. We never see your actual secrets - it's mathematically impossible for us to decrypt them."
             />
 
             <GridItem
               area="md:[grid-area:1/7/2/13] xl:[grid-area:2/1/3/5]"
-              icon={<KeyRound className="h-5 w-5 text-neutral-400" />}
+              icon={<KeyRound className="h-5 w-5 text-green-600" />}
               title="Local key generation"
               description="Your cryptographic keys are generated locally in your browser. Your private key never leaves your device in plaintext."
             />
 
             <GridItem
               area="md:[grid-area:2/1/3/7] xl:[grid-area:1/5/3/8]"
-              icon={<Shield className="h-5 w-5 text-neutral-400" />}
+              icon={<Shield className="h-5 w-5 text-green-600" />}
               title="Passphrase protected"
               description="Your private key is encrypted with your passphrase using AES-256-GCM. Even if someone accesses your encrypted key, it's useless without your passphrase."
             />
 
             <GridItem
               area="md:[grid-area:2/7/3/13] xl:[grid-area:1/8/2/13]"
-              icon={<Users className="h-5 w-5 text-neutral-400" />}
+              icon={<Users className="h-5 w-5 text-green-600" />}
               title="Secure team collaboration"
               description="Share secrets with your team without compromising security. Each member has their own keys and encryption."
             />
 
             <GridItem
               area="md:[grid-area:3/1/4/13] xl:[grid-area:2/8/3/13]"
-              icon={<Zap className="h-5 w-5 text-neutral-400" />}
+              icon={<Zap className="h-5 w-5 text-green-600" />}
               title="Lightning fast & reliable"
               description="All cryptographic operations happen locally for instant response. No waiting for server-side encryption or decryption."
             />
@@ -210,7 +213,7 @@ export function IndexPage() {
         <div className="mx-auto max-w-6xl">
           <motion.div
             className="mb-16 text-center"
-            initial={{ opacity: 0, y: 100, scale: 0.5 }}
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 2, ease: [0, 1, 0, 1] }}
@@ -226,7 +229,7 @@ export function IndexPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <motion.div
               className="relative rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6 backdrop-blur"
-              initial={{ opacity: 0, y: 20, scale: 0.8 }}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true }}
               transition={{
@@ -250,7 +253,7 @@ export function IndexPage() {
 
             <motion.div
               className="relative rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6 backdrop-blur"
-              initial={{ opacity: 0, y: 20, scale: 0.8 }}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true }}
               transition={{
@@ -274,7 +277,7 @@ export function IndexPage() {
 
             <motion.div
               className="relative rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6 backdrop-blur"
-              initial={{ opacity: 0, y: 20, scale: 0.8 }}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true }}
               transition={{
@@ -387,7 +390,7 @@ interface GridItemProps {
 const GridItem = ({ area, icon, title, description }: GridItemProps) => {
   return (
     <li className={`min-h-[14rem] list-none ${area}`}>
-      <div className="relative h-full rounded-2xl border border-neutral-800 p-2 md:rounded-3xl md:p-3">
+      <div className="relative h-full rounded-2xl border border-neutral-800/80 p-2 md:rounded-3xl md:p-3">
         <GlowingEffect
           spread={40}
           glow={true}
@@ -397,7 +400,7 @@ const GridItem = ({ area, icon, title, description }: GridItemProps) => {
         />
         <div className="relative flex h-full flex-col justify-between gap-6 overflow-hidden rounded-xl bg-neutral-900/50 backdrop-blur p-6 md:p-6">
           <div className="relative flex flex-1 flex-col justify-between gap-3">
-            <div className="w-fit rounded-lg border border-neutral-700 bg-neutral-800/50 p-2">
+            <div className="w-fit rounded-lg border border-green-900/80 bg-green-600/10 p-2">
               {icon}
             </div>
             <div className="space-y-3">

@@ -77,7 +77,7 @@ const GlowingEffect = memo(
 
           const currentAngle =
             parseFloat(element.style.getPropertyValue("--start")) || 0;
-          let targetAngle =
+          const targetAngle =
             (180 * Math.atan2(mouseY - center[1], mouseX - center[0])) /
               Math.PI +
             90;
@@ -150,11 +150,11 @@ const GlowingEffect = memo(
                 radial-gradient(circle at 40% 60%, #ffffff 10%, #ffffff00 20%),
                 repeating-conic-gradient(
                   from 236.84deg at 50% 50%,
-                  #ffffff 0%,
-                  #ffffff calc(25% / var(--repeating-conic-gradient-times)),
-                  #ffffff calc(50% / var(--repeating-conic-gradient-times)), 
-                  #ffffff calc(75% / var(--repeating-conic-gradient-times)),
-                  #ffffff calc(100% / var(--repeating-conic-gradient-times))
+                  #ebebeb 0%,
+                  #ebebeb calc(25% / var(--repeating-conic-gradient-times)),
+                  #ebebeb calc(50% / var(--repeating-conic-gradient-times)), 
+                  #ebebeb calc(75% / var(--repeating-conic-gradient-times)),
+                  #ebebeb calc(100% / var(--repeating-conic-gradient-times))
                 )`,
             } as React.CSSProperties
           }

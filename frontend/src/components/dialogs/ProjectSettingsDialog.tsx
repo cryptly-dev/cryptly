@@ -50,6 +50,13 @@ function RenameProjectSection() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleRename();
+    }
+  };
+
   if (!canRename) {
     return (
       <div className="space-y-3 overflow-hidden">
@@ -81,6 +88,7 @@ function RenameProjectSection() {
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="flex-1 rounded-md border px-3 py-2 bg-background text-base sm:text-sm"
             autoFocus
             required
