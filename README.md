@@ -1,23 +1,28 @@
 <div align="center" width="100%">
     <img src="https://i.ibb.co/ccfncjvr/download2.png" alt="Cryptly Logo" width="100"/>
-    <h1>Cryptly</h1>
 </div>
+<br/>
+<p align="center">
+  <a href="https://discord.gg/FwzmtYkc"><img src="https://dcbadge.limes.pink/api/server/https://discord.gg/FwzmtYkc" alt="discord chat"></a>
+</p>
 
-<div align="center">
-    <img src="docs/README/app-preview.png" alt="Cryptly App Preview" width="800"/>
-</div>
+<br/>
 
-<div align="center">
+# Cryptly 🔑
+
+<div>
     <b>A secure, collaborative secrets management platform with end-to-end encryption</b>
 </div>
 
+<br/>
+
 <div align="center">
-    <a href="https://cryptly.dev">cryptly.dev</a>
+    <img src="docs/README/app-preview.png" alt="Cryptly App Preview" width="800" style="border-radius: 6px; box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);"/>
 </div>
 
-## 👫 Community
-
-[![](https://dcbadge.limes.pink/api/server/https://discord.gg/FwzmtYkc)](https://discord.gg/FwzmtYkc)
+<div>
+    <a href="https://cryptly.dev">cryptly.dev</a>
+</div>
 
 ## ⭐ Features
 
