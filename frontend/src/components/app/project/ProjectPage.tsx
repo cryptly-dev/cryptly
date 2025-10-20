@@ -1,6 +1,5 @@
 import { DesktopProjectView } from "@/components/app/project/desktop/DesktopProjectView";
 import { MobileProjectView } from "@/components/app/project/mobile/MobileProjectView";
-import { useProjects } from "@/lib/hooks/useProjects";
 import { authLogic } from "@/lib/logics/authLogic";
 import { integrationsLogic } from "@/lib/logics/integrationsLogic";
 import { invitationsLogic } from "@/lib/logics/invitationsLogic";
@@ -9,7 +8,7 @@ import { projectLogic } from "@/lib/logics/projectLogic";
 import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
 import { suggestedUsersLogic } from "@/lib/logics/suggestedUsersLogic";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useNavigate, useLocation } from "@tanstack/react-router";
 import { BindLogic, useValues } from "kea";
 import { useEffect, useState } from "react";
 
@@ -17,12 +16,11 @@ export function ProjectPage() {
   const { projects } = useValues(projectsLogic);
   const navigate = useNavigate();
   const { isLoggedIn } = useValues(authLogic);
+  const location = useLocation();
 
-  const { activeProject } = useProjects();
-
-  const { projectId } = useParams({
-    from: "/app/project/$projectId",
-  });
+  // Extract projectId from the pathname
+  const pathParts = location.pathname.split("/");
+  const projectId = pathParts[3] || undefined; // /app/project/[projectId]
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -31,19 +29,16 @@ export function ProjectPage() {
   }, []);
 
   useEffect(() => {
-    if (
-      projects &&
-      projects.length &&
-      !projects.find((project) => project.id === activeProject?.id)
-    ) {
-      navigate({
-        to: "/app/project/$projectId",
-        params: { projectId: projects[0].id },
-      });
-    } else if (projects && projects.length === 0) {
+    // Only redirect if there are no projects at all
+    if (projects && projects.length === 0) {
       navigate({ to: "/app/project" });
     }
-  }, [projects, activeProject]);
+  }, [projects]);
+
+  // If no projectId, render without logic bindings
+  if (!projectId) {
+    return <ProjectPageContent />;
+  }
 
   return (
     <BindLogic logic={projectLogic} props={{ projectId }}>

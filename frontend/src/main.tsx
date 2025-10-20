@@ -1,4 +1,8 @@
 import "@fontsource-variable/open-sans";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/fira-code";
+import "@fontsource-variable/comfortaa";
+
 import "./index.css";
 
 import { RouterProvider, createRouter } from "@tanstack/react-router";

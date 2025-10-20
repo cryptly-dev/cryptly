@@ -18,19 +18,19 @@ export function DesktopProjectsListItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center justify-between rounded-lg p-3 text-sm transition border select-none",
+        "group relative flex items-center justify-between rounded-md px-2 py-1.5 text-sm transition select-none",
         isActive
-          ? "bg-primary/10 text-primary border-primary/20"
-          : "border-transparent hover:bg-accent hover:text-accent-foreground"
+          ? "bg-accent text-foreground font-medium"
+          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
       )}
     >
       <Link
         to="/app/project/$projectId"
         params={{ projectId: project.id }}
         aria-label={`Open project ${project.name}`}
-        className="absolute inset-0 rounded-xl cursor-pointer"
+        className="absolute inset-0 rounded-md cursor-pointer"
       />
-      <span className="font-medium truncate block relative pointer-events-none">
+      <span className="truncate block relative pointer-events-none text-xs">
         {project.name}
       </span>
       <div
@@ -39,7 +39,7 @@ export function DesktopProjectsListItem({
         }}
         className="cursor-grab active:cursor-grabbing touch-none flex items-center relative z-10 pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity"
       >
-        <GripVertical className="w-4 h-4 text-muted-foreground/60" />
+        <GripVertical className="w-3 h-3 text-muted-foreground/60" />
       </div>
     </div>
   );

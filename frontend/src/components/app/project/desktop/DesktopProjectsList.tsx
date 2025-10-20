@@ -1,161 +1,77 @@
 import AddProjectDialog from "@/components/dialogs/AddProjectDialog";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
-import type { Project } from "@/lib/api/projects.api";
-import { useActions, useValues } from "kea";
+import { useValues } from "kea";
 import { Plus } from "lucide-react";
-import { motion, Reorder, useDragControls } from "motion/react";
-import { useEffect, useState } from "react";
-import DesktopProjectsListItem from "./DesktopProjectsListItem";
+import { useState } from "react";
 import posthog from "posthog-js";
+import { useNavigate } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function DesktopProjectsList() {
+interface DesktopProjectsListProps {
+  onProjectSelect?: () => void;
+}
+
+export function DesktopProjectsList({ onProjectSelect }: DesktopProjectsListProps) {
   const { projects, projectsLoading } = useValues(projectsLogic);
-  const { finalizeProjectsOrder } = useActions(projectsLogic);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [isAddProjectButtonHovered, setAddProjectButtonHovered] =
-    useState(false);
-  const [localProjects, setLocalProjects] = useState(projects);
-
   const { activeProject } = useProjects();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    setLocalProjects(projects);
-  }, [projects]);
-
-  const containerVariants = {
-    hidden: { opacity: 0, y: 200, scale: 0.7 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 1, ease: [0, 1, 0, 1] },
-    },
-  } as const;
-
-  const listVariants = {
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: 0.04,
-        delayChildren: 0.1,
-      },
-    },
-  } as const;
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 16, scale: 0.98 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { type: "spring", stiffness: 500, damping: 30, mass: 0.5 },
-    },
-  } as const;
-
-  if (!localProjects || (!localProjects.length && projectsLoading)) {
+  if (!projects || (!projects.length && projectsLoading)) {
     return null;
   }
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      layout="position"
-    >
-      <motion.div
-        className="h-[65vh] rounded-2xl border border-border bg-card/60 backdrop-blur shadow-sm overflow-y-auto custom-scrollbar"
-        layout="position"
-      >
-        <motion.h2
-          className="font-semibold text-muted-foreground tracking-wide flex items-center justify-between p-4 sticky top-0 bg-gradient-to-b from-card/60 via-transparent to-transparent z-10"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.5, ease: [0, 1, 0, 1], delay: 0.2 }}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <span>Projects</span>
-            <span className="text-sm">({localProjects.length})</span>
-          </div>
-          <motion.button
-            type="button"
-            aria-label="Add project"
-            className="text-muted-foreground hover:text-foreground cursor-pointer bg-accent/100 rounded-md w-8 h-8 justify-center items-center"
-            onClick={() => {
-              setAddDialogOpen(true);
-              posthog.capture("add_project_button_clicked");
-            }}
-            animate={{ scale: isAddProjectButtonHovered ? 1.15 : 1 }}
-            onHoverStart={() => setAddProjectButtonHovered(true)}
-            onHoverEnd={() => setAddProjectButtonHovered(false)}
-          >
-            <div className="flex items-center justify-center">
-              <Plus className="w-5 h-5" />
-            </div>
-          </motion.button>
-        </motion.h2>
-        <Reorder.Group
-          axis="y"
-          values={localProjects}
-          onReorder={(newOrder) => {
-            setLocalProjects(newOrder);
+    <div className="p-4 flex flex-col h-full">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Projects
+        </h3>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Add project"
+          className="h-6 w-6 cursor-pointer"
+          onClick={() => {
+            setAddDialogOpen(true);
+            posthog.capture("add_project_button_clicked");
           }}
-          className="space-y-2 px-3 pb-3"
-          as="nav"
-          variants={listVariants}
-          initial="hidden"
-          animate="visible"
         >
-          {localProjects.map((project) => {
-            const isActive = project.id === activeProject?.id;
+          <Plus className="w-4 h-4" />
+        </Button>
+      </div>
 
-            return (
-              <ProjectListItem
-                key={project.id}
-                project={project}
-                isActive={isActive}
-                itemVariants={itemVariants}
-                onDragEnd={() => {
-                  finalizeProjectsOrder(localProjects);
-                }}
-              />
-            );
-          })}
-        </Reorder.Group>
-      </motion.div>
+      <div className="space-y-1 flex-1 overflow-y-auto custom-scrollbar">
+        {projects.map((project) => {
+          const isActive = project.id === activeProject?.id;
+          return (
+            <button
+              key={project.id}
+              onClick={() => {
+                navigate({
+                  to: "/app/project/$projectId",
+                  params: { projectId: project.id },
+                });
+                if (onProjectSelect) {
+                  onProjectSelect();
+                }
+              }}
+              className={cn(
+                "w-full text-left px-3 py-2 rounded-md text-sm transition-colors truncate",
+                isActive
+                  ? "bg-accent text-foreground font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              )}
+            >
+              {project.name}
+            </button>
+          );
+        })}
+      </div>
+
       <AddProjectDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
-    </motion.div>
-  );
-}
-
-function ProjectListItem({
-  project,
-  isActive,
-  itemVariants,
-  onDragEnd,
-}: {
-  project: Project;
-  isActive: boolean;
-  itemVariants: any;
-  onDragEnd: () => void;
-}) {
-  const dragControls = useDragControls();
-
-  return (
-    <Reorder.Item
-      value={project}
-      className="list-none"
-      variants={itemVariants}
-      dragListener={false}
-      dragControls={dragControls}
-      onDragEnd={onDragEnd}
-    >
-      <DesktopProjectsListItem
-        project={project}
-        isActive={isActive}
-        dragControls={dragControls}
-      />
-    </Reorder.Item>
+    </div>
   );
 }

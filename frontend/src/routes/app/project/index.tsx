@@ -1,4 +1,4 @@
-import { CreateFirstProjectView } from "@/components/app/project/CreateFirstProjectView";
+import { ProjectPage } from "@/components/app/project/ProjectPage";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/app/project/")({
@@ -6,5 +6,5 @@ export const Route = createFileRoute("/app/project/")({
 });
 
 function ProjectTanstackPage() {
-  return <CreateFirstProjectView />;
+  return <ProjectPage />;
 }

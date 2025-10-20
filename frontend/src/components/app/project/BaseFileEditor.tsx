@@ -38,11 +38,12 @@ export function BaseFileEditor({
         base: "vs-dark",
         inherit: true,
         rules: [
-          { token: "variable", foreground: "D4AF37" },
+          { token: "variable", foreground: "ffb900" },
           { token: "string", foreground: "A3A3A3" },
           { token: "comment", foreground: "6A9955", fontStyle: "italic" },
         ],
         colors: {
+          "editor.background": "#00000000",
           focusBorder: "#00000000",
         },
       });
