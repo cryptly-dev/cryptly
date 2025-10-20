@@ -31,7 +31,7 @@ resetContext({
 });
 
 const posthogOptions = {
-  api_host: "https://ph.cryptly.dev",
+  api_host: "https://eu.posthog.com",
 };
 
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
