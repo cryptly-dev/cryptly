@@ -18,7 +18,9 @@
     <img src="docs/README/app-preview.png" alt="Cryptly App Preview" width="800" style="border-radius: 6px; box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);"/>
 </div>
 
-<div>
+<br/>
+
+<div align="center">
     <a href="https://cryptly.dev">cryptly.dev</a>
 </div>
 

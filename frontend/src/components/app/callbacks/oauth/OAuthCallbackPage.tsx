@@ -27,10 +27,12 @@ export function OAuthCallbackPage({
   }, [exchangeCodeForJwt]);
 
   useEffect(() => {
-    posthog.capture("logged_in", {
-      method,
-      email: userData?.email,
-    });
+    if (userData?.email) {
+      posthog.capture("logged_in", {
+        method,
+        email: userData?.email,
+      });
+    }
     afterLogin(userData);
   }, [userData, afterLogin]);
 
