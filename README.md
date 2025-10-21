@@ -9,7 +9,7 @@
 # Cryptly 🔑
 
 <div>
-    <b>A secure, collaborative secrets management platform with end-to-end encryption</b>
+    <b>A free, secure, collaborative secrets management platform with end-to-end encryption</b>
 </div>
 
 <br/>
