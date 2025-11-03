@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { RequireRole } from 'src/project/decorators/require-project-role.decorator';
 import { CurrentUserId } from '../../../auth/core/decorators/current-user-id.decorator';
 import { ProjectMemberGuard } from '../../../project/core/guards/project-member.guard';
 import { ProjectReadService } from '../../../project/read/project-read.service';
@@ -207,22 +208,24 @@ export class GithubExternalConnectionCoreController {
   }
 
   @ApiResponse({ type: TokenResponse })
-  @Get('/external-connections/github/installations/:installationEntityId/access-token')
+  @Get('/projects/:projectId/external-connections/github/integrations/:integrationId/access-token')
+  @UseGuards(ProjectMemberGuard)
+  @RequireRole(Role.Admin, Role.Write)
   public async getInstallationAccessToken(
-    @Param('installationEntityId') installationEntityId: string,
-    @CurrentUserId() currentUserId: string,
+    @Param('integrationId') integrationId: string,
   ): Promise<any> {
-    const installation = await this.installationReadService.findById(installationEntityId);
+    const integration = await this.integrationReadService.findById(integrationId);
 
-    if (installation.userId !== currentUserId) {
-      throw new ForbiddenException('You are not the owner of this installation');
+    if (!integration) {
+      throw new NotFoundException('Integration not found');
     }
 
+    const installation = await this.installationReadService.findById(
+      integration.installationEntityId,
+    );
     const token = await this.client.getInstallationAccessToken(installation.githubInstallationId);
 
-    return {
-      token,
-    };
+    return { token };
   }
 
   @Delete('external-connections/github/integrations/:integrationId')

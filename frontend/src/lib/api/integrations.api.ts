@@ -156,10 +156,11 @@ export class IntegrationsApi {
 
   public static async getAccessToken(
     jwtToken: string,
-    installationEntityId: string
+    projectId: string,
+    integrationId: string
   ): Promise<string> {
     const response = await axios.get<{ token: string }>(
-      `/external-connections/github/installations/${installationEntityId}/access-token`,
+      `/projects/${projectId}/external-connections/github/integrations/${integrationId}/access-token`,
       {
         headers: { Authorization: `Bearer ${jwtToken}` },
       }
@@ -197,7 +198,8 @@ export class IntegrationsApi {
 
         const githubToken = await this.getAccessToken(
           jwtToken,
-          integration.installationEntityId
+          integration.projectId,
+          integration.id
         );
 
         await Promise.all(

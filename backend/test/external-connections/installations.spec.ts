@@ -1,6 +1,6 @@
 import * as request from 'supertest';
-import { createTestApp } from '../utils/bootstrap';
 import { GithubExternalConnectionClientService } from '../../src/external-connection/github/client/github-external-connection-client.service';
+import { createTestApp } from '../utils/bootstrap';
 
 describe('GithubExternalConnectionCoreController (installations)', () => {
   let bootstrap: Awaited<ReturnType<typeof createTestApp>>;
@@ -254,61 +254,6 @@ describe('GithubExternalConnectionCoreController (installations)', () => {
 
       const response = await request(bootstrap.app.getHttpServer())
         .get(`/external-connections/github/installations/${installation.id}/repositories`)
-        .set('authorization', `Bearer ${setupB.token}`);
-
-      expect(response.status).toEqual(403);
-    });
-  });
-
-  describe('GET /external-connections/github/installations/:installationEntityId/access-token', () => {
-    it('returns installation access token', async () => {
-      const setup = await bootstrap.utils.userUtils.createDefault();
-
-      clientMock.getInstallationAccessToken.mockResolvedValue('test-access-token');
-
-      const installation = await bootstrap.utils.githubExternalConnectionUtils.createInstallation(
-        setup.token,
-        123456,
-      );
-
-      const response = await request(bootstrap.app.getHttpServer())
-        .get(`/external-connections/github/installations/${installation.id}/access-token`)
-        .set('authorization', `Bearer ${setup.token}`);
-
-      expect(response.status).toEqual(200);
-      expect(response.body).toEqual({
-        token: 'test-access-token',
-      });
-    });
-
-    it('returns 404 if installation not found', async () => {
-      const setup = await bootstrap.utils.userUtils.createDefault();
-
-      const response = await request(bootstrap.app.getHttpServer())
-        .get('/external-connections/github/installations/60f7eabc1234567890abcdef/access-token')
-        .set('authorization', `Bearer ${setup.token}`);
-
-      expect(response.status).toEqual(404);
-    });
-
-    it('returns 401 when not authenticated', async () => {
-      const response = await request(bootstrap.app.getHttpServer()).get(
-        '/external-connections/github/installations/60f7eabc1234567890abcdef/access-token',
-      );
-
-      expect(response.status).toEqual(401);
-    });
-
-    it('returns 403 when installation does not belong to user', async () => {
-      const setupA = await bootstrap.utils.userUtils.createDefault();
-      const setupB = await bootstrap.utils.userUtils.createDefault();
-      const installation = await bootstrap.utils.githubExternalConnectionUtils.createInstallation(
-        setupA.token,
-        123456,
-      );
-
-      const response = await request(bootstrap.app.getHttpServer())
-        .get(`/external-connections/github/installations/${installation.id}/access-token`)
         .set('authorization', `Bearer ${setupB.token}`);
 
       expect(response.status).toEqual(403);
