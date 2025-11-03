@@ -402,4 +402,195 @@ describe('GithubExternalConnectionCoreController (integrations)', () => {
       expect(response.status).toEqual(401);
     });
   });
+
+  describe('GET /projects/:projectId/external-connections/github/integrations/:integrationId/access-token', () => {
+    it('returns installation access token for admin', async () => {
+      const setup = await bootstrap.utils.userUtils.createDefault();
+      const project = await bootstrap.utils.projectUtils.createProject(setup.token);
+      const installation = await bootstrap.utils.githubExternalConnectionUtils.createInstallation(
+        setup.token,
+        123456,
+      );
+
+      githubExternalConnectionClientMock.getRepositoryInfoByInstallationIdAndRepositoryId.mockResolvedValue(
+        {
+          id: 789,
+          owner: 'test-owner',
+          name: 'test-repo',
+        },
+      );
+      githubExternalConnectionClientMock.getRepositoryPublicKey.mockResolvedValue({
+        key: 'test-public-key',
+        keyId: 'test-key-id',
+      });
+      clientMock.getInstallationAccessToken.mockResolvedValue('test-access-token');
+
+      const integration = await bootstrap.utils.githubExternalConnectionUtils.createIntegration(
+        setup.token,
+        {
+          repositoryId: 789,
+          installationEntityId: installation.id,
+          projectId: project.id,
+        },
+      );
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .get(
+          `/projects/${project.id}/external-connections/github/integrations/${integration.id}/access-token`,
+        )
+        .set('authorization', `Bearer ${setup.token}`);
+
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        token: 'test-access-token',
+      });
+    });
+
+    it('returns installation access token for write role', async () => {
+      const setupA = await bootstrap.utils.userUtils.createDefault();
+      const project = await bootstrap.utils.projectUtils.createProject(setupA.token);
+      const setupB = await bootstrap.utils.userUtils.createDefault();
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, setupB.user.id, Role.Write);
+
+      const installation = await bootstrap.utils.githubExternalConnectionUtils.createInstallation(
+        setupA.token,
+        123456,
+      );
+
+      githubExternalConnectionClientMock.getRepositoryInfoByInstallationIdAndRepositoryId.mockResolvedValue(
+        {
+          id: 789,
+          owner: 'test-owner',
+          name: 'test-repo',
+        },
+      );
+      githubExternalConnectionClientMock.getRepositoryPublicKey.mockResolvedValue({
+        key: 'test-public-key',
+        keyId: 'test-key-id',
+      });
+      clientMock.getInstallationAccessToken.mockResolvedValue('test-access-token');
+
+      const integration = await bootstrap.utils.githubExternalConnectionUtils.createIntegration(
+        setupA.token,
+        {
+          repositoryId: 789,
+          installationEntityId: installation.id,
+          projectId: project.id,
+        },
+      );
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .get(
+          `/projects/${project.id}/external-connections/github/integrations/${integration.id}/access-token`,
+        )
+        .set('authorization', `Bearer ${setupB.token}`);
+
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        token: 'test-access-token',
+      });
+    });
+
+    it('returns 403 for read role', async () => {
+      const setupA = await bootstrap.utils.userUtils.createDefault();
+      const project = await bootstrap.utils.projectUtils.createProject(setupA.token);
+      const setupB = await bootstrap.utils.userUtils.createDefault();
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, setupB.user.id, Role.Read);
+
+      const installation = await bootstrap.utils.githubExternalConnectionUtils.createInstallation(
+        setupA.token,
+        123456,
+      );
+
+      githubExternalConnectionClientMock.getRepositoryInfoByInstallationIdAndRepositoryId.mockResolvedValue(
+        {
+          id: 789,
+          owner: 'test-owner',
+          name: 'test-repo',
+        },
+      );
+      githubExternalConnectionClientMock.getRepositoryPublicKey.mockResolvedValue({
+        key: 'test-public-key',
+        keyId: 'test-key-id',
+      });
+
+      const integration = await bootstrap.utils.githubExternalConnectionUtils.createIntegration(
+        setupA.token,
+        {
+          repositoryId: 789,
+          installationEntityId: installation.id,
+          projectId: project.id,
+        },
+      );
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .get(
+          `/projects/${project.id}/external-connections/github/integrations/${integration.id}/access-token`,
+        )
+        .set('authorization', `Bearer ${setupB.token}`);
+
+      expect(response.status).toEqual(403);
+    });
+
+    it('returns 403 for user not in project', async () => {
+      const setupA = await bootstrap.utils.userUtils.createDefault();
+      const project = await bootstrap.utils.projectUtils.createProject(setupA.token);
+      const setupB = await bootstrap.utils.userUtils.createDefault();
+
+      const installation = await bootstrap.utils.githubExternalConnectionUtils.createInstallation(
+        setupA.token,
+        123456,
+      );
+
+      githubExternalConnectionClientMock.getRepositoryInfoByInstallationIdAndRepositoryId.mockResolvedValue(
+        {
+          id: 789,
+          owner: 'test-owner',
+          name: 'test-repo',
+        },
+      );
+      githubExternalConnectionClientMock.getRepositoryPublicKey.mockResolvedValue({
+        key: 'test-public-key',
+        keyId: 'test-key-id',
+      });
+
+      const integration = await bootstrap.utils.githubExternalConnectionUtils.createIntegration(
+        setupA.token,
+        {
+          repositoryId: 789,
+          installationEntityId: installation.id,
+          projectId: project.id,
+        },
+      );
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .get(
+          `/projects/${project.id}/external-connections/github/integrations/${integration.id}/access-token`,
+        )
+        .set('authorization', `Bearer ${setupB.token}`);
+
+      expect(response.status).toEqual(403);
+    });
+
+    it('returns 404 for non-existent integration', async () => {
+      const setup = await bootstrap.utils.userUtils.createDefault();
+      const project = await bootstrap.utils.projectUtils.createProject(setup.token);
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .get(
+          `/projects/${project.id}/external-connections/github/integrations/60f7eabc1234567890abcdef/access-token`,
+        )
+        .set('authorization', `Bearer ${setup.token}`);
+
+      expect(response.status).toEqual(404);
+    });
+
+    it('returns 401 when not authenticated', async () => {
+      const response = await request(bootstrap.app.getHttpServer()).get(
+        '/projects/proj-id/external-connections/github/integrations/integ-id/access-token',
+      );
+
+      expect(response.status).toEqual(401);
+    });
+  });
 });
