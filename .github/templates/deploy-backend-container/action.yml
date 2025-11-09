@@ -57,6 +57,8 @@ inputs:
     required: true
   gh-cryptly-app-private-key:
     required: true
+  gh-webhooks-secret:
+    required: true
 
 runs:
   using: "composite"
@@ -90,6 +92,7 @@ runs:
           -e GH_CLIENT_SECRET_ALTERNATIVE=${{ inputs.gh-client-secret-alternative }} \
           -e GH_CRYPTLY_APP_ID=${{ inputs.gh-cryptly-app-id }} \
           -e GH_CRYPTLY_APP_PRIVATE_KEY="${{ inputs.gh-cryptly-app-private-key }}" \
+          -e GH_WEBHOOKS_SECRET=${{ inputs.gh-webhooks-secret }} \
           -e POSTHOG_API_KEY=${{ inputs.posthog-api-key }} \
           -e POSTHOG_HOST=${{ inputs.posthog-host }} \
           -e PORT=${{ inputs.application-port }} \

@@ -33,4 +33,8 @@ export class GithubIntegrationWriteService {
   public async deleteByProjectId(cryptlyProjectId: string): Promise<void> {
     await this.githubIntegrationModel.deleteMany({ projectId: cryptlyProjectId });
   }
+
+  public async deleteByInstallationEntityId(installationEntityId: string): Promise<void> {
+    await this.githubIntegrationModel.deleteMany({ installationEntityId });
+  }
 }
