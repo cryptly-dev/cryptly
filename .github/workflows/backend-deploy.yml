@@ -65,6 +65,7 @@ jobs:
           gh-client-secret-alternative: ${{ secrets.GH_CLIENT_SECRET_ALTERNATIVE }}
           gh-cryptly-app-id: ${{ secrets.GH_CRYPTLY_APP_ID }}
           gh-cryptly-app-private-key: ${{ secrets.GH_CRYPTLY_APP_PRIVATE_KEY }}
+          gh-webhooks-secret: ${{ secrets.GH_WEBHOOKS_SECRET }}
 
           logdash-api-key: ${{ secrets.LOGDASH_API_KEY }}
 

@@ -36,6 +36,7 @@ export interface EnvConfig {
       id: string;
       privateKey: string;
     };
+    webhookSecret: string;
   };
 }
 
@@ -80,6 +81,7 @@ export const EnvConfigs: EnvConfigs = {
         id: process.env.GH_CRYPTLY_APP_ID!,
         privateKey: process.env.GH_CRYPTLY_APP_PRIVATE_KEY!,
       },
+      webhookSecret: process.env.GH_WEBHOOKS_SECRET!,
     },
   },
   [OurEnv.Dev]: {
@@ -117,6 +119,7 @@ export const EnvConfigs: EnvConfigs = {
         id: process.env.GH_CRYPTLY_APP_ID!,
         privateKey: process.env.GH_CRYPTLY_APP_PRIVATE_KEY!,
       },
+      webhookSecret: process.env.GH_WEBHOOKS_SECRET!,
     },
   },
 };

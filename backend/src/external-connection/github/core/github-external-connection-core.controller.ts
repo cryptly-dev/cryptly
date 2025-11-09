@@ -13,6 +13,7 @@ import {
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequireRole } from 'src/project/decorators/require-project-role.decorator';
 import { CurrentUserId } from '../../../auth/core/decorators/current-user-id.decorator';
+import { Public } from '../../../auth/core/decorators/is-public';
 import { ProjectMemberGuard } from '../../../project/core/guards/project-member.guard';
 import { ProjectReadService } from '../../../project/read/project-read.service';
 import { TokenResponse } from '../../../shared/responses/token.response';
@@ -25,10 +26,12 @@ import { GithubInstallationWriteService } from '../write/github-installation-wri
 import { GithubIntegrationWriteService } from '../write/github-integration-write.service';
 import { CreateGithubInstallationBody } from './dto/create-github-installation.body';
 import { CreateGithubIntegrationBody } from './dto/create-github-integration.body';
+import { GithubWebhookBody } from './dto/github-installation-deleted-webhook.body';
 import { GithubInstallationSerialized } from './entities/github-installation.interface';
 import { GithubInstallationSerializer } from './entities/github-installation.serializer';
 import { GithubIntegrationSerialized } from './entities/github-integration.interface';
 import { GithubIntegrationSerializer } from './entities/github-integration.serializer';
+import { GithubWebhookSignatureGuard } from './guards/github-webhook-signature.guard';
 
 @Controller('')
 @ApiTags('Github external connections')
@@ -252,5 +255,25 @@ export class GithubExternalConnectionCoreController {
     }
 
     await this.integrationWriteService.deleteById(integrationId);
+  }
+
+  @Public()
+  @UseGuards(GithubWebhookSignatureGuard)
+  @Post('webhooks/github')
+  public async handleGithubWebhook(@Body() body: GithubWebhookBody): Promise<void> {
+    if (body.action !== 'deleted' || !body.installation) {
+      return;
+    }
+
+    const installation = await this.installationReadService.findByGithubInstallationId(
+      body.installation.id,
+    );
+
+    if (!installation) {
+      return;
+    }
+
+    await this.integrationWriteService.deleteByInstallationEntityId(installation.id);
+    await this.installationWriteService.deleteByGithubInstallationId(body.installation.id);
   }
 }

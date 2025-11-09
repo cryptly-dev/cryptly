@@ -6,32 +6,32 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Model } from 'mongoose';
 import * as nock from 'nock';
+import { AuthCoreModule } from '../../src/auth/core/auth-core.module';
 import { GithubAuthModule } from '../../src/auth/github/github-auth.module';
 import { GoogleAuthModule } from '../../src/auth/google/google-auth.module';
+import { GithubExternalConnectionClientService } from '../../src/external-connection/github/client/github-external-connection-client.service';
+import { GithubInstallationEntity } from '../../src/external-connection/github/core/entities/github-installation.entity';
+import { GithubIntegrationEntity } from '../../src/external-connection/github/core/entities/github-integration.entity';
+import { GithubExternalConnectionCoreModule } from '../../src/external-connection/github/core/github-external-connection-core.module';
 import { HealthModule } from '../../src/health/health.module';
 import { InvitationCoreModule } from '../../src/invitation/core/invitation-core.module';
+import { PersonalInvitationEntity } from '../../src/personal-invitation/core/entities/personal-invitation.entity';
+import { PersonalInvitationCoreModule } from '../../src/personal-invitation/core/personal-invitation-core.module';
 import { PROJECT_HISTORY_SIZE } from '../../src/project-secrets-version/write/project-secrets-version.constants';
+import { ProjectEntity } from '../../src/project/core/entities/project.entity';
 import { ProjectCoreModule } from '../../src/project/core/project-core.module';
 import { LogdashModule } from '../../src/shared/logdash/logdash.module';
 import { UserEntity } from '../../src/user/core/entities/user.entity';
 import { UserCoreModule } from '../../src/user/core/user-core.module';
-import { AuthCoreModule } from '../../src/auth/core/auth-core.module';
+import { GithubExternalConnectionUtils } from './github-external-connection.utils';
 import { InvitationUtils } from './invitation.utils';
+import { githubExternalConnectionClientMock } from './mocks/github-client-mock';
 import { LoggerMock } from './mocks/logger-mock';
 import { MetricsMock } from './mocks/metrics-mock';
 import { closeInMemoryMongoServer, rootMongooseTestModule } from './mongo-in-memory-server';
+import { PersonalInvitationUtils } from './personal-invitation.utils';
 import { ProjectUtils } from './project.utils';
 import { UserUtils } from './user.utils';
-import { GithubExternalConnectionClientService } from '../../src/external-connection/github/client/github-external-connection-client.service';
-import { githubExternalConnectionClientMock } from './mocks/github-client-mock';
-import { GithubExternalConnectionCoreModule } from '../../src/external-connection/github/core/github-external-connection-core.module';
-import { GithubExternalConnectionUtils } from './github-external-connection.utils';
-import { ProjectEntity } from '../../src/project/core/entities/project.entity';
-import { GithubIntegrationEntity } from '../../src/external-connection/github/core/entities/github-integration.entity';
-import { GithubInstallationEntity } from '../../src/external-connection/github/core/entities/github-installation.entity';
-import { PersonalInvitationCoreModule } from '../../src/personal-invitation/core/personal-invitation-core.module';
-import { PersonalInvitationUtils } from './personal-invitation.utils';
-import { PersonalInvitationEntity } from '../../src/personal-invitation/core/entities/personal-invitation.entity';
 
 export interface TestApp {
   app: INestApplication;
@@ -85,7 +85,8 @@ export async function createTestApp(): Promise<TestApp> {
     .useValue(githubExternalConnectionClientMock)
     .compile();
 
-  const app = module.createNestApplication();
+  const app = module.createNestApplication({ rawBody: true });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

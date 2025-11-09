@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { GithubInstallationEntity } from '../core/entities/github-installation.entity';
-import { CreateGithubInstallationDto } from './dto/create-github-installation.dto';
 import { GithubInstallationNormalized } from '../core/entities/github-installation.interface';
 import { GithubInstallationSerializer } from '../core/entities/github-installation.serializer';
+import { CreateGithubInstallationDto } from './dto/create-github-installation.dto';
 
 @Injectable()
 export class GithubInstallationWriteService {
@@ -20,5 +20,9 @@ export class GithubInstallationWriteService {
     });
 
     return GithubInstallationSerializer.normalize(installation);
+  }
+
+  public async deleteByGithubInstallationId(githubInstallationId: number): Promise<void> {
+    await this.model.deleteOne({ githubInstallationId });
   }
 }
