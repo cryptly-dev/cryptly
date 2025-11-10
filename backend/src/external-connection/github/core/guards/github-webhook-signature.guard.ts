@@ -20,7 +20,7 @@ export class GithubWebhookSignatureGuard implements CanActivate {
     const header256 = sig.replace(/^sha256=/, '');
 
     const computed1 = crypto.createHmac('sha1', this.secret).update(raw!).digest('hex');
-    const header1 = (req.headers['x-hub-signature'] as string | '').replace(/^sha1=/, '');
+    const header1 = (req.headers['x-hub-signature'] as string | '')?.replace(/^sha1=/, '');
 
     console.log('###\n\n\n');
     console.log({
