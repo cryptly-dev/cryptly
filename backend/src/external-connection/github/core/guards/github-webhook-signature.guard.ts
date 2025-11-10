@@ -16,9 +16,23 @@ export class GithubWebhookSignatureGuard implements CanActivate {
 
     const expected = 'sha256=' + crypto.createHmac('sha256', this.secret).update(raw).digest('hex');
 
-    const hex = crypto.createHmac('sha256', this.secret).update(raw).digest('hex');
-    console.log('computed sha256=', hex.slice(0, 12) + '…');
-    console.log('header sha256=', (sig ?? '').replace(/^sha256=/, '').slice(0, 12) + '…');
+    const computed256 = crypto.createHmac('sha256', this.secret).update(raw!).digest('hex');
+    const header256 = sig.replace(/^sha256=/, '');
+
+    const computed1 = crypto.createHmac('sha1', this.secret).update(raw!).digest('hex');
+    const header1 = (req.headers['x-hub-signature'] as string | '').replace(/^sha1=/, '');
+
+    console.log('###\n\n\n');
+    console.log({
+      rawLen: raw?.length,
+      headerContentLength: req.headers['content-length'],
+      sha256: { computed: computed256, header: header256, match: computed256 === header256 },
+      sha1: { computed: computed1, header: header1, match: computed1 === header1 },
+      secretLen: this.secret.length,
+      secretHexStart: Buffer.from(this.secret, 'utf8').subarray(0, 8).toString('hex'),
+      secretHexEnd: Buffer.from(this.secret, 'utf8').subarray(-8).toString('hex'),
+    });
+    console.log('###\n\n\n');
 
     // constant-time compare
     const a = Buffer.from(expected, 'utf8');
