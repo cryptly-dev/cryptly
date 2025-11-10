@@ -12,29 +12,10 @@ export class GithubWebhookSignatureGuard implements CanActivate {
     if (!sig) throw new UnauthorizedException('Missing X-Hub-Signature-256');
 
     const raw: Buffer | undefined = req.rawBody;
-    if (!raw) throw new UnauthorizedException('Missing rawBody'); // means step #1 isn’t set up
+    if (!raw) throw new UnauthorizedException('Missing rawBody');
 
     const expected = 'sha256=' + crypto.createHmac('sha256', this.secret).update(raw).digest('hex');
 
-    const computed256 = crypto.createHmac('sha256', this.secret).update(raw!).digest('hex');
-    const header256 = sig.replace(/^sha256=/, '');
-
-    const computed1 = crypto.createHmac('sha1', this.secret).update(raw!).digest('hex');
-    const header1 = (req.headers['x-hub-signature'] as string | '')?.replace(/^sha1=/, '');
-
-    console.log('###\n\n\n');
-    console.log({
-      rawLen: raw?.length,
-      headerContentLength: req.headers['content-length'],
-      sha256: { computed: computed256, header: header256, match: computed256 === header256 },
-      sha1: { computed: computed1, header: header1, match: computed1 === header1 },
-      secretLen: this.secret.length,
-      secretHexStart: Buffer.from(this.secret, 'utf8').subarray(0, 8).toString('hex'),
-      secretHexEnd: Buffer.from(this.secret, 'utf8').subarray(-8).toString('hex'),
-    });
-    console.log('###\n\n\n');
-
-    // constant-time compare
     const a = Buffer.from(expected, 'utf8');
     const b = Buffer.from(sig, 'utf8');
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
