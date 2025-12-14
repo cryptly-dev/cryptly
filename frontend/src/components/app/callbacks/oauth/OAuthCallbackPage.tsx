@@ -3,7 +3,7 @@ import { authLogic } from "@/lib/logics/authLogic";
 import { Spinner } from "@/components/ui/spinner";
 import { useValues } from "kea";
 import posthog from "posthog-js";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface OAuthCallbackPageProps {
   exchangeCodeForJwt: (code: string) => void;
@@ -14,6 +14,7 @@ export function OAuthCallbackPage({
   exchangeCodeForJwt,
   method,
 }: OAuthCallbackPageProps) {
+  const [afterLoginRan, setAfterLoginRan] = useState(false);
   const { userData } = useValues(authLogic);
   const { afterLogin } = useAfterLogin();
 
@@ -27,14 +28,18 @@ export function OAuthCallbackPage({
   }, [exchangeCodeForJwt]);
 
   useEffect(() => {
-    if (userData?.email) {
-      posthog.capture("logged_in", {
-        method,
-        email: userData?.email,
-      });
+    if (!userData || !userData.email) {
+      return;
     }
-    afterLogin(userData);
-  }, [userData, afterLogin]);
+    posthog.capture("logged_in", {
+      method,
+      email: userData.email,
+    });
+    if (!afterLoginRan) {
+      afterLogin(userData);
+      setAfterLoginRan(true);
+    }
+  }, [userData, afterLogin, afterLoginRan]);
 
   return (
     <div className="w-screen h-screen flex items-center justify-center">
