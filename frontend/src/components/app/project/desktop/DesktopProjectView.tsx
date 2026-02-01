@@ -16,7 +16,7 @@ export function DesktopProjectView() {
       </motion.aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 h-full overflow-hidden">
+      <main className="flex-1 h-full">
         <motion.div
           className="h-full"
           initial={{ opacity: 0 }}

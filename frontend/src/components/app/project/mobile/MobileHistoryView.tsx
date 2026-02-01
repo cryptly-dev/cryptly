@@ -49,21 +49,22 @@ export function MobileHistoryView() {
   }
 
   return (
-    <div className="h-full">
-      {/* Top - Version list (30%) */}
-      <div className="border-b border-border overflow-y-auto p-3 h-1/3">
-        <div className="space-y-2">
+    <div className="h-full flex flex-col">
+      {/* Top - Version list */}
+      <div className="border-b border-border/50 overflow-y-auto p-2 h-[35%] flex-shrink-0">
+        <div className="space-y-0.5">
           {patches.map((patch) => {
             const isSelected = patch.id === selectedHistoryChangeId;
 
             return (
-              <div
+              <button
                 key={patch.id}
+                type="button"
                 className={cn(
-                  "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors text-sm",
+                  "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md cursor-pointer transition-colors text-sm text-left",
                   isSelected
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-accent/50"
+                    ? "bg-primary/10 text-primary"
+                    : "active:bg-muted/30"
                 )}
                 onClick={() => selectHistoryChange(patch.id, patch.content)}
               >
@@ -73,31 +74,29 @@ export function MobileHistoryView() {
                   className="w-6 h-6 rounded-full flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium truncate">
-                      {patch.author.displayName}
-                    </span>
-                    <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
-                      {getRelativeTime(patch.createdAt)}
-                    </span>
-                  </div>
+                  <span className="font-medium truncate block">
+                    {patch.author.displayName}
+                  </span>
                 </div>
-              </div>
+                <span className="text-xs text-muted-foreground flex-shrink-0">
+                  {getRelativeTime(patch.createdAt)}
+                </span>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* Bottom - Diff editor (70%) */}
-      <div className="h-2/3">
+      {/* Bottom - Diff editor */}
+      <div className="flex-1 min-h-0">
         {selectedPatch ? (
           <div className="h-full">
             <DiffEditor value={selectedPatch} />
           </div>
         ) : (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <p>Select a version to see changes</p>
+          <div className="h-full flex items-start justify-center pt-8">
+            <div className="text-center text-muted-foreground text-sm">
+              Select a version to see changes
             </div>
           </div>
         )}
