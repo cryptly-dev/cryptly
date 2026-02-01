@@ -264,7 +264,7 @@ function MobileProjectHeader({
       {/* Top row - Logo, Search, Menu */}
       <div className="flex items-center gap-2 px-3 py-2">
         <Link to="/" className="flex-shrink-0">
-          <img src="/favicon.svg" alt="Cryptly" className="w-6 h-6 invert" />
+          <img src="/favicon.svg" alt="Cryptly" className="w-6 h-6 brightness-0 invert" />
         </Link>
         
         <div className="flex-1 relative">

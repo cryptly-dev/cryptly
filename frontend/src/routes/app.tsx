@@ -2,7 +2,7 @@ import Waves from "@/components/Waves";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 const AppLayout = () => (
-  <div className="relative min-h-screen bg-background">
+  <div className="relative min-h-screen bg-background overflow-hidden">
     {/* Background Waves - persists across all /app routes */}
     <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[110vw] h-[110vh] z-0 opacity-[0.12] pointer-events-none">
       <Waves

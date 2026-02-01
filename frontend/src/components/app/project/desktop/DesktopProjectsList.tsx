@@ -131,7 +131,7 @@ export function DesktopProjectsList() {
       {/* App Logo / Brand */}
       <div className="px-4 py-4">
         <Link to="/" className="flex items-center gap-2.5 text-foreground hover:opacity-80 transition-opacity">
-          <img src="/favicon.svg" alt="Cryptly" className="w-7 h-7 invert" />
+          <img src="/favicon.svg" alt="Cryptly" className="w-7 h-7 brightness-0 invert" />
           <span className="font-semibold text-lg tracking-tight">Cryptly</span>
         </Link>
       </div>
