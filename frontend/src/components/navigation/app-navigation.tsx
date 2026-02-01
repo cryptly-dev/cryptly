@@ -81,7 +81,9 @@ function AppNavigationImpl() {
   ];
 
   // Hide the floating dock on project routes (new UI uses sidebar navigation)
-  if (isProjectRoute) {
+  // Also hide on login page
+  const isLoginRoute = location.pathname.startsWith("/app/login");
+  if (isProjectRoute || isLoginRoute) {
     return null;
   }
 
