@@ -38,7 +38,6 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useActions, useAsyncActions, useValues } from "kea";
 import {
   Check,
-  ChevronDown,
   FolderOpen,
   LogOut,
   Menu,
@@ -46,7 +45,7 @@ import {
   Plus,
   Search,
   User,
-  X,
+  X
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
