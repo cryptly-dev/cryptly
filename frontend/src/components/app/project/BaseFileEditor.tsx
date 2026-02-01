@@ -43,8 +43,8 @@ export function BaseFileEditor({
           { token: "comment", foreground: "6A9955", fontStyle: "italic" },
         ],
         colors: {
-          "editor.background": "#00000000",
-          "editor.lineHighlightBackground": "#00000000",
+          "editor.background": "#000000",
+          "editor.lineHighlightBackground": "#0a0a0a",
           focusBorder: "#00000000",
         },
       });

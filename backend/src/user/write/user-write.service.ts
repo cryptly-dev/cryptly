@@ -103,7 +103,7 @@ export class UserWriteService {
   public async addToProjectsOrder(id: string, projectId: string): Promise<void> {
     await this.userModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
-      { $push: { projectsOrder: projectId } },
+      { $push: { projectsOrder: { $each: [projectId], $position: 0 } } },
     );
   }
 
