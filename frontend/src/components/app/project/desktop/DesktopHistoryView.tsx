@@ -60,8 +60,8 @@ export function DesktopHistoryView() {
                 className={cn(
                   "w-full text-left px-3 py-2.5 rounded-md transition-all duration-150 cursor-pointer",
                   selectedHistoryChangeId === patch.id
-                    ? "bg-primary/10 text-primary"
-                    : "hover:bg-muted/30"
+                    ? "bg-neutral-800 text-primary"
+                    : "hover:bg-neutral-800"
                 )}
               >
                 <div className="flex items-center justify-between gap-2">

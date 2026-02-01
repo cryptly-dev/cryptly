@@ -164,7 +164,7 @@ export function DesktopProjectsList() {
           <motion.button
             type="button"
             aria-label="Add project"
-            className="text-muted-foreground hover:text-foreground hover:bg-accent/50 cursor-pointer rounded-md w-6 h-6 flex items-center justify-center transition-colors"
+            className="text-muted-foreground hover:text-foreground hover:bg-neutral-800 cursor-pointer rounded-md w-6 h-6 flex items-center justify-center transition-colors"
             onClick={handleStartAddProject}
             disabled={isAddingProject}
             whileHover={{ scale: 1.1 }}
@@ -280,7 +280,7 @@ export function DesktopProjectsList() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer text-left"
+              className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer text-left"
             >
               {userData?.avatarUrl ? (
                 <img

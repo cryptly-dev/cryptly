@@ -63,8 +63,8 @@ export function MobileHistoryView() {
                 className={cn(
                   "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md cursor-pointer transition-colors text-sm text-left",
                   isSelected
-                    ? "bg-primary/10 text-primary"
-                    : "active:bg-muted/30"
+                    ? "bg-neutral-800 text-primary"
+                    : "active:bg-neutral-800"
                 )}
                 onClick={() => selectHistoryChange(patch.id, patch.content)}
               >
