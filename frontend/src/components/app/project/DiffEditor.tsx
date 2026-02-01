@@ -45,7 +45,8 @@ export function DiffEditor({ value }: DiffEditorProps) {
           { token: "comment", foreground: "6b7280", fontStyle: "italic" },
         ],
         colors: {
-          "editor.lineHighlightBackground": "#1a1a1a",
+          "editor.background": "#00000000",
+          "editor.lineHighlightBackground": "#00000000",
           "editorLineNumber.foreground": "#525252",
           "editorLineNumber.activeForeground": "#a3a3a3",
           "editor.selectionBackground": "#264f78",
