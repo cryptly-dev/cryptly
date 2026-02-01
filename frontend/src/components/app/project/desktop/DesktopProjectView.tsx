@@ -4,7 +4,7 @@ import { DesktopProjectTile } from "./DesktopProjectTile";
 
 export function DesktopProjectView() {
   return (
-    <div className="h-screen w-full overflow-hidden text-foreground flex">
+    <div className="h-screen w-full text-foreground flex">
       {/* Left Sidebar - Full height, attached to edge */}
       <motion.aside
         className="h-full w-72 flex-shrink-0 border-r border-border/50 bg-card/40 backdrop-blur-sm"
