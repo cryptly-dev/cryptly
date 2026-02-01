@@ -273,6 +273,38 @@ function AddIntegrationSection() {
   );
 }
 
+export function IntegrationsTabContent() {
+  return (
+    <div className="w-full max-w-xl space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Integrations</h2>
+        <p className="text-sm text-muted-foreground">
+          Connect external services to sync and manage your project secrets
+          across platforms.
+        </p>
+      </div>
+
+      <ExistingIntegrationsSection />
+
+      <AddIntegrationSection />
+
+      <div className="text-xs text-muted-foreground bg-muted/20 p-3 rounded-md border border-dashed">
+        For now, we only support GitHub integrations. If you need any other
+        integration,{" "}
+        <a
+          href="https://github.com/cryptly-dev/cryptly/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+        >
+          let us know
+        </a>
+        .
+      </div>
+    </div>
+  );
+}
+
 export function IntegrationsDialog({
   open,
   onOpenChange,

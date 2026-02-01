@@ -46,11 +46,11 @@ export function DesktopHistoryView() {
   }
 
   return (
-    <div className="h-full flex gap-4">
+    <div className="h-full flex">
       {/* Left side - List of changes */}
-      <div className="w-80 flex flex-col bg-card rounded-xl">
-        <div className="flex-1 overflow-y-auto custom-scrollbar pl-2 pt-2">
-          <div className="space-y-1">
+      <div className="w-72 flex flex-col border-r border-border/50">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+          <div className="space-y-0.5">
             {patches.map((patch) => (
               <button
                 key={patch.id}
@@ -58,14 +58,14 @@ export function DesktopHistoryView() {
                   selectHistoryChange(patch.id, patch.content);
                 }}
                 className={cn(
-                  "w-full text-left px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer",
+                  "w-full text-left px-3 py-2.5 rounded-md transition-all duration-150 cursor-pointer",
                   selectedHistoryChangeId === patch.id
-                    ? "bg-primary/10 border border-primary/20"
-                    : "border border-transparent hover:bg-muted/20"
+                    ? "bg-primary/10 text-primary"
+                    : "hover:bg-muted/30"
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
                     <img
                       src={patch.author.avatarUrl || DEFAULT_AVATAR}
                       alt={patch.author.displayName}
@@ -89,11 +89,11 @@ export function DesktopHistoryView() {
       </div>
 
       {/* Right side - Diff editor */}
-      <div className="flex-1 bg-editor rounded-xl overflow-hidden">
+      <div className="flex-1 overflow-hidden">
         {selectedPatch ? (
           <DiffEditor value={selectedPatch} />
         ) : (
-          <div className="h-full flex items-center justify-center">
+          <div className="h-full flex items-start justify-center pt-12">
             <div className="text-sm text-muted-foreground">
               Select a version to view changes
             </div>

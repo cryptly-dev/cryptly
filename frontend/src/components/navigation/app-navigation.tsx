@@ -1,8 +1,7 @@
 import { authLogic } from "@/lib/logics/authLogic";
-import { myPersonalInvitationsLogic } from "@/lib/logics/myPersonalInvitationsLogic";
 import { useLocation } from "@tanstack/react-router";
 import { useValues } from "kea";
-import { Code, Home, LogIn, Search, User } from "lucide-react";
+import { Code, Home, LogIn } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { memo } from "react";
 import { FloatingDock } from "./floating-dock";
@@ -12,9 +11,9 @@ function AppNavigationImpl() {
   const location = useLocation();
 
   const isAppRoute = location.href.startsWith("/app");
+  const isProjectRoute = location.pathname.startsWith("/app/project");
 
   const { isLoggedIn } = useValues(authLogic);
-  const { myPersonalInvitations } = useValues(myPersonalInvitationsLogic);
 
   const isDeveloper = useFeatureFlagEnabled("developer");
 
@@ -22,8 +21,8 @@ function AppNavigationImpl() {
   const isRouteActive = (href: string) => {
     const currentPath = location.pathname;
 
-    // Exact match for root and specific routes
-    if (href === "/" || href === "/app/search" || href === "/app/me") {
+    // Exact match for root
+    if (href === "/") {
       return currentPath === href;
     }
 
@@ -54,7 +53,7 @@ function AppNavigationImpl() {
           },
         ]
       : []),
-    // Show Projects, Developer, and Me only when user is logged in
+    // Show Projects and Developer only when user is logged in
     ...(isLoggedIn
       ? [
           {
@@ -64,14 +63,6 @@ function AppNavigationImpl() {
             ),
             href: `/app/project/`,
             isActive: isRouteActive("/app/project/"),
-          },
-          {
-            title: "Search",
-            icon: (
-              <Search className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
-            href: `/app/search`,
-            isActive: isRouteActive("/app/search"),
           },
           ...(isDeveloper
             ? [
@@ -85,18 +76,14 @@ function AppNavigationImpl() {
                 },
               ]
             : []),
-          {
-            title: "Profile",
-            icon: (
-              <User className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
-            href: "/app/me",
-            badge: myPersonalInvitations?.length || undefined,
-            isActive: isRouteActive("/app/me"),
-          },
         ]
       : []),
   ];
+
+  // Hide the floating dock on project routes (new UI uses sidebar navigation)
+  if (isProjectRoute) {
+    return null;
+  }
 
   return (
     <AnimatePresence>
