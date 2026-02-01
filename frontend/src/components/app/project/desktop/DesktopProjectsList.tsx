@@ -3,7 +3,7 @@ import { useProjects } from "@/lib/hooks/useProjects";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
 import type { Project } from "@/lib/api/projects.api";
 import { useActions, useValues } from "kea";
-import { Plus } from "lucide-react";
+import { FolderOpen, Plus } from "lucide-react";
 import { motion, Reorder, useDragControls } from "motion/react";
 import { useEffect, useState } from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
@@ -75,6 +75,7 @@ export function DesktopProjectsList() {
           transition={{ duration: 1.5, ease: [0, 1, 0, 1], delay: 0.2 }}
         >
           <div className="flex items-center justify-center gap-2">
+            <FolderOpen className="w-4 h-4" />
             <span>Projects</span>
             <span className="text-sm">({localProjects.length})</span>
           </div>
