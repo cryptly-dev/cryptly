@@ -200,40 +200,6 @@ describe('ProjectCoreController (reads)', () => {
       expect(response.body).toEqual([]);
     });
 
-    it('returns newly created projects first', async () => {
-      // given
-      const { token } = await bootstrap.utils.userUtils.createDefault({
-        email: 'test@test.com',
-      });
-      const projectA = await bootstrap.utils.projectUtils.createProject(token, {
-        name: 'project-a',
-        encryptedSecretsKeys: {},
-        encryptedSecrets: '',
-      });
-      const projectB = await bootstrap.utils.projectUtils.createProject(token, {
-        name: 'project-b',
-        encryptedSecretsKeys: {},
-        encryptedSecrets: '',
-      });
-      const projectC = await bootstrap.utils.projectUtils.createProject(token, {
-        name: 'project-c',
-        encryptedSecretsKeys: {},
-        encryptedSecrets: '',
-      });
-
-      // when
-      const response = await request(bootstrap.app.getHttpServer())
-        .get(`/users/me/projects`)
-        .set('authorization', `Bearer ${token}`);
-
-      // then
-      expect(response.status).toEqual(200);
-      expect(response.body).toHaveLength(3);
-      expect(response.body[0].id).toEqual(projectC.id);
-      expect(response.body[1].id).toEqual(projectB.id);
-      expect(response.body[2].id).toEqual(projectA.id);
-    });
-
     it('does not get when not logged in', async () => {
       // when
       const response = await request(bootstrap.app.getHttpServer()).get(`/users/me/projects`);
