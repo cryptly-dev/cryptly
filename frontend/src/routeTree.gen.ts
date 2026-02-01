@@ -12,8 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteInviteIdRouteImport } from './routes/invite/$inviteId'
-import { Route as AppSearchRouteImport } from './routes/app/search'
-import { Route as AppMeRouteImport } from './routes/app/me'
 import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppDeveloperRouteImport } from './routes/app/developer'
 import { Route as AppProjectIndexRouteImport } from './routes/app/project/index'
@@ -36,16 +34,6 @@ const InviteInviteIdRoute = InviteInviteIdRouteImport.update({
   id: '/invite/$inviteId',
   path: '/invite/$inviteId',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AppSearchRoute = AppSearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppMeRoute = AppMeRouteImport.update({
-  id: '/me',
-  path: '/me',
-  getParentRoute: () => AppRoute,
 } as any)
 const AppLoginRoute = AppLoginRouteImport.update({
   id: '/login',
@@ -89,8 +77,6 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
-  '/app/me': typeof AppMeRoute
-  '/app/search': typeof AppSearchRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/app/project': typeof AppProjectIndexRoute
@@ -103,8 +89,6 @@ export interface FileRoutesByTo {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
-  '/app/me': typeof AppMeRoute
-  '/app/search': typeof AppSearchRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/app/project': typeof AppProjectIndexRoute
@@ -118,8 +102,6 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
-  '/app/me': typeof AppMeRoute
-  '/app/search': typeof AppSearchRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/app/project/': typeof AppProjectIndexRoute
@@ -134,8 +116,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/developer'
     | '/app/login'
-    | '/app/me'
-    | '/app/search'
     | '/invite/$inviteId'
     | '/app/project/$projectId'
     | '/app/project'
@@ -148,8 +128,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/developer'
     | '/app/login'
-    | '/app/me'
-    | '/app/search'
     | '/invite/$inviteId'
     | '/app/project/$projectId'
     | '/app/project'
@@ -162,8 +140,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/developer'
     | '/app/login'
-    | '/app/me'
-    | '/app/search'
     | '/invite/$inviteId'
     | '/app/project/$projectId'
     | '/app/project/'
@@ -200,20 +176,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/invite/$inviteId'
       preLoaderRoute: typeof InviteInviteIdRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/app/search': {
-      id: '/app/search'
-      path: '/search'
-      fullPath: '/app/search'
-      preLoaderRoute: typeof AppSearchRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/me': {
-      id: '/app/me'
-      path: '/me'
-      fullPath: '/app/me'
-      preLoaderRoute: typeof AppMeRouteImport
-      parentRoute: typeof AppRoute
     }
     '/app/login': {
       id: '/app/login'
@@ -270,8 +232,6 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppDeveloperRoute: typeof AppDeveloperRoute
   AppLoginRoute: typeof AppLoginRoute
-  AppMeRoute: typeof AppMeRoute
-  AppSearchRoute: typeof AppSearchRoute
   AppProjectProjectIdRoute: typeof AppProjectProjectIdRoute
   AppProjectIndexRoute: typeof AppProjectIndexRoute
   AppCallbacksIntegrationsGithubRoute: typeof AppCallbacksIntegrationsGithubRoute
@@ -282,8 +242,6 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppDeveloperRoute: AppDeveloperRoute,
   AppLoginRoute: AppLoginRoute,
-  AppMeRoute: AppMeRoute,
-  AppSearchRoute: AppSearchRoute,
   AppProjectProjectIdRoute: AppProjectProjectIdRoute,
   AppProjectIndexRoute: AppProjectIndexRoute,
   AppCallbacksIntegrationsGithubRoute: AppCallbacksIntegrationsGithubRoute,

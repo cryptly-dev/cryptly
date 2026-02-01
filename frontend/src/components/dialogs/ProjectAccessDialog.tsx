@@ -661,6 +661,49 @@ function SuggestedUsersSection() {
   );
 }
 
+export function MembersTabContent() {
+  const { projectData } = useValues(projectLogic);
+
+  if (!projectData) {
+    return null;
+  }
+
+  return (
+    <div className="w-full max-w-xl space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Members</h2>
+        <p className="text-sm text-muted-foreground">
+          Manage who has access to{" "}
+          <span className="font-medium text-foreground">{projectData.name}</span>
+        </p>
+      </div>
+
+      <MembersSection />
+      <ActiveInvitesSection />
+
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <IconUserPlus className="size-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium">Invite people</h3>
+        </div>
+
+        <Tabs defaultValue="invite-link" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="invite-link">Invite link</TabsTrigger>
+            <TabsTrigger value="suggested">Suggested users</TabsTrigger>
+          </TabsList>
+          <TabsContent value="invite-link">
+            <GenerateNewInviteLinkSection />
+          </TabsContent>
+          <TabsContent value="suggested">
+            <SuggestedUsersSection />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
 export function ProjectAccessDialog({
   open,
   onOpenChange,

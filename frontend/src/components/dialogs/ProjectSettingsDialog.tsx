@@ -236,6 +236,29 @@ function DangerZoneSection() {
   );
 }
 
+export function SettingsTabContent() {
+  const { projectData } = useValues(projectLogic);
+
+  if (!projectData) {
+    return null;
+  }
+
+  return (
+    <div className="w-full max-w-xl space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Settings</h2>
+        <p className="text-sm text-muted-foreground">
+          Manage settings for{" "}
+          <span className="font-medium text-foreground">{projectData.name}</span>
+        </p>
+      </div>
+
+      <RenameProjectSection />
+      <DangerZoneSection />
+    </div>
+  );
+}
+
 export function ProjectSettingsDialog({
   open,
   onOpenChange,

@@ -4,31 +4,28 @@ import { DesktopProjectTile } from "./DesktopProjectTile";
 
 export function DesktopProjectView() {
   return (
-    <div className="h-screen w-full overflow-hidden text-foreground flex items-center justify-center px-8 relative">
-      {/* Content */}
-      <div className="h-screen w-full overflow-hidden text-foreground relative z-10">
-        <div className="mx-auto max-w-7xl h-full grid grid-cols-1 md:grid-cols-[280px_1fr] gap-2 p-4">
-          <aside className="h-full overflow-hidden flex flex-col justify-center">
-            <DesktopProjectsList />
-          </aside>
+    <div className="h-screen w-full overflow-hidden text-foreground flex">
+      {/* Left Sidebar - Full height, attached to edge */}
+      <motion.aside
+        className="h-full w-72 flex-shrink-0 border-r border-border/50 bg-card/40 backdrop-blur-sm"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+      >
+        <DesktopProjectsList />
+      </motion.aside>
 
-          <main className="h-full overflow-hidden flex items-center">
-            <motion.div
-              className="w-full max-w-5xl px-8 relative"
-              initial={{ opacity: 0, x: -50, scale: 0.9 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 50, scale: 0.9 }}
-              transition={{
-                duration: 1,
-                ease: [0, 1, 0, 1],
-                delay: 0.4,
-              }}
-            >
-              <DesktopProjectTile />
-            </motion.div>
-          </main>
-        </div>
-      </div>
+      {/* Main Content Area */}
+      <main className="flex-1 h-full overflow-hidden">
+        <motion.div
+          className="h-full"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <DesktopProjectTile />
+        </motion.div>
+      </main>
     </div>
   );
 }

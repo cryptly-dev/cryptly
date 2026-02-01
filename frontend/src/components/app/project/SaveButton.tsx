@@ -85,7 +85,7 @@ export function UpdateButton() {
               duration: 0.2,
               ease: [0.2, 0, 0, 1],
             }}
-            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md pointer-events-none whitespace-nowrap z-50 flex items-center gap-2"
+            className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-md shadow-md border border-border pointer-events-none whitespace-nowrap z-50 flex items-center gap-2"
           >
             <Kbd>
               <CommandIcon className="size-3" />
