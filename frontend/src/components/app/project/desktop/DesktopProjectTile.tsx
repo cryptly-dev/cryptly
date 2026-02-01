@@ -347,7 +347,7 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
   }, [activeTab, userOpenedIntegrationsDialog]);
 
   return (
-    <div className="flex h-14 items-center justify-between px-3 border-b border-border/50 bg-card/20 backdrop-blur-sm flex-shrink-0">
+    <div className="flex h-14 items-center justify-between px-3 border-b border-border/50 bg-card/20 backdrop-blur-sm flex-shrink-0 overflow-visible">
       {/* Tabs */}
       <div className="flex items-center gap-1">
         {TABS.map((tab) => {
