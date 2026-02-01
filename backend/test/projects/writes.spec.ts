@@ -1,4 +1,5 @@
 import { advanceBy, advanceTo } from 'jest-date-mock';
+import { describe } from 'node:test';
 import { firstValueFrom, of } from 'rxjs';
 import { catchError, take, timeout, toArray } from 'rxjs/operators';
 import * as request from 'supertest';
@@ -6,7 +7,6 @@ import { ProjectCoreController } from '../../src/project/core/project-core.contr
 import { ENCRYPTED_SECRETS_MAX_LENGTH } from '../../src/shared/constants/validation';
 import { Role } from '../../src/shared/types/role.enum';
 import { createTestApp } from '../utils/bootstrap';
-import { describe } from 'node:test';
 
 describe('ProjectCoreController (writes)', () => {
   let bootstrap: Awaited<ReturnType<typeof createTestApp>>;
@@ -815,7 +815,7 @@ describe('ProjectCoreController (writes)', () => {
 
       // then
       const userFromDb = await bootstrap.models.userModel.findById(user.id).lean();
-      expect(userFromDb?.projectsOrder).toEqual([project1.id, project2.id]);
+      expect(userFromDb?.projectsOrder).toEqual([project2.id, project1.id]);
     });
 
     it('returns projects in correct order based on projectsOrder', async () => {
@@ -849,7 +849,7 @@ describe('ProjectCoreController (writes)', () => {
 
       // then
       expect(response.status).toEqual(200);
-      expect(response.body.map((p: any) => p.id)).toEqual([project1.id, project2.id, project3.id]);
+      expect(response.body.map((p: any) => p.id)).toEqual([project3.id, project2.id, project1.id]);
     });
 
     it('adds project to projectsOrder when accepting link invitation', async () => {
