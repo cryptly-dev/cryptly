@@ -114,7 +114,7 @@ function MemberItem({
   };
 
   return (
-    <div className="flex items-center gap-3 p-2 rounded-md bg-muted/30">
+    <div className="flex items-center gap-3 p-2 rounded-md bg-neutral-800">
       <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden">
         {member.avatarUrl ? (
           <img
@@ -226,7 +226,7 @@ function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-2 rounded-md bg-muted/30">
+    <div className="flex items-center gap-3 p-2 rounded-md bg-neutral-800">
       <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden">
         {invite.type === "personal" ? (
           invite.data.invitedUser.avatarUrl ? (
@@ -347,7 +347,7 @@ function ActiveInvitesSection() {
           <IconUserPlus className="size-4 text-muted-foreground" />
           <h3 className="text-sm font-medium">Active invites</h3>
         </div>
-        <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
+        <div className="text-center py-6 px-4 bg-neutral-800 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
             Only <span className="font-medium underline">Admins</span> can view
             active invites.
@@ -433,7 +433,7 @@ function GenerateNewInviteLinkSection() {
 
   if (myRole !== ProjectMemberRole.Admin) {
     return (
-      <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
+      <div className="text-center py-6 px-4 bg-neutral-800 rounded-md border border-dashed">
         <div className="text-sm text-muted-foreground">
           Only <span className="font-medium underline">Admins</span> can
           generate invite links.
@@ -453,7 +453,7 @@ function GenerateNewInviteLinkSection() {
   return (
     <div className="space-y-3">
       <div className="grid gap-2">
-        <div className="p-3 bg-muted/20 rounded-md border border-dashed text-xs text-muted-foreground">
+        <div className="p-3 bg-neutral-800 rounded-md border border-dashed text-xs text-muted-foreground">
           {roleDescriptions[selectedRole]}
         </div>
 
@@ -551,7 +551,7 @@ function SuggestedUserItem({ user }: { user: SuggestedUser }) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-2 rounded-md bg-muted/30">
+    <div className="flex items-center gap-3 p-2 rounded-md bg-neutral-800">
       <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden">
         {user.avatarUrl ? (
           <img
@@ -621,7 +621,7 @@ function SuggestedUsersSection() {
   if (myRole !== ProjectMemberRole.Admin) {
     return (
       <div className="space-y-3">
-        <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
+        <div className="text-center py-6 px-4 bg-neutral-800 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
             Only <span className="font-medium underline">Admins</span> can view
             suggested users.
@@ -643,7 +643,7 @@ function SuggestedUsersSection() {
 
   if (suggestedUsers.length === 0) {
     return (
-      <div className="text-center py-8 px-4 bg-muted/20 rounded-md border border-dashed">
+      <div className="text-center py-8 px-4 bg-neutral-800 rounded-md border border-dashed">
         <div className="text-sm text-muted-foreground">
           No suggested users found. Suggested users are people you've worked
           with in other projects.

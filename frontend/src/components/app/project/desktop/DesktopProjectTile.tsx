@@ -366,8 +366,8 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
               className={cn(
                 "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
                 isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  ? "bg-neutral-800 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-800"
               )}
             >
               <Icon className="size-4" />
@@ -578,8 +578,8 @@ function ProjectHeaderSkeleton({ activeTab, onTabChange }: ProjectHeaderProps) {
               className={cn(
                 "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
                 isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  ? "bg-neutral-800 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-800"
               )}
             >
               <Icon className="size-4" />
@@ -703,9 +703,9 @@ function SearchResultsList({ results, query, onResultClick }: SearchResultsListP
             to="/app/project/$projectId"
             params={{ projectId: project.id }}
             onClick={onResultClick}
-            className="flex items-start gap-3 p-4 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors cursor-pointer group"
+            className="flex items-start gap-3 p-4 rounded-lg border border-border/50 hover:bg-neutral-800 transition-colors cursor-pointer group"
           >
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center flex-shrink-0">
               <FolderOpen className="size-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -713,7 +713,7 @@ function SearchResultsList({ results, query, onResultClick }: SearchResultsListP
                 {project.name}
               </p>
               {matchedInContent && (
-                <p className="text-muted-foreground mt-1 font-mono text-xs bg-muted/50 px-2 py-1 rounded">
+                <p className="text-muted-foreground mt-1 font-mono text-xs bg-neutral-800 px-2 py-1 rounded">
                   {contentSnippet}
                 </p>
               )}

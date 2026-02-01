@@ -20,8 +20,8 @@ export function DesktopProjectsListItem({
       className={cn(
         "group relative flex items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors select-none",
         isActive
-          ? "bg-primary/15 text-primary"
-          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+          ? "bg-neutral-800 text-primary"
+          : "text-muted-foreground hover:bg-neutral-800 hover:text-foreground"
       )}
     >
       <Link

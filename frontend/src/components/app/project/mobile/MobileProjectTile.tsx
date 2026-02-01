@@ -154,40 +154,40 @@ export function MobileProjectTile() {
       />
 
       <div className="flex-1 h-full relative overflow-hidden">
-        {!projectData ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center">
-              <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground/60 border-t-transparent mb-2"></div>
-              <div className="text-sm text-muted-foreground">
-                Loading project...
+            {!projectData ? (
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground/60 border-t-transparent mb-2"></div>
+                  <div className="text-sm text-muted-foreground">
+                    Loading project...
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
         ) : activeTab === "history" ? (
-          <MobileHistoryView />
-        ) : (
-          <div className="h-full">
-            <MobileFileEditor
-              value={inputValue}
-              onChange={(v) => setInputValue(v)}
-              readOnly={isReadOnly}
-            />
-            <AnimatePresence mode="wait">
-              {changedBy && (
-                <motion.div
-                  className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ ease: "easeInOut", duration: 0.1 }}
-                >
+              <MobileHistoryView />
+            ) : (
+              <div className="h-full">
+                <MobileFileEditor
+                  value={inputValue}
+                  onChange={(v) => setInputValue(v)}
+                  readOnly={isReadOnly}
+                />
+                  <AnimatePresence mode="wait">
+                    {changedBy && (
+                      <motion.div
+                        className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ ease: "easeInOut", duration: 0.1 }}
+                      >
                   <span className="rounded-full bg-card/80 backdrop-blur px-3 py-1 text-xs text-muted-foreground shadow-sm border border-border/50">
                     Changed by {changedBy}{" "}
-                    {getRelativeTime(projectData.updatedAt)}
-                  </span>
-                </motion.div>
+                          {getRelativeTime(projectData.updatedAt)}
+                        </span>
+                      </motion.div>
               )}
-            </AnimatePresence>
+                  </AnimatePresence>
           </div>
         )}
       </div>
@@ -328,24 +328,24 @@ function MobileProjectHeader({
                       if (e.key === "Escape") handleCancelEdit();
                     }}
                   />
-                  <Button
+              <Button
                     variant="default"
-                    size="sm"
+                size="sm"
                     onClick={handleSaveDisplayName}
                     isLoading={isSavingDisplayName}
                     className="h-8 w-8 p-0 cursor-pointer"
                   >
                     <Check className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+              </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                     onClick={handleCancelEdit}
                     disabled={isSavingDisplayName}
                     className="h-8 w-8 p-0 cursor-pointer"
                   >
                     <X className="h-3.5 w-3.5" />
-                  </Button>
+                </Button>
                 </div>
               </div>
             ) : (
@@ -378,12 +378,12 @@ function MobileProjectHeader({
           value={activeProject?.id || ""}
           onValueChange={handleSelectChange}
         >
-          <SelectTrigger className="w-full h-9 border-border/50 bg-muted/30">
+          <SelectTrigger className="w-full h-9 border-border/50 bg-neutral-800">
             <div className="flex items-center gap-2">
               <FolderOpen className="w-4 h-4 text-muted-foreground" />
-              <SelectValue placeholder="Select project">
+            <SelectValue placeholder="Select project">
                 {activeProject?.name || "Select project"}
-              </SelectValue>
+            </SelectValue>
             </div>
           </SelectTrigger>
           <SelectContent>
@@ -419,7 +419,7 @@ function MobileProjectHeader({
             className={cn(
               "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
               activeTab === "editor"
-                ? "bg-primary/10 text-primary"
+                ? "bg-neutral-800 text-primary"
                 : "text-muted-foreground"
             )}
           >
@@ -435,7 +435,7 @@ function MobileProjectHeader({
             className={cn(
               "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
               activeTab === "history"
-                ? "bg-primary/10 text-primary"
+                ? "bg-neutral-800 text-primary"
                 : "text-muted-foreground"
             )}
           >
@@ -605,9 +605,9 @@ function MobileSearchResultsList({ results, query, onResultClick }: MobileSearch
             to="/app/project/$projectId"
             params={{ projectId: project.id }}
             onClick={onResultClick}
-            className="flex items-start gap-3 p-3 rounded-lg border border-border/50 active:bg-accent/50 transition-colors"
+            className="flex items-start gap-3 p-3 rounded-lg border border-border/50 active:bg-neutral-800 transition-colors"
           >
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-neutral-800 flex items-center justify-center flex-shrink-0">
               <FolderOpen className="size-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -615,7 +615,7 @@ function MobileSearchResultsList({ results, query, onResultClick }: MobileSearch
                 {project.name}
               </p>
               {matchedInContent && (
-                <p className="text-muted-foreground mt-1 font-mono text-xs bg-muted/50 px-2 py-1 rounded truncate">
+                <p className="text-muted-foreground mt-1 font-mono text-xs bg-neutral-800 px-2 py-1 rounded truncate">
                   {contentSnippet}
                 </p>
               )}

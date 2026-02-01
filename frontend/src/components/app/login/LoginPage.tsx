@@ -24,9 +24,9 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-8">
       {/* Background Waves */}
-      <div className="fixed inset-0 z-0 opacity-[0.08] pointer-events-none">
+      <div className="fixed inset-0 z-0 opacity-[0.12] pointer-events-none">
         <Waves
-          lineColor="rgba(100, 100, 100, 1)"
+          lineColor="rgba(120, 120, 120, 1)"
           backgroundColor="transparent"
           waveSpeedX={0.008}
           waveSpeedY={0.004}
@@ -56,7 +56,7 @@ export function LoginPage() {
                 onClick={handleGoogleLogin}
                 variant="outline"
                 size="lg"
-                className="w-full flex items-center justify-between gap-3 h-12 cursor-pointer group"
+                className="w-full flex items-center justify-between gap-3 h-12 cursor-pointer group bg-neutral-800 hover:bg-neutral-700 border-neutral-700"
               >
                 <div className="flex items-center gap-3">
                   <GoogleIcon />
@@ -71,7 +71,7 @@ export function LoginPage() {
                 onClick={handleGitHubLogin}
                 variant="outline"
                 size="lg"
-                className="w-full flex items-center justify-between gap-3 h-12 cursor-pointer group"
+                className="w-full flex items-center justify-between gap-3 h-12 cursor-pointer group bg-neutral-800 hover:bg-neutral-700 border-neutral-700"
               >
                 <div className="flex items-center gap-3">
                   <GitHubIcon />

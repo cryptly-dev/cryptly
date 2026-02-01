@@ -64,7 +64,7 @@ function RenameProjectSection() {
           <IconEdit className="size-4 text-muted-foreground" />
           <h3 className="text-sm font-medium">Rename project</h3>
         </div>
-        <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
+        <div className="text-center py-6 px-4 bg-neutral-800 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
             Only <span className="font-medium underline">Admins</span> can
             rename projects.
@@ -115,7 +115,7 @@ function RenameProjectSection() {
           </Button>
         </div>
       ) : (
-        <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-md">
+        <div className="flex items-center gap-3 p-3 bg-neutral-800 rounded-md">
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-foreground/90 truncate">
               {projectData?.name}
@@ -211,7 +211,7 @@ function DangerZoneSection() {
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-md">
+        <div className="flex items-center gap-3 p-3 bg-neutral-800 rounded-md">
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-foreground/90">
               {actionText}

@@ -52,7 +52,7 @@ function IntegrationListItem({ integration }: { integration: Integration }) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-md">
+    <div className="flex items-center gap-3 p-3 bg-neutral-800 rounded-md">
       <IconBrandGithub className="size-5 text-foreground/70" />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-foreground/90 truncate">
@@ -97,7 +97,7 @@ function ExistingIntegrationsSection() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-4 px-4 bg-muted/20 rounded-md border border-dashed">
+        <div className="text-center py-4 px-4 bg-neutral-800 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
             No integrations yet
           </div>
@@ -175,7 +175,7 @@ function AddIntegrationSection() {
           <IconPlus className="size-4 text-muted-foreground" />
           <h3 className="text-sm font-medium">New integration</h3>
         </div>
-        <div className="text-center py-6 px-4 bg-muted/20 rounded-md border border-dashed">
+        <div className="text-center py-6 px-4 bg-neutral-800 rounded-md border border-dashed">
           <div className="text-sm text-muted-foreground">
             Only <span className="font-medium underline">Admins</span> can add
             integrations.
@@ -288,7 +288,7 @@ export function IntegrationsTabContent() {
 
       <AddIntegrationSection />
 
-      <div className="text-xs text-muted-foreground bg-muted/20 p-3 rounded-md border border-dashed">
+      <div className="text-xs text-muted-foreground bg-neutral-800 p-3 rounded-md border border-dashed">
         For now, we only support GitHub integrations. If you need any other
         integration,{" "}
         <a
@@ -327,7 +327,7 @@ export function IntegrationsDialog({
 
           <AddIntegrationSection />
 
-          <div className="text-xs text-muted-foreground bg-muted/20 p-3 rounded-md border border-dashed">
+          <div className="text-xs text-muted-foreground bg-neutral-800 p-3 rounded-md border border-dashed">
             For now, we only support GitHub integrations. If you need any other
             integration,{" "}
             <a
