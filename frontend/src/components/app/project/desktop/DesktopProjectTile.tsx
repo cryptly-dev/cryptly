@@ -473,8 +473,8 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
           </div>
         )}
         {activeTab === "editor" && (
-          <div className="flex items-center gap-3">
-            <div className="relative">
+          <div className="flex items-center gap-3 overflow-visible">
+            <div className="relative overflow-visible">
               <TooltipProvider>
                 <Tooltip open={shouldShowSaveTooltip} delayDuration={0}>
                   <TooltipTrigger asChild>
