@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +25,7 @@ import { personalInvitationsLogic } from "@/lib/logics/personalInvitationsLogic"
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
 import { suggestedUsersLogic } from "@/lib/logics/suggestedUsersLogic";
-import { getRelativeTime } from "@/lib/utils";
+import { cn, getRelativeTime } from "@/lib/utils";
 import {
   IconCheck,
   IconCopy,
@@ -187,7 +188,7 @@ function MembersSection() {
         <IconUsers className="size-4 text-muted-foreground" />
         <h3 className="text-sm font-medium">Members</h3>
       </div>
-      <div className="space-y-2 max-h-32 overflow-y-auto">
+      <div className="space-y-2 max-h-[min(50vh,280px)] overflow-y-auto pr-0.5">
         {projectData.members.map((member) => (
           <MemberItem
             key={member.id}
@@ -397,6 +398,8 @@ function ActiveInvitesSection() {
   );
 }
 
+const INVITE_LINK_STEPS = 3;
+
 function GenerateNewInviteLinkSection() {
   const { projectData, userData } = useValues(projectLogic);
   const { createInvitation } = useAsyncActions(invitationsLogic);
@@ -405,6 +408,7 @@ function GenerateNewInviteLinkSection() {
   const [selectedRole, setSelectedRole] = useState<"read" | "write" | "admin">(
     "read"
   );
+  const [wizardStep, setWizardStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   const myRole = useMemo(
@@ -428,6 +432,7 @@ function GenerateNewInviteLinkSection() {
     setIsLoading(true);
     await createInvitation(passphrase, selectedRole);
     setPassphrase("");
+    setWizardStep(0);
     setIsLoading(false);
   };
 
@@ -443,29 +448,135 @@ function GenerateNewInviteLinkSection() {
   }
 
   const roleDescriptions = {
-    read: "Users with this role can view project secrets, the project name, and connected integrations.",
+    read: "Can view secrets, the project name, and connected integrations.",
     write:
-      "Users with this role have all Read permissions, plus the ability to create, modify, and delete secrets.",
+      "Everything Read can do, plus create, edit, and delete secrets.",
     admin:
-      "Users with this role have all Write permissions, plus the ability to manage integrations, rename the project, delete the project, and invite new members.",
+      "Everything Write can do, plus manage integrations, rename or delete the project, and invite members.",
   };
 
-  return (
-    <div className="space-y-3">
-      <div className="grid gap-2">
-        <div className="p-3 bg-neutral-800 rounded-md border border-dashed text-xs text-muted-foreground">
-          {roleDescriptions[selectedRole]}
-        </div>
+  const roleLabel =
+    availableRoles.find((r) => r.value === selectedRole)?.label ?? selectedRole;
 
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+  return (
+    <div className="space-y-4">
+      {wizardStep === 0 && (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Create a single-use link and an invitation code you share with one
+            person. They will need both to join.
+          </p>
+          <Button
+            type="button"
+            className="w-full cursor-pointer"
+            onClick={() => setWizardStep(1)}
+          >
+            Generate invite link
+          </Button>
+        </div>
+      )}
+
+      {wizardStep > 0 && (
+        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>
+            Step {wizardStep} of {INVITE_LINK_STEPS}
+          </span>
+          <div className="flex gap-1" aria-hidden>
+            {Array.from({ length: INVITE_LINK_STEPS }, (_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 w-6 rounded-full transition-colors ${
+                  i + 1 <= wizardStep ? "bg-primary" : "bg-muted"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {wizardStep === 1 && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-foreground">
+            Choose their role
+          </h4>
+          <div
+            role="group"
+            aria-label="Role"
+            className="space-y-2 rounded-md border border-neutral-700 bg-neutral-800/50 p-2"
+          >
+            {availableRoles.map((role) => {
+              const isSelected = selectedRole === role.value;
+              return (
+                <label
+                  key={role.value}
+                  htmlFor={`invite-role-${role.value}`}
+                  className={cn(
+                    "flex cursor-pointer gap-3 rounded-md p-2.5 transition-colors",
+                    isSelected
+                      ? "bg-primary/10 ring-1 ring-primary/40"
+                      : "hover:bg-neutral-800"
+                  )}
+                >
+                  <Checkbox
+                    id={`invite-role-${role.value}`}
+                    checked={isSelected}
+                    onCheckedChange={(checked) => {
+                      if (checked === true) setSelectedRole(role.value);
+                    }}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm font-medium text-foreground shrink-0 min-w-[4.25rem] whitespace-nowrap pt-0.5">
+                    {role.label}
+                  </span>
+                  <span className="text-sm text-muted-foreground leading-snug flex-1 min-w-0">
+                    {roleDescriptions[role.value]}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 cursor-pointer"
+              onClick={() => setWizardStep(0)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="flex-1 cursor-pointer"
+              onClick={() => setWizardStep(2)}
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {wizardStep === 2 && (
+        <div className="space-y-3">
+          <div>
+            <h4 className="text-sm font-medium text-foreground">
+              Create an invitation code
+            </h4>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Invent a code you share with them (separately from the link). They
+              enter it when accepting—one link, one person.
+            </p>
+          </div>
+          <div className="relative">
+            <label htmlFor="passphrase" className="sr-only">
+              Invitation code
+            </label>
             <input
               id="passphrase"
               type={showPassphrase ? "text" : "password"}
               value={passphrase}
               onChange={(e) => setPassphrase(e.target.value)}
               className="w-full rounded-md border px-3 py-2 bg-background text-base sm:text-sm pr-10"
-              placeholder="Enter a secure code"
+              placeholder="e.g. a word or phrase only you two know"
               autoComplete="new-password"
               required
             />
@@ -474,7 +585,7 @@ function GenerateNewInviteLinkSection() {
               onClick={() => setShowPassphrase(!showPassphrase)}
               className="absolute inset-y-0 right-0 flex items-center justify-center h-full px-3 text-muted-foreground hover:text-foreground cursor-pointer"
               aria-label={
-                showPassphrase ? "Hide passphrase" : "Show passphrase"
+                showPassphrase ? "Hide invitation code" : "Show invitation code"
               }
             >
               {showPassphrase ? (
@@ -484,39 +595,87 @@ function GenerateNewInviteLinkSection() {
               )}
             </button>
           </div>
-          <Select
-            value={selectedRole}
-            onValueChange={(value: "read" | "write" | "admin") =>
-              setSelectedRole(value)
-            }
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableRoles.map((role) => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 cursor-pointer"
+              onClick={() => setWizardStep(1)}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              className="flex-1 cursor-pointer"
+              disabled={!passphrase.trim()}
+              onClick={() => setWizardStep(3)}
+            >
+              Continue
+            </Button>
+          </div>
         </div>
+      )}
 
-        <div className="text-xs text-muted-foreground">
-          This code will be required to accept the invitation. Each invite link
-          can only be used by one person.
+      {wizardStep === 3 && (
+        <div className="space-y-3">
+          <div>
+            <h4 className="text-sm font-medium text-foreground">
+              Create the link
+            </h4>
+            <p className="text-xs text-muted-foreground mt-1">
+              We will generate a single-use invite link with these settings.
+            </p>
+          </div>
+          <dl className="rounded-md border bg-muted/40 px-3 py-2.5 space-y-2 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted-foreground">Role</dt>
+              <dd className="font-medium text-foreground">{roleLabel}</dd>
+            </div>
+            <div className="flex justify-between gap-4 items-center">
+              <dt className="text-muted-foreground shrink-0">Invitation code</dt>
+              <dd className="flex items-center gap-1.5 min-w-0">
+                <span className="font-mono text-right truncate">
+                  {showPassphrase
+                    ? passphrase
+                    : "•".repeat(passphrase.length)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowPassphrase(!showPassphrase)}
+                  className="shrink-0 text-muted-foreground hover:text-foreground cursor-pointer p-0.5 rounded"
+                  aria-label={
+                    showPassphrase ? "Hide invitation code" : "Show invitation code"
+                  }
+                >
+                  {showPassphrase ? (
+                    <IconEyeOff className="size-4" />
+                  ) : (
+                    <IconEye className="size-4" />
+                  )}
+                </button>
+              </dd>
+            </div>
+          </dl>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 cursor-pointer"
+              onClick={() => setWizardStep(2)}
+            >
+              Back
+            </Button>
+            <Button
+              onClick={handleGenerateLink}
+              isLoading={isLoading}
+              disabled={!passphrase.trim()}
+              className="flex-1 cursor-pointer"
+            >
+              Generate invite link
+            </Button>
+          </div>
         </div>
-      </div>
-
-      <Button
-        onClick={handleGenerateLink}
-        isLoading={isLoading}
-        disabled={!passphrase.trim()}
-        className="w-full cursor-pointer"
-      >
-        Generate invite link
-      </Button>
+      )}
     </div>
   );
 }
@@ -681,13 +840,13 @@ export function MembersTabContent() {
       <MembersSection />
       <ActiveInvitesSection />
 
-      <div className="space-y-3">
+      <div className="flex flex-col gap-6">
         <div className="flex items-center gap-2">
           <IconUserPlus className="size-4 text-muted-foreground" />
           <h3 className="text-sm font-medium">Invite people</h3>
         </div>
 
-        <Tabs defaultValue="invite-link" className="w-full">
+        <Tabs defaultValue="invite-link" className="w-full flex flex-col gap-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="invite-link">Invite link</TabsTrigger>
             <TabsTrigger value="suggested">Suggested users</TabsTrigger>
@@ -736,13 +895,13 @@ export function ProjectAccessDialog({
           <MembersSection />
           <ActiveInvitesSection />
 
-          <div className="space-y-3">
+          <div className="flex flex-col gap-6">
             <div className="flex items-center gap-2">
               <IconUserPlus className="size-4 text-muted-foreground" />
               <h3 className="text-sm font-medium">Invite people</h3>
             </div>
 
-            <Tabs defaultValue="invite-link" className="w-full">
+            <Tabs defaultValue="invite-link" className="w-full flex flex-col gap-6">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="invite-link">Invite link</TabsTrigger>
                 <TabsTrigger value="suggested">Suggested users</TabsTrigger>
