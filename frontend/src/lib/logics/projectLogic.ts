@@ -11,6 +11,7 @@ import {
 } from "kea";
 
 import { createPatch } from "diff";
+import { toast } from "sonner";
 import { loaders } from "kea-loaders";
 import { subscriptions } from "kea-subscriptions";
 import { IntegrationsApi, type Integration } from "../api/integrations.api";
@@ -342,38 +343,42 @@ export const projectLogic = kea<projectLogicType>([
     },
     updateProjectContent: async () => {
       actions.setIsSubmitting(true);
+      try {
+        const encryptedContent = await SymmetricCrypto.encrypt(
+          values.inputValue,
+          values.projectData?.passphraseAsKey!
+        );
 
-      const encryptedContent = await SymmetricCrypto.encrypt(
-        values.inputValue,
-        values.projectData?.passphraseAsKey!
-      );
+        await ProjectsApi.updateProjectContent(
+          values.jwtToken!,
+          props.projectId,
+          {
+            encryptedSecrets: encryptedContent,
+          }
+        );
+        actions.setIsExternallyUpdated(false);
 
-      await ProjectsApi.updateProjectContent(
-        values.jwtToken!,
-        props.projectId,
-        {
-          encryptedSecrets: encryptedContent,
-        }
-      );
-      actions.setIsExternallyUpdated(false);
-
-      await Promise.all([
-        asyncActions.loadProjectData(),
-        asyncActions.loadProjectVersions(),
-      ]);
-
-      actions.setIsSubmitting(false);
+        await Promise.all([
+          asyncActions.loadProjectData(),
+          asyncActions.loadProjectVersions(),
+        ]);
+      } catch {
+        toast.error("Failed to save", { richColors: true });
+      } finally {
+        actions.setIsSubmitting(false);
+      }
     },
     pushToIntegrations: async () => {
       actions.setIsPushing(true);
-
-      await IntegrationsApi.pushSecrets(
-        values.jwtToken!,
-        values.integrations,
-        values.inputValue
-      );
-
-      actions.setIsPushing(false);
+      try {
+        await IntegrationsApi.pushSecrets(
+          values.jwtToken!,
+          values.integrations,
+          values.inputValue
+        );
+      } finally {
+        actions.setIsPushing(false);
+      }
     },
     computePatches: ({ versions }) => {
       if (versions.length < 2) {
