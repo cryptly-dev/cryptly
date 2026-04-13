@@ -38,7 +38,7 @@ import {
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
 import posthog from "posthog-js";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface ProjectAccessDialogProps {
   open: boolean;
@@ -410,6 +410,15 @@ function GenerateNewInviteLinkSection() {
   );
   const [wizardStep, setWizardStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const passphraseInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (wizardStep !== 2) return;
+    const id = requestAnimationFrame(() => {
+      passphraseInputRef.current?.focus();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [wizardStep]);
 
   const myRole = useMemo(
     () =>
@@ -571,6 +580,7 @@ function GenerateNewInviteLinkSection() {
               Invitation code
             </label>
             <input
+              ref={passphraseInputRef}
               id="passphrase"
               type={showPassphrase ? "text" : "password"}
               value={passphrase}
