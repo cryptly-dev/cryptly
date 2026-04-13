@@ -5,6 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useValues } from "kea";
 import { ArrowRight, Check } from "lucide-react";
 import { motion } from "motion/react";
+import { useEffect } from "react";
 import { ComplianceSection } from "./ComplianceSection";
 import { HowItWorksSection } from "./HowItWorksSection";
 import { WhyCryptlySection } from "./WhyCryptlySection";
@@ -14,6 +15,12 @@ import { ReviewsSection } from "./ReviewsSection";
 export function IndexPage() {
   const navigate = useNavigate();
   const { isLoggedIn } = useValues(authLogic);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate({ to: "/app/project", replace: true });
+    }
+  }, [isLoggedIn, navigate]);
 
   const handleDashboardClick = (e: React.MouseEvent) => {
     e.preventDefault();
