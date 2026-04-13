@@ -1,15 +1,18 @@
 import { advanceBy } from 'jest-date-mock';
 import * as request from 'supertest';
+import { CustomJwtService } from '../../src/auth/custom-jwt/custom-jwt.service';
 import { InvitationTtlService } from '../../src/invitation/ttl/invitation-ttl.service';
 import { createTestApp } from '../utils/bootstrap';
 
 describe('InvitationCoreController (ttl)', () => {
   let bootstrap: Awaited<ReturnType<typeof createTestApp>>;
   let invitationTtlService: InvitationTtlService;
+  let customJwtService: CustomJwtService;
 
   beforeAll(async () => {
     bootstrap = await createTestApp();
     invitationTtlService = bootstrap.app.get(InvitationTtlService);
+    customJwtService = bootstrap.app.get(CustomJwtService);
   });
 
   beforeEach(async () => {
@@ -23,7 +26,7 @@ describe('InvitationCoreController (ttl)', () => {
   describe('Cron job', () => {
     it('automatically removes expired invitations', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
+      const { user, token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'owner@test.com',
       });
       const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
@@ -40,10 +43,11 @@ describe('InvitationCoreController (ttl)', () => {
       // Trigger the cron job manually (we don't want to wait for the actual cron schedule)
       await invitationTtlService.removeExpiredInvitations();
 
-      // Try to get the invitation (should fail as it's been removed)
+      const tokenAfterTimeAdvance = await customJwtService.sign({ id: user.id });
+
       const response = await request(bootstrap.app.getHttpServer())
         .get(`/invitations/${invitation.id}`)
-        .set('authorization', `Bearer ${ownerToken}`);
+        .set('authorization', `Bearer ${tokenAfterTimeAdvance}`);
 
       // then
       expect(response.status).toEqual(404);
@@ -51,7 +55,7 @@ describe('InvitationCoreController (ttl)', () => {
 
     it('does not remove non-expired invitations', async () => {
       // given
-      const { token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
+      const { user, token: ownerToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'owner@test.com',
       });
       const project = await bootstrap.utils.projectUtils.createProject(ownerToken);
@@ -68,10 +72,11 @@ describe('InvitationCoreController (ttl)', () => {
       // Trigger the cron job manually
       await invitationTtlService.removeExpiredInvitations();
 
-      // Try to get the invitation (should succeed as it's not expired)
+      const tokenAfterTimeAdvance = await customJwtService.sign({ id: user.id });
+
       const response = await request(bootstrap.app.getHttpServer())
         .get(`/invitations/${invitation.id}`)
-        .set('authorization', `Bearer ${ownerToken}`);
+        .set('authorization', `Bearer ${tokenAfterTimeAdvance}`);
 
       // then
       expect(response.status).toEqual(200);
