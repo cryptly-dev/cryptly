@@ -63,6 +63,11 @@ export interface Patch {
   content: string;
 }
 
+/** Monaco / OS paste can change CRLF; avoids false "dirty" after save. */
+function normalizeEditorText(text: string) {
+  return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+}
+
 export const projectLogic = kea<projectLogicType>([
   path(["src", "lib", "logics", "projectLogic"]),
 
@@ -252,8 +257,13 @@ export const projectLogic = kea<projectLogicType>([
   selectors(({ values }) => ({
     isEditorDirty: [
       (s) => [s.inputValue, s.projectData, s.projectDataLoading],
-      (inputValue, projectData, projectDataLoading) =>
-        inputValue !== projectData?.content && !projectDataLoading,
+      (inputValue, projectData, projectDataLoading) => {
+        if (projectDataLoading || !projectData) return false;
+        return (
+          normalizeEditorText(inputValue) !==
+          normalizeEditorText(projectData.content)
+        );
+      },
     ],
     lastEditAuthor: [(s) => [s.patches], (patches) => patches[0]?.author],
     currentUserRole: [
@@ -362,8 +372,9 @@ export const projectLogic = kea<projectLogicType>([
           asyncActions.loadProjectData(),
           asyncActions.loadProjectVersions(),
         ]);
-      } catch {
+      } catch (error) {
         toast.error("Failed to save", { richColors: true });
+        throw error;
       } finally {
         actions.setIsSubmitting(false);
       }

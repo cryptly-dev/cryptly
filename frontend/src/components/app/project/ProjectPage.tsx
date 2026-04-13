@@ -1,5 +1,6 @@
 import { DesktopProjectView } from "@/components/app/project/desktop/DesktopProjectView";
 import { MobileProjectView } from "@/components/app/project/mobile/MobileProjectView";
+import { ProjectUnsavedChangesGuard } from "@/components/app/project/ProjectUnsavedChangesGuard";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { authLogic } from "@/lib/logics/authLogic";
 import { integrationsLogic } from "@/lib/logics/integrationsLogic";
@@ -76,5 +77,10 @@ function ProjectPageContent() {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  return isMobile ? <MobileProjectView /> : <DesktopProjectView />;
+  return (
+    <>
+      <ProjectUnsavedChangesGuard />
+      {isMobile ? <MobileProjectView /> : <DesktopProjectView />}
+    </>
+  );
 }
