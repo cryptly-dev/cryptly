@@ -271,7 +271,7 @@ export const integrationsLogic = kea<integrationsLogicType>([
     ],
   }),
 
-  subscriptions(({ actions, values }) => ({
+  subscriptions(({ actions }) => ({
     githubInstallationId: (githubInstallationId) => {
       if (!githubInstallationId) {
         actions.setRepositories([]);

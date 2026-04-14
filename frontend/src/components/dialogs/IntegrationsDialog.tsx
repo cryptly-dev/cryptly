@@ -12,7 +12,6 @@ import { WizardStepper } from "@/components/ui/wizard-stepper";
 import type { Integration } from "@/lib/api/integrations.api";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { useProjects } from "@/lib/hooks/useProjects";
-import { cn } from "@/lib/utils";
 import { commonLogic } from "@/lib/logics/commonLogic";
 import { integrationsLogic } from "@/lib/logics/integrationsLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
@@ -367,7 +366,6 @@ function AddIntegrationWizard({
   const { setShouldReopenIntegrationsDialog } = useActions(commonLogic);
 
   const [step, setStep] = useState<WizardStep>("provider");
-  const [selectedRepository, setSelectedRepository] = useState<string>("");
   const [repoSearch, setRepoSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
