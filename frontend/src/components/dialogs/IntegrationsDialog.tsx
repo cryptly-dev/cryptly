@@ -19,10 +19,12 @@ import { projectLogic } from "@/lib/logics/projectLogic";
 import {
   IconArrowLeft,
   IconArrowNarrowRight,
+  IconBraces,
   IconBrandGithub,
   IconExternalLink,
   IconLink,
   IconMessageCircle,
+  IconPlugConnected,
   IconPlus,
   IconRocket,
   IconTrash,
@@ -675,9 +677,16 @@ export function IntegrationsTabContent() {
 
       <div className="rounded-lg border border-border/50 bg-neutral-800/30 p-4 space-y-3">
         <p className="text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">How integrations work:</span>{" "}
-          Use the push button in the editor to sync your secrets to all
-          connected integrations.
+          Use the push button in{" "}
+          <span className="inline-flex items-center gap-1 align-middle bg-secondary/50 px-1.5 py-0.5 rounded text-[11px] text-foreground font-medium">
+            <IconBraces className="size-3" />
+            Editor
+          </span>{" "}
+          to sync your secrets to all connected{" "}
+          <span className="inline-flex items-center gap-1 align-middle bg-secondary/50 px-1.5 py-0.5 rounded text-[11px] text-foreground font-medium">
+            <IconPlugConnected className="size-3" />
+            Integrations
+          </span>
         </p>
 
         <div className="flex items-center justify-center gap-4">
