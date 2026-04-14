@@ -1,12 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import Waves from "@/components/Waves";
+import { useState } from "react";
 import { LocalLoginForm } from "./LocalLoginForm";
 
 export function LoginPage() {
   const allowLocalLogin = import.meta.env.VITE_ALLOW_LOCAL_LOGIN === "true";
+  const [loadingProvider, setLoadingProvider] = useState<
+    "google" | "github" | null
+  >(null);
 
   const handleGoogleLogin = () => {
+    setLoadingProvider("google");
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     const appUrl = import.meta.env.VITE_APP_URL;
 
@@ -15,6 +20,7 @@ export function LoginPage() {
   };
 
   const handleGitHubLogin = () => {
+    setLoadingProvider("github");
     const githubClientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
     const appUrl = import.meta.env.VITE_APP_URL;
     const githubOAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${appUrl}/app/callbacks/oauth/github&scope=user:email`;
@@ -36,54 +42,66 @@ export function LoginPage() {
         />
       </div>
 
-      {/* Login Form */}
-      <div className="w-full max-w-sm relative z-10">
-        <div className="space-y-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground">
-              Welcome back
-            </h1>
-            <p className="text-muted-foreground text-sm mt-2">
-              Log in to Cryptly
-            </p>
-          </div>
+      {/* Login Card */}
+      <div className="w-full max-w-xs relative z-10">
+        {/* Gradient border wrapper */}
+            <div className="space-y-8">
+              {/* Header */}
+              <div className="text-center space-y-2">
+                <img
+                  src="/favicon.svg"
+                  alt="Cryptly"
+                  className="w-14 h-14 mx-auto mb-2"
+                />
+                <h1 className="text-2xl font-semibold text-foreground tracking-tight">
+                  Welcome back
+                </h1>
+                <p className="text-muted-foreground text-sm">
+                  Sign in to your Cryptly account
+                </p>
+              </div>
 
-          {allowLocalLogin ? (
-            <LocalLoginForm />
-          ) : (
-            <div className="space-y-4">
-              <Button
-                onClick={handleGoogleLogin}
-                variant="outline"
-                size="lg"
-                className="w-full flex items-center justify-between gap-3 h-12 cursor-pointer group bg-neutral-800 hover:bg-neutral-700 border-neutral-700"
-              >
-                <div className="flex items-center gap-3">
-                  <GoogleIcon />
-                  <span>Continue with Google</span>
-                </div>
-                <span className="text-muted-foreground group-hover:translate-x-1 transition-transform">
-                  →
-                </span>
-              </Button>
+              {allowLocalLogin ? (
+                <LocalLoginForm />
+              ) : (
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleGoogleLogin}
+                    variant="outline"
+                    size="lg"
+                    isLoading={loadingProvider === "google"}
+                    disabled={loadingProvider !== null}
+                    className="w-full flex items-center justify-center gap-3 h-12 cursor-pointer rounded-xl bg-neutral-800/80 hover:bg-neutral-700/80 border-neutral-700/60 hover:border-neutral-600 transition-all duration-200"
+                  >
+                    <GoogleIcon />
+                    <span>Continue with Google</span>
+                  </Button>
 
-              <Button
-                onClick={handleGitHubLogin}
-                variant="outline"
-                size="lg"
-                className="w-full flex items-center justify-between gap-3 h-12 cursor-pointer group bg-neutral-800 hover:bg-neutral-700 border-neutral-700"
-              >
-                <div className="flex items-center gap-3">
-                  <GitHubIcon />
-                  <span>Continue with GitHub</span>
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-neutral-700/50" />
+                    <span className="text-xs text-muted-foreground">or</span>
+                    <div className="h-px flex-1 bg-neutral-700/50" />
+                  </div>
+
+                  <Button
+                    onClick={handleGitHubLogin}
+                    variant="outline"
+                    size="lg"
+                    isLoading={loadingProvider === "github"}
+                    disabled={loadingProvider !== null}
+                    className="w-full flex items-center justify-center gap-3 h-12 cursor-pointer rounded-xl bg-neutral-800/80 hover:bg-neutral-700/80 border-neutral-700/60 hover:border-neutral-600 transition-all duration-200"
+                  >
+                    <GitHubIcon />
+                    <span>Continue with GitHub</span>
+                  </Button>
                 </div>
-                <span className="text-muted-foreground group-hover:translate-x-1 transition-transform">
-                  →
-                </span>
-              </Button>
+              )}
             </div>
-          )}
-        </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-muted-foreground/60 mt-6">
+          By continuing, you agree to our Terms of Service
+        </p>
       </div>
     </div>
   );
