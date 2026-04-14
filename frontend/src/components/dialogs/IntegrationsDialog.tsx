@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -7,110 +6,193 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { WizardStepper } from "@/components/ui/wizard-stepper";
 import type { Integration } from "@/lib/api/integrations.api";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { useProjects } from "@/lib/hooks/useProjects";
+import { cn } from "@/lib/utils";
 import { commonLogic } from "@/lib/logics/commonLogic";
 import { integrationsLogic } from "@/lib/logics/integrationsLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import {
+  IconArrowLeft,
   IconBrandGithub,
   IconLink,
+  IconMessageCircle,
   IconPlus,
+  IconRocket,
   IconTrash,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
 import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 
-function repositoryFullName(dto: { name?: string; owner?: string }) {
-  return `${dto.owner}/${dto.name}`;
+// ────────────────────────────────────────────────────────────
+// Integration card (grid item)
+// ────────────────────────────────────────────────────────────
+
+function IntegrationCard({
+  integration,
+  onClick,
+}: {
+  integration: Integration;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
+    >
+      <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center">
+        <IconBrandGithub className="size-5" />
+      </div>
+
+      <div className="text-sm font-medium truncate w-full text-center">
+        {integration.repositoryData?.name ?? "Unknown"}
+      </div>
+
+      <div className="text-xs text-muted-foreground truncate w-full">
+        {integration.repositoryData?.owner}
+      </div>
+    </button>
+  );
 }
 
-interface IntegrationsDialogProps {
+// ────────────────────────────────────────────────────────────
+// Integration detail dialog
+// ────────────────────────────────────────────────────────────
+
+function IntegrationDetailDialog({
+  integration,
+  open,
+  onOpenChange,
+}: {
+  integration: Integration | null;
   open: boolean;
-  onOpenChange?: (open: boolean) => void;
-}
-
-function IntegrationListItem({ integration }: { integration: Integration }) {
-  const [isLoading, setIsLoading] = useState(false);
+  onOpenChange: (open: boolean) => void;
+}) {
   const { removeIntegration } = useActions(integrationsLogic);
   const { currentUserRole } = useValues(projectLogic);
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  if (!integration) return null;
 
   const canDelete = currentUserRole === ProjectMemberRole.Admin;
 
-  const handleRemoveIntegration = () => {
-    setIsLoading(true);
+  const handleRemove = () => {
+    setIsRemoving(true);
     removeIntegration(integration.id);
+    onOpenChange(false);
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-neutral-800 rounded-md">
-      <IconBrandGithub className="size-5 text-foreground/70" />
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-foreground/90 truncate">
-          {repositoryFullName(integration.repositoryData!)}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="sm:max-w-sm"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <IconBrandGithub className="size-7" />
+          </div>
+
+          <DialogTitle>
+            {integration.repositoryData?.owner}/
+            {integration.repositoryData?.name}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Integration details
+          </DialogDescription>
+
+          <div className="text-xs px-3 py-1.5 rounded bg-muted text-muted-foreground">
+            GitHub
+          </div>
+
+          {canDelete && (
+            <Button
+              onClick={handleRemove}
+              isLoading={isRemoving}
+              variant="ghost"
+              className="w-full cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <IconTrash className="size-4 mr-2" />
+              Remove integration
+            </Button>
+          )}
         </div>
-        <div className="text-xs text-muted-foreground">
-          Repository ID: {integration.githubRepositoryId}
-        </div>
-      </div>
-      {canDelete && (
-        <Button
-          onClick={handleRemoveIntegration}
-          variant="ghost"
-          isLoading={isLoading}
-          size="sm"
-          className="cursor-pointer text-destructive hover:text-destructive"
-        >
-          <IconTrash className="size-4" />
-        </Button>
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function ExistingIntegrationsSection() {
+// ────────────────────────────────────────────────────────────
+// Integrations section (grid)
+// ────────────────────────────────────────────────────────────
+
+function IntegrationsSection() {
   const { integrations } = useValues(integrationsLogic);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const selected = selectedId
+    ? integrations.find((i) => i.id === selectedId) ?? null
+    : null;
+
+  if (integrations.length === 0) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
         <IconLink className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Integrations</h3>
+        <h3 className="text-sm font-medium">Connected</h3>
       </div>
-
-      {integrations.length > 0 ? (
-        <div className="space-y-3">
-          {integrations.map((integration) => (
-            <IntegrationListItem
-              key={integration.id}
-              integration={integration}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-4 px-4 bg-neutral-800 rounded-md border border-dashed">
-          <div className="text-sm text-muted-foreground">
-            No integrations yet
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {integrations.map((integration) => (
+          <IntegrationCard
+            key={integration.id}
+            integration={integration}
+            onClick={() => setSelectedId(integration.id)}
+          />
+        ))}
+      </div>
+      <IntegrationDetailDialog
+        integration={selected}
+        open={!!selected}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
+      />
     </div>
   );
 }
 
-function AddIntegrationSection() {
-  const [selectedRepository, setSelectedRepository] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(false);
+// ────────────────────────────────────────────────────────────
+// Add Integration wizard
+// ────────────────────────────────────────────────────────────
 
+type WizardStep = "provider" | "installation" | "repository";
+
+const STEP_NUMBER: Record<WizardStep, number> = {
+  provider: 1,
+  installation: 2,
+  repository: 3,
+};
+
+const STEP_TITLE: Record<WizardStep, string> = {
+  provider: "Add integration",
+  installation: "Choose installation",
+  repository: "Choose repository",
+};
+
+function AddIntegrationWizard({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const { activeProject } = useProjects();
   const {
     installations,
@@ -121,13 +203,29 @@ function AddIntegrationSection() {
   const { createIntegration } = useAsyncActions(integrationsLogic);
   const { setSelectedInstallationEntityId } = useActions(integrationsLogic);
   const { setShouldReopenIntegrationsDialog } = useActions(commonLogic);
-  const { currentUserRole } = useValues(projectLogic);
 
-  const canAddIntegration = currentUserRole === ProjectMemberRole.Admin;
+  const [step, setStep] = useState<WizardStep>("provider");
+  const [selectedRepository, setSelectedRepository] = useState<string>("");
+  const [repoSearch, setRepoSearch] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset repository selection when installation changes
+  // Reset on close
+  useEffect(() => {
+    if (!open) {
+      const timeout = setTimeout(() => {
+        setStep("provider");
+        setSelectedRepository("");
+        setRepoSearch("");
+        setIsSubmitting(false);
+      }, 200);
+      return () => clearTimeout(timeout);
+    }
+  }, [open]);
+
+  // Reset repository when installation changes
   useEffect(() => {
     setSelectedRepository("");
+    setRepoSearch("");
   }, [selectedInstallationEntityId]);
 
   const handleInstallApp = () => {
@@ -135,212 +233,338 @@ function AddIntegrationSection() {
     window.location.href = `https://github.com/apps/cryptly-dev/installations/new?state="projectId=${activeProject?.id}"`;
   };
 
-  const handleInstallationSelectChange = (value: string) => {
+  const handleInstallationSelect = (value: string) => {
     if (value === "add-installation") {
       handleInstallApp();
     } else {
       setSelectedInstallationEntityId(value);
+      setStep("repository");
     }
   };
 
-  const handleConnectRepository = async () => {
-    if (!selectedRepository || !selectedInstallationEntityId) return;
+  const handleConnectRepo = async (repoFullName: string) => {
+    if (!selectedInstallationEntityId) return;
 
     const repository = repositories.find(
-      (repo) => `${repo.owner}/${repo.name}` === selectedRepository
+      (repo) => `${repo.owner}/${repo.name}` === repoFullName
     );
-
     if (!repository) return;
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     await createIntegration(
       Number(repository.id),
       Number(selectedInstallationEntityId)
     );
-    setIsLoading(false);
-    setSelectedRepository("");
+    setIsSubmitting(false);
 
-    posthog.capture("integration_created", {
-      type: "github",
-    });
+    posthog.capture("integration_created", { type: "github" });
+    onOpenChange(false);
   };
 
-  const isRepositoryDisabled =
-    !selectedInstallationEntityId || repositoriesLoading;
+  const goBack = () => {
+    if (step === "installation") setStep("provider");
+    else if (step === "repository") setStep("installation");
+  };
 
-  if (!canAddIntegration) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <IconPlus className="size-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium">New integration</h3>
-        </div>
-        <div className="text-center py-6 px-4 bg-neutral-800 rounded-md border border-dashed">
-          <div className="text-sm text-muted-foreground">
-            Only <span className="font-medium underline">Admins</span> can add
-            integrations.
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const showBack = step !== "provider";
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <IconPlus className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">New integration</h3>
-      </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="sm:max-w-md"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        {/* Back arrow */}
+        {showBack && (
+          <button
+            type="button"
+            onClick={goBack}
+            className="absolute top-4 left-4 p-1 rounded-sm opacity-70 hover:opacity-100 transition-opacity cursor-pointer z-10"
+          >
+            <IconArrowLeft className="size-4" />
+          </button>
+        )}
 
-      {/* Provider and Installation selectors on the same line */}
-      <div className="flex gap-2">
-        <Select value="github" disabled>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue>
-              <div className="flex items-center gap-2">
-                <IconBrandGithub className="size-4" />
-                <span>GitHub</span>
-              </div>
-            </SelectValue>
-          </SelectTrigger>
-        </Select>
+        {/* Header */}
+        <div className="flex flex-col items-center gap-3 pt-1">
+          <DialogTitle className="text-center">
+            {STEP_TITLE[step]}
+          </DialogTitle>
+          <WizardStepper
+            currentStep={STEP_NUMBER[step]}
+            totalSteps={3}
+          />
+          <DialogDescription className="sr-only">
+            Step {STEP_NUMBER[step]} of 3
+          </DialogDescription>
+        </div>
 
-        <Select
-          value={selectedInstallationEntityId ?? undefined}
-          onValueChange={handleInstallationSelectChange}
-        >
-          <SelectTrigger className="flex-1">
-            <SelectValue placeholder="Choose installation" />
-          </SelectTrigger>
-          <SelectContent>
-            {installations.map((installation) => (
-              <SelectItem key={installation.id} value={installation.id}>
-                <div className="flex items-center gap-2">
-                  {installation.liveData?.avatar && (
-                    <img
-                      src={installation.liveData.avatar}
-                      alt={`${installation.liveData.owner} avatar`}
-                      className="size-5 rounded-full"
-                    />
-                  )}
-                  <span className="truncate">
-                    {installation.liveData?.owner ||
-                      `Installation ${installation.githubInstallationId}`}
-                  </span>
-                </div>
-              </SelectItem>
-            ))}
-            <SelectItem
-              value="add-installation"
-              className="text-muted-foreground cursor-pointer"
+        {/* Step 1: Provider */}
+        {step === "provider" && (
+          <div className="grid grid-cols-3 gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setStep("installation")}
+              className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
             >
-              <div className="flex items-center gap-2">
-                <IconPlus className="size-4" />
-                <span>Add new installation</span>
+              <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <IconBrandGithub className="size-5 text-primary" />
               </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
+              <div className="text-sm font-medium">GitHub</div>
+            </button>
+
+            <button
+              type="button"
+              disabled
+              className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/30 opacity-50 cursor-not-allowed text-center relative"
+            >
+              <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <IconRocket className="size-5 text-primary" />
+              </div>
+              <div className="text-sm font-medium">Vercel</div>
+              <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                Soon
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                window.open(
+                  "https://github.com/cryptly-dev/cryptly/issues",
+                  "_blank"
+                )
+              }
+              className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
+            >
+              <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <IconMessageCircle className="size-5 text-primary" />
+              </div>
+              <div className="text-sm font-medium">Other?</div>
+            </button>
+          </div>
+        )}
+
+        {/* Step 2: Installation */}
+        {step === "installation" && (
+          <div className="space-y-2 pt-2">
+            {installations.length === 0 ? (
+              <div className="text-center py-8 space-y-3">
+                <div className="text-sm text-muted-foreground">
+                  No GitHub installations found.
+                </div>
+                <Button
+                  onClick={handleInstallApp}
+                  className="cursor-pointer"
+                >
+                  <IconPlus className="size-4 mr-2" />
+                  Install GitHub App
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {installations.map((installation) => (
+                    <button
+                      key={installation.id}
+                      type="button"
+                      onClick={() => handleInstallationSelect(installation.id)}
+                      className="flex items-center gap-3 p-3 rounded-lg w-full text-left border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer"
+                    >
+                      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden">
+                        {installation.liveData?.avatar ? (
+                          <img
+                            src={installation.liveData.avatar}
+                            alt={installation.liveData.owner}
+                            className="size-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <IconBrandGithub className="size-4" />
+                        )}
+                      </div>
+                      <div className="text-sm font-medium">
+                        {installation.liveData?.owner ??
+                          `Installation ${installation.githubInstallationId}`}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleInstallApp}
+                  className="flex items-center gap-3 p-3 rounded-lg w-full text-left border border-dashed border-border/50 bg-neutral-800/30 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-muted-foreground"
+                >
+                  <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <IconPlus className="size-4 text-primary" />
+                  </div>
+                  <div className="text-sm font-medium">
+                    Add new installation
+                  </div>
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Step 3: Repository */}
+        {step === "repository" && (
+          <div className="space-y-2 pt-2 min-w-0">
+            {repositoriesLoading ? (
+              <div className="flex flex-col items-center justify-center py-8 gap-3">
+                <Spinner className="size-5 text-muted-foreground" />
+                <div className="text-sm text-muted-foreground">
+                  Loading repositories...
+                </div>
+              </div>
+            ) : (
+              <>
+                <Input
+                  placeholder="Search repositories..."
+                  value={repoSearch}
+                  onChange={(e) => setRepoSearch(e.target.value)}
+                  autoFocus
+                />
+                <div className="space-y-1 max-h-64 overflow-y-auto">
+                  {repositories
+                    .filter((repo) =>
+                      `${repo.owner}/${repo.name}`
+                        .toLowerCase()
+                        .includes(repoSearch.toLowerCase())
+                    )
+                    .map((repo) => {
+                      const fullName = `${repo.owner}/${repo.name}`;
+                      return (
+                        <button
+                          key={repo.id}
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => handleConnectRepo(fullName)}
+                          className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg w-full min-w-0 text-left border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden shrink-0">
+                            {repo.avatarUrl ? (
+                              <img
+                                src={repo.avatarUrl}
+                                alt={repo.owner}
+                                className="size-6 rounded-full object-cover"
+                              />
+                            ) : (
+                              <IconBrandGithub className="size-3.5" />
+                            )}
+                          </div>
+                          <div className="text-sm font-medium truncate">
+                            {fullName}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  {repositories.filter((repo) =>
+                    `${repo.owner}/${repo.name}`
+                      .toLowerCase()
+                      .includes(repoSearch.toLowerCase())
+                  ).length === 0 && (
+                    <div className="text-center py-4 text-sm text-muted-foreground">
+                      No repositories found.
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// IntegrationsTabContent (desktop tab)
+// ────────────────────────────────────────────────────────────
+
+export function IntegrationsTabContent() {
+  const { projectData } = useValues(projectLogic);
+  const { currentUserRole } = useValues(projectLogic);
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  return (
+    <div className="w-full max-w-xl space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold mb-1">Integrations</h2>
+          <p className="text-sm text-muted-foreground">
+            Connect external services to{" "}
+            <span className="font-medium text-foreground">
+              {projectData?.name}
+            </span>
+          </p>
+        </div>
+
+        {currentUserRole === ProjectMemberRole.Admin && (
+          <Button
+            onClick={() => setWizardOpen(true)}
+            className="cursor-pointer shrink-0"
+          >
+            <IconPlus className="size-4 mr-2" />
+            Add integration
+          </Button>
+        )}
       </div>
 
-      {/* Repository selector and connect button on the same line */}
-      <div className="flex gap-2">
-        <Combobox
-          options={repositories.map((repo) => ({
-            value: `${repo.owner}/${repo.name}`,
-            label: `${repo.owner}/${repo.name}`,
-            avatarUrl: repo.avatarUrl,
-          }))}
-          value={selectedRepository}
-          onValueChange={setSelectedRepository}
-          placeholder={repositoriesLoading ? "Loading..." : "Choose repository"}
-          searchPlaceholder="Search repositories..."
-          emptyMessage="No repositories found."
-          className="flex-1"
-          disabled={isRepositoryDisabled}
-        />
+      <IntegrationsSection />
 
-        <Button
-          onClick={handleConnectRepository}
-          disabled={!selectedRepository || isRepositoryDisabled}
-          isLoading={isLoading}
-          className="cursor-pointer"
-        >
-          Connect
-        </Button>
-      </div>
+      <AddIntegrationWizard open={wizardOpen} onOpenChange={setWizardOpen} />
     </div>
   );
 }
 
-export function IntegrationsTabContent() {
-  return (
-    <div className="w-full max-w-xl space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold mb-1">Integrations</h2>
-        <p className="text-sm text-muted-foreground">
-          Connect external services to sync and manage your project secrets
-          across platforms.
-        </p>
-      </div>
+// ────────────────────────────────────────────────────────────
+// IntegrationsDialog (mobile)
+// ────────────────────────────────────────────────────────────
 
-      <ExistingIntegrationsSection />
-
-      <AddIntegrationSection />
-
-      <div className="text-xs text-muted-foreground bg-neutral-800 p-3 rounded-md border border-dashed">
-        For now, we only support GitHub integrations. If you need any other
-        integration,{" "}
-        <a
-          href="https://github.com/cryptly-dev/cryptly/issues"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-        >
-          let us know
-        </a>
-        .
-      </div>
-    </div>
-  );
+interface IntegrationsDialogProps {
+  open: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function IntegrationsDialog({
   open,
   onOpenChange,
 }: IntegrationsDialogProps) {
+  const { projectData } = useValues(projectLogic);
+  const { currentUserRole } = useValues(projectLogic);
+  const [wizardOpen, setWizardOpen] = useState(false);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <div className="grid gap-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              Integrations
-            </DialogTitle>
+            <DialogTitle>Integrations</DialogTitle>
             <DialogDescription>
-              Connect external services to sync and manage your project secrets
-              across platforms.
+              Connect external services to{" "}
+              <span className="font-medium text-foreground">
+                {projectData?.name}
+              </span>
             </DialogDescription>
           </DialogHeader>
 
-          <ExistingIntegrationsSection />
+          <IntegrationsSection />
 
-          <AddIntegrationSection />
-
-          <div className="text-xs text-muted-foreground bg-neutral-800 p-3 rounded-md border border-dashed">
-            For now, we only support GitHub integrations. If you need any other
-            integration,{" "}
-            <a
-              href="https://github.com/cryptly-dev/cryptly/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
+          {currentUserRole === ProjectMemberRole.Admin && (
+            <Button
+              onClick={() => setWizardOpen(true)}
+              className="w-full cursor-pointer"
             >
-              let us know
-            </a>
-            .
-          </div>
+              <IconPlus className="size-4 mr-2" />
+              Add integration
+            </Button>
+          )}
         </div>
+
+        <AddIntegrationWizard
+          open={wizardOpen}
+          onOpenChange={setWizardOpen}
+        />
       </DialogContent>
     </Dialog>
   );

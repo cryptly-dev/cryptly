@@ -43,9 +43,9 @@ import {
   IconUserPlus,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
-import { motion } from "motion/react";
 import posthog from "posthog-js";
 import { useEffect, useMemo, useState } from "react";
+import { WizardStepper } from "@/components/ui/wizard-stepper";
 
 // ────────────────────────────────────────────────────────────
 // Helpers
@@ -479,39 +479,6 @@ function ActiveInvitesSection() {
           />
         ))}
       </div>
-    </div>
-  );
-}
-
-// ────────────────────────────────────────────────────────────
-// Wizard stepper pills
-// ────────────────────────────────────────────────────────────
-
-function WizardStepper({
-  currentStep,
-  totalSteps,
-}: {
-  currentStep: number;
-  totalSteps: number;
-}) {
-  return (
-    <div className="flex items-center justify-center gap-1.5">
-      {Array.from({ length: totalSteps }, (_, i) => {
-        const isActive = i + 1 === currentStep;
-        return (
-          <motion.div
-            key={i}
-            className="h-1.5 rounded-full"
-            animate={{
-              width: isActive ? 24 : 8,
-              backgroundColor: isActive
-                ? "rgba(255,255,255,0.9)"
-                : "rgba(255,255,255,0.2)",
-            }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          />
-        );
-      })}
     </div>
   );
 }
