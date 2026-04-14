@@ -7,13 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -85,56 +78,25 @@ const ROLE_META: Record<
 };
 
 // ────────────────────────────────────────────────────────────
-// Member card (vertical)
+// Member card (vertical, clickable)
 // ────────────────────────────────────────────────────────────
 
 function MemberCard({
   member,
-  projectId,
+  onClick,
 }: {
   member: ProjectMember;
-  projectId: string;
+  onClick: () => void;
 }) {
-  const { updateMemberRoleLoading } = useValues(projectSettingsLogic);
-  const { updateMemberRole, removeMember } =
-    useAsyncActions(projectSettingsLogic);
-  const [deleteIsLoading, setDeleteIsLoading] = useState(false);
   const { userData } = useValues(authLogic);
-  const { currentUserRole } = useValues(projectLogic);
-
-  const canEditRole =
-    member.id !== userData?.id &&
-    currentUserRole === ProjectMemberRole.Admin;
-
-  const canRemove =
-    member.id !== userData?.id &&
-    currentUserRole === ProjectMemberRole.Admin;
-
-  const handleRoleChange = async (newRole: ProjectMemberRole) => {
-    if (newRole === member.role) return;
-    await updateMemberRole({ projectId, memberId: member.id, role: newRole });
-  };
-
-  const handleRemove = async () => {
-    setDeleteIsLoading(true);
-    await removeMember({ projectId, memberId: member.id });
-  };
+  const roleMeta = ROLE_META[member.role];
 
   return (
-    <div className="group relative flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50">
-      {canRemove && (
-        <Button
-          isLoading={deleteIsLoading}
-          onClick={handleRemove}
-          variant="ghost"
-          size="sm"
-          className="size-6 p-0 text-destructive hover:text-destructive cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2"
-          aria-label={`Remove ${member.displayName}`}
-        >
-          <IconTrash className="size-3.5" />
-        </Button>
-      )}
-
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
+    >
       <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium overflow-hidden">
         {member.avatarUrl ? (
           <img
@@ -153,29 +115,134 @@ function MemberCard({
         {member.id === userData?.id ? "You" : member.displayName}
       </div>
 
-      {canEditRole ? (
-        <Select
-          value={member.role}
-          onValueChange={(v: ProjectMemberRole) => handleRoleChange(v)}
-          disabled={updateMemberRoleLoading}
-        >
-          <SelectTrigger className="w-24 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(ROLE_META).map(([value, meta]) => (
-              <SelectItem key={value} value={value}>
-                {meta.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : (
-        <div className="text-xs px-2 py-1 rounded capitalize bg-muted text-muted-foreground">
-          {member.role}
+      <div className="text-xs px-2 py-1 rounded capitalize bg-muted text-muted-foreground">
+        {roleMeta?.label ?? member.role}
+      </div>
+    </button>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// Member detail dialog
+// ────────────────────────────────────────────────────────────
+
+function MemberDetailDialog({
+  member,
+  projectId,
+  open,
+  onOpenChange,
+}: {
+  member: ProjectMember | null;
+  projectId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { updateMemberRole, removeMember } =
+    useAsyncActions(projectSettingsLogic);
+  const { userData } = useValues(authLogic);
+  const { currentUserRole } = useValues(projectLogic);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  if (!member) return null;
+
+  const canEdit =
+    member.id !== userData?.id &&
+    currentUserRole === ProjectMemberRole.Admin;
+
+  const handleRoleChange = async (newRole: ProjectMemberRole) => {
+    if (newRole === member.role) return;
+    setIsUpdating(true);
+    await updateMemberRole({ projectId, memberId: member.id, role: newRole });
+    setIsUpdating(false);
+  };
+
+  const handleRemove = async () => {
+    setIsRemoving(true);
+    await removeMember({ projectId, memberId: member.id });
+    setIsRemoving(false);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium overflow-hidden">
+            {member.avatarUrl ? (
+              <img
+                src={member.avatarUrl}
+                alt={member.displayName}
+                className="size-16 rounded-full object-cover"
+              />
+            ) : (
+              <span className="text-2xl">
+                {member.displayName.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          <DialogTitle>{member.id === userData?.id ? "You" : member.displayName}</DialogTitle>
+          <DialogDescription className="sr-only">Member details</DialogDescription>
+
+          {canEdit ? (
+            <div className="w-full space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Role</label>
+                <TooltipProvider skipDelayDuration={300}>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.entries(ROLE_META).map(([value, meta]) => {
+                      const Icon = meta.icon;
+                      const isSelected = member.role === value;
+
+                      return (
+                        <Tooltip key={value} delayDuration={400}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              disabled={isUpdating}
+                              onClick={() => handleRoleChange(value as ProjectMemberRole)}
+                              className={cn(
+                                "flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed",
+                                isSelected
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30"
+                              )}
+                            >
+                              <Icon className="size-4 text-primary" />
+                              <div className="text-xs font-medium">
+                                {meta.label}
+                              </div>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-48 text-center">
+                            {meta.description}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
+              </div>
+
+              <Button
+                onClick={handleRemove}
+                isLoading={isRemoving}
+                variant="ghost"
+                className="w-full cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <IconTrash className="size-4 mr-2" />
+                Remove from project
+              </Button>
+            </div>
+          ) : (
+            <div className="text-xs px-3 py-1.5 rounded capitalize bg-muted text-muted-foreground">
+              {ROLE_META[member.role]?.label ?? member.role}
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -185,7 +252,13 @@ function MemberCard({
 
 function MembersSection() {
   const { projectData } = useValues(projectLogic);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
   if (!projectData) return null;
+
+  const selectedMember = selectedMemberId
+    ? projectData.members.find((m) => m.id === selectedMemberId) ?? null
+    : null;
 
   return (
     <div className="space-y-3">
@@ -198,10 +271,16 @@ function MembersSection() {
           <MemberCard
             key={member.id}
             member={member}
-            projectId={projectData.id}
+            onClick={() => setSelectedMemberId(member.id)}
           />
         ))}
       </div>
+      <MemberDetailDialog
+        member={selectedMember}
+        projectId={projectData.id}
+        open={!!selectedMember}
+        onOpenChange={(open) => { if (!open) setSelectedMemberId(null); }}
+      />
     </div>
   );
 }
