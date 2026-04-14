@@ -43,6 +43,9 @@ export const invitationsLogic = kea<invitationsLogicType>([
     }),
     setInvitations: (invitations: Invitation[]) => ({ invitations }),
     deleteInvitation: (invitationId: string) => ({ invitationId }),
+    setLastCreatedInvitation: (invitation: Invitation | null) => ({
+      invitation,
+    }),
   }),
 
   reducers({
@@ -50,6 +53,12 @@ export const invitationsLogic = kea<invitationsLogicType>([
       [] as Invitation[],
       {
         setInvitations: (_, { invitations }) => invitations,
+      },
+    ],
+    lastCreatedInvitation: [
+      null as Invitation | null,
+      {
+        setLastCreatedInvitation: (_, { invitation }) => invitation,
       },
     ],
   }),
@@ -85,14 +94,18 @@ export const invitationsLogic = kea<invitationsLogicType>([
         keyPair.publicKey
       );
 
-      await InvitationsApi.createInvitation(values.jwtToken!, {
-        projectId: props.projectId,
-        temporaryPublicKey: keyPair.publicKey,
-        temporaryPrivateKey: encryptedPrivateKey,
-        temporarySecretsKey: serverKeyEncrypted,
-        role: role,
-      });
+      const invitation = await InvitationsApi.createInvitation(
+        values.jwtToken!,
+        {
+          projectId: props.projectId,
+          temporaryPublicKey: keyPair.publicKey,
+          temporaryPrivateKey: encryptedPrivateKey,
+          temporarySecretsKey: serverKeyEncrypted,
+          role: role,
+        }
+      );
 
+      actions.setLastCreatedInvitation(invitation);
       actions.loadInvitations();
     },
     deleteInvitation: async ({ invitationId }) => {

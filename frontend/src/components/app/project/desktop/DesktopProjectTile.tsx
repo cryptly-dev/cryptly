@@ -298,23 +298,25 @@ export function DesktopProjectTile() {
         )}
 
         {activeTab === "history" && (
-          <DesktopHistoryView />
+          <div className="h-full bg-background">
+            <DesktopHistoryView />
+          </div>
         )}
 
         {activeTab === "members" && (
-          <div className="h-full overflow-y-auto p-6 flex justify-center">
+          <div className="h-full overflow-y-auto p-6 flex justify-center bg-background">
             <MembersTabContent />
           </div>
         )}
 
         {activeTab === "settings" && (
-          <div className="h-full overflow-y-auto p-6 flex justify-center">
+          <div className="h-full overflow-y-auto p-6 flex justify-center bg-background">
             <SettingsTabContent />
           </div>
         )}
 
         {activeTab === "integrations" && (
-          <div className="h-full overflow-y-auto p-6 flex justify-center">
+          <div className="h-full overflow-y-auto p-6 flex justify-center bg-background">
             <IntegrationsTabContent />
           </div>
         )}
