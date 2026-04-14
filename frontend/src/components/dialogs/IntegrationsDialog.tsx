@@ -27,6 +27,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
+import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 
@@ -45,7 +46,7 @@ function IntegrationCard({
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
+      className="w-full flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50 hover:bg-neutral-800 hover:border-primary/30 transition-colors cursor-pointer text-center"
     >
       <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
         {integration.repositoryData?.avatarUrl ? (
@@ -156,27 +157,32 @@ function IntegrationDetailDialog({
 }
 
 // ────────────────────────────────────────────────────────────
-// Integrations section (grid, always visible)
+// Animation helpers
 // ────────────────────────────────────────────────────────────
 
-function CardRowPlaceholder({ children }: { children?: React.ReactNode }) {
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+function SectionHeader({
+  icon: Icon,
+  label,
+  loading,
+}: {
+  icon: typeof IconLink;
+  label: string;
+  loading: boolean;
+}) {
   return (
-    <div className="relative">
-      {/* Invisible card sets the exact row height */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 invisible" aria-hidden>
-        <div className="flex flex-col items-center gap-2 p-4 rounded-lg border">
-          <div className="size-12 rounded-full" />
-          <div className="h-5 w-20" />
-          <div className="h-4 w-14" />
-        </div>
-      </div>
-      {/* Overlay content */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        {children}
-      </div>
+    <div className="flex items-center gap-2">
+      <Icon className="size-4 text-muted-foreground" />
+      <h3 className="text-sm font-medium">{label}</h3>
+      {loading && <Spinner className="size-3.5 text-muted-foreground" />}
     </div>
   );
 }
+
+// ────────────────────────────────────────────────────────────
+// Integrations section (grid, always visible)
+// ────────────────────────────────────────────────────────────
 
 function IntegrationsSection() {
   const { integrations, integrationsLoading } = useValues(integrationsLogic);
@@ -188,29 +194,45 @@ function IntegrationsSection() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <IconLink className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Connected</h3>
+      <SectionHeader
+        icon={IconLink}
+        label="Connected"
+        loading={integrationsLoading && integrations.length === 0}
+      />
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <AnimatePresence mode="popLayout">
+          {integrations.length > 0 ? (
+            integrations.map((integration, i) => (
+              <motion.div
+                key={integration.id}
+                layoutId={`repo-${integration.githubRepositoryId}`}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.3, ease: EASE_OUT, delay: i * 0.06 }}
+              >
+                <IntegrationCard
+                  integration={integration}
+                  onClick={() => setSelectedId(integration.id)}
+                />
+              </motion.div>
+            ))
+          ) : !integrationsLoading ? (
+            <motion.div
+              key="empty"
+              className="col-span-full flex items-center justify-center py-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: EASE_OUT }}
+            >
+              <span className="text-sm text-muted-foreground">
+                No integrations connected yet
+              </span>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
-      {integrationsLoading && integrations.length === 0 ? (
-        <CardRowPlaceholder>
-          <Spinner className="size-5 text-muted-foreground" />
-        </CardRowPlaceholder>
-      ) : integrations.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {integrations.map((integration) => (
-            <IntegrationCard
-              key={integration.id}
-              integration={integration}
-              onClick={() => setSelectedId(integration.id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <CardRowPlaceholder>
-          <span className="text-sm text-muted-foreground">No integrations connected yet</span>
-        </CardRowPlaceholder>
-      )}
       <IntegrationDetailDialog
         integration={selected}
         open={!!selected}
@@ -227,7 +249,7 @@ function IntegrationsSection() {
 // ────────────────────────────────────────────────────────────
 
 function SuggestedIntegrationSection() {
-  const { suggestedIntegrations, allRepositoriesLoading, integrations } =
+  const { suggestedIntegrations, allRepositoriesLoading } =
     useValues(integrationsLogic);
   const { createIntegration } = useAsyncActions(integrationsLogic);
   const [connectingId, setConnectingId] = useState<number | null>(null);
@@ -242,51 +264,66 @@ function SuggestedIntegrationSection() {
     });
   };
 
-  const isLoading = allRepositoriesLoading;
-
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <IconBrandGithub className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Suggested</h3>
-      </div>
-      {isLoading ? (
-        <CardRowPlaceholder>
-          <Spinner className="size-5 text-muted-foreground" />
-        </CardRowPlaceholder>
-      ) : suggestedIntegrations.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {suggestedIntegrations.map(({ repo }) => (
-            <button
+      <SectionHeader
+        icon={IconBrandGithub}
+        label="Suggested"
+        loading={allRepositoriesLoading}
+      />
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <AnimatePresence mode="popLayout">
+          {suggestedIntegrations.map(({ repo }, i) => (
+            <motion.div
               key={repo.id}
-              type="button"
-              disabled={connectingId !== null}
-              onClick={() => handleConnect(repo)}
-              className="flex flex-col items-center gap-2 p-4 rounded-lg border border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
+              layoutId={`repo-${repo.id}`}
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.3, ease: EASE_OUT, delay: i * 0.06 }}
             >
-              <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                {repo.avatarUrl ? (
-                  <img
-                    src={repo.avatarUrl}
-                    alt={repo.owner}
-                    className="size-12 rounded-full object-cover"
-                  />
-                ) : (
-                  <IconBrandGithub className="size-5" />
-                )}
-              </div>
-              <div className="text-sm font-medium truncate w-full text-center">
-                {repo.name}
-              </div>
-              <div className="text-xs text-muted-foreground truncate w-full">
-                {repo.owner}
-              </div>
-            </button>
+              <button
+                type="button"
+                disabled={connectingId !== null}
+                onClick={() => handleConnect(repo)}
+                className="w-full flex flex-col items-center gap-2 p-4 rounded-lg border border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {repo.avatarUrl ? (
+                    <img
+                      src={repo.avatarUrl}
+                      alt={repo.owner}
+                      className="size-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <IconBrandGithub className="size-5" />
+                  )}
+                </div>
+                <div className="text-sm font-medium truncate w-full text-center">
+                  {repo.name}
+                </div>
+                <div className="text-xs text-muted-foreground truncate w-full">
+                  {repo.owner}
+                </div>
+              </button>
+            </motion.div>
           ))}
-        </div>
-      ) : (
-        <CardRowPlaceholder />
-      )}
+          {!allRepositoriesLoading && suggestedIntegrations.length === 0 && (
+            <motion.div
+              key="no-suggestions"
+              className="col-span-full flex items-center justify-center py-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: EASE_OUT }}
+            >
+              <span className="text-sm text-muted-foreground">
+                No suggestions found
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
