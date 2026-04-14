@@ -1,7 +1,7 @@
 import AddProjectDialog from "@/components/dialogs/AddProjectDialog";
-import { IntegrationsDialog } from "@/components/dialogs/IntegrationsDialog";
-import { ProjectAccessDialog } from "@/components/dialogs/ProjectAccessDialog";
-import { ProjectSettingsDialog } from "@/components/dialogs/ProjectSettingsDialog";
+import { IntegrationsTabContent } from "@/components/dialogs/IntegrationsDialog";
+import { MembersTabContent } from "@/components/dialogs/ProjectAccessDialog";
+import { SettingsTabContent } from "@/components/dialogs/ProjectSettingsDialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -40,7 +40,6 @@ import {
   Check,
   FolderOpen,
   LogOut,
-  Menu,
   Pencil,
   Plus,
   Search,
@@ -55,7 +54,15 @@ import { SavePushButtonGroup } from "../SavePushButtonGroup";
 import { MobileFileEditor } from "./MobileFileEditor";
 import { MobileHistoryView } from "./MobileHistoryView";
 
-type MobileTabType = "editor" | "history";
+type MobileTabType = "editor" | "history" | "members" | "integrations" | "settings";
+
+const MOBILE_TABS: { id: MobileTabType; label: string; icon: typeof IconBraces }[] = [
+  { id: "editor", label: "Editor", icon: IconBraces },
+  { id: "history", label: "History", icon: IconHistory },
+  { id: "members", label: "Members", icon: IconUsers },
+  { id: "integrations", label: "Integrations", icon: IconPlugConnected },
+  { id: "settings", label: "Settings", icon: IconSettings },
+];
 
 export function MobileProjectTile() {
   const {
@@ -148,7 +155,6 @@ export function MobileProjectTile() {
         projects={projects || []}
         activeProject={activeProject}
         onProjectChange={handleProjectChange}
-        projectData={projectData}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
@@ -165,6 +171,18 @@ export function MobileProjectTile() {
               </div>
         ) : activeTab === "history" ? (
               <MobileHistoryView />
+        ) : activeTab === "members" ? (
+              <div className="h-full overflow-y-auto p-4">
+                <MembersTabContent />
+              </div>
+        ) : activeTab === "integrations" ? (
+              <div className="h-full overflow-y-auto p-4">
+                <IntegrationsTabContent />
+              </div>
+        ) : activeTab === "settings" ? (
+              <div className="h-full overflow-y-auto p-4">
+                <SettingsTabContent />
+              </div>
             ) : (
               <div className="h-full">
                 <MobileFileEditor
@@ -175,7 +193,7 @@ export function MobileProjectTile() {
                   <AnimatePresence mode="wait">
                     {changedBy && (
                       <motion.div
-                        className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center"
+                        className="pointer-events-none absolute inset-x-0 bottom-14 flex justify-center"
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
@@ -191,6 +209,14 @@ export function MobileProjectTile() {
           </div>
         )}
       </div>
+
+      {/* Bottom action bar - only when editor is active */}
+      {activeTab === "editor" && projectData && (
+        <div className="flex items-center justify-end gap-2 px-3 py-2 border-t border-border/50 bg-card/20 backdrop-blur-sm">
+          <SavePushButtonGroup />
+          <CopyAllButton disabled={!projectData} />
+        </div>
+      )}
     </div>
   );
 }
@@ -199,14 +225,12 @@ function MobileProjectHeader({
   projects,
   activeProject,
   onProjectChange,
-  projectData,
   activeTab,
   onTabChange,
 }: {
   projects: any[];
   activeProject: any;
   onProjectChange: (projectId: string) => void;
-  projectData: any;
   activeTab: MobileTabType;
   onTabChange: (tab: MobileTabType) => void;
 }) {
@@ -215,12 +239,10 @@ function MobileProjectHeader({
   const { logout } = useAuth();
   const { searchQuery } = useValues(searchLogic);
   const { setSearchQuery } = useActions(searchLogic);
-  
+
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
-  const [integrationsDialogOpen, setIntegrationsDialogOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState(userData?.displayName || "");
   const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
@@ -260,29 +282,63 @@ function MobileProjectHeader({
   };
 
   return (
-    <div className="border-b border-border/50 bg-card/20 backdrop-blur-sm">
-      {/* Top row - Logo, Search, Menu */}
+    <div className="border-b border-border/50 bg-card/20 backdrop-blur-sm flex-shrink-0">
+      {/* Top row - Project selector, Search icon, Avatar */}
       <div className="flex items-center gap-2 px-3 py-2">
         <Link to="/" className="flex-shrink-0">
           <img src="/favicon.svg" alt="Cryptly" className="w-6 h-6 brightness-0 invert" />
         </Link>
-        
-        <div className="flex-1 relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-8 pl-8 pr-3 rounded-md bg-muted/50 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20"
-          />
-        </div>
+
+        <Select
+          value={activeProject?.id || ""}
+          onValueChange={handleSelectChange}
+        >
+          <SelectTrigger className="flex-1 h-9 border-border/50 bg-neutral-800">
+            <div className="flex items-center gap-2">
+              <FolderOpen className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <SelectValue placeholder="Select project">
+                {activeProject?.name || "Select project"}
+              </SelectValue>
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {projects.map((project) => (
+              <SelectItem
+                key={project.id}
+                value={project.id}
+                className="cursor-pointer"
+              >
+                {project.name}
+              </SelectItem>
+            ))}
+            <SelectItem
+              value="add-project"
+              className="text-muted-foreground cursor-pointer"
+            >
+              <span className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Add new project
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+
+        <button
+          type="button"
+          onClick={() => setSearchOpen(!searchOpen)}
+          className={cn(
+            "flex-shrink-0 w-9 h-9 rounded-md flex items-center justify-center transition-colors cursor-pointer",
+            searchOpen ? "bg-neutral-800 text-primary" : "text-muted-foreground"
+          )}
+        >
+          <Search className="size-4" />
+        </button>
 
         <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden"
+              className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden cursor-pointer"
             >
               {userData?.avatarUrl ? (
                 <img
@@ -291,7 +347,7 @@ function MobileProjectHeader({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-muted flex items-center justify-center">
+                <div className="w-full h-full bg-muted rounded-full flex items-center justify-center">
                   <User className="w-4 h-4 text-muted-foreground" />
                 </div>
               )}
@@ -328,24 +384,24 @@ function MobileProjectHeader({
                       if (e.key === "Escape") handleCancelEdit();
                     }}
                   />
-              <Button
+                  <Button
                     variant="default"
-                size="sm"
+                    size="sm"
                     onClick={handleSaveDisplayName}
                     isLoading={isSavingDisplayName}
                     className="h-8 w-8 p-0 cursor-pointer"
                   >
                     <Check className="h-3.5 w-3.5" />
-              </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={handleCancelEdit}
                     disabled={isSavingDisplayName}
                     className="h-8 w-8 p-0 cursor-pointer"
                   >
                     <X className="h-3.5 w-3.5" />
-                </Button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -372,144 +428,62 @@ function MobileProjectHeader({
         </DropdownMenu>
       </div>
 
-      {/* Project selector row */}
-      <div className="px-3 pb-2">
-        <Select
-          value={activeProject?.id || ""}
-          onValueChange={handleSelectChange}
-        >
-          <SelectTrigger className="w-full h-9 border-border/50 bg-neutral-800">
-            <div className="flex items-center gap-2">
-              <FolderOpen className="w-4 h-4 text-muted-foreground" />
-            <SelectValue placeholder="Select project">
-                {activeProject?.name || "Select project"}
-            </SelectValue>
+      {/* Expandable search bar */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden"
+          >
+            <div className="px-3 pb-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                  className="w-full h-8 pl-8 pr-3 rounded-md bg-muted/50 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
             </div>
-          </SelectTrigger>
-          <SelectContent>
-            {projects.map((project) => (
-              <SelectItem
-                key={project.id}
-                value={project.id}
-                className="cursor-pointer"
-              >
-                {project.name}
-              </SelectItem>
-            ))}
-            <SelectItem
-              value="add-project"
-              className="text-muted-foreground cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Add new project
-              </span>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Tabs and actions row */}
-      <div className="flex items-center justify-between px-3 pb-3 h-12">
-        {/* Tabs */}
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => onTabChange("editor")}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
-              activeTab === "editor"
-                ? "bg-neutral-800 text-primary"
-                : "text-muted-foreground"
-            )}
-          >
-            <IconBraces className="size-4" />
-            <span>Editor</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onTabChange("history");
-              posthog.capture("history_button_clicked");
-            }}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
-              activeTab === "history"
-                ? "bg-neutral-800 text-primary"
-                : "text-muted-foreground"
-            )}
-          >
-            <IconHistory className="size-4" />
-            <span>History</span>
-          </button>
-          
-          {/* More menu for Members, Settings, Integrations */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="flex items-center gap-1 px-2 py-2 text-sm font-medium text-muted-foreground rounded-md cursor-pointer"
-              >
-                <Menu className="size-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                onClick={() => {
-                  setShareDialogOpen(true);
-                  posthog.capture("members_button_clicked");
-                }}
-                className="cursor-pointer"
-              >
-                <IconUsers className="size-4 mr-2" />
-                Members
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setIntegrationsDialogOpen(true);
-                  posthog.capture("integrations_button_clicked");
-                }}
-                className="cursor-pointer"
-              >
-                <IconPlugConnected className="size-4 mr-2" />
-                Integrations
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setSettingsDialogOpen(true);
-                  posthog.capture("settings_button_clicked");
-                }}
-                className="cursor-pointer"
-              >
-                <IconSettings className="size-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Actions */}
-        {activeTab === "editor" && (
-          <div className="flex items-center gap-2">
-            <SavePushButtonGroup />
-            <CopyAllButton disabled={!projectData} />
-          </div>
+          </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* Horizontally scrollable tabs */}
+      <div className="flex items-center overflow-x-auto px-3 pb-2 gap-1 scrollbar-none">
+        {MOBILE_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                onTabChange(tab.id);
+                posthog.capture(`${tab.id}_tab_clicked`);
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap flex-shrink-0",
+                isActive
+                  ? "bg-neutral-800 text-primary"
+                  : "text-muted-foreground"
+              )}
+            >
+              <Icon className="size-4" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       <AddProjectDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
-      <ProjectAccessDialog
-        open={shareDialogOpen}
-        onOpenChange={setShareDialogOpen}
-      />
-      <ProjectSettingsDialog
-        open={settingsDialogOpen}
-        onOpenChange={setSettingsDialogOpen}
-      />
-      <IntegrationsDialog
-        open={integrationsDialogOpen}
-        onOpenChange={setIntegrationsDialogOpen}
-      />
     </div>
   );
 }
