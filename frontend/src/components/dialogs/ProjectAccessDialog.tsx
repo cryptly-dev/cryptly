@@ -37,6 +37,7 @@ import {
   IconCopy,
   IconCrown,
   IconEye,
+  IconEyeOff,
   IconLink,
   IconPencil,
   IconRefresh,
@@ -485,7 +486,8 @@ function AddPeopleWizard({
   const [passphrase, setPassphrase] = useState("");
   const [selectedUser, setSelectedUser] = useState<SuggestedUser | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [showCode, setShowCode] = useState(false);
 
   useEffect(() => {
     if (open) loadSuggestedUsers();
@@ -500,7 +502,8 @@ function AddPeopleWizard({
         setPassphrase("");
         setSelectedUser(null);
         setIsSubmitting(false);
-        setCopied(false);
+        setCopiedField(null);
+        setShowCode(false);
       }, 200);
       return () => clearTimeout(timeout);
     }
@@ -548,10 +551,10 @@ function AddPeopleWizard({
     ? `${import.meta.env.VITE_APP_URL}/invite/${lastCreatedInvitation.id}`
     : "";
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(inviteUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2_000);
+  const handleCopy = async (field: string, value: string) => {
+    await navigator.clipboard.writeText(value);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2_000);
   };
 
   return (
@@ -798,35 +801,81 @@ function AddPeopleWizard({
             <DialogHeader>
               <DialogTitle className="text-center">
                 {inviteType === "invite-link"
-                  ? "Invite ready!"
-                  : "Invitation sent!"}
+                  ? "Invite ready"
+                  : "Invitation sent"}
               </DialogTitle>
               <DialogDescription className="text-center">
                 {inviteType === "invite-link"
-                  ? "Share this link with the person you want to invite. They'll also need the invitation code."
+                  ? "The invited person needs both the link and the code to join."
                   : `${selectedUser?.displayName} has been invited to the project.`}
               </DialogDescription>
             </DialogHeader>
 
             {inviteType === "invite-link" && inviteUrl && (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={inviteUrl}
-                  readOnly
-                  className="flex-1 rounded-md border px-3 py-2 bg-neutral-800 text-sm font-mono truncate"
-                />
-                <Button
-                  onClick={handleCopy}
-                  variant="outline"
-                  className="cursor-pointer shrink-0"
-                >
-                  {copied ? (
-                    <IconCheck className="size-4 text-green-600" />
-                  ) : (
-                    <IconCopy className="size-4" />
-                  )}
-                </Button>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Invite link</label>
+                  <div className="flex items-stretch rounded-lg border border-border overflow-hidden">
+                    <input
+                      type="text"
+                      value={inviteUrl}
+                      readOnly
+                      className="flex-1 min-w-0 px-3 py-2.5 bg-background text-sm font-mono outline-none border-none truncate"
+                    />
+                    <span className="w-px self-stretch bg-border/30" />
+                    <button
+                      type="button"
+                      onClick={() => handleCopy("link", inviteUrl)}
+                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      {copiedField === "link" ? (
+                        <IconCheck className="size-4 text-green-500" />
+                      ) : (
+                        <IconCopy className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Invitation code</label>
+                  <div className="flex items-stretch rounded-lg border border-border overflow-hidden">
+                    <input
+                      type={showCode ? "text" : "password"}
+                      value={passphrase}
+                      readOnly
+                      className="flex-1 min-w-0 px-3 py-2.5 bg-background text-sm font-mono outline-none border-none truncate"
+                    />
+                    <span className="w-px self-stretch bg-border/30" />
+                    <button
+                      type="button"
+                      onClick={() => setShowCode(!showCode)}
+                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      {showCode ? (
+                        <IconEyeOff className="size-4" />
+                      ) : (
+                        <IconEye className="size-4" />
+                      )}
+                    </button>
+                    <span className="w-px self-stretch bg-border/30" />
+                    <button
+                      type="button"
+                      onClick={() => handleCopy("code", passphrase)}
+                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      {copiedField === "code" ? (
+                        <IconCheck className="size-4 text-green-500" />
+                      ) : (
+                        <IconCopy className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  You won't be able to see the code again after closing this dialog.
+                </p>
               </div>
             )}
 
