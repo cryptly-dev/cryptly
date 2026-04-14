@@ -78,7 +78,7 @@ export function MobileProjectTile() {
   const { activeProject } = useProjects();
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
   const { isSearching, searchResults, searchQuery, searchableProjectsLoading } = useValues(searchLogic);
-  const { setSearchQuery, startSearch, clearSearch } = useActions(searchLogic);
+  const { setSearchQuery, clearSearch } = useActions(searchLogic);
   const navigate = useNavigate();
   const isReadOnly = currentUserRole === ProjectMemberRole.Read;
   const [activeTab, setActiveTab] = useState<MobileTabType>("editor");
