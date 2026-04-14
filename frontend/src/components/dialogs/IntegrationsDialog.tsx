@@ -19,6 +19,7 @@ import { projectLogic } from "@/lib/logics/projectLogic";
 import {
   IconArrowLeft,
   IconBrandGithub,
+  IconExternalLink,
   IconLink,
   IconMessageCircle,
   IconPlus,
@@ -46,8 +47,16 @@ function IntegrationCard({
       onClick={onClick}
       className="flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
     >
-      <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center">
-        <IconBrandGithub className="size-5" />
+      <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+        {integration.repositoryData?.avatarUrl ? (
+          <img
+            src={integration.repositoryData.avatarUrl}
+            alt={integration.repositoryData.owner}
+            className="size-12 rounded-full object-cover"
+          />
+        ) : (
+          <IconBrandGithub className="size-5" />
+        )}
       </div>
 
       <div className="text-sm font-medium truncate w-full text-center">
@@ -111,17 +120,35 @@ function IntegrationDetailDialog({
             GitHub
           </div>
 
-          {canDelete && (
-            <Button
-              onClick={handleRemove}
-              isLoading={isRemoving}
-              variant="ghost"
-              className="w-full cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <IconTrash className="size-4 mr-2" />
-              Remove integration
-            </Button>
-          )}
+          <div className="w-full space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Actions</label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    `https://github.com/${integration.repositoryData?.owner}/${integration.repositoryData?.name}`,
+                    "_blank"
+                  )
+                }
+              >
+                <IconExternalLink className="size-4 mr-2" />
+                Open
+              </Button>
+              {canDelete && (
+                <Button
+                  onClick={handleRemove}
+                  isLoading={isRemoving}
+                  variant="outline"
+                  className="cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <IconTrash className="size-4 mr-2" />
+                  Remove
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -129,18 +156,35 @@ function IntegrationDetailDialog({
 }
 
 // ────────────────────────────────────────────────────────────
-// Integrations section (grid)
+// Integrations section (grid, always visible)
 // ────────────────────────────────────────────────────────────
 
+function CardRowPlaceholder({ children }: { children?: React.ReactNode }) {
+  return (
+    <div className="relative">
+      {/* Invisible card sets the exact row height */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 invisible" aria-hidden>
+        <div className="flex flex-col items-center gap-2 p-4 rounded-lg border">
+          <div className="size-12 rounded-full" />
+          <div className="h-5 w-20" />
+          <div className="h-4 w-14" />
+        </div>
+      </div>
+      {/* Overlay content */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function IntegrationsSection() {
-  const { integrations } = useValues(integrationsLogic);
+  const { integrations, integrationsLoading } = useValues(integrationsLogic);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const selected = selectedId
     ? integrations.find((i) => i.id === selectedId) ?? null
     : null;
-
-  if (integrations.length === 0) return null;
 
   return (
     <div className="space-y-3">
@@ -148,15 +192,25 @@ function IntegrationsSection() {
         <IconLink className="size-4 text-muted-foreground" />
         <h3 className="text-sm font-medium">Connected</h3>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {integrations.map((integration) => (
-          <IntegrationCard
-            key={integration.id}
-            integration={integration}
-            onClick={() => setSelectedId(integration.id)}
-          />
-        ))}
-      </div>
+      {integrationsLoading && integrations.length === 0 ? (
+        <CardRowPlaceholder>
+          <Spinner className="size-5 text-muted-foreground" />
+        </CardRowPlaceholder>
+      ) : integrations.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {integrations.map((integration) => (
+            <IntegrationCard
+              key={integration.id}
+              integration={integration}
+              onClick={() => setSelectedId(integration.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <CardRowPlaceholder>
+          <span className="text-sm text-muted-foreground">No integrations connected yet</span>
+        </CardRowPlaceholder>
+      )}
       <IntegrationDetailDialog
         integration={selected}
         open={!!selected}
@@ -164,6 +218,75 @@ function IntegrationsSection() {
           if (!open) setSelectedId(null);
         }}
       />
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// Suggested integration (grid, always visible)
+// ────────────────────────────────────────────────────────────
+
+function SuggestedIntegrationSection() {
+  const { suggestedIntegrations, allRepositoriesLoading, integrations } =
+    useValues(integrationsLogic);
+  const { createIntegration } = useAsyncActions(integrationsLogic);
+  const [connectingId, setConnectingId] = useState<number | null>(null);
+
+  const handleConnect = async (repo: typeof suggestedIntegrations[0]["repo"]) => {
+    setConnectingId(repo.id);
+    await createIntegration(Number(repo.id), repo.installationEntityId);
+    setConnectingId(null);
+    posthog.capture("integration_created", {
+      type: "github",
+      source: "suggestion",
+    });
+  };
+
+  const isLoading = allRepositoriesLoading;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <IconBrandGithub className="size-4 text-muted-foreground" />
+        <h3 className="text-sm font-medium">Suggested</h3>
+      </div>
+      {isLoading ? (
+        <CardRowPlaceholder>
+          <Spinner className="size-5 text-muted-foreground" />
+        </CardRowPlaceholder>
+      ) : suggestedIntegrations.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {suggestedIntegrations.map(({ repo }) => (
+            <button
+              key={repo.id}
+              type="button"
+              disabled={connectingId !== null}
+              onClick={() => handleConnect(repo)}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg border border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                {repo.avatarUrl ? (
+                  <img
+                    src={repo.avatarUrl}
+                    alt={repo.owner}
+                    className="size-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <IconBrandGithub className="size-5" />
+                )}
+              </div>
+              <div className="text-sm font-medium truncate w-full text-center">
+                {repo.name}
+              </div>
+              <div className="text-xs text-muted-foreground truncate w-full">
+                {repo.owner}
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <CardRowPlaceholder />
+      )}
     </div>
   );
 }
@@ -253,7 +376,7 @@ function AddIntegrationWizard({
     setIsSubmitting(true);
     await createIntegration(
       Number(repository.id),
-      Number(selectedInstallationEntityId)
+      selectedInstallationEntityId!
     );
     setIsSubmitting(false);
 
@@ -511,6 +634,7 @@ export function IntegrationsTabContent() {
       </div>
 
       <IntegrationsSection />
+      <SuggestedIntegrationSection />
 
       <AddIntegrationWizard open={wizardOpen} onOpenChange={setWizardOpen} />
     </div>
@@ -548,6 +672,7 @@ export function IntegrationsDialog({
             </DialogDescription>
           </DialogHeader>
 
+          <SuggestedIntegrationSection />
           <IntegrationsSection />
 
           {currentUserRole === ProjectMemberRole.Admin && (

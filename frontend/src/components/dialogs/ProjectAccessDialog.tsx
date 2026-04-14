@@ -229,15 +229,20 @@ function MemberDetailDialog({
                 </TooltipProvider>
               </div>
 
-              <Button
-                onClick={handleRemove}
-                isLoading={isRemoving}
-                variant="ghost"
-                className="w-full cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <IconTrash className="size-4 mr-2" />
-                Remove from project
-              </Button>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Actions</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={handleRemove}
+                    isLoading={isRemoving}
+                    variant="outline"
+                    className="cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <IconTrash className="size-4 mr-2" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="text-xs px-3 py-1.5 rounded capitalize bg-muted text-muted-foreground">

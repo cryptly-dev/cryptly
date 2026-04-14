@@ -21,6 +21,32 @@ import {
   type Integration,
   type Repository,
 } from "../api/integrations.api";
+
+export interface RepoWithInstallation extends Repository {
+  installationEntityId: string;
+}
+
+export interface SuggestedRepo {
+  repo: RepoWithInstallation;
+  score: number;
+}
+
+function tokenize(name: string): string[] {
+  return name
+    .toLowerCase()
+    .split(/[.\-_\s]+/)
+    .filter((t) => t.length > 0);
+}
+
+function scoreSuggestion(
+  repoName: string,
+  projectTokens: string[]
+): number {
+  const repoTokens = tokenize(repoName);
+  return projectTokens.filter((pt) =>
+    repoTokens.some((rt) => rt.includes(pt) || pt.includes(rt))
+  ).length;
+}
 import { subscriptions } from "kea-subscriptions";
 
 export interface IntegrationsLogicProps {
@@ -44,9 +70,9 @@ export const integrationsLogic = kea<integrationsLogicType>([
     loadRepositories: true,
     loadIntegrations: true,
     loadInstallations: true,
-    createIntegration: (repositoryId: number, installationId: number) => ({
+    createIntegration: (repositoryId: number, installationEntityId: string) => ({
       repositoryId,
-      installationId,
+      installationEntityId,
     }),
     removeIntegration: (integrationId: string) => ({ integrationId }),
     setRepositories: (repositories: Repository[]) => ({ repositories }),
@@ -54,6 +80,10 @@ export const integrationsLogic = kea<integrationsLogicType>([
     setInstallations: (installations: Installation[]) => ({ installations }),
     setSelectedInstallationEntityId: (installationEntityId: string) => ({
       installationEntityId,
+    }),
+    loadAllRepositories: true,
+    setAllRepositories: (allRepositories: RepoWithInstallation[]) => ({
+      allRepositories,
     }),
   }),
 
@@ -87,6 +117,19 @@ export const integrationsLogic = kea<integrationsLogicType>([
       {
         setSelectedInstallationEntityId: (_, { installationEntityId }) =>
           installationEntityId,
+      },
+    ],
+    allRepositories: [
+      [] as RepoWithInstallation[],
+      {
+        setAllRepositories: (_, { allRepositories }) => allRepositories,
+      },
+    ],
+    allRepositoriesLoading: [
+      false as boolean,
+      {
+        loadAllRepositories: () => true,
+        setAllRepositories: () => false,
       },
     ],
   }),
@@ -142,11 +185,21 @@ export const integrationsLogic = kea<integrationsLogicType>([
   })),
 
   listeners(({ actions, values, props }) => ({
-    createIntegration: async ({ repositoryId }) => {
+    loadIntegrationsSuccess: () => {
+      if (values.installations.length > 0) {
+        actions.loadAllRepositories();
+      }
+    },
+    loadInstallationsSuccess: ({ installations }) => {
+      if (installations.length > 0 && !values.integrationsLoading) {
+        actions.loadAllRepositories();
+      }
+    },
+    createIntegration: async ({ repositoryId, installationEntityId }) => {
       await IntegrationsApi.createIntegration(values.jwtToken!, {
         projectId: props.projectId,
         repositoryId,
-        installationEntityId: values.selectedInstallationEntityId!,
+        installationEntityId: installationEntityId ?? values.selectedInstallationEntityId!,
       });
 
       actions.loadIntegrations();
@@ -154,6 +207,25 @@ export const integrationsLogic = kea<integrationsLogicType>([
     removeIntegration: async ({ integrationId }) => {
       await IntegrationsApi.deleteIntegration(values.jwtToken!, integrationId);
       actions.loadIntegrations();
+    },
+    loadAllRepositories: async () => {
+      const allRepos: RepoWithInstallation[] = [];
+      const results = await Promise.all(
+        values.installations.map(async (installation) => {
+          const repos = await IntegrationsApi.getRepositories(
+            values.jwtToken!,
+            installation.id
+          );
+          return repos.map((repo) => ({
+            ...repo,
+            installationEntityId: installation.id,
+          }));
+        })
+      );
+      for (const repos of results) {
+        allRepos.push(...repos);
+      }
+      actions.setAllRepositories(allRepos);
     },
     removeInstallationFromProject: async () => {
       await IntegrationsApi.deleteInstallationFromProject(
@@ -170,9 +242,36 @@ export const integrationsLogic = kea<integrationsLogicType>([
       (projectData: DecryptedProject) =>
         projectData?.integrations?.githubInstallationId,
     ],
+    suggestedIntegrations: [
+      (s) => [s.allRepositories, s.integrations, s.projectData],
+      (
+        allRepositories: RepoWithInstallation[],
+        integrations: Integration[],
+        projectData: DecryptedProject
+      ): SuggestedRepo[] => {
+        if (allRepositories.length === 0 || !projectData?.name) {
+          return [];
+        }
+
+        const projectTokens = tokenize(projectData.name);
+        if (projectTokens.length === 0) return [];
+
+        const connectedRepoIds = new Set(integrations.map((i) => i.githubRepositoryId));
+
+        const scored: SuggestedRepo[] = [];
+        for (const repo of allRepositories) {
+          if (connectedRepoIds.has(repo.id)) continue;
+          const score = scoreSuggestion(repo.name, projectTokens);
+          if (score > 0) {
+            scored.push({ repo, score });
+          }
+        }
+        return scored.sort((a, b) => b.score - a.score).slice(0, 3);
+      },
+    ],
   }),
 
-  subscriptions(({ actions }) => ({
+  subscriptions(({ actions, values }) => ({
     githubInstallationId: (githubInstallationId) => {
       if (!githubInstallationId) {
         actions.setRepositories([]);
