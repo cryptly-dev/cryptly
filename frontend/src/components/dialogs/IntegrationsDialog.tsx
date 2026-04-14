@@ -18,6 +18,7 @@ import { integrationsLogic } from "@/lib/logics/integrationsLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import {
   IconArrowLeft,
+  IconArrowNarrowRight,
   IconBrandGithub,
   IconExternalLink,
   IconLink,
@@ -27,6 +28,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
+import { CloudUpload } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
 import { useEffect, useState } from "react";
@@ -87,6 +89,10 @@ function IntegrationDetailDialog({
   const { removeIntegration } = useActions(integrationsLogic);
   const { currentUserRole } = useValues(projectLogic);
   const [isRemoving, setIsRemoving] = useState(false);
+
+  useEffect(() => {
+    if (open) setIsRemoving(false);
+  }, [open]);
 
   if (!integration) return null;
 
@@ -199,39 +205,39 @@ function IntegrationsSection() {
         label="Connected"
         loading={integrationsLoading && integrations.length === 0}
       />
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <AnimatePresence mode="popLayout">
-          {integrations.length > 0 ? (
-            integrations.map((integration, i) => (
-              <motion.div
-                key={integration.id}
-                layoutId={`repo-${integration.githubRepositoryId}`}
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.92 }}
-                transition={{ duration: 0.3, ease: EASE_OUT, delay: i * 0.06 }}
-              >
-                <IntegrationCard
-                  integration={integration}
-                  onClick={() => setSelectedId(integration.id)}
-                />
-              </motion.div>
-            ))
-          ) : !integrationsLoading ? (
-            <motion.div
-              key="empty"
-              className="col-span-full flex items-center justify-center py-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: EASE_OUT }}
-            >
-              <span className="text-sm text-muted-foreground">
-                No integrations connected yet
-              </span>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+      <div className="relative grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {/* Invisible card that always holds one row of height */}
+        <div className="invisible pointer-events-none flex flex-col items-center gap-2 p-4 rounded-lg border" aria-hidden>
+          <div className="size-12 rounded-full" />
+          <div className="h-5 w-20" />
+          <div className="h-4 w-14" />
+        </div>
+        {/* Real content overlaid on the same grid */}
+        <div className="absolute inset-0 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <AnimatePresence mode="popLayout">
+            {integrations.length > 0 ? (
+              integrations.map((integration) => (
+                <motion.div
+                  key={integration.id}
+                  layoutId={`repo-${integration.githubRepositoryId}`}
+                  layout
+                  transition={{ layout: { duration: 0.3, ease: EASE_OUT } }}
+                >
+                  <IntegrationCard
+                    integration={integration}
+                    onClick={() => setSelectedId(integration.id)}
+                  />
+                </motion.div>
+              ))
+            ) : !integrationsLoading ? (
+              <div className="col-span-full flex items-center justify-center h-full">
+                <span className="text-sm text-muted-foreground">
+                  No integrations connected yet
+                </span>
+              </div>
+            ) : null}
+          </AnimatePresence>
+        </div>
       </div>
       <IntegrationDetailDialog
         integration={selected}
@@ -267,20 +273,21 @@ function SuggestedIntegrationSection() {
   return (
     <div className="space-y-3">
       <SectionHeader
-        icon={IconBrandGithub}
+        icon={IconPlus}
         label="Suggested"
         loading={allRepositoriesLoading}
       />
+      <p className="text-xs text-muted-foreground">
+        Based on your project name, click to connect instantly.
+      </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <AnimatePresence mode="popLayout">
-          {suggestedIntegrations.map(({ repo }, i) => (
+          {suggestedIntegrations.map(({ repo }) => (
             <motion.div
               key={repo.id}
               layoutId={`repo-${repo.id}`}
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.92 }}
-              transition={{ duration: 0.3, ease: EASE_OUT, delay: i * 0.06 }}
+              layout
+              transition={{ layout: { duration: 0.3, ease: EASE_OUT } }}
             >
               <button
                 type="button"
@@ -308,21 +315,14 @@ function SuggestedIntegrationSection() {
               </button>
             </motion.div>
           ))}
-          {!allRepositoriesLoading && suggestedIntegrations.length === 0 && (
-            <motion.div
-              key="no-suggestions"
-              className="col-span-full flex items-center justify-center py-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: EASE_OUT }}
-            >
-              <span className="text-sm text-muted-foreground">
-                No suggestions found
-              </span>
-            </motion.div>
-          )}
         </AnimatePresence>
+        {!allRepositoriesLoading && suggestedIntegrations.length === 0 && (
+          <div className="col-span-full flex items-center justify-center py-8">
+            <span className="text-sm text-muted-foreground">
+              No suggestions found
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -665,13 +665,41 @@ export function IntegrationsTabContent() {
             className="cursor-pointer shrink-0"
           >
             <IconPlus className="size-4 mr-2" />
-            Add integration
+            Connect integration
           </Button>
         )}
       </div>
 
       <IntegrationsSection />
       <SuggestedIntegrationSection />
+
+      <div className="rounded-lg border border-border/50 bg-neutral-800/30 p-4 space-y-3">
+        <p className="text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">How integrations work:</span>{" "}
+          Use the push button in the editor to sync your secrets to all
+          connected integrations.
+        </p>
+
+        <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="size-10 rounded-lg bg-secondary/50 border border-border/50 flex items-center justify-center">
+              <CloudUpload className="size-5 text-muted-foreground" />
+            </div>
+            <span className="text-[11px] text-muted-foreground">Push</span>
+          </div>
+
+          <IconArrowNarrowRight className="size-5 text-muted-foreground" />
+
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="size-10 rounded-lg bg-secondary/50 border border-border/50 flex items-center justify-center">
+              <IconBrandGithub className="size-5 text-muted-foreground" />
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              Actions Secrets
+            </span>
+          </div>
+        </div>
+      </div>
 
       <AddIntegrationWizard open={wizardOpen} onOpenChange={setWizardOpen} />
     </div>
@@ -718,7 +746,7 @@ export function IntegrationsDialog({
               className="w-full cursor-pointer"
             >
               <IconPlus className="size-4 mr-2" />
-              Add integration
+              Connect integration
             </Button>
           )}
         </div>
