@@ -7,6 +7,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  InputAction,
+  InputWithActions,
+} from "@/components/ui/input-with-actions";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -740,38 +744,35 @@ function AddPeopleWizard({
         {step === "invite-link-code" && (
           <TooltipProvider skipDelayDuration={300}>
             <div className="space-y-3 pt-2">
-              <div className="flex items-stretch rounded-lg border border-border focus-within:border-primary/60 focus-within:ring-1 focus-within:ring-primary/30 overflow-hidden transition-colors">
-                <input
-                  type="text"
-                  value={passphrase}
-                  onChange={(e) => setPassphrase(e.target.value)}
-                  className="flex-1 min-w-0 px-3 py-2.5 bg-background text-sm font-mono outline-none border-none placeholder:text-muted-foreground/50"
-                  placeholder="Enter or generate a code"
-                  autoFocus
-                />
-                <span className="w-px self-stretch bg-border/30" />
-                <Tooltip delayDuration={300}>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={() => setPassphrase(generateInviteCode())}
-                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              <InputWithActions
+                type="text"
+                value={passphrase}
+                onChange={(e) => setPassphrase(e.target.value)}
+                className="font-mono"
+                placeholder="Enter or generate a code"
+                autoFocus
+                actions={
+                  <>
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <InputAction
+                          onClick={() => setPassphrase(generateInviteCode())}
+                        >
+                          <IconRefresh className="size-4" />
+                        </InputAction>
+                      </TooltipTrigger>
+                      <TooltipContent>Generate random code</TooltipContent>
+                    </Tooltip>
+                    <InputAction
+                      onClick={() => setStep("role")}
+                      disabled={!passphrase.trim()}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
                     >
-                      <IconRefresh className="size-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Generate random code</TooltipContent>
-                </Tooltip>
-                <span className="w-px self-stretch bg-border/30" />
-                <button
-                  type="button"
-                  onClick={() => setStep("role")}
-                  disabled={!passphrase.trim()}
-                  className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <IconArrowRight className="size-4" />
-                </button>
-              </div>
+                      <IconArrowRight className="size-4" />
+                    </InputAction>
+                  </>
+                }
+              />
               <p className="text-xs text-muted-foreground text-center leading-relaxed">
                 The code protects the link. Share it separately — only someone who knows both can join.
               </p>
@@ -894,62 +895,51 @@ function AddPeopleWizard({
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Invite link</label>
-                  <div className="flex items-stretch rounded-lg border border-border overflow-hidden">
-                    <input
-                      type="text"
-                      value={inviteUrl}
-                      readOnly
-                      className="flex-1 min-w-0 px-3 py-2.5 bg-background text-sm font-mono outline-none border-none truncate"
-                    />
-                    <span className="w-px self-stretch bg-border/30" />
-                    <button
-                      type="button"
-                      onClick={() => handleCopy("link", inviteUrl)}
-                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                    >
-                      {copiedField === "link" ? (
-                        <IconCheck className="size-4 text-green-500" />
-                      ) : (
-                        <IconCopy className="size-4" />
-                      )}
-                    </button>
-                  </div>
+                  <InputWithActions
+                    type="text"
+                    value={inviteUrl}
+                    readOnly
+                    className="font-mono truncate"
+                    focusRing={false}
+                    actions={
+                      <InputAction onClick={() => handleCopy("link", inviteUrl)}>
+                        {copiedField === "link" ? (
+                          <IconCheck className="size-4 text-green-500" />
+                        ) : (
+                          <IconCopy className="size-4" />
+                        )}
+                      </InputAction>
+                    }
+                  />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Invitation code</label>
-                  <div className="flex items-stretch rounded-lg border border-border overflow-hidden">
-                    <input
-                      type={showCode ? "text" : "password"}
-                      value={passphrase}
-                      readOnly
-                      className="flex-1 min-w-0 px-3 py-2.5 bg-background text-sm font-mono outline-none border-none truncate"
-                    />
-                    <span className="w-px self-stretch bg-border/30" />
-                    <button
-                      type="button"
-                      onClick={() => setShowCode(!showCode)}
-                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                    >
-                      {showCode ? (
-                        <IconEyeOff className="size-4" />
-                      ) : (
-                        <IconEye className="size-4" />
-                      )}
-                    </button>
-                    <span className="w-px self-stretch bg-border/30" />
-                    <button
-                      type="button"
-                      onClick={() => handleCopy("code", passphrase)}
-                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                    >
-                      {copiedField === "code" ? (
-                        <IconCheck className="size-4 text-green-500" />
-                      ) : (
-                        <IconCopy className="size-4" />
-                      )}
-                    </button>
-                  </div>
+                  <InputWithActions
+                    type={showCode ? "text" : "password"}
+                    value={passphrase}
+                    readOnly
+                    className="font-mono truncate"
+                    focusRing={false}
+                    actions={
+                      <>
+                        <InputAction onClick={() => setShowCode(!showCode)}>
+                          {showCode ? (
+                            <IconEyeOff className="size-4" />
+                          ) : (
+                            <IconEye className="size-4" />
+                          )}
+                        </InputAction>
+                        <InputAction onClick={() => handleCopy("code", passphrase)}>
+                          {copiedField === "code" ? (
+                            <IconCheck className="size-4 text-green-500" />
+                          ) : (
+                            <IconCopy className="size-4" />
+                          )}
+                        </InputAction>
+                      </>
+                    }
+                  />
                 </div>
 
                 <p className="text-xs text-muted-foreground text-center">
