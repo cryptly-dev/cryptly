@@ -374,7 +374,6 @@ function AddIntegrationWizard({
     if (!open) {
       const timeout = setTimeout(() => {
         setStep("provider");
-        setSelectedRepository("");
         setRepoSearch("");
         setIsSubmitting(false);
       }, 200);
@@ -384,7 +383,6 @@ function AddIntegrationWizard({
 
   // Reset repository when installation changes
   useEffect(() => {
-    setSelectedRepository("");
     setRepoSearch("");
   }, [selectedInstallationEntityId]);
 
