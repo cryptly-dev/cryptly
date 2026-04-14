@@ -78,7 +78,7 @@ export function MobileProjectTile() {
   const { activeProject } = useProjects();
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
   const { isSearching, searchResults, searchQuery, searchableProjectsLoading } = useValues(searchLogic);
-  const { setSearchQuery, clearSearch } = useActions(searchLogic);
+  const { setSearchQuery, startSearch, clearSearch } = useActions(searchLogic);
   const navigate = useNavigate();
   const isReadOnly = currentUserRole === ProjectMemberRole.Read;
   const [activeTab, setActiveTab] = useState<MobileTabType>("editor");
@@ -237,12 +237,10 @@ function MobileProjectHeader({
   const { userData, jwtToken } = useValues(authLogic);
   const { loadUserData } = useAsyncActions(authLogic);
   const { logout } = useAuth();
-  const { searchQuery } = useValues(searchLogic);
-  const { setSearchQuery } = useActions(searchLogic);
+  const { startSearch } = useActions(searchLogic);
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState(userData?.displayName || "");
   const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
@@ -325,11 +323,8 @@ function MobileProjectHeader({
 
         <button
           type="button"
-          onClick={() => setSearchOpen(!searchOpen)}
-          className={cn(
-            "flex-shrink-0 w-9 h-9 rounded-md flex items-center justify-center transition-colors cursor-pointer",
-            searchOpen ? "bg-neutral-800 text-primary" : "text-muted-foreground"
-          )}
+          onClick={startSearch}
+          className="flex-shrink-0 w-9 h-9 rounded-md flex items-center justify-center transition-colors cursor-pointer text-muted-foreground"
         >
           <Search className="size-4" />
         </button>
@@ -427,33 +422,6 @@ function MobileProjectHeader({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {/* Expandable search bar */}
-      <AnimatePresence>
-        {searchOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="overflow-hidden"
-          >
-            <div className="px-3 pb-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Search projects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                  className="w-full h-8 pl-8 pr-3 rounded-md bg-muted/50 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20"
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Horizontally scrollable tabs */}
       <div className="flex items-center overflow-x-auto px-3 pb-2 gap-1 scrollbar-none">
