@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -8,17 +7,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Invitation } from "@/lib/api/invitations.api";
 import type { PersonalInvitation } from "@/lib/api/personal-invitations.api";
 import { ProjectMemberRole, type ProjectMember } from "@/lib/api/projects.api";
-import { type SuggestedUser } from "@/lib/api/user.api";
+import type { SuggestedUser } from "@/lib/api/user.api";
 import { authLogic } from "@/lib/logics/authLogic";
 import { invitationsLogic } from "@/lib/logics/invitationsLogic";
 import { personalInvitationsLogic } from "@/lib/logics/personalInvitationsLogic";
@@ -27,160 +24,241 @@ import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
 import { suggestedUsersLogic } from "@/lib/logics/suggestedUsersLogic";
 import { cn, getRelativeTime } from "@/lib/utils";
 import {
+  IconArrowLeft,
+  IconArrowRight,
   IconCheck,
   IconCopy,
+  IconCrown,
   IconEye,
   IconEyeOff,
   IconLink,
+  IconPencil,
+  IconRefresh,
   IconTrash,
   IconUsers,
   IconUserPlus,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
+import { motion } from "motion/react";
 import posthog from "posthog-js";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-interface ProjectAccessDialogProps {
-  open: boolean;
-  onOpenChange?: (open: boolean) => void;
+// ────────────────────────────────────────────────────────────
+// Helpers
+// ────────────────────────────────────────────────────────────
+
+function generateInviteCode(length = 32): string {
+  // Exclude ambiguous characters: i, l, 0, o (and uppercase I, L, O)
+  const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ123456789";
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return Array.from(array, (byte) => chars[byte % chars.length]).join("");
 }
 
-function MemberItem({
+const ROLE_META: Record<
+  string,
+  { icon: typeof IconEye; label: string; description: string }
+> = {
+  [ProjectMemberRole.Read]: {
+    icon: IconEye,
+    label: "Read",
+    description: "View secrets, project name, and integrations.",
+  },
+  [ProjectMemberRole.Write]: {
+    icon: IconPencil,
+    label: "Write",
+    description: "Read access plus create, edit, and delete secrets.",
+  },
+  [ProjectMemberRole.Admin]: {
+    icon: IconCrown,
+    label: "Admin",
+    description:
+      "Full control — integrations, members, and project settings.",
+  },
+};
+
+// ────────────────────────────────────────────────────────────
+// Member card (vertical, clickable)
+// ────────────────────────────────────────────────────────────
+
+function MemberCard({
   member,
-  projectId,
+  onClick,
 }: {
   member: ProjectMember;
-  projectId: string;
+  onClick: () => void;
 }) {
-  const { updateMemberRoleLoading } = useValues(projectSettingsLogic);
-  const { updateMemberRole, removeMember } =
-    useAsyncActions(projectSettingsLogic);
-
-  const [deleteIsLoading, setDeleteIsLoading] = useState(false);
-
   const { userData } = useValues(authLogic);
-
-  const { currentUserRole } = useValues(projectLogic);
-
-  const canEditRole = useMemo(() => {
-    // Can't edit your own role
-    if (member.id === userData?.id) return false;
-
-    // Only admins can edit roles
-    if (currentUserRole === ProjectMemberRole.Admin) {
-      return true;
-    }
-
-    return false;
-  }, [member.id, userData?.id, currentUserRole]);
-
-  const canRemove = useMemo(() => {
-    // Can't remove yourself
-    if (member.id === userData?.id) return false;
-
-    // Only admins can remove members
-    if (currentUserRole !== ProjectMemberRole.Admin) return false;
-
-    return true;
-  }, [member.id, userData?.id, currentUserRole]);
-
-  const availableRoles = useMemo(() => {
-    const roles = [];
-
-    if (currentUserRole === ProjectMemberRole.Admin) {
-      roles.push({ value: ProjectMemberRole.Read, label: "Read" });
-      roles.push({ value: ProjectMemberRole.Write, label: "Write" });
-      roles.push({ value: ProjectMemberRole.Admin, label: "Admin" });
-    }
-
-    return roles;
-  }, [currentUserRole]);
-
-  const handleRoleChange = async (newRole: ProjectMemberRole) => {
-    if (newRole === member.role) return;
-
-    await updateMemberRole({
-      projectId,
-      memberId: member.id,
-      role: newRole,
-    });
-  };
-
-  const handleRemove = async () => {
-    setDeleteIsLoading(true);
-    await removeMember({
-      projectId,
-      memberId: member.id,
-    });
-  };
+  const roleMeta = ROLE_META[member.role];
 
   return (
-    <div className="flex items-center gap-3 p-2 rounded-md bg-neutral-800">
-      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
+    >
+      <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium overflow-hidden">
         {member.avatarUrl ? (
           <img
             src={member.avatarUrl}
             alt={member.displayName}
-            className="size-8 rounded-full object-cover"
+            className="size-12 rounded-full object-cover"
           />
         ) : (
-          member.displayName.charAt(0).toUpperCase()
+          <span className="text-lg">
+            {member.displayName.charAt(0).toUpperCase()}
+          </span>
         )}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">
-          {member.id === userData?.id ? "You" : member.displayName}
-        </div>
-        <div className="text-xs text-muted-foreground truncate">
-          {member.id === userData?.id ? userData?.email : member.displayName}
-        </div>
+
+      <div className="text-sm font-medium truncate w-full text-center">
+        {member.id === userData?.id ? "You" : member.displayName}
       </div>
-      <div className="flex items-center gap-2">
-        {canEditRole ? (
-          <Select
-            value={member.role}
-            onValueChange={(value: ProjectMemberRole) =>
-              handleRoleChange(value)
-            }
-            disabled={updateMemberRoleLoading}
-          >
-            <SelectTrigger className="w-24 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableRoles.map((role) => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <div className="text-xs px-2 py-1 rounded capitalize bg-muted text-muted-foreground">
-            {member.role}
-          </div>
-        )}
-        {canRemove && (
-          <Button
-            isLoading={deleteIsLoading}
-            onClick={handleRemove}
-            variant="ghost"
-            size="sm"
-            className="size-8 p-0 text-destructive hover:text-destructive cursor-pointer"
-            aria-label={`Remove ${member.displayName} from project`}
-          >
-            <IconTrash className="size-4" />
-          </Button>
-        )}
+
+      <div className="text-xs px-2 py-1 rounded capitalize bg-muted text-muted-foreground">
+        {roleMeta?.label ?? member.role}
       </div>
-    </div>
+    </button>
   );
 }
 
+// ────────────────────────────────────────────────────────────
+// Member detail dialog
+// ────────────────────────────────────────────────────────────
+
+function MemberDetailDialog({
+  member,
+  projectId,
+  open,
+  onOpenChange,
+}: {
+  member: ProjectMember | null;
+  projectId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { updateMemberRole, removeMember } =
+    useAsyncActions(projectSettingsLogic);
+  const { userData } = useValues(authLogic);
+  const { currentUserRole } = useValues(projectLogic);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  if (!member) return null;
+
+  const canEdit =
+    member.id !== userData?.id &&
+    currentUserRole === ProjectMemberRole.Admin;
+
+  const handleRoleChange = async (newRole: ProjectMemberRole) => {
+    if (newRole === member.role) return;
+    setIsUpdating(true);
+    await updateMemberRole({ projectId, memberId: member.id, role: newRole });
+    setIsUpdating(false);
+  };
+
+  const handleRemove = async () => {
+    setIsRemoving(true);
+    await removeMember({ projectId, memberId: member.id });
+    setIsRemoving(false);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium overflow-hidden">
+            {member.avatarUrl ? (
+              <img
+                src={member.avatarUrl}
+                alt={member.displayName}
+                className="size-16 rounded-full object-cover"
+              />
+            ) : (
+              <span className="text-2xl">
+                {member.displayName.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          <DialogTitle>{member.id === userData?.id ? "You" : member.displayName}</DialogTitle>
+          <DialogDescription className="sr-only">Member details</DialogDescription>
+
+          {canEdit ? (
+            <div className="w-full space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Role</label>
+                <TooltipProvider skipDelayDuration={300}>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.entries(ROLE_META).map(([value, meta]) => {
+                      const Icon = meta.icon;
+                      const isSelected = member.role === value;
+
+                      return (
+                        <Tooltip key={value} delayDuration={400}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              disabled={isUpdating}
+                              onClick={() => handleRoleChange(value as ProjectMemberRole)}
+                              className={cn(
+                                "flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed",
+                                isSelected
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30"
+                              )}
+                            >
+                              <Icon className="size-4 text-primary" />
+                              <div className="text-xs font-medium">
+                                {meta.label}
+                              </div>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-48 text-center">
+                            {meta.description}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
+              </div>
+
+              <Button
+                onClick={handleRemove}
+                isLoading={isRemoving}
+                variant="ghost"
+                className="w-full cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <IconTrash className="size-4 mr-2" />
+                Remove from project
+              </Button>
+            </div>
+          ) : (
+            <div className="text-xs px-3 py-1.5 rounded capitalize bg-muted text-muted-foreground">
+              {ROLE_META[member.role]?.label ?? member.role}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// Members section (grid)
+// ────────────────────────────────────────────────────────────
+
 function MembersSection() {
   const { projectData } = useValues(projectLogic);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
   if (!projectData) return null;
+
+  const selectedMember = selectedMemberId
+    ? projectData.members.find((m) => m.id === selectedMemberId) ?? null
+    : null;
 
   return (
     <div className="space-y-3">
@@ -188,24 +266,34 @@ function MembersSection() {
         <IconUsers className="size-4 text-muted-foreground" />
         <h3 className="text-sm font-medium">Members</h3>
       </div>
-      <div className="space-y-2 max-h-[min(50vh,280px)] overflow-y-auto pr-0.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {projectData.members.map((member) => (
-          <MemberItem
+          <MemberCard
             key={member.id}
             member={member}
-            projectId={projectData.id}
+            onClick={() => setSelectedMemberId(member.id)}
           />
         ))}
       </div>
+      <MemberDetailDialog
+        member={selectedMember}
+        projectId={projectData.id}
+        open={!!selectedMember}
+        onOpenChange={(open) => { if (!open) setSelectedMemberId(null); }}
+      />
     </div>
   );
 }
+
+// ────────────────────────────────────────────────────────────
+// Active invite card (vertical)
+// ────────────────────────────────────────────────────────────
 
 type ActiveInvite =
   | { type: "link"; data: Invitation }
   | { type: "personal"; data: PersonalInvitation };
 
-function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
+function ActiveInviteCard({ invite }: { invite: ActiveInvite }) {
   const { deleteInvitation } = useAsyncActions(invitationsLogic);
   const { deletePersonalInvitation } = useActions(personalInvitationsLogic);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
@@ -227,43 +315,8 @@ function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-2 rounded-md bg-neutral-800">
-      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden">
-        {invite.type === "personal" ? (
-          invite.data.invitedUser.avatarUrl ? (
-            <img
-              src={invite.data.invitedUser.avatarUrl}
-              alt={invite.data.invitedUser.displayName}
-              className="size-8 rounded-full object-cover"
-            />
-          ) : (
-            invite.data.invitedUser.displayName.charAt(0).toUpperCase()
-          )
-        ) : (
-          <IconLink className="size-4" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">
-          {invite.type === "personal"
-            ? invite.data.invitedUser.displayName
-            : "Invite link"}
-        </div>
-        <div className="text-xs text-muted-foreground">
-          {invite.type === "personal" ? (
-            <>
-              {invite.data.role} • Created{" "}
-              {getRelativeTime(invite.data.createdAt)}
-            </>
-          ) : (
-            <>
-              Created {getRelativeTime(invite.data.createdAt)} • ID:{" "}
-              {invite.data.id.slice(-8)}
-            </>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-1 shrink-0">
+    <div className="group relative flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50">
+      <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         {invite.type === "link" && (
           <Button
             type="button"
@@ -275,13 +328,13 @@ function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
                 `${import.meta.env.VITE_APP_URL}/invite/${invite.data.id}`
               )
             }
-            className="size-8 p-0 cursor-pointer"
+            className="size-6 p-0 cursor-pointer"
             aria-label="Copy link"
           >
             {copiedLinkId === invite.data.id ? (
-              <IconCheck className="size-4 text-green-600" />
+              <IconCheck className="size-3.5 text-green-600" />
             ) : (
-              <IconCopy className="size-4" />
+              <IconCopy className="size-3.5" />
             )}
           </Button>
         )}
@@ -292,17 +345,56 @@ function ActiveInviteItem({ invite }: { invite: ActiveInvite }) {
           variant="ghost"
           onClick={handleRevoke}
           disabled={isLoading}
-          className="size-8 p-0 text-destructive hover:text-destructive cursor-pointer"
+          className="size-6 p-0 text-destructive hover:text-destructive cursor-pointer"
           aria-label={
             invite.type === "link" ? "Revoke link" : "Revoke invitation"
           }
         >
-          <IconTrash className="size-4" />
+          <IconTrash className="size-3.5" />
         </Button>
+      </div>
+
+      <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium overflow-hidden">
+        {invite.type === "personal" ? (
+          invite.data.invitedUser.avatarUrl ? (
+            <img
+              src={invite.data.invitedUser.avatarUrl}
+              alt={invite.data.invitedUser.displayName}
+              className="size-12 rounded-full object-cover"
+            />
+          ) : (
+            <span className="text-lg">
+              {invite.data.invitedUser.displayName.charAt(0).toUpperCase()}
+            </span>
+          )
+        ) : (
+          <IconLink className="size-5" />
+        )}
+      </div>
+
+      <div className="text-sm font-medium truncate w-full text-center">
+        {invite.type === "personal"
+          ? invite.data.invitedUser.displayName
+          : "Invite link"}
+      </div>
+
+      <div className="text-xs text-muted-foreground text-center">
+        {invite.type === "personal" ? (
+          <>
+            {invite.data.role} &middot;{" "}
+            {getRelativeTime(invite.data.createdAt)}
+          </>
+        ) : (
+          <>ID: {invite.data.id.slice(-8)}</>
+        )}
       </div>
     </div>
   );
 }
+
+// ────────────────────────────────────────────────────────────
+// Active invites section (grid)
+// ────────────────────────────────────────────────────────────
 
 function ActiveInvitesSection() {
   const { projectData, userData } = useValues(projectLogic);
@@ -315,7 +407,7 @@ function ActiveInvitesSection() {
 
   const myRole = useMemo(
     () =>
-      projectData?.members.find((member) => member.id === userData?.id)?.role,
+      projectData?.members.find((m) => m.id === userData?.id)?.role,
     [projectData?.members, userData?.id]
   );
 
@@ -341,26 +433,29 @@ function ActiveInvitesSection() {
     );
   }, [invitations, personalInvitations]);
 
-  if (myRole !== ProjectMemberRole.Admin) {
+  if (myRole !== ProjectMemberRole.Admin) return null;
+
+  const isLoading =
+    (invitationsLoading && !invitations) ||
+    (personalInvitationsLoading && !personalInvitations);
+
+  if (isLoading) {
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <IconUserPlus className="size-4 text-muted-foreground" />
           <h3 className="text-sm font-medium">Active invites</h3>
         </div>
-        <div className="text-center py-6 px-4 bg-neutral-800 rounded-md border border-dashed">
+        <div className="text-center py-8">
           <div className="text-sm text-muted-foreground">
-            Only <span className="font-medium underline">Admins</span> can view
-            active invites.
+            Loading invites...
           </div>
         </div>
       </div>
     );
   }
 
-  const isLoading =
-    (invitationsLoading && !invitations) ||
-    (personalInvitationsLoading && !personalInvitations);
+  if (allInvites.length === 0) return null;
 
   return (
     <div className="space-y-3">
@@ -368,509 +463,564 @@ function ActiveInvitesSection() {
         <IconUserPlus className="size-4 text-muted-foreground" />
         <h3 className="text-sm font-medium">Active invites</h3>
       </div>
-      {isLoading ? (
-        <div className="text-center py-8 px-4">
-          <div className="text-sm text-muted-foreground">
-            Loading invites...
-          </div>
-        </div>
-      ) : allInvites.length > 0 ? (
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {allInvites.map((invite) => (
-            <ActiveInviteItem
-              key={
-                invite.type === "link"
-                  ? `link-${invite.data.id}`
-                  : `personal-${invite.data.id}`
-              }
-              invite={invite}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8 px-4">
-          <div className="text-sm text-muted-foreground mb-2">
-            No active invites
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-const INVITE_LINK_STEPS = 3;
-
-function GenerateNewInviteLinkSection() {
-  const { projectData, userData } = useValues(projectLogic);
-  const { createInvitation } = useAsyncActions(invitationsLogic);
-  const [passphrase, setPassphrase] = useState("");
-  const [showPassphrase, setShowPassphrase] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<"read" | "write" | "admin">(
-    "read"
-  );
-  const [wizardStep, setWizardStep] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const passphraseInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (wizardStep !== 2) return;
-    const id = requestAnimationFrame(() => {
-      passphraseInputRef.current?.focus();
-    });
-    return () => cancelAnimationFrame(id);
-  }, [wizardStep]);
-
-  const myRole = useMemo(
-    () =>
-      projectData?.members.find((member) => member.id === userData?.id)?.role,
-    [projectData?.members, userData?.id]
-  );
-
-  const availableRoles = useMemo(() => {
-    if (myRole === ProjectMemberRole.Admin) {
-      return [
-        { value: "read" as const, label: "Read" },
-        { value: "write" as const, label: "Write" },
-        { value: "admin" as const, label: "Admin" },
-      ];
-    }
-    return [];
-  }, [myRole]);
-
-  const handleGenerateLink = async () => {
-    setIsLoading(true);
-    await createInvitation(passphrase, selectedRole);
-    setPassphrase("");
-    setWizardStep(0);
-    setIsLoading(false);
-  };
-
-  if (myRole !== ProjectMemberRole.Admin) {
-    return (
-      <div className="text-center py-6 px-4 bg-neutral-800 rounded-md border border-dashed">
-        <div className="text-sm text-muted-foreground">
-          Only <span className="font-medium underline">Admins</span> can
-          generate invite links.
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {allInvites.map((invite) => (
+          <ActiveInviteCard
+            key={
+              invite.type === "link"
+                ? `link-${invite.data.id}`
+                : `personal-${invite.data.id}`
+            }
+            invite={invite}
+          />
+        ))}
       </div>
-    );
-  }
-
-  const roleDescriptions = {
-    read: "Can view secrets, the project name, and connected integrations.",
-    write:
-      "Everything Read can do, plus create, edit, and delete secrets.",
-    admin:
-      "Everything Write can do, plus manage integrations, rename or delete the project, and invite members.",
-  };
-
-  const roleLabel =
-    availableRoles.find((r) => r.value === selectedRole)?.label ?? selectedRole;
-
-  return (
-    <div className="space-y-4">
-      {wizardStep === 0 && (
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Create a single-use link and an invitation code you share with one
-            person. They will need both to join.
-          </p>
-          <Button
-            type="button"
-            className="w-full cursor-pointer"
-            onClick={() => setWizardStep(1)}
-          >
-            Generate invite link
-          </Button>
-        </div>
-      )}
-
-      {wizardStep > 0 && (
-        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span>
-            Step {wizardStep} of {INVITE_LINK_STEPS}
-          </span>
-          <div className="flex gap-1" aria-hidden>
-            {Array.from({ length: INVITE_LINK_STEPS }, (_, i) => (
-              <span
-                key={i}
-                className={`h-1.5 w-6 rounded-full transition-colors ${
-                  i + 1 <= wizardStep ? "bg-primary" : "bg-muted"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {wizardStep === 1 && (
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium text-foreground">
-            Choose their role
-          </h4>
-          <div
-            role="group"
-            aria-label="Role"
-            className="space-y-2 rounded-md border border-neutral-700 bg-neutral-800/50 p-2"
-          >
-            {availableRoles.map((role) => {
-              const isSelected = selectedRole === role.value;
-              return (
-                <label
-                  key={role.value}
-                  htmlFor={`invite-role-${role.value}`}
-                  className={cn(
-                    "flex cursor-pointer gap-3 rounded-md p-2.5 transition-colors",
-                    isSelected
-                      ? "bg-primary/10 ring-1 ring-primary/40"
-                      : "hover:bg-neutral-800"
-                  )}
-                >
-                  <Checkbox
-                    id={`invite-role-${role.value}`}
-                    checked={isSelected}
-                    onCheckedChange={(checked) => {
-                      if (checked === true) setSelectedRole(role.value);
-                    }}
-                    className="mt-0.5"
-                  />
-                  <span className="text-sm font-medium text-foreground shrink-0 min-w-[4.25rem] whitespace-nowrap pt-0.5">
-                    {role.label}
-                  </span>
-                  <span className="text-sm text-muted-foreground leading-snug flex-1 min-w-0">
-                    {roleDescriptions[role.value]}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 cursor-pointer"
-              onClick={() => setWizardStep(0)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              className="flex-1 cursor-pointer"
-              onClick={() => setWizardStep(2)}
-            >
-              Continue
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {wizardStep === 2 && (
-        <div className="space-y-3">
-          <div>
-            <h4 className="text-sm font-medium text-foreground">
-              Create an invitation code
-            </h4>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Invent a code you share with them (separately from the link). They
-              enter it when accepting—one link, one person.
-            </p>
-          </div>
-          <div className="relative">
-            <label htmlFor="passphrase" className="sr-only">
-              Invitation code
-            </label>
-            <input
-              ref={passphraseInputRef}
-              id="passphrase"
-              type={showPassphrase ? "text" : "password"}
-              value={passphrase}
-              onChange={(e) => setPassphrase(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 bg-background text-base sm:text-sm pr-10"
-              placeholder="e.g. a word or phrase only you two know"
-              autoComplete="new-password"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassphrase(!showPassphrase)}
-              className="absolute inset-y-0 right-0 flex items-center justify-center h-full px-3 text-muted-foreground hover:text-foreground cursor-pointer"
-              aria-label={
-                showPassphrase ? "Hide invitation code" : "Show invitation code"
-              }
-            >
-              {showPassphrase ? (
-                <IconEyeOff className="size-4" />
-              ) : (
-                <IconEye className="size-4" />
-              )}
-            </button>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 cursor-pointer"
-              onClick={() => setWizardStep(1)}
-            >
-              Back
-            </Button>
-            <Button
-              type="button"
-              className="flex-1 cursor-pointer"
-              disabled={!passphrase.trim()}
-              onClick={() => setWizardStep(3)}
-            >
-              Continue
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {wizardStep === 3 && (
-        <div className="space-y-3">
-          <div>
-            <h4 className="text-sm font-medium text-foreground">
-              Create the link
-            </h4>
-            <p className="text-xs text-muted-foreground mt-1">
-              We will generate a single-use invite link with these settings.
-            </p>
-          </div>
-          <dl className="rounded-md border bg-muted/40 px-3 py-2.5 space-y-2 text-sm">
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Role</dt>
-              <dd className="font-medium text-foreground">{roleLabel}</dd>
-            </div>
-            <div className="flex justify-between gap-4 items-center">
-              <dt className="text-muted-foreground shrink-0">Invitation code</dt>
-              <dd className="flex items-center gap-1.5 min-w-0">
-                <span className="font-mono text-right truncate">
-                  {showPassphrase
-                    ? passphrase
-                    : "•".repeat(passphrase.length)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowPassphrase(!showPassphrase)}
-                  className="shrink-0 text-muted-foreground hover:text-foreground cursor-pointer p-0.5 rounded"
-                  aria-label={
-                    showPassphrase ? "Hide invitation code" : "Show invitation code"
-                  }
-                >
-                  {showPassphrase ? (
-                    <IconEyeOff className="size-4" />
-                  ) : (
-                    <IconEye className="size-4" />
-                  )}
-                </button>
-              </dd>
-            </div>
-          </dl>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 cursor-pointer"
-              onClick={() => setWizardStep(2)}
-            >
-              Back
-            </Button>
-            <Button
-              onClick={handleGenerateLink}
-              isLoading={isLoading}
-              disabled={!passphrase.trim()}
-              className="flex-1 cursor-pointer"
-            >
-              Generate invite link
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-function SuggestedUserItem({ user }: { user: SuggestedUser }) {
+// ────────────────────────────────────────────────────────────
+// Wizard stepper pills
+// ────────────────────────────────────────────────────────────
+
+function WizardStepper({
+  currentStep,
+  totalSteps,
+}: {
+  currentStep: number;
+  totalSteps: number;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-1.5">
+      {Array.from({ length: totalSteps }, (_, i) => {
+        const isActive = i + 1 === currentStep;
+        return (
+          <motion.div
+            key={i}
+            className="h-1.5 rounded-full"
+            animate={{
+              width: isActive ? 24 : 8,
+              backgroundColor: isActive
+                ? "rgba(255,255,255,0.9)"
+                : "rgba(255,255,255,0.2)",
+            }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// Add People wizard
+// ────────────────────────────────────────────────────────────
+
+type WizardStep =
+  | "type"
+  | "invite-link-code"
+  | "suggested-user"
+  | "team"
+  | "role"
+  | "done";
+
+type InviteType = "invite-link" | "suggested-user" | "team";
+
+const STEP_NUMBER: Record<WizardStep, number> = {
+  type: 1,
+  "invite-link-code": 2,
+  "suggested-user": 2,
+  team: 2,
+  role: 3,
+  done: 3,
+};
+
+const STEP_TITLE: Record<WizardStep, string> = {
+  type: "Add people",
+  "invite-link-code": "Invitation code",
+  "suggested-user": "Choose a person",
+  team: "Team",
+  role: "Choose a role",
+  done: "",
+};
+
+function AddPeopleWizard({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { createInvitation } = useAsyncActions(invitationsLogic);
   const { createPersonalInvitation } = useAsyncActions(
     personalInvitationsLogic
   );
-  const [selectedRole, setSelectedRole] = useState<ProjectMemberRole>(
-    ProjectMemberRole.Read
-  );
-  const [isLoading, setIsLoading] = useState(false);
-
-  const availableRoles = [
-    { value: ProjectMemberRole.Read, label: "Read" },
-    { value: ProjectMemberRole.Write, label: "Write" },
-    { value: ProjectMemberRole.Admin, label: "Admin" },
-  ];
-
-  const handleInvite = async () => {
-    if (!user.publicKey) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await createPersonalInvitation(user.id, user.publicKey, selectedRole);
-      posthog.capture("personal_invitation_created");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-3 p-2 rounded-md bg-neutral-800">
-      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden">
-        {user.avatarUrl ? (
-          <img
-            src={user.avatarUrl}
-            alt={user.displayName}
-            className="size-8 rounded-full object-cover"
-          />
-        ) : (
-          user.displayName.charAt(0).toUpperCase()
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-xs text-muted-foreground truncate">
-          {user.displayName}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Select
-          value={selectedRole}
-          onValueChange={(value: ProjectMemberRole) => setSelectedRole(value)}
-        >
-          <SelectTrigger className="w-24 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {availableRoles.map((role) => (
-              <SelectItem key={role.value} value={role.value}>
-                {role.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          onClick={handleInvite}
-          isLoading={isLoading}
-          disabled={isLoading || !user.publicKey}
-          variant="ghost"
-          size="sm"
-          className="size-8 p-0 cursor-pointer"
-          aria-label={`Invite ${user.displayName}`}
-        >
-          <IconUserPlus className="size-4" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function SuggestedUsersSection() {
-  const { projectData, userData } = useValues(projectLogic);
   const { suggestedUsers, suggestedUsersLoading } =
     useValues(suggestedUsersLogic);
   const { loadSuggestedUsers } = useActions(suggestedUsersLogic);
+  const { lastCreatedInvitation } = useValues(invitationsLogic);
 
-  const myRole = useMemo(
-    () =>
-      projectData?.members.find((member) => member.id === userData?.id)?.role,
-    [projectData?.members, userData?.id]
-  );
+  const [step, setStep] = useState<WizardStep>("type");
+  const [inviteType, setInviteType] = useState<InviteType | null>(null);
+  const [passphrase, setPassphrase] = useState("");
+  const [selectedUser, setSelectedUser] = useState<SuggestedUser | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [showCode, setShowCode] = useState(false);
 
   useEffect(() => {
-    if (myRole === ProjectMemberRole.Admin) {
-      loadSuggestedUsers();
+    if (open) loadSuggestedUsers();
+  }, [open]);
+
+  // Reset on close (delayed to let the dialog's close animation finish)
+  useEffect(() => {
+    if (!open) {
+      const timeout = setTimeout(() => {
+        setStep("type");
+        setInviteType(null);
+        setPassphrase("");
+        setSelectedUser(null);
+        setIsSubmitting(false);
+        setCopiedField(null);
+        setShowCode(false);
+      }, 200);
+      return () => clearTimeout(timeout);
     }
-  }, [myRole]);
+  }, [open]);
 
-  if (myRole !== ProjectMemberRole.Admin) {
-    return (
-      <div className="space-y-3">
-        <div className="text-center py-6 px-4 bg-neutral-800 rounded-md border border-dashed">
-          <div className="text-sm text-muted-foreground">
-            Only <span className="font-medium underline">Admins</span> can view
-            suggested users.
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const goBack = () => {
+    if (
+      step === "invite-link-code" ||
+      step === "suggested-user" ||
+      step === "team"
+    )
+      setStep("type");
+    else if (step === "role")
+      setStep(
+        inviteType === "invite-link" ? "invite-link-code" : "suggested-user"
+      );
+  };
 
-  if (suggestedUsersLoading && suggestedUsers.length === 0) {
-    return (
-      <div className="text-center py-8 px-4">
-        <div className="text-sm text-muted-foreground">
-          Loading suggested users...
-        </div>
-      </div>
-    );
-  }
+  const showBack = step !== "type" && step !== "done";
 
-  if (suggestedUsers.length === 0) {
-    return (
-      <div className="text-center py-8 px-4 bg-neutral-800 rounded-md border border-dashed">
-        <div className="text-sm text-muted-foreground">
-          No suggested users found. Suggested users are people you've worked
-          with in other projects.
-        </div>
-      </div>
-    );
-  }
+  const handleSubmit = async (role: ProjectMemberRole) => {
+    setIsSubmitting(true);
+    try {
+      if (inviteType === "invite-link") {
+        await createInvitation(
+          passphrase,
+          role as "read" | "write" | "admin"
+        );
+        setStep("done");
+      } else if (inviteType === "suggested-user" && selectedUser?.publicKey) {
+        await createPersonalInvitation(
+          selectedUser.id,
+          selectedUser.publicKey,
+          role
+        );
+        posthog.capture("personal_invitation_created");
+        setStep("done");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const inviteUrl = lastCreatedInvitation
+    ? `${import.meta.env.VITE_APP_URL}/invite/${lastCreatedInvitation.id}`
+    : "";
+
+  const handleCopy = async (field: string, value: string) => {
+    await navigator.clipboard.writeText(value);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2_000);
+  };
 
   return (
-    <div className="space-y-2 max-h-96 overflow-y-auto">
-      {suggestedUsers.map((user) => (
-        <SuggestedUserItem key={user.id} user={user} />
-      ))}
-    </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+        {/* Back arrow */}
+        {showBack && (
+          <button
+            type="button"
+            onClick={goBack}
+            className="absolute top-4 left-4 p-1 rounded-sm opacity-70 hover:opacity-100 transition-opacity cursor-pointer z-10"
+          >
+            <IconArrowLeft className="size-4" />
+          </button>
+        )}
+
+        {/* ── Header: title + info icon + stepper ── */}
+        {step !== "done" && (
+          <div className="flex flex-col items-center gap-3 pt-1">
+            <DialogTitle className="text-center">
+              {STEP_TITLE[step]}
+            </DialogTitle>
+            <WizardStepper
+              currentStep={STEP_NUMBER[step]}
+              totalSteps={3}
+            />
+            <DialogDescription className="sr-only">
+              Step {STEP_NUMBER[step]} of 3
+            </DialogDescription>
+          </div>
+        )}
+
+        {/* ── Step 1: Choose type ── */}
+        {step === "type" && (
+          <TooltipProvider skipDelayDuration={300}>
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <Tooltip delayDuration={400}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInviteType("invite-link");
+                      setStep("invite-link-code");
+                    }}
+                    className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
+                  >
+                    <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <IconLink className="size-5 text-primary" />
+                    </div>
+                    <div className="text-sm font-medium">Invite link</div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  Secure single-use link
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip delayDuration={400}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInviteType("suggested-user");
+                      setStep("suggested-user");
+                    }}
+                    className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
+                  >
+                    <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <IconUserPlus className="size-5 text-primary" />
+                    </div>
+                    <div className="text-sm font-medium">Suggested</div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  Someone you've worked with
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip delayDuration={400}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    disabled
+                    className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/30 opacity-50 cursor-not-allowed text-center relative"
+                  >
+                    <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <IconUsers className="size-5 text-primary" />
+                    </div>
+                    <div className="text-sm font-medium">Team</div>
+                    <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                      Soon
+                    </span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  Invite an entire team at once
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+        )}
+
+        {/* ── Step 2a: Invite-link code ── */}
+        {step === "invite-link-code" && (
+          <TooltipProvider skipDelayDuration={300}>
+            <div className="space-y-3 pt-2">
+              <div className="flex items-stretch rounded-lg border border-border focus-within:border-primary/60 focus-within:ring-1 focus-within:ring-primary/30 overflow-hidden transition-colors">
+                <input
+                  type="text"
+                  value={passphrase}
+                  onChange={(e) => setPassphrase(e.target.value)}
+                  className="flex-1 min-w-0 px-3 py-2.5 bg-background text-sm font-mono outline-none border-none placeholder:text-muted-foreground/50"
+                  placeholder="Enter or generate a code"
+                  autoFocus
+                />
+                <span className="w-px self-stretch bg-border/30" />
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => setPassphrase(generateInviteCode())}
+                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      <IconRefresh className="size-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Generate random code</TooltipContent>
+                </Tooltip>
+                <span className="w-px self-stretch bg-border/30" />
+                <button
+                  type="button"
+                  onClick={() => setStep("role")}
+                  disabled={!passphrase.trim()}
+                  className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <IconArrowRight className="size-4" />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                The code protects the link. Share it separately — only someone who knows both can join.
+              </p>
+            </div>
+          </TooltipProvider>
+        )}
+
+        {/* ── Step 2b: Suggested user ── */}
+        {step === "suggested-user" && (
+          <div className="space-y-4 pt-2">
+            {suggestedUsersLoading && suggestedUsers.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-sm text-muted-foreground">Loading...</div>
+              </div>
+            ) : suggestedUsers.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-sm text-muted-foreground">
+                  No suggested users found.
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {suggestedUsers.map((user) => (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedUser(user);
+                      setStep("role");
+                    }}
+                    disabled={!user.publicKey}
+                    className="flex items-center gap-3 p-3 rounded-lg w-full text-left border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium overflow-hidden">
+                      {user.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt={user.displayName}
+                          className="size-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        user.displayName.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="text-sm font-medium">
+                      {user.displayName}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Step 2c: Team (coming soon) ── */}
+        {step === "team" && (
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground text-center">
+              This feature is coming soon.
+            </p>
+          </div>
+        )}
+
+        {/* ── Step 3: Choose role ── */}
+        {step === "role" && (
+          <div className="pt-2">
+            <TooltipProvider skipDelayDuration={300}>
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(ROLE_META).map(([value, meta]) => {
+                  const Icon = meta.icon;
+
+                  return (
+                    <Tooltip key={value} delayDuration={400}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => handleSubmit(value as ProjectMemberRole)}
+                          className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <div className="size-10 rounded-full flex items-center justify-center bg-primary/10">
+                            <Icon className="size-5 text-primary" />
+                          </div>
+                          <div className="text-sm font-medium">
+                            {meta.label}
+                          </div>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        className="max-w-48 text-center"
+                      >
+                        {meta.description}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            </TooltipProvider>
+          </div>
+        )}
+
+        {/* ── Step 4: Done ── */}
+        {step === "done" && (
+          <div className="space-y-4">
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                {inviteType === "invite-link"
+                  ? "Invite ready"
+                  : "Invitation sent"}
+              </DialogTitle>
+              <DialogDescription className="text-center">
+                {inviteType === "invite-link"
+                  ? "The invited person needs both the link and the code to join."
+                  : `${selectedUser?.displayName} has been invited to the project.`}
+              </DialogDescription>
+            </DialogHeader>
+
+            {inviteType === "invite-link" && inviteUrl && (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Invite link</label>
+                  <div className="flex items-stretch rounded-lg border border-border overflow-hidden">
+                    <input
+                      type="text"
+                      value={inviteUrl}
+                      readOnly
+                      className="flex-1 min-w-0 px-3 py-2.5 bg-background text-sm font-mono outline-none border-none truncate"
+                    />
+                    <span className="w-px self-stretch bg-border/30" />
+                    <button
+                      type="button"
+                      onClick={() => handleCopy("link", inviteUrl)}
+                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      {copiedField === "link" ? (
+                        <IconCheck className="size-4 text-green-500" />
+                      ) : (
+                        <IconCopy className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Invitation code</label>
+                  <div className="flex items-stretch rounded-lg border border-border overflow-hidden">
+                    <input
+                      type={showCode ? "text" : "password"}
+                      value={passphrase}
+                      readOnly
+                      className="flex-1 min-w-0 px-3 py-2.5 bg-background text-sm font-mono outline-none border-none truncate"
+                    />
+                    <span className="w-px self-stretch bg-border/30" />
+                    <button
+                      type="button"
+                      onClick={() => setShowCode(!showCode)}
+                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      {showCode ? (
+                        <IconEyeOff className="size-4" />
+                      ) : (
+                        <IconEye className="size-4" />
+                      )}
+                    </button>
+                    <span className="w-px self-stretch bg-border/30" />
+                    <button
+                      type="button"
+                      onClick={() => handleCopy("code", passphrase)}
+                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      {copiedField === "code" ? (
+                        <IconCheck className="size-4 text-green-500" />
+                      ) : (
+                        <IconCopy className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  You won't be able to see the code again after closing this dialog.
+                </p>
+              </div>
+            )}
+
+            <Button
+              onClick={() => onOpenChange(false)}
+              className="w-full cursor-pointer"
+            >
+              Done
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
+// ────────────────────────────────────────────────────────────
+// MembersTabContent (desktop tab)
+// ────────────────────────────────────────────────────────────
+
 export function MembersTabContent() {
   const { projectData } = useValues(projectLogic);
+  const { currentUserRole } = useValues(projectLogic);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
-  if (!projectData) {
-    return null;
-  }
+  if (!projectData) return null;
 
   return (
     <div className="w-full max-w-xl space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold mb-1">Members</h2>
-        <p className="text-sm text-muted-foreground">
-          Manage who has access to{" "}
-          <span className="font-medium text-foreground">{projectData.name}</span>
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold mb-1">Members</h2>
+          <p className="text-sm text-muted-foreground">
+            Manage who has access to{" "}
+            <span className="font-medium text-foreground">
+              {projectData.name}
+            </span>
+          </p>
+        </div>
+
+        {currentUserRole === ProjectMemberRole.Admin && (
+          <Button
+            onClick={() => setWizardOpen(true)}
+            className="cursor-pointer shrink-0"
+          >
+            <IconUserPlus className="size-4 mr-2" />
+            Add people
+          </Button>
+        )}
       </div>
 
       <MembersSection />
       <ActiveInvitesSection />
 
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-2">
-          <IconUserPlus className="size-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium">Invite people</h3>
-        </div>
-
-        <Tabs defaultValue="invite-link" className="w-full flex flex-col gap-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="invite-link">Invite link</TabsTrigger>
-            <TabsTrigger value="suggested">Suggested users</TabsTrigger>
-          </TabsList>
-          <TabsContent value="invite-link">
-            <GenerateNewInviteLinkSection />
-          </TabsContent>
-          <TabsContent value="suggested">
-            <SuggestedUsersSection />
-          </TabsContent>
-        </Tabs>
-      </div>
+      <AddPeopleWizard open={wizardOpen} onOpenChange={setWizardOpen} />
     </div>
   );
+}
+
+// ────────────────────────────────────────────────────────────
+// ProjectAccessDialog (mobile)
+// ────────────────────────────────────────────────────────────
+
+interface ProjectAccessDialogProps {
+  open: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function ProjectAccessDialog({
@@ -878,11 +1028,11 @@ export function ProjectAccessDialog({
   onOpenChange,
 }: ProjectAccessDialogProps) {
   const { projectData } = useValues(projectLogic);
+  const { currentUserRole } = useValues(projectLogic);
   const { invitationsLoading } = useValues(invitationsLogic);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
-  if (!projectData) {
-    return null;
-  }
+  if (!projectData) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -905,26 +1055,18 @@ export function ProjectAccessDialog({
           <MembersSection />
           <ActiveInvitesSection />
 
-          <div className="flex flex-col gap-6">
-            <div className="flex items-center gap-2">
-              <IconUserPlus className="size-4 text-muted-foreground" />
-              <h3 className="text-sm font-medium">Invite people</h3>
-            </div>
-
-            <Tabs defaultValue="invite-link" className="w-full flex flex-col gap-6">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="invite-link">Invite link</TabsTrigger>
-                <TabsTrigger value="suggested">Suggested users</TabsTrigger>
-              </TabsList>
-              <TabsContent value="invite-link">
-                <GenerateNewInviteLinkSection />
-              </TabsContent>
-              <TabsContent value="suggested">
-                <SuggestedUsersSection />
-              </TabsContent>
-            </Tabs>
-          </div>
+          {currentUserRole === ProjectMemberRole.Admin && (
+            <Button
+              onClick={() => setWizardOpen(true)}
+              className="w-full cursor-pointer"
+            >
+              <IconUserPlus className="size-4 mr-2" />
+              Add people
+            </Button>
+          )}
         </div>
+
+        <AddPeopleWizard open={wizardOpen} onOpenChange={setWizardOpen} />
       </DialogContent>
     </Dialog>
   );
