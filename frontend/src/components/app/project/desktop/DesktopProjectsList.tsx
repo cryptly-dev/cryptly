@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
 import type { Project } from "@/lib/api/projects.api";
@@ -157,7 +158,9 @@ export function DesktopProjectsList() {
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <FolderOpen className="w-4 h-4" />
             <span>Projects</span>
-            {localProjects && (
+            {projectsLoading ? (
+              <Spinner className="w-3.5 h-3.5 text-muted-foreground" />
+            ) : localProjects && (
               <span className="text-muted-foreground font-normal">({localProjects.length})</span>
             )}
           </div>
@@ -262,11 +265,7 @@ export function DesktopProjectsList() {
                 );
               })}
             </Reorder.Group>
-          ) : projectsLoading ? (
-            <div className="px-2 py-4 text-sm text-muted-foreground">
-              Loading...
-            </div>
-          ) : !isAddingProject ? (
+          ) : !projectsLoading && !isAddingProject ? (
             <div className="px-2 py-4 text-sm text-muted-foreground">
               No projects yet
             </div>

@@ -256,10 +256,11 @@ function IntegrationsSection() {
 // ────────────────────────────────────────────────────────────
 
 function SuggestedIntegrationSection() {
-  const { suggestedIntegrations, allRepositoriesLoading } =
+  const { suggestedIntegrations, allRepositoriesLoading, installationsLoading, integrationsLoading } =
     useValues(integrationsLogic);
   const { createIntegration } = useAsyncActions(integrationsLogic);
   const [connectingId, setConnectingId] = useState<number | null>(null);
+  const isLoading = installationsLoading || integrationsLoading || allRepositoriesLoading;
 
   const handleConnect = async (repo: typeof suggestedIntegrations[0]["repo"]) => {
     setConnectingId(repo.id);
@@ -276,12 +277,12 @@ function SuggestedIntegrationSection() {
       <SectionHeader
         icon={IconPlus}
         label="Suggested"
-        loading={allRepositoriesLoading}
+        loading={isLoading}
       />
       <p className="text-xs text-muted-foreground">
         Based on your project name, click to connect instantly.
       </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 min-h-[140px]">
         <AnimatePresence mode="popLayout">
           {suggestedIntegrations.map(({ repo }) => (
             <motion.div
@@ -317,7 +318,7 @@ function SuggestedIntegrationSection() {
             </motion.div>
           ))}
         </AnimatePresence>
-        {!allRepositoriesLoading && suggestedIntegrations.length === 0 && (
+        {!isLoading && suggestedIntegrations.length === 0 && (
           <div className="col-span-full flex items-center justify-center py-8">
             <span className="text-sm text-muted-foreground">
               No suggestions found

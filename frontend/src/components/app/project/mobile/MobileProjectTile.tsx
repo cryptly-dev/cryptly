@@ -438,14 +438,21 @@ function MobileProjectHeader({
                 posthog.capture(`${tab.id}_tab_clicked`);
               }}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap flex-shrink-0",
+                "relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap flex-shrink-0",
                 isActive
-                  ? "bg-neutral-800 text-primary"
+                  ? "text-primary"
                   : "text-muted-foreground"
               )}
             >
-              <Icon className="size-4" />
-              <span>{tab.label}</span>
+              {isActive && (
+                <motion.div
+                  layoutId="active-tab-mobile"
+                  className="absolute inset-0 bg-neutral-800 rounded-md"
+                  transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+                />
+              )}
+              <Icon className="relative z-10 size-4" />
+              <span className="relative z-10">{tab.label}</span>
             </button>
           );
         })}
