@@ -43,9 +43,9 @@ import {
   IconUserPlus,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
-import { motion } from "motion/react";
 import posthog from "posthog-js";
 import { useEffect, useMemo, useState } from "react";
+import { WizardStepper } from "@/components/ui/wizard-stepper";
 
 // ────────────────────────────────────────────────────────────
 // Helpers
@@ -229,15 +229,20 @@ function MemberDetailDialog({
                 </TooltipProvider>
               </div>
 
-              <Button
-                onClick={handleRemove}
-                isLoading={isRemoving}
-                variant="ghost"
-                className="w-full cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <IconTrash className="size-4 mr-2" />
-                Remove from project
-              </Button>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">Actions</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={handleRemove}
+                    isLoading={isRemoving}
+                    variant="outline"
+                    className="cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <IconTrash className="size-4 mr-2" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="text-xs px-3 py-1.5 rounded capitalize bg-muted text-muted-foreground">
@@ -479,39 +484,6 @@ function ActiveInvitesSection() {
           />
         ))}
       </div>
-    </div>
-  );
-}
-
-// ────────────────────────────────────────────────────────────
-// Wizard stepper pills
-// ────────────────────────────────────────────────────────────
-
-function WizardStepper({
-  currentStep,
-  totalSteps,
-}: {
-  currentStep: number;
-  totalSteps: number;
-}) {
-  return (
-    <div className="flex items-center justify-center gap-1.5">
-      {Array.from({ length: totalSteps }, (_, i) => {
-        const isActive = i + 1 === currentStep;
-        return (
-          <motion.div
-            key={i}
-            className="h-1.5 rounded-full"
-            animate={{
-              width: isActive ? 24 : 8,
-              backgroundColor: isActive
-                ? "rgba(255,255,255,0.9)"
-                : "rgba(255,255,255,0.2)",
-            }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          />
-        );
-      })}
     </div>
   );
 }
