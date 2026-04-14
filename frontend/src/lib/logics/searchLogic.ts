@@ -25,6 +25,7 @@ export const searchLogic = kea<searchLogicType>([
 
   actions({
     setSearchQuery: (query: string) => ({ query }),
+    startSearch: true,
     clearSearch: true,
     loadSearchableProjects: true,
   }),
@@ -35,6 +36,13 @@ export const searchLogic = kea<searchLogicType>([
       {
         setSearchQuery: (_, { query }) => query,
         clearSearch: () => "",
+      },
+    ],
+    searchActive: [
+      false,
+      {
+        startSearch: () => true,
+        clearSearch: () => false,
       },
     ],
   }),
@@ -101,8 +109,8 @@ export const searchLogic = kea<searchLogicType>([
 
   selectors({
     isSearching: [
-      (s) => [s.searchQuery],
-      (searchQuery) => searchQuery.trim().length > 0,
+      (s) => [s.searchQuery, s.searchActive],
+      (searchQuery, searchActive) => searchActive || searchQuery.trim().length > 0,
     ],
     searchResults: [
       (s) => [s.searchableProjects, s.searchQuery],
