@@ -6,6 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  InputAction,
+  InputWithActions,
+} from "@/components/ui/input-with-actions";
 import type { Device } from "@/lib/api/device-flow.api";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { authLogic } from "@/lib/logics/authLogic";
@@ -16,6 +20,7 @@ import {
   IconExclamationCircle,
   IconEye,
   IconEyeOff,
+  IconLock,
   IconSend,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
@@ -95,52 +100,48 @@ export function UnlockBrowserDialog() {
           <label htmlFor="unlock-pass" className="text-sm font-medium">
             Passphrase
           </label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                id="unlock-pass"
-                type={showPassphrase ? "text" : "password"}
-                value={passphrase}
-                onChange={(e) => {
-                  setLocalPassphrase(e.target.value);
-                  if (isError) {
-                    setIsError(false);
+          <InputWithActions
+            id="unlock-pass"
+            type={showPassphrase ? "text" : "password"}
+            value={passphrase}
+            onChange={(e) => {
+              setLocalPassphrase(e.target.value);
+              if (isError) {
+                setIsError(false);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && passphrase && !submitting) {
+                handleUnlock();
+              }
+            }}
+            placeholder="Enter your passphrase"
+            autoFocus
+            autoComplete="current-password"
+            actions={
+              <>
+                <InputAction
+                  onClick={() => setShowPassphrase(!showPassphrase)}
+                  aria-label={
+                    showPassphrase ? "Hide passphrase" : "Show passphrase"
                   }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && passphrase && !submitting) {
-                    handleUnlock();
-                  }
-                }}
-                className="w-full rounded-md border px-3 py-2 text bg-background text-base sm:text-sm pr-10"
-                autoFocus
-                autoComplete="current-password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassphrase(!showPassphrase)}
-                className="absolute inset-y-0 right-0 flex items-center justify-center h-full px-3 text-muted-foreground hover:text-foreground cursor-pointer"
-                aria-label={
-                  showPassphrase ? "Hide passphrase" : "Show passphrase"
-                }
-              >
-                {showPassphrase ? (
-                  <IconEyeOff className="size-4" />
-                ) : (
-                  <IconEye className="size-4" />
-                )}
-              </button>
-            </div>
-            <Button
-              onClick={handleUnlock}
-              disabled={!passphrase || submitting}
-              isLoading={submitting}
-              className="cursor-pointer"
-            >
-              Unlock
-            </Button>
-          </div>
+                >
+                  {showPassphrase ? (
+                    <IconEyeOff className="size-4" />
+                  ) : (
+                    <IconEye className="size-4" />
+                  )}
+                </InputAction>
+                <InputAction
+                  onClick={handleUnlock}
+                  disabled={!passphrase || submitting}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <IconLock className="size-4" />
+                </InputAction>
+              </>
+            }
+          />
           {isError && (
             <div className="flex items-center gap-2 p-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
               <IconExclamationCircle />
