@@ -13,6 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Invitation } from "@/lib/api/invitations.api";
 import type { PersonalInvitation } from "@/lib/api/personal-invitations.api";
 import { ProjectMemberRole, type ProjectMember } from "@/lib/api/projects.api";
@@ -25,6 +31,8 @@ import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
 import { suggestedUsersLogic } from "@/lib/logics/suggestedUsersLogic";
 import { cn, getRelativeTime } from "@/lib/utils";
 import {
+  IconArrowLeft,
+  IconArrowRight,
   IconCheck,
   IconCopy,
   IconCrown,
@@ -37,6 +45,7 @@ import {
   IconUserPlus,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
+import { motion } from "motion/react";
 import posthog from "posthog-js";
 import { useEffect, useMemo, useState } from "react";
 
@@ -391,6 +400,39 @@ function ActiveInvitesSection() {
 }
 
 // ────────────────────────────────────────────────────────────
+// Wizard stepper pills
+// ────────────────────────────────────────────────────────────
+
+function WizardStepper({
+  currentStep,
+  totalSteps,
+}: {
+  currentStep: number;
+  totalSteps: number;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-1.5">
+      {Array.from({ length: totalSteps }, (_, i) => {
+        const isActive = i + 1 === currentStep;
+        return (
+          <motion.div
+            key={i}
+            className="h-1.5 rounded-full"
+            animate={{
+              width: isActive ? 24 : 8,
+              backgroundColor: isActive
+                ? "rgba(255,255,255,0.9)"
+                : "rgba(255,255,255,0.2)",
+            }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
 // Add People wizard
 // ────────────────────────────────────────────────────────────
 
@@ -403,6 +445,24 @@ type WizardStep =
   | "done";
 
 type InviteType = "invite-link" | "suggested-user" | "team";
+
+const STEP_NUMBER: Record<WizardStep, number> = {
+  type: 1,
+  "invite-link-code": 2,
+  "suggested-user": 2,
+  team: 2,
+  role: 3,
+  done: 3,
+};
+
+const STEP_TITLE: Record<WizardStep, string> = {
+  type: "Add people",
+  "invite-link-code": "Invitation code",
+  "suggested-user": "Choose a person",
+  team: "Team",
+  role: "Choose a role",
+  done: "",
+};
 
 function AddPeopleWizard({
   open,
@@ -423,9 +483,6 @@ function AddPeopleWizard({
   const [step, setStep] = useState<WizardStep>("type");
   const [inviteType, setInviteType] = useState<InviteType | null>(null);
   const [passphrase, setPassphrase] = useState("");
-  const [selectedRole, setSelectedRole] = useState<ProjectMemberRole>(
-    ProjectMemberRole.Read
-  );
   const [selectedUser, setSelectedUser] = useState<SuggestedUser | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -441,7 +498,6 @@ function AddPeopleWizard({
         setStep("type");
         setInviteType(null);
         setPassphrase("");
-        setSelectedRole(ProjectMemberRole.Read);
         setSelectedUser(null);
         setIsSubmitting(false);
         setCopied(false);
@@ -450,20 +506,35 @@ function AddPeopleWizard({
     }
   }, [open]);
 
-  const handleSubmit = async () => {
+  const goBack = () => {
+    if (
+      step === "invite-link-code" ||
+      step === "suggested-user" ||
+      step === "team"
+    )
+      setStep("type");
+    else if (step === "role")
+      setStep(
+        inviteType === "invite-link" ? "invite-link-code" : "suggested-user"
+      );
+  };
+
+  const showBack = step !== "type" && step !== "done";
+
+  const handleSubmit = async (role: ProjectMemberRole) => {
     setIsSubmitting(true);
     try {
       if (inviteType === "invite-link") {
         await createInvitation(
           passphrase,
-          selectedRole as "read" | "write" | "admin"
+          role as "read" | "write" | "admin"
         );
         setStep("done");
       } else if (inviteType === "suggested-user" && selectedUser?.publicKey) {
         await createPersonalInvitation(
           selectedUser.id,
           selectedUser.publicKey,
-          selectedRole
+          role
         );
         posthog.capture("personal_invitation_created");
         setStep("done");
@@ -485,138 +556,150 @@ function AddPeopleWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+        {/* Back arrow */}
+        {showBack && (
+          <button
+            type="button"
+            onClick={goBack}
+            className="absolute top-4 left-4 p-1 rounded-sm opacity-70 hover:opacity-100 transition-opacity cursor-pointer z-10"
+          >
+            <IconArrowLeft className="size-4" />
+          </button>
+        )}
+
+        {/* ── Header: title + info icon + stepper ── */}
+        {step !== "done" && (
+          <div className="flex flex-col items-center gap-3 pt-1">
+            <DialogTitle className="text-center">
+              {STEP_TITLE[step]}
+            </DialogTitle>
+            <WizardStepper
+              currentStep={STEP_NUMBER[step]}
+              totalSteps={3}
+            />
+            <DialogDescription className="sr-only">
+              Step {STEP_NUMBER[step]} of 3
+            </DialogDescription>
+          </div>
+        )}
+
         {/* ── Step 1: Choose type ── */}
         {step === "type" && (
-          <div className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>Add people</DialogTitle>
-              <DialogDescription>
-                Choose how you'd like to invite someone to the project.
-              </DialogDescription>
-            </DialogHeader>
+          <TooltipProvider skipDelayDuration={300}>
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <Tooltip delayDuration={400}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInviteType("invite-link");
+                      setStep("invite-link-code");
+                    }}
+                    className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
+                  >
+                    <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <IconLink className="size-5 text-primary" />
+                    </div>
+                    <div className="text-sm font-medium">Invite link</div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  Secure single-use link
+                </TooltipContent>
+              </Tooltip>
 
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setInviteType("invite-link");
-                  setStep("invite-link-code");
-                }}
-                className="flex flex-col items-center gap-3 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
-              >
-                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <IconLink className="size-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium">Invite link</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Secure single-use link
-                  </div>
-                </div>
-              </button>
+              <Tooltip delayDuration={400}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInviteType("suggested-user");
+                      setStep("suggested-user");
+                    }}
+                    className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
+                  >
+                    <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <IconUserPlus className="size-5 text-primary" />
+                    </div>
+                    <div className="text-sm font-medium">Suggested</div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  Someone you've worked with
+                </TooltipContent>
+              </Tooltip>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setInviteType("suggested-user");
-                  setStep("suggested-user");
-                }}
-                className="flex flex-col items-center gap-3 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
-              >
-                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <IconUserPlus className="size-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium">Suggested</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Someone you've worked with
-                  </div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                disabled
-                className="flex flex-col items-center gap-3 p-5 rounded-lg border border-border/50 bg-neutral-800/30 opacity-50 cursor-not-allowed text-center relative"
-              >
-                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <IconUsers className="size-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium">Team</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Invite an entire team
-                  </div>
-                </div>
-                <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                  Soon
-                </span>
-              </button>
+              <Tooltip delayDuration={400}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    disabled
+                    className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/30 opacity-50 cursor-not-allowed text-center relative"
+                  >
+                    <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <IconUsers className="size-5 text-primary" />
+                    </div>
+                    <div className="text-sm font-medium">Team</div>
+                    <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                      Soon
+                    </span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  Invite an entire team at once
+                </TooltipContent>
+              </Tooltip>
             </div>
-          </div>
+          </TooltipProvider>
         )}
 
         {/* ── Step 2a: Invite-link code ── */}
         {step === "invite-link-code" && (
-          <div className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>Create an invitation code</DialogTitle>
-              <DialogDescription>
-                The code protects the link. Share it separately — only someone
-                who knows both can join.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-3">
-              <input
-                type="text"
-                value={passphrase}
-                onChange={(e) => setPassphrase(e.target.value)}
-                className="w-full rounded-md border px-3 py-2 bg-background text-sm font-mono"
-                placeholder="Enter or generate a code"
-                autoFocus
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full cursor-pointer"
-                onClick={() => setPassphrase(generateInviteCode())}
-              >
-                <IconRefresh className="size-4 mr-2" />
-                Generate random code
-              </Button>
+          <TooltipProvider skipDelayDuration={300}>
+            <div className="space-y-3 pt-2">
+              <div className="flex items-stretch rounded-lg border border-border focus-within:border-primary/60 focus-within:ring-1 focus-within:ring-primary/30 overflow-hidden transition-colors">
+                <input
+                  type="text"
+                  value={passphrase}
+                  onChange={(e) => setPassphrase(e.target.value)}
+                  className="flex-1 min-w-0 px-3 py-2.5 bg-background text-sm font-mono outline-none border-none placeholder:text-muted-foreground/50"
+                  placeholder="Enter or generate a code"
+                  autoFocus
+                />
+                <span className="w-px self-stretch bg-border/30" />
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => setPassphrase(generateInviteCode())}
+                      className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      <IconRefresh className="size-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Generate random code</TooltipContent>
+                </Tooltip>
+                <span className="w-px self-stretch bg-border/30" />
+                <button
+                  type="button"
+                  onClick={() => setStep("role")}
+                  disabled={!passphrase.trim()}
+                  className="flex items-center justify-center w-10 shrink-0 cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <IconArrowRight className="size-4" />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                The code protects the link. Share it separately — only someone who knows both can join.
+              </p>
             </div>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setStep("type")}
-                className="flex-1 cursor-pointer"
-              >
-                Back
-              </Button>
-              <Button
-                onClick={() => setStep("role")}
-                disabled={!passphrase.trim()}
-                className="flex-1 cursor-pointer"
-              >
-                Continue
-              </Button>
-            </div>
-          </div>
+          </TooltipProvider>
         )}
 
         {/* ── Step 2b: Suggested user ── */}
         {step === "suggested-user" && (
-          <div className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>Choose a person</DialogTitle>
-              <DialogDescription>
-                People you've collaborated with in other projects.
-              </DialogDescription>
-            </DialogHeader>
-
+          <div className="space-y-4 pt-2">
             {suggestedUsersLoading && suggestedUsers.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-sm text-muted-foreground">Loading...</div>
@@ -658,110 +741,54 @@ function AddPeopleWizard({
                 ))}
               </div>
             )}
-
-            <Button
-              variant="outline"
-              onClick={() => setStep("type")}
-              className="w-full cursor-pointer"
-            >
-              Back
-            </Button>
           </div>
         )}
 
         {/* ── Step 2c: Team (coming soon) ── */}
         {step === "team" && (
-          <div className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>Team invitations</DialogTitle>
-              <DialogDescription>
-                This feature is coming soon.
-              </DialogDescription>
-            </DialogHeader>
-            <Button
-              variant="outline"
-              onClick={() => setStep("type")}
-              className="w-full cursor-pointer"
-            >
-              Back
-            </Button>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground text-center">
+              This feature is coming soon.
+            </p>
           </div>
         )}
 
         {/* ── Step 3: Choose role ── */}
         {step === "role" && (
-          <div className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>Choose a role</DialogTitle>
-              <DialogDescription>
-                {inviteType === "suggested-user" && selectedUser
-                  ? `What should ${selectedUser.displayName} be able to do?`
-                  : "What should the invited person be able to do?"}
-              </DialogDescription>
-            </DialogHeader>
+          <div className="pt-2">
+            <TooltipProvider skipDelayDuration={300}>
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(ROLE_META).map(([value, meta]) => {
+                  const Icon = meta.icon;
 
-            <div className="grid grid-cols-3 gap-3">
-              {Object.entries(ROLE_META).map(([value, meta]) => {
-                const Icon = meta.icon;
-                const isSelected = selectedRole === value;
-
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() =>
-                      setSelectedRole(value as ProjectMemberRole)
-                    }
-                    className={cn(
-                      "flex flex-col items-center gap-3 p-5 rounded-lg border transition-all cursor-pointer text-center",
-                      isSelected
-                        ? "border-primary bg-primary/10"
-                        : "border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "size-10 rounded-full flex items-center justify-center",
-                        isSelected ? "bg-primary/20" : "bg-primary/10"
-                      )}
-                    >
-                      <Icon className="size-5 text-primary" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">{meta.label}</div>
-                      <div className="text-xs text-muted-foreground mt-1 leading-snug">
+                  return (
+                    <Tooltip key={value} delayDuration={400}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => handleSubmit(value as ProjectMemberRole)}
+                          className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <div className="size-10 rounded-full flex items-center justify-center bg-primary/10">
+                            <Icon className="size-5 text-primary" />
+                          </div>
+                          <div className="text-sm font-medium">
+                            {meta.label}
+                          </div>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        className="max-w-48 text-center"
+                      >
                         {meta.description}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setStep(
-                    inviteType === "invite-link"
-                      ? "invite-link-code"
-                      : "suggested-user"
-                  )
-                }
-                className="flex-1 cursor-pointer"
-              >
-                Back
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                isLoading={isSubmitting}
-                className="flex-1 cursor-pointer"
-              >
-                {inviteType === "invite-link"
-                  ? "Create invite"
-                  : "Send invitation"}
-              </Button>
-            </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            </TooltipProvider>
           </div>
         )}
 
@@ -769,12 +796,12 @@ function AddPeopleWizard({
         {step === "done" && (
           <div className="space-y-4">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-center">
                 {inviteType === "invite-link"
                   ? "Invite ready!"
                   : "Invitation sent!"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-center">
                 {inviteType === "invite-link"
                   ? "Share this link with the person you want to invite. They'll also need the invitation code."
                   : `${selectedUser?.displayName} has been invited to the project.`}
