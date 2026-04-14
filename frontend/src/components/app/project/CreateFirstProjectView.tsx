@@ -1,12 +1,12 @@
 import { AddProjectDialog } from "@/components/dialogs/AddProjectDialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import Waves from "@/components/Waves";
 import { authLogic } from "@/lib/logics/authLogic";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
-import { IconFolder, IconPlus } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useValues } from "kea";
-import { motion } from "motion/react";
 import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 
@@ -82,17 +82,6 @@ export function CreateFirstProjectView() {
 
 function EmptyProjectsState() {
   const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
-
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.9 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 0.6, ease: [0, 1, 0, 1] },
-    },
-  } as const;
 
   const handleCreateProject = () => {
     posthog.capture("add_project_button_clicked");
@@ -100,66 +89,56 @@ function EmptyProjectsState() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <motion.div
-        className="w-full max-w-2xl"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <div className="bg-card rounded-xl shadow-lg border border-border p-12">
-          <div className="text-center">
-            {/* Icon */}
-            <div className="flex justify-center mb-6">
-              <div className="p-6 bg-muted rounded-full">
-                <IconFolder className="w-16 h-16 text-muted-foreground" />
-              </div>
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-8">
+      {/* Background Waves */}
+      <div className="fixed inset-0 z-0 opacity-[0.12] pointer-events-none">
+        <Waves
+          lineColor="rgba(120, 120, 120, 1)"
+          backgroundColor="transparent"
+          waveSpeedX={0.008}
+          waveSpeedY={0.004}
+          waveAmpX={20}
+          waveAmpY={20}
+          maxCursorMove={30}
+        />
+      </div>
 
-            {/* Heading */}
-            <h1 className="text-4xl font-bold text-card-foreground mb-4">
+      <div className="relative z-10 w-full max-w-xs">
+        <div className="text-center space-y-6">
+          {/* Logo */}
+          <img
+            src="/favicon.svg"
+            alt="Cryptly"
+            className="w-14 h-14 mx-auto"
+          />
+
+          {/* Heading */}
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight">
               No projects yet
             </h1>
-
-            {/* Description */}
-            <p className="text-lg text-muted-foreground mb-8 max-w-md mx-auto">
-              Get started by creating your first project. Store and manage your
-              encrypted secrets securely.
+            <p className="text-sm text-muted-foreground">
+              Create your first project to start managing your encrypted secrets.
             </p>
-
-            {/* CTA Button */}
-            <motion.div
-              animate={{ scale: isButtonHovered ? 1.05 : 1 }}
-              transition={{
-                scale: {
-                  type: "spring",
-                  stiffness: 500,
-                  damping: 30,
-                  mass: 0.5,
-                },
-              }}
-              whileTap={{ scale: 0.95 }}
-              onHoverStart={() => setIsButtonHovered(true)}
-              onHoverEnd={() => setIsButtonHovered(false)}
-            >
-              <Button
-                onClick={handleCreateProject}
-                size="lg"
-                className="cursor-pointer gap-2 px-8 py-6 text-lg"
-              >
-                <IconPlus className="w-5 h-5" />
-                Create your first project
-              </Button>
-            </motion.div>
-
-            {/* Add Project Dialog */}
-            <AddProjectDialog
-              open={isAddProjectDialogOpen}
-              onOpenChange={setIsAddProjectDialogOpen}
-            />
           </div>
+
+          {/* CTA Button */}
+          <Button
+            onClick={handleCreateProject}
+            size="default"
+            className="w-2/3 mx-auto cursor-pointer gap-2 rounded-xl"
+          >
+            <IconPlus className="w-5 h-5" />
+            Create your first project
+          </Button>
         </div>
-      </motion.div>
+
+        {/* Add Project Dialog */}
+        <AddProjectDialog
+          open={isAddProjectDialogOpen}
+          onOpenChange={setIsAddProjectDialogOpen}
+        />
+      </div>
     </div>
   );
 }

@@ -366,14 +366,21 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
                 posthog.capture(`${tab.id}_tab_clicked`);
               }}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
+                "relative flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
                 isActive
-                  ? "bg-neutral-800 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-800"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-800/50"
               )}
             >
-              <Icon className="size-4" />
-              <span>{tab.label}</span>
+              {isActive && (
+                <motion.div
+                  layoutId="active-tab-desktop"
+                  className="absolute inset-0 bg-neutral-800 rounded-md"
+                  transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+                />
+              )}
+              <Icon className="relative z-10 size-4" />
+              <span className="relative z-10">{tab.label}</span>
             </button>
           );
 
@@ -581,7 +588,7 @@ function ProjectHeaderSkeleton({ activeTab, onTabChange }: ProjectHeaderProps) {
                 "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
                 isActive
                   ? "bg-neutral-800 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-800"
+                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-800/50"
               )}
             >
               <Icon className="size-4" />
