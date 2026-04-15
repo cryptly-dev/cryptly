@@ -1,5 +1,4 @@
 import Editor, { loader } from "@monaco-editor/react";
-import type * as Monaco from "monaco-editor";
 import { useCallback, useEffect, useRef } from "react";
 
 interface BaseFileEditorProps {
@@ -21,7 +20,7 @@ interface ValueRange {
   endCol: number;
 }
 
-function getValueRanges(model: Monaco.editor.ITextModel): ValueRange[] {
+function getValueRanges(model: any): ValueRange[] {
   const lineCount = model.getLineCount();
   const ranges: ValueRange[] = [];
 
@@ -180,9 +179,9 @@ export function BaseFileEditor({
   lineNumbersMinChars,
   readOnly = false,
 }: BaseFileEditorProps) {
-  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
-  const monacoRef = useRef<typeof Monaco | null>(null);
-  const decorationsRef = useRef<Monaco.editor.IEditorDecorationsCollection | null>(null);
+  const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
+  const decorationsRef = useRef<any>(null);
   const revealedLinesRef = useRef<Set<number>>(new Set());
   /** Revealed lines last applied to decorations — used to pick reveal/hide keyframe classes vs static. */
   const lastAppliedRevealedRef = useRef<Set<number>>(new Set());
@@ -287,8 +286,7 @@ export function BaseFileEditor({
     lastAppliedRevealedRef.current = new Set(revealed);
   }, []);
 
-  const handleEditorMount = useCallback(
-    (editor: Monaco.editor.IStandaloneCodeEditor, monaco: typeof Monaco) => {
+  const handleEditorMount = useCallback((editor: any, monaco: any) => {
       editorRef.current = editor;
       monacoRef.current = monaco;
       injectBlurCSS();
@@ -303,7 +301,7 @@ export function BaseFileEditor({
       });
 
       // Mouse hover — reveal hovered line and one line above/below (PC / fine-pointer hover only)
-      editor.onMouseMove((e) => {
+      editor.onMouseMove((e: any) => {
         if (!hoverRevealEnabledRef.current) return;
 
         const line = e.target?.position?.lineNumber;
@@ -329,7 +327,7 @@ export function BaseFileEditor({
       });
 
       // Cursor position — reveal cursor line and neighbors (keyboard navigation)
-      editor.onDidChangeCursorPosition((e) => {
+      editor.onDidChangeCursorPosition((e: any) => {
         const line = e.position.lineNumber;
         const model = editor.getModel();
         const lineCount = model?.getLineCount() ?? 0;
@@ -365,9 +363,7 @@ export function BaseFileEditor({
           applyBlurDecorations();
         });
       }
-    },
-    [applyBlurDecorations]
-  );
+  }, [applyBlurDecorations]);
 
   const editorOptions = {
     minimap: { enabled: false },
