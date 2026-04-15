@@ -599,7 +599,7 @@ export function IntegrationsTabContent() {
             <IconBraces className="size-3" />
             Editor
           </span>{" "}
-          to deploy secrets to{" "}
+          to push secrets to{" "}
           <IconBrandGithub className="inline size-3.5 align-text-bottom text-muted-foreground" />{" "}
           GitHub Actions
         </p>
