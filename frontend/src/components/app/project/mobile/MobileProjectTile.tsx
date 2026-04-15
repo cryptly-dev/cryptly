@@ -60,7 +60,7 @@ const MOBILE_TABS: { id: MobileTabType; label: string; icon: typeof IconBraces }
   { id: "editor", label: "Editor", icon: IconBraces },
   { id: "history", label: "History", icon: IconHistory },
   { id: "members", label: "Members", icon: IconUsers },
-  { id: "integrations", label: "Repositories", icon: IconBrandGithub },
+  { id: "integrations", label: "GitHub Secrets", icon: IconBrandGithub },
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 
