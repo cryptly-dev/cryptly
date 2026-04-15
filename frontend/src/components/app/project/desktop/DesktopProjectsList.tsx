@@ -301,7 +301,7 @@ export function DesktopProjectsList() {
               return (
                 <div
                   key={repo.id}
-                  className="group relative flex items-center justify-between rounded-md px-3 py-2 text-sm select-none border border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors"
+                  className="group relative flex items-center justify-between rounded-md px-3 py-2.5 text-sm select-none text-muted-foreground/60 hover:bg-neutral-800/50 hover:text-muted-foreground transition-colors"
                 >
                   <button
                     type="button"
@@ -316,11 +316,11 @@ export function DesktopProjectsList() {
                   />
                   <div className="flex items-center gap-2 min-w-0 flex-1 pointer-events-none">
                     {isAccepting ? (
-                      <Spinner className="w-3 h-3 text-primary flex-shrink-0" />
+                      <Spinner className="w-3 h-3 flex-shrink-0" />
                     ) : (
-                      <Plus className="w-3 h-3 text-primary/60 flex-shrink-0" />
+                      <Plus className="w-3 h-3 flex-shrink-0 opacity-50" />
                     )}
-                    <span className="font-medium truncate text-[13px] text-muted-foreground">
+                    <span className="truncate text-[13px]">
                       {repo.name}
                     </span>
                   </div>
@@ -330,7 +330,7 @@ export function DesktopProjectsList() {
                       e.stopPropagation();
                       dismissSuggestion(repo.id);
                     }}
-                    className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
+                    className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity hover:text-foreground cursor-pointer"
                   >
                     <X className="w-3 h-3" />
                   </button>
