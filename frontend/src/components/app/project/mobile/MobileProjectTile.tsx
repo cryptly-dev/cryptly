@@ -49,8 +49,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
 import { useEffect, useMemo, useState } from "react";
-import { CopyAllButton } from "../CopyAllButton";
-import { SavePushButtonGroup } from "../SavePushButtonGroup";
+import { SavePushPill } from "../SavePushPill";
 import { MobileFileEditor } from "./MobileFileEditor";
 import { MobileHistoryView } from "./MobileHistoryView";
 
@@ -184,39 +183,37 @@ export function MobileProjectTile() {
                 <SettingsTabContent />
               </div>
             ) : (
-              <div className="h-full">
+              <div className="h-full relative">
                 <MobileFileEditor
                   value={inputValue}
                   onChange={(v) => setInputValue(v)}
                   readOnly={isReadOnly}
                 />
-                  <AnimatePresence mode="wait">
-                    {changedBy && (
-                      <motion.div
-                        className="pointer-events-none absolute inset-x-0 bottom-14 flex justify-center"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ ease: "easeInOut", duration: 0.1 }}
-                      >
-                  <span className="rounded-full bg-card/80 backdrop-blur px-3 py-1 text-xs text-muted-foreground shadow-sm border border-border/50">
-                    Changed by {changedBy}{" "}
-                          {getRelativeTime(projectData.updatedAt)}
-                        </span>
-                      </motion.div>
-              )}
-                  </AnimatePresence>
-          </div>
+                {/* Changed-by label — bottom */}
+                <AnimatePresence mode="wait">
+                  {changedBy && (
+                    <motion.div
+                      className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center z-10"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ ease: "easeInOut", duration: 0.1 }}
+                    >
+                      <span className="rounded-full bg-card/80 backdrop-blur px-3 py-1 text-xs text-muted-foreground shadow-sm border border-border/50">
+                        Changed by {changedBy}{" "}
+                        {getRelativeTime(projectData.updatedAt)}
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {/* Save/Push pill — top right */}
+                <div className="absolute top-3 right-3 z-10">
+                  <SavePushPill />
+                </div>
+              </div>
         )}
       </div>
 
-      {/* Bottom action bar - only when editor is active */}
-      {activeTab === "editor" && projectData && (
-        <div className="flex items-center justify-end gap-2 px-3 py-2 border-t border-border/50 bg-card/20 backdrop-blur-sm">
-          <SavePushButtonGroup />
-          <CopyAllButton disabled={!projectData} />
-        </div>
-      )}
     </div>
   );
 }
