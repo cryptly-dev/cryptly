@@ -14,8 +14,9 @@ import type { Project } from "@/lib/api/projects.api";
 import { UserApi } from "@/lib/api/user.api";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { searchLogic } from "@/lib/logics/searchLogic";
+import { suggestedProjectsLogic } from "@/lib/logics/suggestedProjectsLogic";
 import { useActions, useAsyncActions, useValues } from "kea";
-import { ChevronRight, FolderOpen, LogOut, Pencil, Plus, Search, User, Check, X } from "lucide-react";
+import { ChevronRight, FolderOpen, GitBranch, Info, LogOut, Pencil, Plus, Search, User, Check, X } from "lucide-react";
 import { motion, Reorder, useDragControls } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
@@ -31,6 +32,8 @@ export function DesktopProjectsList() {
   const { logout } = useAuth();
   const { searchQuery } = useValues(searchLogic);
   const { setSearchQuery } = useActions(searchLogic);
+  const { suggestedProjects, loading: suggestionsLoading, acceptingRepoId, hasInstallations } = useValues(suggestedProjectsLogic);
+  const { acceptSuggestion, dismissSuggestion } = useActions(suggestedProjectsLogic);
   const navigate = useNavigate();
   
   const [localProjects, setLocalProjects] = useState(projects);
@@ -272,6 +275,71 @@ export function DesktopProjectsList() {
           ) : null}
         </div>
       </div>
+
+      {/* Suggested Projects */}
+      {hasInstallations && suggestedProjects.length > 0 && !projectsLoading && (
+        <motion.div
+          className="border-t border-border/50 px-2 py-2"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0, 1, 0.25, 1] }}
+        >
+          <div className="px-2 py-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <GitBranch className="w-3.5 h-3.5" />
+            <span>Suggested</span>
+            {suggestionsLoading && <Spinner className="w-3 h-3" />}
+            <div className="relative group/info ml-auto">
+              <Info className="w-3 h-3 cursor-help" />
+              <div className="absolute bottom-full mb-1.5 right-0 w-48 bg-popover text-popover-foreground text-xs rounded-md py-2 px-3 opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none shadow-md border border-border z-50">
+                Repos from your GitHub installations that don't match any existing project. Click to create a project and link it.
+              </div>
+            </div>
+          </div>
+          <div className="space-y-0.5">
+            {suggestedProjects.map((repo) => {
+              const isAccepting = acceptingRepoId === repo.id;
+              return (
+                <div
+                  key={repo.id}
+                  className="group relative flex items-center justify-between rounded-md px-3 py-2 text-sm select-none border border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors"
+                >
+                  <button
+                    type="button"
+                    disabled={acceptingRepoId !== null}
+                    onClick={() => {
+                      posthog.capture("suggested_project_accepted");
+                      acceptSuggestion(repo, (projectId) =>
+                        navigate({ to: `/app/project/${projectId}` })
+                      );
+                    }}
+                    className="absolute inset-0 rounded-md cursor-pointer disabled:cursor-not-allowed"
+                  />
+                  <div className="flex items-center gap-2 min-w-0 flex-1 pointer-events-none">
+                    {isAccepting ? (
+                      <Spinner className="w-3 h-3 text-primary flex-shrink-0" />
+                    ) : (
+                      <Plus className="w-3 h-3 text-primary/60 flex-shrink-0" />
+                    )}
+                    <span className="font-medium truncate text-[13px] text-muted-foreground">
+                      {repo.name}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dismissSuggestion(repo.id);
+                    }}
+                    className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
 
       {/* Bottom Section - User Profile */}
       <div className="border-t border-border/50 p-3">
