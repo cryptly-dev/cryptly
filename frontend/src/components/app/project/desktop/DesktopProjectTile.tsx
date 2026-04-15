@@ -25,8 +25,8 @@ import { searchLogic } from "@/lib/logics/searchLogic";
 import { cn, getRelativeTime } from "@/lib/utils";
 import {
   IconBraces,
+  IconBrandGithub,
   IconHistory,
-  IconPlugConnected,
   IconSettings,
   IconUsers,
 } from "@tabler/icons-react";
@@ -43,7 +43,7 @@ const TABS: { id: TabType; label: string; icon: typeof IconBraces }[] = [
   { id: "editor", label: "Editor", icon: IconBraces },
   { id: "history", label: "History", icon: IconHistory },
   { id: "members", label: "Members", icon: IconUsers },
-  { id: "integrations", label: "Integrations", icon: IconPlugConnected },
+  { id: "integrations", label: "Repositories", icon: IconBrandGithub },
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 
@@ -420,9 +420,9 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
                       {/* Description */}
                       <p className="text-sm text-foreground leading-relaxed">
                         <div>
-                          Link external services like{" "}
+                          Connect{" "}
                           <GitHubIcon className="inline w-4 h-4 align-text-bottom" />{" "}
-                          GitHub to automatically sync your secrets.
+                          GitHub repositories to automatically sync your secrets.
                         </div>
                       </p>
 
