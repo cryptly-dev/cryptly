@@ -43,7 +43,7 @@ const TABS: { id: TabType; label: string; icon: typeof IconBraces }[] = [
   { id: "editor", label: "Editor", icon: IconBraces },
   { id: "history", label: "History", icon: IconHistory },
   { id: "members", label: "Members", icon: IconUsers },
-  { id: "integrations", label: "GitHub Secrets", icon: IconBrandGithub },
+  { id: "integrations", label: "GitHub secrets", icon: IconBrandGithub },
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 
