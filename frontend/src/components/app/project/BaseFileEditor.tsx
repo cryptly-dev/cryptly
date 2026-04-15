@@ -27,9 +27,26 @@ export function BaseFileEditor({
       monaco.languages.setMonarchTokensProvider("dotenv", {
         tokenizer: {
           root: [
-            [/^[A-Z0-9_]+(?==)/, "variable"],
-            [/"([^"\\]|\\.)*"/, "string"],
-            [/#.*/, "comment"],
+            [/#.*$/, "comment"],
+            [/^[a-zA-Z_][a-zA-Z0-9_.]*(?=\s*=)/, "variable"],
+            [/=/, "delimiter", "@value"],
+            [/./, ""],
+          ],
+          value: [
+            [/#.*$/, "comment", "@pop"],
+            [/"/, "string", "@doubleQuoteString"],
+            [/'/, "string", "@singleQuoteString"],
+            [/.*$/, "string", "@pop"],
+          ],
+          doubleQuoteString: [
+            [/\\./, "string.escape"],
+            [/"/, "string", "@pop"],
+            [/./, "string"],
+          ],
+          singleQuoteString: [
+            [/\\./, "string.escape"],
+            [/'/, "string", "@pop"],
+            [/./, "string"],
           ],
         },
       });
@@ -39,7 +56,9 @@ export function BaseFileEditor({
         inherit: true,
         rules: [
           { token: "variable", foreground: "D4AF37" },
+          { token: "delimiter", foreground: "666666" },
           { token: "string", foreground: "A3A3A3" },
+          { token: "string.escape", foreground: "D4AF37" },
           { token: "comment", foreground: "6A9955", fontStyle: "italic" },
         ],
         colors: {
