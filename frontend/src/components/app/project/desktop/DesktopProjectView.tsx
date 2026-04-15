@@ -10,7 +10,7 @@ export function DesktopProjectView() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 h-full">
+      <main className="flex-1 h-full min-w-0">
         <DesktopProjectTile />
       </main>
     </div>

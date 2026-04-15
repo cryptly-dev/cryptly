@@ -20,7 +20,7 @@ import {
   IconExclamationCircle,
   IconEye,
   IconEyeOff,
-  IconLock,
+  IconArrowRight,
   IconSend,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
@@ -137,7 +137,7 @@ export function UnlockBrowserDialog() {
                   disabled={!passphrase || submitting}
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                 >
-                  <IconLock className="size-4" />
+                  <IconArrowRight className="size-4" />
                 </InputAction>
               </>
             }

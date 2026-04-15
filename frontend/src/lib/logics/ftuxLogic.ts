@@ -33,7 +33,10 @@ export const ftuxLogic = kea<ftuxLogicType>([
       FTUXStep.NOT_STARTED as FTUXStep,
       {
         setCurrentStep: (_, { step }) => step,
-        startFTUX: () => FTUXStep.EDITOR,
+        startFTUX: () =>
+          localStorage.getItem(FTUX_STORAGE_KEY) === "true"
+            ? FTUXStep.COMPLETED
+            : FTUXStep.EDITOR,
         skipFTUX: () => FTUXStep.COMPLETED,
         completeFTUX: () => FTUXStep.COMPLETED,
       },
@@ -41,7 +44,8 @@ export const ftuxLogic = kea<ftuxLogicType>([
     isFTUXActive: [
       false as boolean,
       {
-        startFTUX: () => true,
+        startFTUX: () =>
+          localStorage.getItem(FTUX_STORAGE_KEY) !== "true",
         skipFTUX: () => false,
         completeFTUX: () => false,
       },
