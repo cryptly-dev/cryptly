@@ -29,8 +29,8 @@ import { searchLogic, type SearchableProject } from "@/lib/logics/searchLogic";
 import { cn, getRelativeTime } from "@/lib/utils";
 import {
   IconBraces,
+  IconBrandGithub,
   IconHistory,
-  IconPlugConnected,
   IconSettings,
   IconUsers,
 } from "@tabler/icons-react";
@@ -60,7 +60,7 @@ const MOBILE_TABS: { id: MobileTabType; label: string; icon: typeof IconBraces }
   { id: "editor", label: "Editor", icon: IconBraces },
   { id: "history", label: "History", icon: IconHistory },
   { id: "members", label: "Members", icon: IconUsers },
-  { id: "integrations", label: "Integrations", icon: IconPlugConnected },
+  { id: "integrations", label: "Repositories", icon: IconBrandGithub },
   { id: "settings", label: "Settings", icon: IconSettings },
 ];
 
