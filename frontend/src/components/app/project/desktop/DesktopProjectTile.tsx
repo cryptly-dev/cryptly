@@ -1,7 +1,6 @@
-import { CopyAllButton } from "@/components/app/project/CopyAllButton";
+import { SavePushPill } from "@/components/app/project/SavePushPill";
 import { DesktopHistoryView } from "@/components/app/project/desktop/DesktopHistoryView";
 import { FileEditor } from "@/components/app/project/FileEditor";
-import { SavePushButtonGroup } from "@/components/app/project/SavePushButtonGroup";
 import { IntegrationsTabContent } from "@/components/dialogs/IntegrationsDialog";
 import { MembersTabContent } from "@/components/dialogs/ProjectAccessDialog";
 import { SettingsTabContent } from "@/components/dialogs/ProjectSettingsDialog";
@@ -39,6 +38,7 @@ import React, { useEffect, useMemo, useState } from "react";
 
 type TabType = "editor" | "history" | "members" | "settings" | "integrations";
 
+
 const TABS: { id: TabType; label: string; icon: typeof IconBraces }[] = [
   { id: "editor", label: "Editor", icon: IconBraces },
   { id: "history", label: "History", icon: IconHistory },
@@ -60,7 +60,8 @@ export function DesktopProjectTile() {
   const { userData } = useValues(authLogic);
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
   const isReadOnly = currentUserRole === ProjectMemberRole.Read;
-  const { shouldShowEditorTooltip, currentStepNumber } = useValues(ftuxLogic);
+  const { shouldShowEditorTooltip, shouldShowSaveTooltip, currentStepNumber } =
+    useValues(ftuxLogic);
   const {
     startFTUX,
     skipFTUX,
@@ -210,14 +211,15 @@ export function DesktopProjectTile() {
                       onChange={(v) => setInputValue(v)}
                       readOnly={isReadOnly}
                     />
+                    {/* Changed-by label — top */}
                     <AnimatePresence mode="wait">
                       {changedBy && (
                         <motion.div
-                          className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center"
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          transition={{ ease: "easeInOut", duration: 0.1 }}
+                          className="pointer-events-none absolute inset-x-0 top-4 flex justify-center z-10"
+                          initial={{ opacity: 0, y: -2, scale: 0.9 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -2, scale: 0.9 }}
+                          transition={{ ease: [0, 1, 0.25, 1], duration: 0.1 }}
                         >
                           <span className="rounded-full bg-card/80 backdrop-blur px-3 py-1 text-xs text-muted-foreground shadow-sm border border-border/50">
                             Changed by {changedBy}{" "}
@@ -226,6 +228,94 @@ export function DesktopProjectTile() {
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    {/* Pill */}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
+                      <div className="pointer-events-auto">
+                        <TooltipProvider>
+                          <Tooltip
+                            open={shouldShowSaveTooltip}
+                            delayDuration={0}
+                          >
+                            <TooltipTrigger asChild>
+                              <div>
+                                <SavePushPill
+                                  suppressShortcutTooltip={
+                                    shouldShowSaveTooltip
+                                  }
+                                />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="top"
+                              align="center"
+                              sideOffset={12}
+                              className="w-80 p-4 shadow-2xl"
+                              onPointerDownOutside={(e) => e.preventDefault()}
+                            >
+                              <TooltipArrow />
+                              <div className="flex flex-col gap-4">
+                                <div className="flex items-start justify-between gap-4">
+                                  <span className="text-sm font-medium text-muted-foreground">
+                                    Step {currentStepNumber} of 3
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={skipFTUX}
+                                    className="h-5 w-5 hover:bg-secondary cursor-pointer"
+                                    aria-label="Skip tutorial"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <p className="text-sm text-foreground leading-relaxed">
+                                  Click Save or press{" "}
+                                  <Kbd className="inline-flex !text-white">
+                                    <CommandIcon className="size-3 !text-white" />
+                                  </Kbd>{" "}
+                                  +{" "}
+                                  <Kbd className="inline-flex !text-white">
+                                    S
+                                  </Kbd>
+                                  . Your data is encrypted before it ever leaves
+                                  your device.
+                                </p>
+                                <div className="flex justify-between gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={skipFTUX}
+                                    className="text-muted-foreground hover:text-foreground cursor-pointer"
+                                  >
+                                    Skip tutorial
+                                  </Button>
+                                  <div className="flex gap-2">
+                                    {currentStepNumber > 1 && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={previousStep}
+                                        className="px-2 border cursor-pointer"
+                                        aria-label="Previous step"
+                                      >
+                                        <ArrowLeft className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      onClick={nextStep}
+                                      className="font-semibold cursor-pointer"
+                                    >
+                                      Next
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
                   </div>
               </div>
             </TooltipTrigger>
@@ -333,11 +423,8 @@ interface ProjectHeaderProps {
 function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
   const { isExternallyUpdated } = useValues(projectLogic);
 
-  const {
-    shouldShowSaveTooltip,
-    shouldShowIntegrationsTooltip,
-    currentStepNumber,
-  } = useValues(ftuxLogic);
+  const { shouldShowIntegrationsTooltip, currentStepNumber } =
+    useValues(ftuxLogic);
   const { skipFTUX, nextStep, previousStep, userOpenedIntegrationsDialog } =
     useActions(ftuxLogic);
 
@@ -481,90 +568,6 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
             </div>
           </div>
         )}
-        {activeTab === "editor" && (
-          <div className="flex items-center gap-3 overflow-visible">
-            <div className="relative overflow-visible">
-              <TooltipProvider>
-                <Tooltip open={shouldShowSaveTooltip} delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <SavePushButtonGroup />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="bottom"
-                    align="end"
-                    sideOffset={6}
-                    className="w-80 p-4 shadow-2xl"
-                    onPointerDownOutside={(e) => e.preventDefault()}
-                  >
-                    <TooltipArrow />
-                    <div className="flex flex-col gap-4">
-                      {/* Header */}
-                      <div className="flex items-start justify-between gap-4">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          Step {currentStepNumber} of 3
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={skipFTUX}
-                          className="h-5 w-5 hover:bg-secondary cursor-pointer"
-                          aria-label="Skip tutorial"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-sm text-foreground leading-relaxed">
-                        Click Save or press{" "}
-                        <Kbd className="inline-flex !text-white">
-                          <CommandIcon className="size-3 !text-white" />
-                        </Kbd>{" "}
-                        + <Kbd className="inline-flex !text-white">S</Kbd>. Your
-                        data is encrypted before it ever leaves your device.
-                      </p>
-
-                      {/* Actions */}
-                      <div className="flex justify-between gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={skipFTUX}
-                          className="text-muted-foreground hover:text-foreground cursor-pointer"
-                        >
-                          Skip tutorial
-                        </Button>
-                        <div className="flex gap-2">
-                          {currentStepNumber > 1 && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={previousStep}
-                              className="px-2 border cursor-pointer"
-                              aria-label="Previous step"
-                            >
-                              <ArrowLeft className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            onClick={nextStep}
-                            className="font-semibold cursor-pointer"
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <CopyAllButton />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -598,15 +601,7 @@ function ProjectHeaderSkeleton({ activeTab, onTabChange }: ProjectHeaderProps) {
         })}
       </div>
 
-      {/* Right side - actions */}
-      <div className="flex items-center gap-3">
-        {activeTab === "editor" && (
-          <div className="flex items-center gap-3">
-            <SavePushButtonGroup />
-            <CopyAllButton disabled />
-          </div>
-        )}
-      </div>
+      <div />
     </div>
   );
 }
