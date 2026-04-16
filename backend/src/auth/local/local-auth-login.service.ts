@@ -6,6 +6,7 @@ import { AuthMethod } from '../../user/core/enum/auth-method.enum';
 import { TokenResponse } from '../../shared/responses/token.response';
 import { LocalLoginBody } from './dto/local-login.body';
 import { getEnvConfig } from '../../shared/config/env-config';
+import { RefreshTokenWriteService } from '../refresh-token/write/refresh-token-write.service';
 
 @Injectable()
 export class LocalAuthLoginService {
@@ -15,6 +16,7 @@ export class LocalAuthLoginService {
     private readonly jwtService: CustomJwtService,
     private readonly userReadService: UserReadService,
     private readonly userWriteService: UserWriteService,
+    private readonly refreshTokenWriteService: RefreshTokenWriteService,
   ) {}
 
   public async login(dto: LocalLoginBody): Promise<TokenResponse> {
@@ -40,6 +42,7 @@ export class LocalAuthLoginService {
 
       return {
         token: await this.jwtService.sign({ id: newUser.id }),
+        refreshToken: (await this.refreshTokenWriteService.issue(newUser.id)).rawToken,
         isNewUser: true,
       };
     }
@@ -51,6 +54,7 @@ export class LocalAuthLoginService {
 
     return {
       token: await this.jwtService.sign({ id: user.id }),
+      refreshToken: (await this.refreshTokenWriteService.issue(user.id)).rawToken,
       isNewUser: false,
     };
   }

@@ -6,6 +6,7 @@ import { AuthCoreModule } from './auth/core/auth-core.module';
 import { GithubAuthModule } from './auth/github/github-auth.module';
 import { GoogleAuthModule } from './auth/google/google-auth.module';
 import { LocalAuthModule } from './auth/local/local-auth.module';
+import { RefreshTokenCoreModule } from './auth/refresh-token/core/refresh-token-core.module';
 import { HealthModule } from './health/health.module';
 import { InvitationCoreModule } from './invitation/core/invitation-core.module';
 import { PersonalInvitationCoreModule } from './personal-invitation/core/personal-invitation-core.module';
@@ -31,6 +32,7 @@ import { GithubExternalConnectionCoreModule } from './external-connection/github
     GoogleAuthModule,
     GithubAuthModule,
     LocalAuthModule,
+    RefreshTokenCoreModule,
     HealthModule,
     GithubExternalConnectionCoreModule,
   ],

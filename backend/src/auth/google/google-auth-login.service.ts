@@ -7,6 +7,7 @@ import { UserWriteService } from '../../user/write/user-write.service';
 import { CustomJwtService } from '../custom-jwt/custom-jwt.service';
 import { GoogleLoginBody } from './dto/google-login.body';
 import { GoogleAuthDataService } from './google-auth-data.service';
+import { RefreshTokenWriteService } from '../refresh-token/write/refresh-token-write.service';
 
 @Injectable()
 export class GoogleAuthLoginService {
@@ -17,6 +18,7 @@ export class GoogleAuthLoginService {
     private readonly logger: Logger,
     private readonly authGoogleDataService: GoogleAuthDataService,
     private readonly metrics: Metrics,
+    private readonly refreshTokenWriteService: RefreshTokenWriteService,
   ) {}
 
   public async login(dto: GoogleLoginBody): Promise<TokenResponse> {
@@ -51,6 +53,7 @@ export class GoogleAuthLoginService {
 
       return {
         token: await this.jwtService.sign({ id: user.id }),
+        refreshToken: (await this.refreshTokenWriteService.issue(user.id)).rawToken,
         isNewUser: true,
       };
     }
@@ -61,6 +64,7 @@ export class GoogleAuthLoginService {
 
     return {
       token: await this.jwtService.sign({ id: user.id }),
+      refreshToken: (await this.refreshTokenWriteService.issue(user.id)).rawToken,
       isNewUser: false,
     };
   }

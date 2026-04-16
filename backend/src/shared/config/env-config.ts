@@ -21,6 +21,9 @@ export interface EnvConfig {
   };
   auth: {
     jwtSecret: string;
+    jwtExpiresIn: string;
+    refreshTokenSecret: string;
+    refreshTokenExpiresIn: string;
     allowLocalLogin: boolean;
   };
   logdash: {
@@ -66,6 +69,9 @@ export const EnvConfigs: EnvConfigs = {
     },
     auth: {
       jwtSecret: process.env.JWT_SECRET!,
+      jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
+      refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET!,
+      refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',
       allowLocalLogin: process.env.ALLOW_LOCAL_LOGIN === 'true',
     },
     logdash: {
@@ -104,6 +110,9 @@ export const EnvConfigs: EnvConfigs = {
     },
     auth: {
       jwtSecret: process.env.JWT_SECRET!,
+      jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
+      refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET!,
+      refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',
       allowLocalLogin: process.env.ALLOW_LOCAL_LOGIN === 'true',
     },
     logdash: {

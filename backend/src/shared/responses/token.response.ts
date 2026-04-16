@@ -1,9 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TokenResponse {
   @ApiProperty()
   token: string;
 
-  @ApiProperty()
-  isNewUser: boolean;
+  @ApiPropertyOptional()
+  refreshToken?: string;
+
+  @ApiPropertyOptional()
+  isNewUser?: boolean;
 }
