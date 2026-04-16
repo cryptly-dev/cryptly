@@ -12,17 +12,21 @@ const InputWithActions = React.forwardRef<
   InputWithActionsProps
 >(({ className, actions, focusRing = true, ...props }, ref) => {
   return (
-    <div className="flex items-stretch">
+    <div
+      className={cn(
+        "flex items-stretch border border-border rounded-lg bg-background transition-colors",
+        focusRing && "focus-within:border-neutral-500"
+      )}
+    >
       <input
         ref={ref}
         className={cn(
-          "flex-1 min-w-0 px-3 py-2.5 bg-background text-sm outline-none placeholder:text-muted-foreground/50 border border-border rounded-l-lg transition-colors",
-          focusRing && "focus:border-neutral-500",
+          "flex-1 min-w-0 px-3 py-2.5 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50",
           className
         )}
         {...props}
       />
-      <div className="flex items-stretch border border-l-0 border-border rounded-r-lg overflow-hidden">
+      <div className="flex items-center gap-0.5 pr-1">
         {actions}
       </div>
     </div>
@@ -35,20 +39,17 @@ const InputAction = React.forwardRef<
   React.ButtonHTMLAttributes<HTMLButtonElement>
 >(({ className, children, ...props }, ref) => {
   return (
-    <>
-      <span className="w-px self-stretch bg-border/30" />
-      <button
-        ref={ref}
-        type="button"
-        className={cn(
-          "flex items-center justify-center w-10 shrink-0 cursor-pointer bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
-          className
-        )}
-        {...props}
-      >
-        {children}
-      </button>
-    </>
+    <button
+      ref={ref}
+      type="button"
+      className={cn(
+        "flex items-center justify-center size-8 shrink-0 cursor-pointer rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </button>
   );
 });
 InputAction.displayName = "InputAction";

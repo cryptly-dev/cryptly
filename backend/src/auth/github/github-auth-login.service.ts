@@ -7,6 +7,7 @@ import { UserWriteService } from '../../user/write/user-write.service';
 import { CustomJwtService } from '../custom-jwt/custom-jwt.service';
 import { GithubLoginBody } from './dto/github-login.body';
 import { GithubAuthDataService } from './github-auth-data.service';
+import { RefreshTokenWriteService } from '../refresh-token/write/refresh-token-write.service';
 
 @Injectable()
 export class GithubAuthLoginService {
@@ -17,6 +18,7 @@ export class GithubAuthLoginService {
     private readonly logger: Logger,
     private readonly authGithubDataService: GithubAuthDataService,
     private readonly metrics: Metrics,
+    private readonly refreshTokenWriteService: RefreshTokenWriteService,
   ) {}
 
   public async login(dto: GithubLoginBody): Promise<TokenResponse> {
@@ -53,6 +55,7 @@ export class GithubAuthLoginService {
 
       return {
         token: await this.jwtService.sign({ id: user.id }),
+        refreshToken: (await this.refreshTokenWriteService.issue(user.id)).rawToken,
         isNewUser: true,
       };
     }
@@ -63,6 +66,7 @@ export class GithubAuthLoginService {
 
     return {
       token: await this.jwtService.sign({ id: user.id }),
+      refreshToken: (await this.refreshTokenWriteService.issue(user.id)).rawToken,
       isNewUser: false,
     };
   }

@@ -9,6 +9,7 @@ import * as nock from 'nock';
 import { AuthCoreModule } from '../../src/auth/core/auth-core.module';
 import { GithubAuthModule } from '../../src/auth/github/github-auth.module';
 import { GoogleAuthModule } from '../../src/auth/google/google-auth.module';
+import { RefreshTokenCoreModule } from '../../src/auth/refresh-token/core/refresh-token-core.module';
 import { GithubExternalConnectionClientService } from '../../src/external-connection/github/client/github-external-connection-client.service';
 import { GithubInstallationEntity } from '../../src/external-connection/github/core/entities/github-installation.entity';
 import { GithubIntegrationEntity } from '../../src/external-connection/github/core/entities/github-integration.entity';
@@ -71,6 +72,7 @@ export async function createTestApp(): Promise<TestApp> {
       LogdashModule,
       GoogleAuthModule,
       GithubAuthModule,
+      RefreshTokenCoreModule,
       HealthModule,
       GithubExternalConnectionCoreModule,
     ],

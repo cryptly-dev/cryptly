@@ -18,12 +18,12 @@ const QUICK_USERS = [
 
 export function LocalLoginForm() {
   const [email, setEmail] = useState("");
-  const { setJwtToken } = useActions(authLogic);
+  const { setTokens } = useActions(authLogic);
   const navigate = useNavigate();
 
   const loginWithEmail = async (loginEmail: string) => {
-    const token = await AuthApi.loginLocal(loginEmail);
-    setJwtToken(token);
+    const { token, refreshToken } = await AuthApi.loginLocal(loginEmail);
+    setTokens(token, refreshToken);
     navigate({ to: "/app/project" });
   };
 

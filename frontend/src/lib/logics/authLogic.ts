@@ -22,6 +22,11 @@ export const authLogic = kea<authLogicType>([
 
   actions({
     setJwtToken: (jwtToken: string) => ({ jwtToken }),
+    setRefreshToken: (refreshToken: string) => ({ refreshToken }),
+    setTokens: (jwtToken: string, refreshToken: string) => ({
+      jwtToken,
+      refreshToken,
+    }),
     setUserData: (userData: User) => ({ userData }),
 
     reset: true,
@@ -40,6 +45,19 @@ export const authLogic = kea<authLogicType>([
       },
       {
         setJwtToken: (_, { jwtToken }) => jwtToken,
+        setTokens: (_, { jwtToken }) => jwtToken,
+        reset: () => null,
+        logout: () => null,
+      },
+    ],
+    refreshToken: [
+      null as string | null,
+      {
+        persist: true,
+      },
+      {
+        setRefreshToken: (_, { refreshToken }) => refreshToken,
+        setTokens: (_, { refreshToken }) => refreshToken,
         reset: () => null,
         logout: () => null,
       },
@@ -58,26 +76,26 @@ export const authLogic = kea<authLogicType>([
     isLoggedIn: [(state) => [state.jwtToken], (jwtToken) => jwtToken !== null],
   }),
 
-  loaders(({ values }) => ({
+  loaders(({ values, actions }) => ({
     jwtToken: {
       exchangeGoogleCodeForJwt: async (
         googleCode: string
       ): Promise<string | null> => {
-        const jwtTokenValue = await AuthApi.loginGoogle(googleCode);
-
-        return jwtTokenValue;
+        const result = await AuthApi.loginGoogle(googleCode);
+        actions.setRefreshToken(result.refreshToken);
+        return result.token;
       },
       exchangeGithubCodeForJwt: async (
         githubCode: string
       ): Promise<string | null> => {
-        const jwtTokenValue = await AuthApi.loginGithub(githubCode);
-
-        return jwtTokenValue;
+        const result = await AuthApi.loginGithub(githubCode);
+        actions.setRefreshToken(result.refreshToken);
+        return result.token;
       },
       loginLocal: async (email: string): Promise<string | null> => {
-        const jwtTokenValue = await AuthApi.loginLocal(email);
-
-        return jwtTokenValue;
+        const result = await AuthApi.loginLocal(email);
+        actions.setRefreshToken(result.refreshToken);
+        return result.token;
       },
     },
     userData: {
@@ -95,10 +113,19 @@ export const authLogic = kea<authLogicType>([
     },
   })),
 
-  listeners(({ actions }) => ({
-    logout: () => {
+  listeners(({ actions, values }) => ({
+    logout: async () => {
+      const currentRefreshToken = values.refreshToken;
       actions.reset();
       router.actions.push("/app/login");
+
+      if (currentRefreshToken) {
+        try {
+          await AuthApi.logout(currentRefreshToken);
+        } catch {
+          // best effort; ignore errors
+        }
+      }
     },
   })),
 
