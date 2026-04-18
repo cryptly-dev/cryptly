@@ -8,23 +8,23 @@ interface CryptlyLogoProps {
   active?: boolean;
 }
 
-const ACTIVE_BG_HEX = "#0060D1";
+const ACTIVE_BG_HEX = "#ffffff";
 
-const KEY_COLOR_DEFAULT = "#292929";
+const KEY_COLOR_DEFAULT = "#000000";
 const KEY_COLOR_ACTIVE = ACTIVE_BG_HEX;
 
-const RING_COLOR_DEFAULT = "#0060D1";
+const RING_COLOR_DEFAULT = "#b0b4b3";
 const RING_COLOR_ACTIVE = ACTIVE_BG_HEX;
 
-const HOLE_RADIUS_DEFAULT = 10;
+const HOLE_RADIUS_DEFAULT = 8;
 const HOLE_RADIUS_ACTIVE = 0;
 
-const RING_OUTER_RADIUS_DEFAULT = 18;
-const RING_OUTER_RADIUS_ACTIVE = 16;
+const RING_OUTER_RADIUS_DEFAULT = 14;
+const RING_OUTER_RADIUS_ACTIVE = 14;
 
 const CENTER = 50;
 const RING_OUTER_R = 40;
-const RING_INNER_R = 34;
+const RING_INNER_R = 22;
 // Notch opening half-height. Outer and inner share the same value so the
 // notch walls run parallel (straight across) instead of slanting inward.
 // Default is the wider resting gap; active is the tighter gap used on hover.
