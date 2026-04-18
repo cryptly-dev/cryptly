@@ -486,11 +486,19 @@ function MobileSearchHeader({ query, resultCount, isLoading, onClose, onQueryCha
         <div className="flex-1 relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
           <input
-            type="text"
+            type="search"
+            name="project-search"
             placeholder="Search..."
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             autoFocus
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-1p-ignore
+            data-lpignore="true"
+            data-form-type="other"
             className="w-full h-8 pl-8 pr-3 rounded-md bg-muted/50 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20"
           />
         </div>
