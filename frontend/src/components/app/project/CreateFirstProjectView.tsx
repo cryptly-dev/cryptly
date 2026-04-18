@@ -1,7 +1,8 @@
 import { AddProjectDialog } from "@/components/dialogs/AddProjectDialog";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import Waves from "@/components/Waves";
+import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
+import { CryptlyLogo } from "@/components/ui/CryptlyLogo";
+import { TypingDots } from "@/components/ui/TypingDots";
 import { authLogic } from "@/lib/logics/authLogic";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
 import { IconPlus } from "@tabler/icons-react";
@@ -52,9 +53,9 @@ export function CreateFirstProjectView() {
     return (
       <div className="w-screen h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Spinner className="h-12 w-12" />
+          <BlinkingCursor className="h-12 w-3" />
           <span className="text-lg text-muted-foreground">
-            Loading your projects...
+            Loading your projects<TypingDots />
           </span>
         </div>
       </div>
@@ -71,9 +72,9 @@ export function CreateFirstProjectView() {
   return (
     <div className="w-screen h-screen flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <Spinner className="h-12 w-12" />
+        <BlinkingCursor className="h-12 w-3" />
         <span className="text-lg text-muted-foreground">
-          Redirecting to your project...
+          Redirecting to your project<TypingDots />
         </span>
       </div>
     </div>
@@ -90,27 +91,10 @@ function EmptyProjectsState() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-8">
-      {/* Background Waves */}
-      <div className="fixed inset-0 z-0 opacity-[0.12] pointer-events-none">
-        <Waves
-          lineColor="rgba(120, 120, 120, 1)"
-          backgroundColor="transparent"
-          waveSpeedX={0.008}
-          waveSpeedY={0.004}
-          waveAmpX={20}
-          waveAmpY={20}
-          maxCursorMove={30}
-        />
-      </div>
-
       <div className="relative z-10 w-full max-w-xs">
         <div className="text-center space-y-6">
           {/* Logo */}
-          <img
-            src="/favicon.svg"
-            alt="Cryptly"
-            className="w-14 h-14 mx-auto"
-          />
+          <CryptlyLogo size={56} className="mx-auto" />
 
           {/* Heading */}
           <div className="space-y-2">
