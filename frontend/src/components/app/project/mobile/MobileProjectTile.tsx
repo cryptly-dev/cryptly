@@ -209,7 +209,9 @@ export function MobileProjectTile() {
                 </AnimatePresence>
                 {/* Save/Push pill — top right */}
                 <div className="absolute top-3 right-3 z-10">
-                  <SavePushPill />
+                  <SavePushPill
+                    onConnectIntegrations={() => setActiveTab("integrations")}
+                  />
                 </div>
               </div>
         )}

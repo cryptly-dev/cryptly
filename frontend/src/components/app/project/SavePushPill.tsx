@@ -32,10 +32,12 @@ const style = {
 
 interface SavePushPillProps {
   suppressShortcutTooltip?: boolean;
+  onConnectIntegrations?: () => void;
 }
 
 export function SavePushPill({
   suppressShortcutTooltip,
+  onConnectIntegrations,
 }: SavePushPillProps) {
   const {
     isSubmitting,
@@ -260,7 +262,19 @@ export function SavePushPill({
           </TooltipTrigger>
           {pushDisabledReason && !showSlideToConfirm && (
             <TooltipContent side="top" sideOffset={8} className="text-xs">
-              {pushDisabledReason}
+              <span>{pushDisabledReason}</span>
+              {!hasIntegrations && !isReadOnly && onConnectIntegrations && (
+                <>
+                  {". "}
+                  <button
+                    type="button"
+                    onClick={onConnectIntegrations}
+                    className="underline underline-offset-2 cursor-pointer hover:text-white focus:outline-none"
+                  >
+                    Connect now?
+                  </button>
+                </>
+              )}
             </TooltipContent>
           )}
         </Tooltip>
