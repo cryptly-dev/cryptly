@@ -73,7 +73,6 @@ export function DesktopProjectTile() {
   const { isSearching, searchResults, searchQuery, searchableProjectsLoading } = useValues(searchLogic);
   const { clearSearch } = useActions(searchLogic);
   const [_currentTime, setCurrentTime] = useState(Date.now()); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const [hasStartedFTUX, setHasStartedFTUX] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("editor");
 
   const changedBy = useMemo(() => {
@@ -127,13 +126,14 @@ export function DesktopProjectTile() {
     return () => clearInterval(interval);
   }, []);
 
-  // Start FTUX when project loads for the first time
+  // Attempt to start FTUX whenever a project loads. The logic itself is
+  // idempotent and only actually runs when FTUX was queued (right after
+  // passphrase setup) and has not already been completed/skipped.
   useEffect(() => {
-    if (projectData && !hasStartedFTUX) {
-      setHasStartedFTUX(true);
+    if (projectData) {
       startFTUX();
     }
-  }, [projectData, hasStartedFTUX, startFTUX]);
+  }, [projectData, startFTUX]);
 
   // Track when user makes their first edit
   useEffect(() => {
