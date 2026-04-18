@@ -24,7 +24,7 @@ import {
   IconSend,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export function UnlockBrowserDialog() {
   const { browserIsUnlocked, shouldSetUpPassphrase } = useValues(keyLogic);
@@ -39,6 +39,7 @@ export function UnlockBrowserDialog() {
   const [showPassphrase, setShowPassphrase] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isError, setIsError] = useState(false);
+  const passphraseInputRef = useRef<HTMLInputElement>(null);
 
   const open = useMemo(() => {
     return !browserIsUnlocked && isLoggedIn && !shouldSetUpPassphrase;
@@ -74,6 +75,10 @@ export function UnlockBrowserDialog() {
       await decryptPrivateKey();
     } catch (e) {
       setIsError(true);
+      requestAnimationFrame(() => {
+        passphraseInputRef.current?.focus();
+        passphraseInputRef.current?.select();
+      });
     } finally {
       setSubmitting(false);
     }
@@ -101,6 +106,7 @@ export function UnlockBrowserDialog() {
             Passphrase
           </label>
           <InputWithActions
+            ref={passphraseInputRef}
             id="unlock-pass"
             type={showPassphrase ? "text" : "password"}
             value={passphrase}
