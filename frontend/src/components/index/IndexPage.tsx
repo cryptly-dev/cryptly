@@ -57,7 +57,7 @@ export function IndexPage() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 2, ease: [0, 1, 0, 1] }}
         >
-          <h1 className="text-center text-5xl font-bold text-neutral-100 md:text-7xl lg:text-8xl">
+          <h1 className="text-center text-5xl font-semibold text-neutral-100 md:text-7xl lg:text-8xl">
             <span className="">Cryptly</span>
           </h1>
 

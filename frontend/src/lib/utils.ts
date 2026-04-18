@@ -46,6 +46,27 @@ export function getRelativeTime(dateString: string): string {
   }
 }
 
+export function getCompactRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInSeconds = Math.floor(diffInMs / 1000);
+
+  if (diffInSeconds < 60) return "now";
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m`;
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h`;
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) return `${diffInDays}d`;
+  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)}w`;
+  if (diffInDays < 365) return `${Math.floor(diffInDays / 30)}mo`;
+  return `${Math.floor(diffInDays / 365)}y`;
+}
+
 export function withTimeout<T>(p: Promise<T>, ms: number) {
   return Promise.race([
     p,

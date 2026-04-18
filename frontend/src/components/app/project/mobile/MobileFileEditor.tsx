@@ -15,7 +15,7 @@ export function MobileFileEditor({
       onChange={onChange}
       height="100%"
       fontSize={16}
-      padding={{ top: 12, bottom: 8 }}
+      padding={{ top: 12, bottom: 80 }}
       lineNumbersMinChars={3}
       readOnly={readOnly}
     />

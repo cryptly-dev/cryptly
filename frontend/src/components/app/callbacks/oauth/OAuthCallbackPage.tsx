@@ -1,6 +1,7 @@
 import { useAfterLogin } from "@/lib/hooks/useAfterLogin";
 import { authLogic } from "@/lib/logics/authLogic";
-import { Spinner } from "@/components/ui/spinner";
+import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
+import { TypingDots } from "@/components/ui/TypingDots";
 import { useValues } from "kea";
 import posthog from "posthog-js";
 import { useEffect, useState } from "react";
@@ -43,10 +44,10 @@ export function OAuthCallbackPage({
 
   return (
     <div className="w-screen h-screen flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <Spinner className="h-12 w-12" />
+      <div className="flex items-center gap-2">
+        <BlinkingCursor className="h-5 w-2" />
         <span className="text-lg text-muted-foreground">
-          Fetching projects...
+          Fetching projects<TypingDots />
         </span>
       </div>
     </div>

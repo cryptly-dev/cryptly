@@ -1,4 +1,7 @@
+import { BulbIcon } from "@/components/ui/BulbIcon";
 import { Button } from "@/components/ui/button";
+import { ConnectionIcon } from "@/components/ui/ConnectionIcon";
+import { DisconnectionIcon } from "@/components/ui/DisconnectionIcon";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +11,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { WizardStepper } from "@/components/ui/wizard-stepper";
 import type { Integration } from "@/lib/api/integrations.api";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
@@ -22,139 +31,93 @@ import {
   IconExternalLink,
   IconLink,
   IconPlus,
-  IconTrash,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
-import { CloudUpload, Info } from "lucide-react";
+import { CloudUpload } from "lucide-react";
 import posthog from "posthog-js";
 import { useEffect, useState } from "react";
 
 // ────────────────────────────────────────────────────────────
-// Integration card (grid item)
+// Integration row
 // ────────────────────────────────────────────────────────────
 
-function IntegrationCard({
+function IntegrationRow({
   integration,
-  onClick,
+  canDelete,
 }: {
   integration: Integration;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50 hover:bg-neutral-800 hover:border-primary/30 transition-colors cursor-pointer text-center"
-    >
-      <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-        {integration.repositoryData?.avatarUrl ? (
-          <img
-            src={integration.repositoryData.avatarUrl}
-            alt={integration.repositoryData.owner}
-            className="size-12 rounded-full object-cover"
-          />
-        ) : (
-          <IconBrandGithub className="size-5" />
-        )}
-      </div>
-
-      <div className="text-sm font-medium truncate w-full text-center">
-        {integration.repositoryData?.name ?? "Unknown"}
-      </div>
-
-      <div className="text-xs text-muted-foreground truncate w-full">
-        {integration.repositoryData?.owner}
-      </div>
-    </button>
-  );
-}
-
-// ────────────────────────────────────────────────────────────
-// Integration detail dialog
-// ────────────────────────────────────────────────────────────
-
-function IntegrationDetailDialog({
-  integration,
-  open,
-  onOpenChange,
-}: {
-  integration: Integration | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  canDelete: boolean;
 }) {
   const { removeIntegration } = useActions(integrationsLogic);
-  const { currentUserRole } = useValues(projectLogic);
-  const [isRemoving, setIsRemoving] = useState(false);
+  const owner = integration.repositoryData?.owner;
+  const name = integration.repositoryData?.name ?? "Unknown";
+  const avatarUrl = integration.repositoryData?.avatarUrl;
+  const repoUrl = `https://github.com/${owner}/${name}`;
 
-  useEffect(() => {
-    if (open) setIsRemoving(false);
-  }, [open]);
+  const handleOpen = () => {
+    window.open(repoUrl, "_blank");
+  };
 
-  if (!integration) return null;
-
-  const canDelete = currentUserRole === ProjectMemberRole.Admin;
-
-  const handleRemove = () => {
-    setIsRemoving(true);
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
     removeIntegration(integration.id);
-    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="sm:max-w-sm"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        <div className="flex flex-col items-center gap-4">
-          <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <IconBrandGithub className="size-7" />
-          </div>
+    <div className="group flex items-center gap-3 px-4 py-3 hover:bg-neutral-800/40 transition-colors">
+      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={owner}
+            className="size-8 rounded-full object-cover"
+          />
+        ) : (
+          <IconBrandGithub className="size-4" />
+        )}
+      </div>
 
-          <DialogTitle>
-            {integration.repositoryData?.owner}/
-            {integration.repositoryData?.name}
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Repository details
-          </DialogDescription>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium truncate">{name}</div>
+        <div className="text-xs text-muted-foreground truncate">{owner}</div>
+      </div>
 
-          <div className="text-xs px-3 py-1.5 rounded bg-muted text-muted-foreground">
-            GitHub
-          </div>
-
-          <div className="w-full space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Actions</label>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="cursor-pointer"
-                onClick={() =>
-                  window.open(
-                    `https://github.com/${integration.repositoryData?.owner}/${integration.repositoryData?.name}`,
-                    "_blank"
-                  )
-                }
-              >
-                <IconExternalLink className="size-4 mr-2" />
-                Open
-              </Button>
-              {canDelete && (
-                <Button
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleOpen}
+          className="cursor-pointer h-8 px-2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <IconExternalLink className="size-4 mr-1.5" />
+          Open
+        </Button>
+        {canDelete ? (
+          <TooltipProvider>
+            <Tooltip delayDuration={150}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
                   onClick={handleRemove}
-                  isLoading={isRemoving}
-                  variant="outline"
-                  className="cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+                  aria-label="Remove connection"
+                  className="group/disconnect inline-flex items-center justify-center size-8 rounded-md text-green-600 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                 >
-                  <IconTrash className="size-4 mr-2" />
-                  Remove
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+                  <ConnectionIcon className="size-4 group-hover/disconnect:hidden" />
+                  <DisconnectionIcon className="size-4 hidden group-hover/disconnect:block" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={6}>
+                Remove connection?
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <span className="inline-flex items-center justify-center size-8 text-green-600">
+            <ConnectionIcon className="size-4" />
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -184,45 +147,46 @@ function SectionHeader({
 // Integrations section (grid, always visible)
 // ────────────────────────────────────────────────────────────
 
-function IntegrationsSection() {
+function IntegrationsSection({
+  canConnect,
+  onConnect,
+}: {
+  canConnect: boolean;
+  onConnect: () => void;
+}) {
   const { integrations, integrationsLoading } = useValues(integrationsLogic);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const selected = selectedId
-    ? integrations.find((i) => i.id === selectedId) ?? null
-    : null;
+  const showEmptyState = !integrationsLoading && integrations.length === 0;
 
   return (
     <div className="space-y-3">
-      <SectionHeader
-        icon={IconLink}
-        label="Connected"
-        loading={integrationsLoading && integrations.length === 0}
-      />
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {integrations.length > 0 ? (
-          integrations.map((integration) => (
-            <IntegrationCard
+      {integrations.length > 0 ? (
+        <div className="rounded-lg border border-border/50 bg-neutral-800/20 overflow-hidden divide-y divide-border/50">
+          {integrations.map((integration) => (
+            <IntegrationRow
               key={integration.id}
               integration={integration}
-              onClick={() => setSelectedId(integration.id)}
+              canDelete={canConnect}
             />
-          ))
-        ) : !integrationsLoading ? (
-          <div className="col-span-full flex items-center justify-center py-8">
-            <span className="text-sm text-muted-foreground">
-              No repositories connected yet
-            </span>
-          </div>
-        ) : null}
-      </div>
-      <IntegrationDetailDialog
-        integration={selected}
-        open={!!selected}
-        onOpenChange={(open) => {
-          if (!open) setSelectedId(null);
-        }}
-      />
+          ))}
+        </div>
+      ) : showEmptyState && !canConnect ? (
+        <div className="flex items-center justify-center rounded-lg border border-dashed border-border/50 bg-neutral-800/20 py-8">
+          <span className="text-sm text-muted-foreground">
+            No repositories connected yet
+          </span>
+        </div>
+      ) : null}
+      {canConnect && !integrationsLoading && (
+        <button
+          type="button"
+          onClick={onConnect}
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-white text-neutral-900 h-8 w-fit px-4 text-sm font-semibold hover:bg-white/90 transition-colors cursor-pointer shadow-sm"
+        >
+          <IconPlus className="size-4" />
+          {integrations.length > 0 ? "Connect another repository" : "Connect repository"}
+        </button>
+      )}
     </div>
   );
 }
@@ -232,13 +196,20 @@ function IntegrationsSection() {
 // ────────────────────────────────────────────────────────────
 
 function SuggestedIntegrationSection() {
-  const { suggestedIntegrations, allRepositoriesLoading, installationsLoading, integrationsLoading } =
-    useValues(integrationsLogic);
+  const {
+    suggestedIntegrations,
+    allRepositoriesLoading,
+    installationsLoading,
+    integrationsLoading,
+  } = useValues(integrationsLogic);
   const { createIntegration } = useAsyncActions(integrationsLogic);
   const [connectingId, setConnectingId] = useState<number | null>(null);
-  const isLoading = installationsLoading || integrationsLoading || allRepositoriesLoading;
+  const isLoading =
+    installationsLoading || integrationsLoading || allRepositoriesLoading;
 
-  const handleConnect = async (repo: typeof suggestedIntegrations[0]["repo"]) => {
+  const handleConnect = async (
+    repo: (typeof suggestedIntegrations)[0]["repo"]
+  ) => {
     setConnectingId(repo.id);
     await createIntegration(Number(repo.id), repo.installationEntityId);
     setConnectingId(null);
@@ -248,13 +219,13 @@ function SuggestedIntegrationSection() {
     });
   };
 
+  if (!isLoading && suggestedIntegrations.length === 0) {
+    return null;
+  }
+
   return (
     <div className="space-y-3">
-      <SectionHeader
-        icon={IconPlus}
-        label="Suggested"
-        loading={isLoading}
-      />
+      <SectionHeader icon={IconPlus} label="Suggested" loading={isLoading} />
       <p className="text-xs text-muted-foreground">
         Based on your project name, click to connect instantly.
       </p>
@@ -286,13 +257,6 @@ function SuggestedIntegrationSection() {
             </div>
           </button>
         ))}
-        {!isLoading && suggestedIntegrations.length === 0 && (
-          <div className="col-span-full flex items-center justify-center py-8">
-            <span className="text-sm text-muted-foreground">
-              No suggestions found
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -411,13 +375,8 @@ function AddIntegrationWizard({
 
         {/* Header */}
         <div className="flex flex-col items-center gap-3 pt-1">
-          <DialogTitle className="text-center">
-            {STEP_TITLE[step]}
-          </DialogTitle>
-          <WizardStepper
-            currentStep={STEP_NUMBER[step]}
-            totalSteps={2}
-          />
+          <DialogTitle className="text-center">{STEP_TITLE[step]}</DialogTitle>
+          <WizardStepper currentStep={STEP_NUMBER[step]} totalSteps={2} />
           <DialogDescription className="sr-only">
             Step {STEP_NUMBER[step]} of 2
           </DialogDescription>
@@ -431,10 +390,7 @@ function AddIntegrationWizard({
                 <div className="text-sm text-muted-foreground">
                   No GitHub installations found.
                 </div>
-                <Button
-                  onClick={handleInstallApp}
-                  className="cursor-pointer"
-                >
+                <Button onClick={handleInstallApp} className="cursor-pointer">
                   <IconPlus className="size-4 mr-2" />
                   Install GitHub App
                 </Button>
@@ -567,46 +523,43 @@ export function IntegrationsTabContent() {
 
   return (
     <div className="w-full max-w-xl space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold mb-1">Repositories</h2>
-          <p className="text-sm text-muted-foreground">
-            Connect GitHub repositories to{" "}
-            <span className="font-medium text-foreground">
-              {projectData?.name}
-            </span>
-          </p>
-        </div>
-
-        {currentUserRole === ProjectMemberRole.Admin && (
-          <Button
-            onClick={() => setWizardOpen(true)}
-            className="cursor-pointer shrink-0"
-          >
-            <IconPlus className="size-4 mr-2" />
-            Connect repository
-          </Button>
-        )}
-      </div>
-
-      <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-neutral-800/30 px-4 py-3">
-        <Info className="size-3.5 text-muted-foreground shrink-0" />
-        <p className="text-xs text-muted-foreground">
-          Hit{" "}
-          <CloudUpload className="inline size-3.5 align-text-bottom text-muted-foreground" />{" "}
-          Push in{" "}
-          <span className="inline-flex items-center gap-1 align-middle bg-secondary/50 px-1.5 py-0.5 rounded text-[11px] text-foreground font-medium">
-            <IconBraces className="size-3" />
-            Editor
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Sync externally</h2>
+        <p className="text-sm text-muted-foreground">
+          Integrate your{" "}
+          <span className="font-medium text-foreground">
+            {projectData?.name}
           </span>{" "}
-          to push secrets to{" "}
-          <IconBrandGithub className="inline size-3.5 align-text-bottom text-muted-foreground" />{" "}
-          GitHub Actions
+          secrets with Github Actions.
         </p>
       </div>
 
-      <IntegrationsSection />
-      {!integrationsLoading && integrations.length === 0 && <SuggestedIntegrationSection />}
+      {integrations.length > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-neutral-800/30 px-4 py-3">
+          <BulbIcon className="size-4 text-amber-500 shrink-0" />
+
+          <p className="text-xs text-muted-foreground">
+            Hit{" "}
+            <CloudUpload className="inline size-3.5 align-text-bottom text-muted-foreground" />{" "}
+            Push in the{" "}
+            <span className="inline-flex items-center gap-1 align-middle bg-secondary/50 px-1.5 py-0.5 rounded text-[11px] text-foreground font-medium">
+              <IconBraces className="size-3" />
+              Editor
+            </span>{" "}
+            to push secrets to{" "}
+            <IconBrandGithub className="inline size-3.5 align-text-bottom text-muted-foreground" />{" "}
+            GitHub Actions
+          </p>
+        </div>
+      )}
+
+      <IntegrationsSection
+        canConnect={currentUserRole === ProjectMemberRole.Admin}
+        onConnect={() => setWizardOpen(true)}
+      />
+      {!integrationsLoading && integrations.length === 0 && (
+        <SuggestedIntegrationSection />
+      )}
 
       <AddIntegrationWizard open={wizardOpen} onOpenChange={setWizardOpen} />
     </div>
@@ -645,24 +598,16 @@ export function IntegrationsDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <IntegrationsSection />
-          {!integrationsLoading && integrations.length === 0 && <SuggestedIntegrationSection />}
-
-          {currentUserRole === ProjectMemberRole.Admin && (
-            <Button
-              onClick={() => setWizardOpen(true)}
-              className="w-full cursor-pointer"
-            >
-              <IconPlus className="size-4 mr-2" />
-              Connect repository
-            </Button>
+          <IntegrationsSection
+            canConnect={currentUserRole === ProjectMemberRole.Admin}
+            onConnect={() => setWizardOpen(true)}
+          />
+          {!integrationsLoading && integrations.length === 0 && (
+            <SuggestedIntegrationSection />
           )}
         </div>
 
-        <AddIntegrationWizard
-          open={wizardOpen}
-          onOpenChange={setWizardOpen}
-        />
+        <AddIntegrationWizard open={wizardOpen} onOpenChange={setWizardOpen} />
       </DialogContent>
     </Dialog>
   );
