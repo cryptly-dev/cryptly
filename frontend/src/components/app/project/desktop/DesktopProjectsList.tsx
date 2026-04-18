@@ -23,9 +23,10 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { searchLogic } from "@/lib/logics/searchLogic";
 import { suggestedProjectsLogic } from "@/lib/logics/suggestedProjectsLogic";
 import { useActions, useAsyncActions, useValues } from "kea";
-import { ChevronRight, FolderOpen, Info, LogOut, Pencil, Plus, Search, User, Check, Wand2, X } from "lucide-react";
+import { ChevronRight, Info, LogOut, Pencil, Plus, Search, User, Check, Wand2, X } from "lucide-react";
+import { FolderIcon } from "@/components/ui/FolderIcon";
 import { motion, Reorder, useDragControls } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
 import posthog from "posthog-js";
 import { authLogic } from "@/lib/logics/authLogic";
@@ -43,7 +44,17 @@ export function DesktopProjectsList() {
   const { acceptSuggestion, dismissSuggestion } = useActions(suggestedProjectsLogic);
   const navigate = useNavigate();
   
-  const [localProjects, setLocalProjects] = useState(projects);
+  const uniqueProjects = useMemo(() => {
+    if (!projects) return projects;
+    const seen = new Set<string>();
+    return projects.filter((p) => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+  }, [projects]);
+
+  const [localProjects, setLocalProjects] = useState(uniqueProjects);
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState(userData?.displayName || "");
   const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
@@ -115,8 +126,8 @@ export function DesktopProjectsList() {
   };
 
   useEffect(() => {
-    setLocalProjects(projects);
-  }, [projects]);
+    setLocalProjects(uniqueProjects);
+  }, [uniqueProjects]);
 
   const listVariants = {
     hidden: {},
@@ -174,7 +185,7 @@ export function DesktopProjectsList() {
         {/* Section Header */}
         <div className="px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <FolderOpen className="w-4 h-4" />
+            <FolderIcon className="w-4 h-4" />
             <span>Projects</span>
             {projectsLoading ? (
               <Spinner className="w-3.5 h-3.5 text-muted-foreground" />
@@ -212,7 +223,7 @@ export function DesktopProjectsList() {
               exit={{ opacity: 0, height: 0 }}
               className="mb-0.5"
             >
-              <div className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-primary/30 bg-primary/5">
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm border border-primary/30 bg-primary/5">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <input
                   ref={newProjectInputRef}
