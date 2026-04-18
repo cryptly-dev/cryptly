@@ -1,4 +1,5 @@
 import AddProjectDialog from "@/components/dialogs/AddProjectDialog";
+import { CryptlyLogo } from "@/components/ui/CryptlyLogo";
 import { IntegrationsTabContent } from "@/components/dialogs/IntegrationsDialog";
 import { MembersTabContent } from "@/components/dialogs/ProjectAccessDialog";
 import { SettingsTabContent } from "@/components/dialogs/ProjectSettingsDialog";
@@ -281,7 +282,7 @@ function MobileProjectHeader({
       {/* Top row - Project selector, Search icon, Avatar */}
       <div className="flex items-center gap-2 px-3 py-2">
         <Link to="/" className="flex-shrink-0">
-          <img src="/favicon.svg" alt="Cryptly" className="w-6 h-6 brightness-0 invert" />
+          <CryptlyLogo size={24} />
         </Link>
 
         <Select
