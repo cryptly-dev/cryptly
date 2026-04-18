@@ -17,13 +17,17 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 const style = {
-  pill: "bg-[#1e1e1e] shadow-[4px_4px_12px_rgba(0,0,0,0.4),-4px_-4px_12px_rgba(255,255,255,0.03)] border border-[#2a2a2a]",
-  save: "text-neutral-300 hover:text-white hover:bg-white/[0.04]",
-  saveDisabled: "text-neutral-600",
+  pill: "bg-[#1e1e1e] shadow-[4px_4px_12px_rgba(0,0,0,0.4),-4px_-4px_12px_rgba(255,255,255,0.03)] border border-[#2a2a2a] p-1.5",
+  save: "bg-white text-black hover:bg-neutral-100 font-semibold rounded-full",
+  saveDisabled: "text-neutral-600 font-medium rounded-full",
   divider: "bg-neutral-700/30",
-  push: "text-neutral-300 hover:text-white hover:bg-white/[0.04]",
-  pushDisabled: "text-neutral-600",
+  push: "bg-white text-black hover:bg-neutral-100 font-semibold rounded-full",
+  pushDisabled: "text-neutral-600 font-medium rounded-full",
   spinner: "border-neutral-600 border-t-neutral-300",
+  buttonBase:
+    "flex items-center gap-2.5 px-6 py-3 transition-all duration-200 cursor-pointer disabled:cursor-default",
+  buttonEnabledText: "text-[17px]",
+  buttonDisabledText: "text-base",
 };
 
 interface SavePushPillProps {
@@ -164,8 +168,10 @@ export function SavePushPill({
               onClick={handleSave}
               disabled={saveDisabled}
               className={cn(
-                "flex items-center gap-2.5 px-6 py-3 text-base font-medium rounded-l-full transition-all duration-200 cursor-pointer disabled:cursor-default",
-                saveDisabled ? style.saveDisabled : style.save
+                style.buttonBase,
+                saveDisabled
+                  ? cn(style.buttonDisabledText, style.saveDisabled)
+                  : cn(style.buttonEnabledText, style.save)
               )}
             >
               {isSubmitting ? (
@@ -229,8 +235,10 @@ export function SavePushPill({
                   onClick={handlePushClick}
                   disabled={!pushEnabled}
                   className={cn(
-                    "flex items-center gap-2.5 px-6 py-3 text-base font-medium rounded-r-full transition-all duration-200 cursor-pointer disabled:cursor-default",
-                    !pushEnabled ? style.pushDisabled : style.push
+                    style.buttonBase,
+                    !pushEnabled
+                      ? cn(style.buttonDisabledText, style.pushDisabled)
+                      : cn(style.buttonEnabledText, style.push)
                   )}
                 >
                   {isPushing ? (
