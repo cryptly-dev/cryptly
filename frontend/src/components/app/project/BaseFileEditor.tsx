@@ -187,8 +187,7 @@ export function BaseFileEditor({
   const lastAppliedRevealedRef = useRef<Set<number>>(new Set());
   /** Phones / touch-primary UAs report `hover: none`; skip pointer-hover reveal (use caret/tap only). */
   const hoverRevealEnabledRef = useRef(
-    typeof window !== "undefined" &&
-      window.matchMedia("(hover: hover)").matches
+    typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches
   );
 
   useEffect(() => {
@@ -236,15 +235,15 @@ export function BaseFileEditor({
         base: "vs-dark",
         inherit: true,
         rules: [
-          { token: "variable", foreground: "F47067" },
-          { token: "delimiter", foreground: "ADBAC7" },
-          { token: "identifier", foreground: "ADBAC7" },
-          { token: "string", foreground: "96D0FF" },
-          { token: "string.escape", foreground: "F69D50" },
+          { token: "variable", foreground: "509DDA" },
+          { token: "delimiter", foreground: "CCCCCC" },
+          { token: "identifier", foreground: "CCCCCC" },
+          { token: "string", foreground: "CCCCCC" },
+          { token: "string.escape", foreground: "D7BA7D" },
           { token: "comment", foreground: "545C66", fontStyle: "italic" },
         ],
         colors: {
-          "editor.foreground": "#ADBAC7",
+          "editor.foreground": "#CCCCCC",
           "editor.background": "#000000",
           "editor.lineHighlightBackground": "#0a0a0a",
           focusBorder: "#00000000",
@@ -288,7 +287,8 @@ export function BaseFileEditor({
     lastAppliedRevealedRef.current = new Set(revealed);
   }, []);
 
-  const handleEditorMount = useCallback((editor: any, monaco: any) => {
+  const handleEditorMount = useCallback(
+    (editor: any, monaco: any) => {
       editorRef.current = editor;
       monacoRef.current = monaco;
       injectBlurCSS();
@@ -319,10 +319,7 @@ export function BaseFileEditor({
         }
 
         // Only re-render if set changed
-        if (
-          prev.size !== next.size ||
-          [...prev].some((l) => !next.has(l))
-        ) {
+        if (prev.size !== next.size || [...prev].some((l) => !next.has(l))) {
           revealedLinesRef.current = next;
           applyBlurDecorations();
         }
@@ -365,7 +362,9 @@ export function BaseFileEditor({
           applyBlurDecorations();
         });
       }
-  }, [applyBlurDecorations]);
+    },
+    [applyBlurDecorations]
+  );
 
   const editorOptions = {
     minimap: { enabled: false },
