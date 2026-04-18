@@ -58,6 +58,10 @@ function getValueRanges(model: any): ValueRange[] {
     const eqIdx = text.indexOf("=");
     if (eqIdx === -1) continue;
 
+    const key = text.substring(0, eqIdx).trim();
+    // Only treat conventional env-style UPPERCASE keys as having secret values.
+    if (!/^[A-Z_][A-Z0-9_]*$/.test(key)) continue;
+
     const afterEq = text.substring(eqIdx + 1);
     if (afterEq.length === 0) continue;
 
