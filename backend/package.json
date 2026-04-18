@@ -29,6 +29,7 @@
     "@nestjs/event-emitter": "^3.0.0",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/mongoose": "^11.0.1",
+    "@nestjs/platform-express": "^11.1.19",
     "@nestjs/schedule": "^6.0.1",
     "@nestjs/swagger": "^11.0.4",
     "@redis/client": "^5.0.1",

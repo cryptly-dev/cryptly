@@ -44,7 +44,7 @@ import {
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
 import posthog from "posthog-js";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { WizardStepper } from "@/components/ui/wizard-stepper";
 
 // ────────────────────────────────────────────────────────────
@@ -543,6 +543,7 @@ function AddPeopleWizard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showCode, setShowCode] = useState(false);
+  const passphraseInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) loadSuggestedUsers();
@@ -569,9 +570,10 @@ function AddPeopleWizard({
       step === "invite-link-code" ||
       step === "suggested-user" ||
       step === "team"
-    )
+    ) {
+      if (step === "invite-link-code") setPassphrase("");
       setStep("type");
-    else if (step === "role")
+    } else if (step === "role")
       setStep(
         inviteType === "invite-link" ? "invite-link-code" : "suggested-user"
       );
@@ -717,6 +719,7 @@ function AddPeopleWizard({
           <TooltipProvider skipDelayDuration={300}>
             <div className="space-y-3 pt-2">
               <InputWithActions
+                ref={passphraseInputRef}
                 type="text"
                 value={passphrase}
                 onChange={(e) => setPassphrase(e.target.value)}
@@ -728,7 +731,13 @@ function AddPeopleWizard({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <InputAction
-                          onClick={() => setPassphrase(generateInviteCode())}
+                          onClick={() => {
+                            setPassphrase(generateInviteCode());
+                            requestAnimationFrame(() => {
+                              passphraseInputRef.current?.focus();
+                              passphraseInputRef.current?.select();
+                            });
+                          }}
                         >
                           <IconRefresh className="size-4" />
                         </InputAction>

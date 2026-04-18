@@ -13,6 +13,7 @@ import { UserApi, type User } from "../api/user.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
 import { authLogic } from "./authLogic";
+import { ftuxLogic } from "./ftuxLogic";
 import type { keyLogicType } from "./keyLogicType";
 
 export const keyLogic = kea<keyLogicType>([
@@ -20,7 +21,7 @@ export const keyLogic = kea<keyLogicType>([
 
   connect({
     values: [authLogic, ["userData", "jwtToken"]],
-    actions: [authLogic, ["loadUserData"]],
+    actions: [authLogic, ["loadUserData"], ftuxLogic, ["queueFTUX"]],
   }),
 
   actions({
@@ -98,6 +99,8 @@ export const keyLogic = kea<keyLogicType>([
         publicKey: keyPair.publicKey,
         privateKeyEncrypted: encrypted,
       });
+
+      actions.queueFTUX();
 
       await actions.loadUserData();
     },

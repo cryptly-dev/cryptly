@@ -43,7 +43,7 @@ const InputAction = React.forwardRef<
       ref={ref}
       type="button"
       className={cn(
-        "flex items-center justify-center size-8 shrink-0 cursor-pointer rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+        "flex items-center justify-center size-8 shrink-0 cursor-pointer rounded-md text-muted-foreground [&:not(.bg-primary)]:hover:text-foreground [&:not(.bg-primary)]:hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
         className
       )}
       {...props}

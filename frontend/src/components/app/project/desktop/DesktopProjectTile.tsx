@@ -16,35 +16,31 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
-import { authLogic } from "@/lib/logics/authLogic";
 import { ftuxLogic } from "@/lib/logics/ftuxLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import type { SearchableProject } from "@/lib/logics/searchLogic";
 import { searchLogic } from "@/lib/logics/searchLogic";
-import { cn, getRelativeTime } from "@/lib/utils";
-import {
-  IconBraces,
-  IconBrandGithub,
-  IconHistory,
-  IconSettings,
-  IconUsers,
-} from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
+import { IconBrandGithub, IconUsers } from "@tabler/icons-react";
+import { BracketsIcon } from "@/components/ui/BracketsIcon";
+import { HistoryIcon } from "@/components/ui/HistoryIcon";
+import { SlidersIcon } from "@/components/ui/SlidersIcon";
 import { Link } from "@tanstack/react-router";
 import { useActions, useValues } from "kea";
 import { AlertTriangle, ArrowLeft, CommandIcon, FolderOpen, Search, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import posthog from "posthog-js";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type TabType = "editor" | "history" | "members" | "settings" | "integrations";
 
 
-const TABS: { id: TabType; label: string; icon: typeof IconBraces }[] = [
-  { id: "editor", label: "Editor", icon: IconBraces },
-  { id: "history", label: "History", icon: IconHistory },
+const TABS: { id: TabType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "editor", label: "Editor", icon: BracketsIcon },
+  { id: "history", label: "History", icon: HistoryIcon },
   { id: "members", label: "Members", icon: IconUsers },
   { id: "integrations", label: "GitHub secrets", icon: IconBrandGithub },
-  { id: "settings", label: "Settings", icon: IconSettings },
+  { id: "settings", label: "Settings", icon: SlidersIcon },
 ];
 
 export function DesktopProjectTile() {
@@ -53,11 +49,9 @@ export function DesktopProjectTile() {
     isSubmitting,
     isEditorDirty,
     inputValue,
-    lastEditAuthor,
     isExternallyUpdated,
     currentUserRole,
   } = useValues(projectLogic);
-  const { userData } = useValues(authLogic);
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
   const isReadOnly = currentUserRole === ProjectMemberRole.Read;
   const { shouldShowEditorTooltip, shouldShowSaveTooltip, currentStepNumber } =
@@ -73,20 +67,7 @@ export function DesktopProjectTile() {
   const { isSearching, searchResults, searchQuery, searchableProjectsLoading } = useValues(searchLogic);
   const { clearSearch } = useActions(searchLogic);
   const [_currentTime, setCurrentTime] = useState(Date.now()); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const [hasStartedFTUX, setHasStartedFTUX] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("editor");
-
-  const changedBy = useMemo(() => {
-    if (lastEditAuthor?.id === userData?.id) {
-      return "you";
-    }
-
-    if (!lastEditAuthor) {
-      return null;
-    }
-
-    return lastEditAuthor?.displayName;
-  }, [lastEditAuthor, userData]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -127,13 +108,14 @@ export function DesktopProjectTile() {
     return () => clearInterval(interval);
   }, []);
 
-  // Start FTUX when project loads for the first time
+  // Attempt to start FTUX whenever a project loads. The logic itself is
+  // idempotent and only actually runs when FTUX was queued (right after
+  // passphrase setup) and has not already been completed/skipped.
   useEffect(() => {
-    if (projectData && !hasStartedFTUX) {
-      setHasStartedFTUX(true);
+    if (projectData) {
       startFTUX();
     }
-  }, [projectData, hasStartedFTUX, startFTUX]);
+  }, [projectData, startFTUX]);
 
   // Track when user makes their first edit
   useEffect(() => {
@@ -211,23 +193,6 @@ export function DesktopProjectTile() {
                       onChange={(v) => setInputValue(v)}
                       readOnly={isReadOnly}
                     />
-                    {/* Changed-by label — top */}
-                    <AnimatePresence mode="wait">
-                      {changedBy && (
-                        <motion.div
-                          className="pointer-events-none absolute inset-x-0 top-4 flex justify-center z-10"
-                          initial={{ opacity: 0, y: -2, scale: 0.9 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -2, scale: 0.9 }}
-                          transition={{ ease: [0, 1, 0.25, 1], duration: 0.1 }}
-                        >
-                          <span className="rounded-full bg-card/80 backdrop-blur px-3 py-1 text-xs text-muted-foreground shadow-sm border border-border/50">
-                            Changed by {changedBy}{" "}
-                            {getRelativeTime(projectData.updatedAt)}
-                          </span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                     {/* Pill */}
                     <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
                       <div className="pointer-events-auto">
@@ -241,6 +206,9 @@ export function DesktopProjectTile() {
                                 <SavePushPill
                                   suppressShortcutTooltip={
                                     shouldShowSaveTooltip
+                                  }
+                                  onConnectIntegrations={() =>
+                                    setActiveTab("integrations")
                                   }
                                 />
                               </div>

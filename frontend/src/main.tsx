@@ -1,4 +1,4 @@
-import "@fontsource-variable/open-sans";
+import "@fontsource-variable/funnel-display";
 import "./index.css";
 
 import { RouterProvider, createRouter } from "@tanstack/react-router";

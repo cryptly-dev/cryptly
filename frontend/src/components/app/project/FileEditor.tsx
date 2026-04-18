@@ -15,7 +15,7 @@ export function FileEditor({
       onChange={onChange}
       height="100%"
       fontSize={14}
-      padding={{ top: 16, bottom: 8 }}
+      padding={{ top: 16, bottom: 80 }}
       readOnly={readOnly}
     />
   );
