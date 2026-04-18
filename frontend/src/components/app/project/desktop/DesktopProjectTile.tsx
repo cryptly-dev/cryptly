@@ -242,6 +242,9 @@ export function DesktopProjectTile() {
                                   suppressShortcutTooltip={
                                     shouldShowSaveTooltip
                                   }
+                                  onConnectIntegrations={() =>
+                                    setActiveTab("integrations")
+                                  }
                                 />
                               </div>
                             </TooltipTrigger>
