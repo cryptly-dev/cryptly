@@ -23,8 +23,19 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { searchLogic } from "@/lib/logics/searchLogic";
 import { suggestedProjectsLogic } from "@/lib/logics/suggestedProjectsLogic";
 import { useActions, useAsyncActions, useValues } from "kea";
-import { ChevronRight, Info, LogOut, Pencil, Plus, Search, User, Check, Wand2, X } from "lucide-react";
-import { FolderIcon } from "@/components/ui/FolderIcon";
+import {
+  ChevronRight,
+  FolderOpen,
+  Info,
+  LogOut,
+  Pencil,
+  Plus,
+  Search,
+  User,
+  Check,
+  Wand2,
+  X,
+} from "lucide-react";
 import { motion, Reorder, useDragControls } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
@@ -40,10 +51,17 @@ export function DesktopProjectsList() {
   const { logout } = useAuth();
   const { searchQuery } = useValues(searchLogic);
   const { setSearchQuery } = useActions(searchLogic);
-  const { suggestedProjects, loading: suggestionsLoading, acceptingRepoId, hasInstallations } = useValues(suggestedProjectsLogic);
-  const { acceptSuggestion, dismissSuggestion } = useActions(suggestedProjectsLogic);
+  const {
+    suggestedProjects,
+    loading: suggestionsLoading,
+    acceptingRepoId,
+    hasInstallations,
+  } = useValues(suggestedProjectsLogic);
+  const { acceptSuggestion, dismissSuggestion } = useActions(
+    suggestedProjectsLogic
+  );
   const navigate = useNavigate();
-  
+
   const uniqueProjects = useMemo(() => {
     if (!projects) return projects;
     const seen = new Set<string>();
@@ -56,9 +74,11 @@ export function DesktopProjectsList() {
 
   const [localProjects, setLocalProjects] = useState(uniqueProjects);
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
-  const [displayNameInput, setDisplayNameInput] = useState(userData?.displayName || "");
+  const [displayNameInput, setDisplayNameInput] = useState(
+    userData?.displayName || ""
+  );
   const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
-  
+
   // Inline project creation state
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
@@ -77,7 +97,9 @@ export function DesktopProjectsList() {
     if (!jwtToken || !displayNameInput.trim()) return;
     setIsSavingDisplayName(true);
     try {
-      await UserApi.updateMe(jwtToken, { displayName: displayNameInput.trim() });
+      await UserApi.updateMe(jwtToken, {
+        displayName: displayNameInput.trim(),
+      });
       await loadUserData();
       setIsEditingDisplayName(false);
     } catch (error) {
@@ -103,12 +125,11 @@ export function DesktopProjectsList() {
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim() || isCreatingProject) return;
-    
+
     setIsCreatingProject(true);
     try {
-      await addProject(
-        { name: newProjectName.trim() },
-        (projectId) => navigate({ to: `/app/project/${projectId}` })
+      await addProject({ name: newProjectName.trim() }, (projectId) =>
+        navigate({ to: `/app/project/${projectId}` })
       );
       setIsAddingProject(false);
       setNewProjectName("");
@@ -152,7 +173,10 @@ export function DesktopProjectsList() {
     <div className="h-full flex flex-col">
       {/* App Logo / Brand */}
       <div className="px-4 py-4">
-        <Link to="/" className="flex items-center gap-2.5 text-foreground hover:opacity-80 transition-opacity">
+        <Link
+          to="/"
+          className="flex items-center gap-2.5 text-foreground hover:opacity-80 transition-opacity"
+        >
           <CryptlyLogo size={28} />
           <span className="font-semibold text-lg tracking-tight">Cryptly</span>
         </Link>
@@ -175,7 +199,7 @@ export function DesktopProjectsList() {
             data-1p-ignore
             data-lpignore="true"
             data-form-type="other"
-            className="w-full h-9 pl-9 pr-3 rounded-lg bg-muted/50 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+            className="w-full h-9 pl-9 pr-3 rounded-md bg-muted/50 border-[0.5px] border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
           />
         </div>
       </div>
@@ -185,12 +209,16 @@ export function DesktopProjectsList() {
         {/* Section Header */}
         <div className="px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <FolderIcon className="w-4 h-4" />
+            <FolderOpen className="w-4 h-4" />
             <span>Projects</span>
             {projectsLoading ? (
               <Spinner className="w-3.5 h-3.5 text-muted-foreground" />
-            ) : localProjects && (
-              <span className="text-muted-foreground font-normal">({localProjects.length})</span>
+            ) : (
+              localProjects && (
+                <span className="text-muted-foreground font-normal">
+                  ({localProjects.length})
+                </span>
+              )
             )}
           </div>
           <TooltipProvider>
@@ -271,7 +299,7 @@ export function DesktopProjectsList() {
               </div>
             </motion.div>
           )}
-          
+
           {localProjects && localProjects.length > 0 ? (
             <Reorder.Group
               axis="y"
@@ -324,7 +352,8 @@ export function DesktopProjectsList() {
             <div className="relative group/info ml-auto">
               <Info className="w-3 h-3 cursor-help" />
               <div className="absolute bottom-full mb-1.5 right-0 w-48 bg-popover text-popover-foreground text-xs rounded-md py-2 px-3 opacity-0 group-hover/info:opacity-100 transition-opacity pointer-events-none shadow-md border border-border z-50">
-                We are checking repositories you've recently created on GitHub that don't have a matching Cryptly project
+                We are checking repositories you've recently created on GitHub
+                that don't have a matching Cryptly project
               </div>
             </div>
           </div>
@@ -353,9 +382,7 @@ export function DesktopProjectsList() {
                     ) : (
                       <Plus className="w-3 h-3 flex-shrink-0 opacity-50" />
                     )}
-                    <span className="truncate text-[13px]">
-                      {repo.name}
-                    </span>
+                    <span className="truncate text-[13px]">{repo.name}</span>
                   </div>
                   <button
                     type="button"
