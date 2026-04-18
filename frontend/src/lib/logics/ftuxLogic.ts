@@ -11,12 +11,11 @@ export enum FTUXStep {
   COMPLETED = "completed",
 }
 
-const FTUX_STORAGE_KEY = "ftux_completed";
-
 export const ftuxLogic = kea<ftuxLogicType>([
   path(["src", "lib", "logics", "ftuxLogic"]),
 
   actions({
+    queueFTUX: true,
     startFTUX: true,
     nextStep: true,
     previousStep: true,
@@ -29,48 +28,61 @@ export const ftuxLogic = kea<ftuxLogicType>([
   }),
 
   reducers({
+    // Queued for the next eligible project view; cleared once FTUX runs
+    // (started, skipped, or completed). Persisted so it survives reloads
+    // between passphrase setup and the user opening their first project.
+    ftuxQueued: [
+      false as boolean,
+      { persist: true },
+      {
+        queueFTUX: () => true,
+        setCurrentStep: (state, { step }) =>
+          step === FTUXStep.EDITOR ? false : state,
+        skipFTUX: () => false,
+        completeFTUX: () => false,
+      },
+    ],
+    // Sticky terminal flag: once true, FTUX never auto-starts again.
+    ftuxCompleted: [
+      false as boolean,
+      { persist: true },
+      {
+        skipFTUX: () => true,
+        completeFTUX: () => true,
+      },
+    ],
     currentStep: [
       FTUXStep.NOT_STARTED as FTUXStep,
       {
         setCurrentStep: (_, { step }) => step,
-        startFTUX: () =>
-          localStorage.getItem(FTUX_STORAGE_KEY) === "true"
-            ? FTUXStep.COMPLETED
-            : FTUXStep.EDITOR,
         skipFTUX: () => FTUXStep.COMPLETED,
         completeFTUX: () => FTUXStep.COMPLETED,
-      },
-    ],
-    isFTUXActive: [
-      false as boolean,
-      {
-        startFTUX: () =>
-          localStorage.getItem(FTUX_STORAGE_KEY) !== "true",
-        skipFTUX: () => false,
-        completeFTUX: () => false,
       },
     ],
   }),
 
   selectors({
+    isFTUXActive: [
+      (s) => [s.currentStep],
+      (currentStep) =>
+        currentStep !== FTUXStep.NOT_STARTED &&
+        currentStep !== FTUXStep.COMPLETED,
+    ],
     isFTUXCompleted: [
       (s) => [s.currentStep],
       (currentStep) => currentStep === FTUXStep.COMPLETED,
     ],
     shouldShowEditorTooltip: [
-      (s) => [s.currentStep, s.isFTUXActive],
-      (currentStep, isFTUXActive) =>
-        isFTUXActive && currentStep === FTUXStep.EDITOR,
+      (s) => [s.currentStep],
+      (currentStep) => currentStep === FTUXStep.EDITOR,
     ],
     shouldShowSaveTooltip: [
-      (s) => [s.currentStep, s.isFTUXActive],
-      (currentStep, isFTUXActive) =>
-        isFTUXActive && currentStep === FTUXStep.SAVE,
+      (s) => [s.currentStep],
+      (currentStep) => currentStep === FTUXStep.SAVE,
     ],
     shouldShowIntegrationsTooltip: [
-      (s) => [s.currentStep, s.isFTUXActive],
-      (currentStep, isFTUXActive) =>
-        isFTUXActive && currentStep === FTUXStep.INTEGRATIONS,
+      (s) => [s.currentStep],
+      (currentStep) => currentStep === FTUXStep.INTEGRATIONS,
     ],
     currentStepNumber: [
       (s) => [s.currentStep],
@@ -90,15 +102,19 @@ export const ftuxLogic = kea<ftuxLogicType>([
   }),
 
   listeners(({ actions, values }) => ({
+    queueFTUX: () => {
+      posthog.capture("ftux_queued");
+    },
+
     startFTUX: () => {
-      // Check if FTUX was already completed
-      const completed = localStorage.getItem(FTUX_STORAGE_KEY);
-      if (completed === "true") {
-        actions.setCurrentStep(FTUXStep.COMPLETED);
-      } else {
-        posthog.capture("ftux_started");
-        actions.setCurrentStep(FTUXStep.EDITOR);
+      // Run only when explicitly queued (after passphrase setup) and
+      // not already finished. Idempotent: subsequent calls do nothing.
+      if (values.ftuxCompleted || !values.ftuxQueued) {
+        return;
       }
+
+      posthog.capture("ftux_started");
+      actions.setCurrentStep(FTUXStep.EDITOR);
     },
 
     userMadeEdit: () => {
@@ -123,18 +139,15 @@ export const ftuxLogic = kea<ftuxLogicType>([
       posthog.capture("ftux_skipped", {
         current_step: values.currentStep,
       });
-      localStorage.setItem(FTUX_STORAGE_KEY, "true");
     },
 
     completeFTUX: () => {
       posthog.capture("ftux_done_button_clicked");
-      localStorage.setItem(FTUX_STORAGE_KEY, "true");
     },
 
     nextStep: () => {
       const { currentStep } = values;
 
-      // Track "Next" button clicks for all steps except the last one
       if (currentStep !== FTUXStep.INTEGRATIONS) {
         posthog.capture("ftux_next_button_clicked", {
           current_step: currentStep,
