@@ -91,7 +91,14 @@ export function AcceptInvitationPage() {
             </p>
           </div>
 
-          <div className="space-y-4">
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!passphrase.trim() || isLoading) return;
+              handleAcceptInvitation();
+            }}
+          >
             <div className="p-3 bg-muted/50 rounded-lg border">
               <div className="flex items-center gap-3">
                 <img
@@ -140,8 +147,8 @@ export function AcceptInvitationPage() {
             </div>
 
             <Button
+              type="submit"
               isLoading={isLoading}
-              onClick={handleAcceptInvitation}
               disabled={!passphrase.trim()}
               className="w-full"
             >
@@ -151,7 +158,7 @@ export function AcceptInvitationPage() {
             <p className="text-xs text-muted-foreground text-center">
               Invitation ID: {inviteId.slice(-8)}
             </p>
-          </div>
+          </form>
         </div>
       </div>
     </div>
