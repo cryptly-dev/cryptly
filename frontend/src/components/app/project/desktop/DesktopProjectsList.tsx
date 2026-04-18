@@ -9,6 +9,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
 import type { Project } from "@/lib/api/projects.api";
@@ -176,17 +182,24 @@ export function DesktopProjectsList() {
               <span className="text-muted-foreground font-normal">({localProjects.length})</span>
             )}
           </div>
-          <motion.button
-            type="button"
-            aria-label="Add project"
-            className="text-muted-foreground hover:text-foreground hover:bg-neutral-800 cursor-pointer rounded-md w-6 h-6 flex items-center justify-center transition-colors"
-            onClick={handleStartAddProject}
-            disabled={isAddingProject}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Plus className="w-4 h-4" />
-          </motion.button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  type="button"
+                  aria-label="Add project"
+                  className="text-muted-foreground hover:text-foreground hover:bg-neutral-800 cursor-pointer rounded-md w-6 h-6 flex items-center justify-center transition-colors"
+                  onClick={handleStartAddProject}
+                  disabled={isAddingProject}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Plus className="w-4 h-4" />
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Add project</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {/* Projects List */}
