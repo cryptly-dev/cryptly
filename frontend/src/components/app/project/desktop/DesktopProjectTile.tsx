@@ -21,10 +21,9 @@ import { projectLogic } from "@/lib/logics/projectLogic";
 import type { SearchableProject } from "@/lib/logics/searchLogic";
 import { searchLogic } from "@/lib/logics/searchLogic";
 import { cn } from "@/lib/utils";
-import { IconBrandGithub } from "@tabler/icons-react";
+import { IconBrandGithub, IconUsers } from "@tabler/icons-react";
 import { BracketsIcon } from "@/components/ui/BracketsIcon";
 import { HistoryIcon } from "@/components/ui/HistoryIcon";
-import { MembersIcon } from "@/components/ui/MembersIcon";
 import { SlidersIcon } from "@/components/ui/SlidersIcon";
 import { Link } from "@tanstack/react-router";
 import { useActions, useValues } from "kea";
@@ -39,7 +38,7 @@ type TabType = "editor" | "history" | "members" | "settings" | "integrations";
 const TABS: { id: TabType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "editor", label: "Editor", icon: BracketsIcon },
   { id: "history", label: "History", icon: HistoryIcon },
-  { id: "members", label: "Members", icon: MembersIcon },
+  { id: "members", label: "Members", icon: IconUsers },
   { id: "integrations", label: "GitHub secrets", icon: IconBrandGithub },
   { id: "settings", label: "Settings", icon: SlidersIcon },
 ];
