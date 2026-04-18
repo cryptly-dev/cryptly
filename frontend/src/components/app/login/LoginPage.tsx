@@ -34,7 +34,8 @@ export function LoginPage() {
         <div className="space-y-4">
           {/* Header */}
           <div className="text-center space-y-2">
-            <CryptlyLogo size={56} className="mx-auto mb-4" />
+            <CryptlyLogo size={42} className="m-auto mb-4" />
+
             <h1 className="text-xl font-semibold text-foreground tracking-tight">
               Welcome to Cryptly
             </h1>
