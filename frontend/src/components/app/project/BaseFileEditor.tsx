@@ -195,16 +195,15 @@ function injectMaskingCSS() {
       background-position: 2px center;
       border-radius: 3px;
       cursor: pointer;
-      transition: background-color 120ms ease;
     }
     .secret-masked::selection {
       background: rgba(100, 148, 237, 0.3);
     }
-    .secret-group-highlight {
-      background-color: rgba(173, 186, 199, 0.08);
-    }
-    .secret-group-zone-hover,
-    .secret-group-zone-hover * {
+    .secret-group-zone-hover .view-line,
+    .secret-group-zone-hover .view-lines,
+    .secret-group-zone-hover .view-overlays,
+    .secret-group-zone-hover .lines-content,
+    .secret-group-zone-hover textarea {
       cursor: pointer !important;
     }
     .secret-copied {
@@ -220,6 +219,8 @@ function injectMaskingCSS() {
     }
     .secret-tooltip {
       position: absolute;
+      top: 0;
+      left: 0;
       padding: 4px 8px;
       background: #1c2128;
       color: #adbac7;
@@ -229,7 +230,12 @@ function injectMaskingCSS() {
       pointer-events: none;
       white-space: nowrap;
       z-index: 100;
-      transform: translateY(-100%) translateY(-6px);
+      will-change: transform;
+    }
+    .secret-tooltip.copied {
+      background: rgba(34, 197, 94, 0.18);
+      border-color: rgba(34, 197, 94, 0.5);
+      color: #b6f0c2;
     }
     .secret-group-zone {
       display: flex;
@@ -273,7 +279,7 @@ export function BaseFileEditor({
   onChange,
   height = "55vh",
   fontSize = 14,
-  padding = { top: 16, bottom: 8 },
+  padding = { top: 16, bottom: 80 },
   lineNumbersMinChars,
   readOnly = false,
 }: BaseFileEditorProps) {
@@ -341,10 +347,16 @@ export function BaseFileEditor({
     });
   }, []);
 
+  const tooltipResetTimerRef = useRef<number | null>(null);
+
   const hideTooltip = useCallback(() => {
-    if (tooltipRef.current) {
-      tooltipRef.current.remove();
-      tooltipRef.current = null;
+    if (tooltipResetTimerRef.current !== null) {
+      window.clearTimeout(tooltipResetTimerRef.current);
+      tooltipResetTimerRef.current = null;
+    }
+    const tip = tooltipRef.current;
+    if (tip && tip.style.display !== "none") {
+      tip.style.display = "none";
     }
     hoveredRangeRef.current = null;
   }, []);
@@ -362,25 +374,49 @@ export function BaseFileEditor({
     });
     if (!visiblePos) return;
 
-    if (!tooltipRef.current) {
-      const tip = document.createElement("div");
+    let tip = tooltipRef.current;
+    if (!tip) {
+      tip = document.createElement("div");
       tip.className = "secret-tooltip";
       tip.textContent = "Click to copy";
       domNode.appendChild(tip);
       tooltipRef.current = tip;
+    } else if (
+      !tip.classList.contains("copied") &&
+      tip.textContent !== "Click to copy"
+    ) {
+      tip.textContent = "Click to copy";
     }
 
-    tooltipRef.current.style.left = `${visiblePos.left}px`;
-    tooltipRef.current.style.top = `${visiblePos.top}px`;
+    if (tip.style.display === "none") tip.style.display = "";
+    tip.style.transform = `translate3d(${visiblePos.left}px, ${visiblePos.top}px, 0) translateY(-100%) translateY(-6px)`;
+  }, []);
+
+  const flashTooltipCopied = useCallback(() => {
+    const tip = tooltipRef.current;
+    if (!tip) return;
+    if (tooltipResetTimerRef.current !== null) {
+      window.clearTimeout(tooltipResetTimerRef.current);
+    }
+    tip.classList.add("copied");
+    tip.textContent = "Copied!";
+    tooltipResetTimerRef.current = window.setTimeout(() => {
+      tooltipResetTimerRef.current = null;
+      const t = tooltipRef.current;
+      if (t) {
+        t.classList.remove("copied");
+        t.textContent = "Click to copy";
+      }
+    }, 1200);
   }, []);
 
   const flashCopied = useCallback(
-    (rangesToFlash: ValueRange[], includeLabel = true) => {
+    (rangesToFlash: ValueRange[]) => {
       const editor = editorRef.current;
       const monacoInstance = monacoRef.current;
       if (!editor || !monacoInstance || rangesToFlash.length === 0) return;
 
-      const decorations = rangesToFlash.map((range, idx) => ({
+      const decorations = rangesToFlash.map((range) => ({
         range: new monacoInstance.Range(
           range.startLine,
           range.startCol,
@@ -389,14 +425,6 @@ export function BaseFileEditor({
         ),
         options: {
           inlineClassName: "secret-masked secret-copied",
-          ...(includeLabel && idx === 0
-            ? {
-                after: {
-                  content: " Copied!",
-                  inlineClassName: "secret-copied-label",
-                },
-              }
-            : {}),
         },
       }));
 
@@ -443,7 +471,7 @@ export function BaseFileEditor({
         }
       }, 1200);
 
-      flashCopied(group.ranges, false);
+      flashCopied(group.ranges);
     },
     [flashCopied]
   );
@@ -618,6 +646,7 @@ export function BaseFileEditor({
           navigator.clipboard.writeText(toCopy).catch(() => {});
         }
         flashCopied([range]);
+        flashTooltipCopied();
       });
 
       const editorDom = editor.getDomNode();
@@ -678,7 +707,15 @@ export function BaseFileEditor({
       });
 
       editor.onDidScrollChange(() => {
-        hideTooltip();
+        const r = hoveredRangeRef.current;
+        if (r) {
+          showTooltip(r);
+        } else if (
+          tooltipRef.current &&
+          tooltipRef.current.style.display !== "none"
+        ) {
+          tooltipRef.current.style.display = "none";
+        }
       });
 
       const domNode = editor.getDomNode();
@@ -689,7 +726,14 @@ export function BaseFileEditor({
         });
       }
     },
-    [applySecretDecorations, flashCopied, hideTooltip, showTooltip, copyGroup]
+    [
+      applySecretDecorations,
+      flashCopied,
+      flashTooltipCopied,
+      hideTooltip,
+      showTooltip,
+      copyGroup,
+    ]
   );
 
   useEffect(() => {
@@ -705,7 +749,7 @@ export function BaseFileEditor({
   const editorOptions = {
     minimap: { enabled: false },
     wordWrap: "on" as const,
-    scrollBeyondLastLine: true,
+    scrollBeyondLastLine: false,
     lineNumbers: "on" as const,
     fontSize,
     automaticLayout: true,
