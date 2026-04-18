@@ -109,60 +109,158 @@ function getValueRanges(model: any): ValueRange[] {
   return ranges;
 }
 
-function rangeIsRevealed(r: ValueRange, revealed: Set<number>): boolean {
-  for (let l = r.startLine; l <= r.endLine; l++) {
-    if (revealed.has(l)) return true;
-  }
-  return false;
+function posInRange(
+  pos: { lineNumber: number; column: number },
+  r: ValueRange
+): boolean {
+  if (pos.lineNumber < r.startLine || pos.lineNumber > r.endLine) return false;
+  if (pos.lineNumber === r.startLine && pos.column < r.startCol) return false;
+  if (pos.lineNumber === r.endLine && pos.column >= r.endCol) return false;
+  return true;
 }
 
-/** Monaco replaces inline decoration nodes on update, so `transition` rarely runs; use one-shot keyframes on class change. */
-function secretInlineClass(
-  r: ValueRange,
-  revealed: Set<number>,
-  revealedBefore: Set<number>
-): string {
-  const on = rangeIsRevealed(r, revealed);
-  const wasOn = rangeIsRevealed(r, revealedBefore);
-  if (on === wasOn) return on ? "secret-revealed" : "secret-blurred";
-  return on ? "secret-reveal-anim" : "secret-hide-anim";
+interface ValueGroup {
+  startLine: number;
+  endLine: number;
+  ranges: ValueRange[];
+}
+
+/** Group = max run of non-blank lines containing ≥1 KEY=VALUE pair, bounded by blank lines or file edges. */
+function getValueGroups(model: any, ranges: ValueRange[]): ValueGroup[] {
+  const lineCount = model.getLineCount();
+  const linesWithValues = new Set<number>();
+  for (const r of ranges) {
+    for (let l = r.startLine; l <= r.endLine; l++) linesWithValues.add(l);
+  }
+
+  const groups: ValueGroup[] = [];
+  let blockStart: number | null = null;
+  let blockEnd = 0;
+  let blockHasValue = false;
+
+  const flush = () => {
+    if (blockStart !== null && blockHasValue) {
+      const start = blockStart;
+      const end = blockEnd;
+      groups.push({
+        startLine: start,
+        endLine: end,
+        ranges: ranges.filter(
+          (r) => r.startLine >= start && r.endLine <= end
+        ),
+      });
+    }
+    blockStart = null;
+    blockHasValue = false;
+  };
+
+  for (let line = 1; line <= lineCount; line++) {
+    const text = model.getLineContent(line);
+    if (text.trim() === "") {
+      flush();
+      continue;
+    }
+    if (blockStart === null) blockStart = line;
+    blockEnd = line;
+    if (linesWithValues.has(line)) blockHasValue = true;
+  }
+  flush();
+
+  return groups;
+}
+
+function stripQuotes(text: string): string {
+  if (text.length < 2) return text;
+  const first = text[0];
+  const last = text[text.length - 1];
+  if ((first === '"' || first === "'") && first === last) {
+    return text.slice(1, -1);
+  }
+  return text;
 }
 
 // ── CSS injection ─────────────────────────────────────────
 
 let cssInjected = false;
-function injectBlurCSS() {
+function injectMaskingCSS() {
   if (cssInjected) return;
   cssInjected = true;
   const style = document.createElement("style");
   style.textContent = `
-    @keyframes cryptly-secret-reveal {
-      from { filter: blur(5px); }
-      to { filter: blur(0); }
+    .secret-masked {
+      color: transparent !important;
+      background-image: radial-gradient(circle, #6e7681 1.5px, transparent 1.5px);
+      background-size: 8.4px 100%;
+      background-repeat: repeat-x;
+      background-position: 2px center;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background-color 120ms ease;
     }
-    @keyframes cryptly-secret-hide {
-      from { filter: blur(0); }
-      to { filter: blur(5px); }
+    .secret-masked::selection {
+      background: rgba(100, 148, 237, 0.3);
     }
-    .secret-blurred {
-      filter: blur(5px);
+    .secret-group-highlight {
+      background-color: rgba(173, 186, 199, 0.08);
     }
-    .secret-revealed {
-      filter: blur(0);
+    .secret-group-zone-hover,
+    .secret-group-zone-hover * {
+      cursor: pointer !important;
     }
-    .secret-reveal-anim {
-      animation: cryptly-secret-reveal 0.22s ease-out forwards;
+    .secret-copied {
+      animation: secret-copied-flash 1.5s ease-out forwards;
     }
-    .secret-hide-anim {
-      animation: cryptly-secret-hide 0.2s ease-out forwards;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .secret-reveal-anim,
-      .secret-hide-anim {
-        animation: none;
+    @keyframes secret-copied-flash {
+      0%, 20% {
+        background-color: rgba(34, 197, 94, 0.15);
       }
-      .secret-reveal-anim { filter: blur(0); }
-      .secret-hide-anim { filter: blur(5px); }
+      100% {
+        background-color: transparent;
+      }
+    }
+    .secret-tooltip {
+      position: absolute;
+      padding: 4px 8px;
+      background: #1c2128;
+      color: #adbac7;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid #373e47;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 100;
+      transform: translateY(-100%) translateY(-6px);
+    }
+    .secret-group-zone {
+      display: flex;
+      align-items: flex-end;
+      height: 100%;
+      padding: 0 0 2px 0;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .secret-group-pill {
+      display: inline-block;
+      color: #6e7681;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font-size: 10.5px;
+      line-height: 1.2;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      text-decoration-color: #4d5562;
+      cursor: pointer;
+      pointer-events: auto;
+      user-select: none;
+      transition: color 120ms ease, text-decoration-color 120ms ease;
+    }
+    .secret-group-pill:hover,
+    .secret-group-pill.hover {
+      color: #adbac7;
+      text-decoration-color: #adbac7;
+    }
+    .secret-group-pill.copied {
+      color: #b6f0c2;
+      text-decoration-color: #b6f0c2;
     }
   `;
   document.head.appendChild(style);
@@ -182,23 +280,14 @@ export function BaseFileEditor({
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<any>(null);
-  const revealedLinesRef = useRef<Set<number>>(new Set());
-  /** Revealed lines last applied to decorations — used to pick reveal/hide keyframe classes vs static. */
-  const lastAppliedRevealedRef = useRef<Set<number>>(new Set());
-  /** Phones / touch-primary UAs report `hover: none`; skip pointer-hover reveal (use caret/tap only). */
-  const hoverRevealEnabledRef = useRef(
-    typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches
-  );
-
-  useEffect(() => {
-    const mq = window.matchMedia("(hover: hover)");
-    const sync = () => {
-      hoverRevealEnabledRef.current = mq.matches;
-    };
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
+  const flashDecorationsRef = useRef<any>(null);
+  const secretRangesRef = useRef<ValueRange[]>([]);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const hoveredRangeRef = useRef<ValueRange | null>(null);
+  const groupZoneIdsRef = useRef<string[]>([]);
+  const groupZoneMapRef = useRef<
+    Map<string, { group: ValueGroup; pill: HTMLElement }>
+  >(new Map());
 
   useEffect(() => {
     loader.init().then((monaco) => {
@@ -252,7 +341,164 @@ export function BaseFileEditor({
     });
   }, []);
 
-  const applyBlurDecorations = useCallback(() => {
+  const hideTooltip = useCallback(() => {
+    if (tooltipRef.current) {
+      tooltipRef.current.remove();
+      tooltipRef.current = null;
+    }
+    hoveredRangeRef.current = null;
+  }, []);
+
+  const showTooltip = useCallback((range: ValueRange) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const domNode = editor.getDomNode();
+    if (!domNode) return;
+
+    const visiblePos = editor.getScrolledVisiblePosition({
+      lineNumber: range.startLine,
+      column: range.startCol,
+    });
+    if (!visiblePos) return;
+
+    if (!tooltipRef.current) {
+      const tip = document.createElement("div");
+      tip.className = "secret-tooltip";
+      tip.textContent = "Click to copy";
+      domNode.appendChild(tip);
+      tooltipRef.current = tip;
+    }
+
+    tooltipRef.current.style.left = `${visiblePos.left}px`;
+    tooltipRef.current.style.top = `${visiblePos.top}px`;
+  }, []);
+
+  const flashCopied = useCallback(
+    (rangesToFlash: ValueRange[], includeLabel = true) => {
+      const editor = editorRef.current;
+      const monacoInstance = monacoRef.current;
+      if (!editor || !monacoInstance || rangesToFlash.length === 0) return;
+
+      const decorations = rangesToFlash.map((range, idx) => ({
+        range: new monacoInstance.Range(
+          range.startLine,
+          range.startCol,
+          range.endLine,
+          range.endCol
+        ),
+        options: {
+          inlineClassName: "secret-masked secret-copied",
+          ...(includeLabel && idx === 0
+            ? {
+                after: {
+                  content: " Copied!",
+                  inlineClassName: "secret-copied-label",
+                },
+              }
+            : {}),
+        },
+      }));
+
+      if (!flashDecorationsRef.current) {
+        flashDecorationsRef.current =
+          editor.createDecorationsCollection(decorations);
+      } else {
+        flashDecorationsRef.current.set(decorations);
+      }
+
+      window.setTimeout(() => {
+        if (flashDecorationsRef.current) {
+          flashDecorationsRef.current.clear();
+        }
+      }, 1500);
+    },
+    []
+  );
+
+  const copyGroup = useCallback(
+    (group: ValueGroup, pill: HTMLElement) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const model = editor.getModel();
+      if (!model) return;
+
+      const lines: string[] = [];
+      for (let l = group.startLine; l <= group.endLine; l++) {
+        lines.push(model.getLineContent(l));
+      }
+      const text = lines.join("\n");
+
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {});
+      }
+
+      const original = pill.textContent;
+      pill.classList.add("copied");
+      pill.textContent = "Copied!";
+      window.setTimeout(() => {
+        if (pill.isConnected) {
+          pill.classList.remove("copied");
+          pill.textContent = original;
+        }
+      }, 1200);
+
+      flashCopied(group.ranges, false);
+    },
+    [flashCopied]
+  );
+
+  const applyGroupZones = useCallback(
+    (groups: ValueGroup[]) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+
+      const groupsToShow = groups.filter((g) => g.ranges.length >= 2);
+
+      editor.changeViewZones((accessor: any) => {
+        for (const id of groupZoneIdsRef.current) {
+          accessor.removeZone(id);
+        }
+        groupZoneIdsRef.current = [];
+        groupZoneMapRef.current.clear();
+
+        for (const group of groupsToShow) {
+          const zoneNode = document.createElement("div");
+          zoneNode.className = "secret-group-zone";
+
+          const pill = document.createElement("span");
+          pill.className = "secret-group-pill";
+          pill.textContent = "Copy whole group";
+
+          zoneNode.appendChild(pill);
+
+          const id = accessor.addZone({
+            afterLineNumber: group.startLine - 1,
+            heightInPx: 22,
+            domNode: zoneNode,
+            suppressMouseDown: true,
+          });
+          groupZoneIdsRef.current.push(id);
+          groupZoneMapRef.current.set(id, { group, pill });
+        }
+      });
+    },
+    []
+  );
+
+  const clearGroupZones = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.changeViewZones((accessor: any) => {
+      for (const id of groupZoneIdsRef.current) {
+        accessor.removeZone(id);
+      }
+      groupZoneIdsRef.current = [];
+      groupZoneMapRef.current.clear();
+    });
+  }, []);
+
+  const applySecretDecorations = useCallback(() => {
     const editor = editorRef.current;
     if (!editor) return;
 
@@ -263,8 +509,8 @@ export function BaseFileEditor({
     if (!monacoInstance) return;
 
     const ranges = getValueRanges(model);
-    const revealed = revealedLinesRef.current;
-    const revealedBefore = lastAppliedRevealedRef.current;
+    secretRangesRef.current = ranges;
+    const groups = getValueGroups(model, ranges);
 
     const decorations = ranges.map((r) => ({
       range: new monacoInstance.Range(
@@ -274,7 +520,7 @@ export function BaseFileEditor({
         r.endCol
       ),
       options: {
-        inlineClassName: secretInlineClass(r, revealed, revealedBefore),
+        inlineClassName: "secret-masked",
       },
     }));
 
@@ -284,87 +530,177 @@ export function BaseFileEditor({
       decorationsRef.current.set(decorations);
     }
 
-    lastAppliedRevealedRef.current = new Set(revealed);
-  }, []);
+    applyGroupZones(groups);
+  }, [applyGroupZones]);
 
   const handleEditorMount = useCallback(
     (editor: any, monaco: any) => {
       editorRef.current = editor;
       monacoRef.current = monaco;
-      injectBlurCSS();
+      injectMaskingCSS();
 
-      // Initial decorations
-      applyBlurDecorations();
+      applySecretDecorations();
 
-      // Update on content change (snap blur state — no reveal/hide animation while typing)
       editor.onDidChangeModelContent(() => {
-        lastAppliedRevealedRef.current = new Set(revealedLinesRef.current);
-        applyBlurDecorations();
+        applySecretDecorations();
       });
 
-      // Mouse hover — reveal hovered line and one line above/below (PC / fine-pointer hover only)
+      const VIEW_ZONE_TARGET_TYPE =
+        monaco.editor.MouseTargetType?.CONTENT_VIEW_ZONE ?? 8;
+
+      let mouseDownInfo: {
+        pos: { lineNumber: number; column: number };
+        time: number;
+      } | null = null;
+      let mouseDownZoneId: string | null = null;
+
+      editor.onMouseDown((e: any) => {
+        if (e.target?.type === VIEW_ZONE_TARGET_TYPE) {
+          mouseDownInfo = null;
+          mouseDownZoneId = e.target.detail?.viewZoneId ?? null;
+          return;
+        }
+
+        mouseDownZoneId = null;
+        const pos = e.target?.position;
+        if (!pos) {
+          mouseDownInfo = null;
+          return;
+        }
+        mouseDownInfo = { pos, time: Date.now() };
+      });
+
+      editor.onMouseUp((e: any) => {
+        if (mouseDownZoneId !== null) {
+          const downZoneId = mouseDownZoneId;
+          mouseDownZoneId = null;
+          if (
+            e.target?.type === VIEW_ZONE_TARGET_TYPE &&
+            e.target.detail?.viewZoneId === downZoneId
+          ) {
+            const entry = groupZoneMapRef.current.get(downZoneId);
+            if (entry) copyGroup(entry.group, entry.pill);
+          }
+          return;
+        }
+
+        if (!mouseDownInfo) return;
+        const downInfo = mouseDownInfo;
+        mouseDownInfo = null;
+
+        const pos = e.target?.position;
+        if (!pos) return;
+
+        const samePos =
+          pos.lineNumber === downInfo.pos.lineNumber &&
+          pos.column === downInfo.pos.column;
+        const fast = Date.now() - downInfo.time < 300;
+
+        if (!samePos || !fast) return;
+
+        const range = secretRangesRef.current.find((r) => posInRange(pos, r));
+        if (!range) return;
+
+        const model = editor.getModel();
+        if (!model) return;
+
+        const text = model.getValueInRange(
+          new monaco.Range(
+            range.startLine,
+            range.startCol,
+            range.endLine,
+            range.endCol
+          )
+        );
+
+        const toCopy = stripQuotes(text);
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(toCopy).catch(() => {});
+        }
+        flashCopied([range]);
+      });
+
+      const editorDom = editor.getDomNode();
+      let hoveredZoneId: string | null = null;
       editor.onMouseMove((e: any) => {
-        if (!hoverRevealEnabledRef.current) return;
+        const targetType = e.target?.type;
 
-        const line = e.target?.position?.lineNumber;
-        const model = editor.getModel();
-        const lineCount = model?.getLineCount() ?? 0;
-        const prev = revealedLinesRef.current;
-        const next = new Set<number>();
-
-        if (line && lineCount > 0) {
-          next.add(line);
-          if (line > 1) next.add(line - 1);
-          if (line < lineCount) next.add(line + 1);
+        if (targetType === VIEW_ZONE_TARGET_TYPE) {
+          const zoneId: string | undefined = e.target.detail?.viewZoneId;
+          if (zoneId && groupZoneMapRef.current.has(zoneId)) {
+            if (zoneId !== hoveredZoneId) {
+              if (hoveredZoneId) {
+                groupZoneMapRef.current
+                  .get(hoveredZoneId)
+                  ?.pill.classList.remove("hover");
+              }
+              hoveredZoneId = zoneId;
+              groupZoneMapRef.current
+                .get(zoneId)
+                ?.pill.classList.add("hover");
+              editorDom?.classList.add("secret-group-zone-hover");
+            }
+            hideTooltip();
+            return;
+          }
         }
 
-        // Only re-render if set changed
-        if (prev.size !== next.size || [...prev].some((l) => !next.has(l))) {
-          revealedLinesRef.current = next;
-          applyBlurDecorations();
+        if (hoveredZoneId) {
+          groupZoneMapRef.current
+            .get(hoveredZoneId)
+            ?.pill.classList.remove("hover");
+          hoveredZoneId = null;
+          editorDom?.classList.remove("secret-group-zone-hover");
         }
+
+        const pos = e.target?.position;
+        if (!pos) {
+          hideTooltip();
+          return;
+        }
+
+        const range = secretRangesRef.current.find((r) => posInRange(pos, r));
+        if (!range) {
+          hideTooltip();
+          return;
+        }
+
+        if (
+          hoveredRangeRef.current &&
+          hoveredRangeRef.current.startLine === range.startLine &&
+          hoveredRangeRef.current.startCol === range.startCol
+        ) {
+          return;
+        }
+
+        hoveredRangeRef.current = range;
+        showTooltip(range);
       });
 
-      // Cursor position — reveal cursor line and neighbors (keyboard navigation)
-      editor.onDidChangeCursorPosition((e: any) => {
-        const line = e.position.lineNumber;
-        const model = editor.getModel();
-        const lineCount = model?.getLineCount() ?? 0;
-        const next = new Set<number>();
-        if (lineCount > 0) {
-          next.add(line);
-          if (line > 1) next.add(line - 1);
-          if (line < lineCount) next.add(line + 1);
-        }
-        revealedLinesRef.current = next;
-        applyBlurDecorations();
+      editor.onDidScrollChange(() => {
+        hideTooltip();
       });
 
-      // Re-blur everything when mouse leaves the editor
       const domNode = editor.getDomNode();
       if (domNode) {
         domNode.addEventListener("mouseleave", () => {
-          if (!hoverRevealEnabledRef.current) return;
-
-          // Keep cursor line (+ neighbors) revealed if editor is focused
-          const cursorLine = editor.getPosition()?.lineNumber;
-          const model = editor.getModel();
-          const lineCount = model?.getLineCount() ?? 0;
-          if (editor.hasTextFocus() && cursorLine && lineCount > 0) {
-            const next = new Set<number>();
-            next.add(cursorLine);
-            if (cursorLine > 1) next.add(cursorLine - 1);
-            if (cursorLine < lineCount) next.add(cursorLine + 1);
-            revealedLinesRef.current = next;
-          } else {
-            revealedLinesRef.current = new Set();
-          }
-          applyBlurDecorations();
+          hideTooltip();
+          domNode.classList.remove("secret-group-zone-hover");
         });
       }
     },
-    [applyBlurDecorations]
+    [applySecretDecorations, flashCopied, hideTooltip, showTooltip, copyGroup]
   );
+
+  useEffect(() => {
+    return () => {
+      if (tooltipRef.current) {
+        tooltipRef.current.remove();
+        tooltipRef.current = null;
+      }
+      clearGroupZones();
+    };
+  }, [clearGroupZones]);
 
   const editorOptions = {
     minimap: { enabled: false },
@@ -379,6 +715,7 @@ export function BaseFileEditor({
     occurrencesHighlight: "off" as const,
     selectionHighlight: false,
     renderLineHighlight: "none" as const,
+    links: false,
     padding,
     readOnly,
     readOnlyMessage: { value: "Read-only access" },
