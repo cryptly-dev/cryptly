@@ -50,7 +50,6 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
 import { useEffect, useMemo, useState } from "react";
-import { ProjectSwitchLoadingBar } from "../ProjectSwitchLoadingBar";
 import { SavePushPill } from "../SavePushPill";
 import { MobileFileEditor } from "./MobileFileEditor";
 import { MobileHistoryView } from "./MobileHistoryView";
@@ -76,7 +75,7 @@ export function MobileProjectTile() {
   } = useValues(projectLogic);
   const { userData } = useValues(authLogic);
   const { projects } = useValues(projectsLogic);
-  const { activeProject } = useProjects();
+  const { activeProject, isSwitching } = useProjects();
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
   const { isSearching, searchResults, searchQuery, searchableProjectsLoading } = useValues(searchLogic);
   const { setSearchQuery, clearSearch } = useActions(searchLogic);
@@ -93,7 +92,8 @@ export function MobileProjectTile() {
           !isSubmitting &&
           isEditorDirty &&
           activeTab === "editor" &&
-          !isReadOnly
+          !isReadOnly &&
+          !isSwitching
         ) {
           updateProjectContent();
         }
@@ -109,6 +109,7 @@ export function MobileProjectTile() {
     inputValue,
     activeTab,
     isReadOnly,
+    isSwitching,
   ]);
 
   const changedBy = useMemo(() => {
@@ -186,12 +187,20 @@ export function MobileProjectTile() {
               </div>
             ) : (
               <div className="h-full relative">
-                <ProjectSwitchLoadingBar />
-                <MobileFileEditor
-                  value={inputValue}
-                  onChange={(v) => setInputValue(v)}
-                  readOnly={isReadOnly}
-                />
+                <div
+                  className={cn(
+                    "h-full transition-opacity duration-300 ease-in-out",
+                    isSwitching
+                      ? "pointer-events-none opacity-60"
+                      : "opacity-100"
+                  )}
+                >
+                  <MobileFileEditor
+                    value={inputValue}
+                    onChange={(v) => setInputValue(v)}
+                    readOnly={isReadOnly || isSwitching}
+                  />
+                </div>
                 {/* Changed-by label — bottom */}
                 <AnimatePresence mode="wait">
                   {changedBy && (

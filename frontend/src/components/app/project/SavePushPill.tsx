@@ -8,12 +8,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
+import { ProjectSwitchContext } from "@/lib/context/ProjectSwitchContext";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { cn } from "@/lib/utils";
 import { useActions, useAsyncActions, useValues } from "kea";
 import { CheckCircle2, CommandIcon, XCircle } from "lucide-react";
 import posthog from "posthog-js";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { toast } from "sonner";
 
 const style = {
@@ -50,19 +51,28 @@ export function SavePushPill({
   const { updateProjectContent } = useActions(projectLogic);
   const { pushToIntegrations } = useAsyncActions(projectLogic);
   const isReadOnly = currentUserRole === ProjectMemberRole.Read;
+  const switchContext = useContext(ProjectSwitchContext);
+  const isSwitching = switchContext?.isSwitching ?? false;
   const [showSlideToConfirm, setShowSlideToConfirm] = useState(false);
 
   const saveDisabled =
-    isSubmitting || !isEditorDirty || isExternallyUpdated || isReadOnly;
+    isSubmitting ||
+    !isEditorDirty ||
+    isExternallyUpdated ||
+    isReadOnly ||
+    isSwitching;
   const hasIntegrations = integrations && integrations.length > 0;
   const pushEnabled =
     !isEditorDirty &&
     !isPushing &&
     !isExternallyUpdated &&
     hasIntegrations &&
-    !isReadOnly;
+    !isReadOnly &&
+    !isSwitching;
   let pushDisabledReason: string | undefined;
-  if (isReadOnly) {
+  if (isSwitching) {
+    pushDisabledReason = "Switching project…";
+  } else if (isReadOnly) {
     pushDisabledReason = "You don't have permission to push";
   } else if (!hasIntegrations) {
     pushDisabledReason = "No GitHub repository connected";
@@ -73,7 +83,9 @@ export function SavePushPill({
   }
 
   let saveDisabledReason: string | undefined;
-  if (isReadOnly) {
+  if (isSwitching) {
+    saveDisabledReason = "Switching project…";
+  } else if (isReadOnly) {
     saveDisabledReason = "You don't have permission to edit";
   } else if (isExternallyUpdated) {
     saveDisabledReason = "Project was updated externally. Refresh first.";
@@ -86,6 +98,7 @@ export function SavePushPill({
     !isSubmitting &&
     !isExternallyUpdated &&
     !isReadOnly &&
+    !isSwitching &&
     !showSlideToConfirm &&
     !suppressShortcutTooltip;
 

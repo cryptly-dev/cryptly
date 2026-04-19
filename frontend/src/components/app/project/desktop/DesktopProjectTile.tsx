@@ -1,4 +1,3 @@
-import { ProjectSwitchLoadingBar } from "@/components/app/project/ProjectSwitchLoadingBar";
 import { SavePushPill } from "@/components/app/project/SavePushPill";
 import { DesktopHistoryView } from "@/components/app/project/desktop/DesktopHistoryView";
 import { FileEditor } from "@/components/app/project/FileEditor";
@@ -17,6 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
+import { useProjects } from "@/lib/hooks/useProjects";
 import { ftuxLogic } from "@/lib/logics/ftuxLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import type { SearchableProject } from "@/lib/logics/searchLogic";
@@ -78,6 +78,7 @@ export function DesktopProjectTile() {
   const { isSearching, searchResults, searchQuery, searchableProjectsLoading } =
     useValues(searchLogic);
   const { clearSearch } = useActions(searchLogic);
+  const { isSwitching } = useProjects();
   const [_currentTime, setCurrentTime] = useState(Date.now()); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [activeTab, setActiveTab] = useState<TabType>("editor");
 
@@ -92,7 +93,8 @@ export function DesktopProjectTile() {
           isEditorDirty &&
           activeTab === "editor" &&
           !isExternallyUpdated &&
-          !isReadOnly
+          !isReadOnly &&
+          !isSwitching
         ) {
           updateProjectContent();
         }
@@ -109,6 +111,7 @@ export function DesktopProjectTile() {
     activeTab,
     isExternallyUpdated,
     isReadOnly,
+    isSwitching,
   ]);
 
   // Update the current time every second to refresh the relative time display
@@ -203,13 +206,21 @@ export function DesktopProjectTile() {
             <Tooltip open={shouldShowEditorTooltip} delayDuration={0}>
               <TooltipTrigger asChild>
                 <div className="relative h-full">
-                  <ProjectSwitchLoadingBar />
                   <div className="h-full">
-                    <FileEditor
-                      value={inputValue}
-                      onChange={(v) => setInputValue(v)}
-                      readOnly={isReadOnly}
-                    />
+                    <div
+                      className={cn(
+                        "h-full transition-opacity duration-300 ease-in-out",
+                        isSwitching
+                          ? "pointer-events-none opacity-60"
+                          : "opacity-100"
+                      )}
+                    >
+                      <FileEditor
+                        value={inputValue}
+                        onChange={(v) => setInputValue(v)}
+                        readOnly={isReadOnly || isSwitching}
+                      />
+                    </div>
                     {/* Pill */}
                     <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
                       <div className="pointer-events-auto">
