@@ -20,17 +20,20 @@ describe('PersonalInvitationCoreController (reads)', () => {
   describe('GET /projects/:projectId/personal-invitations', () => {
     it('gets personal invitations for project as admin', async () => {
       const { user, token, project } = await bootstrap.utils.projectUtils.setupAdmin();
-      const { user: invitedUser } = await bootstrap.utils.userUtils.createDefault({
-        email: 'invited@test.com',
+      const { user: invitedUserA } = await bootstrap.utils.userUtils.createDefault({
+        email: 'invited-a@test.com',
+      });
+      const { user: invitedUserB } = await bootstrap.utils.userUtils.createDefault({
+        email: 'invited-b@test.com',
       });
       const invitationA = await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(
         token,
-        invitedUser.id,
+        invitedUserA.id,
         project.id,
       );
       const invitationB = await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(
         token,
-        invitedUser.id,
+        invitedUserB.id,
         project.id,
       );
 
@@ -43,15 +46,16 @@ describe('PersonalInvitationCoreController (reads)', () => {
       expect(response.body.map((i) => i.id).sort()).toEqual(
         [invitationA.id, invitationB.id].sort(),
       );
-      expect(response.body[0].author).toEqual({
+      const rowA = response.body.find((i: { invitedUser: { id: string } }) => i.invitedUser.id === invitedUserA.id);
+      expect(rowA?.author).toEqual({
         id: user.id,
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
       });
-      expect(response.body[0].invitedUser).toEqual({
-        id: invitedUser.id,
-        displayName: invitedUser.displayName,
-        avatarUrl: invitedUser.avatarUrl,
+      expect(rowA?.invitedUser).toEqual({
+        id: invitedUserA.id,
+        displayName: invitedUserA.displayName,
+        avatarUrl: invitedUserA.avatarUrl,
       });
     });
 
