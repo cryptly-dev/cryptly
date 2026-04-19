@@ -27,15 +27,25 @@ import { HistoryIcon } from "@/components/ui/HistoryIcon";
 import { SlidersIcon } from "@/components/ui/SlidersIcon";
 import { Link } from "@tanstack/react-router";
 import { useActions, useValues } from "kea";
-import { AlertTriangle, ArrowLeft, CommandIcon, FolderOpen, Search, X } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CommandIcon,
+  FolderOpen,
+  Search,
+  X,
+} from "lucide-react";
 import { motion } from "motion/react";
 import posthog from "posthog-js";
 import React, { useEffect, useState } from "react";
 
 type TabType = "editor" | "history" | "members" | "settings" | "integrations";
 
-
-const TABS: { id: TabType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const TABS: {
+  id: TabType;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
   { id: "editor", label: "Editor", icon: BracketsIcon },
   { id: "history", label: "History", icon: HistoryIcon },
   { id: "members", label: "Members", icon: IconUsers },
@@ -64,7 +74,8 @@ export function DesktopProjectTile() {
     userMadeEdit,
     userSaved,
   } = useActions(ftuxLogic);
-  const { isSearching, searchResults, searchQuery, searchableProjectsLoading } = useValues(searchLogic);
+  const { isSearching, searchResults, searchQuery, searchableProjectsLoading } =
+    useValues(searchLogic);
   const { clearSearch } = useActions(searchLogic);
   const [_currentTime, setCurrentTime] = useState(Date.now()); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [activeTab, setActiveTab] = useState<TabType>("editor");
@@ -138,7 +149,10 @@ export function DesktopProjectTile() {
     return (
       <div className="h-full flex flex-col">
         <div className="h-full flex flex-col">
-          <ProjectHeaderSkeleton activeTab={activeTab} onTabChange={setActiveTab} />
+          <ProjectHeaderSkeleton
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
           <div className="flex-1 relative overflow-hidden">
             <div className="h-full p-6">
               <EditorSkeleton />
@@ -153,11 +167,11 @@ export function DesktopProjectTile() {
   if (isSearching) {
     return (
       <div className="h-full flex flex-col">
-        <SearchResultsHeader 
-          query={searchQuery} 
-          resultCount={searchResults.length} 
+        <SearchResultsHeader
+          query={searchQuery}
+          resultCount={searchResults.length}
           isLoading={searchableProjectsLoading}
-          onClose={clearSearch} 
+          onClose={clearSearch}
         />
         <div className="flex-1 overflow-y-auto p-4">
           {searchableProjectsLoading ? (
@@ -166,7 +180,11 @@ export function DesktopProjectTile() {
               <p className="text-muted-foreground">Searching...</p>
             </div>
           ) : (
-            <SearchResultsList results={searchResults} query={searchQuery} onResultClick={clearSearch} />
+            <SearchResultsList
+              results={searchResults}
+              query={searchQuery}
+              onResultClick={clearSearch}
+            />
           )}
         </div>
       </div>
@@ -176,16 +194,13 @@ export function DesktopProjectTile() {
   return (
     <div className="h-full flex flex-col">
       <ProjectHeader activeTab={activeTab} onTabChange={setActiveTab} />
-      
+
       {/* Tab Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === "editor" && (
-        <TooltipProvider>
-          <Tooltip
-              open={shouldShowEditorTooltip}
-            delayDuration={0}
-          >
-            <TooltipTrigger asChild>
+          <TooltipProvider>
+            <Tooltip open={shouldShowEditorTooltip} delayDuration={0}>
+              <TooltipTrigger asChild>
                 <div className="relative h-full">
                   <div className="h-full">
                     <FileEditor
@@ -285,74 +300,74 @@ export function DesktopProjectTile() {
                       </div>
                     </div>
                   </div>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              align="center"
-              sideOffset={-180}
-              className="w-80 p-4 shadow-2xl"
-              onPointerDownOutside={(e) => e.preventDefault()}
-            >
-              <TooltipArrow />
-              <div className="flex flex-col gap-4">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-4">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Step {currentStepNumber} of 3
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={skipFTUX}
-                    className="h-5 w-5 hover:bg-secondary cursor-pointer"
-                    aria-label="Skip tutorial"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
-
-                {/* Description */}
-                <p className="text-sm text-foreground leading-relaxed">
-                  <div>Store API keys, tokens, and sensitive data.</div>
-                  <div>Everything is end-to-end encrypted.</div>
-                </p>
-
-                {/* Actions */}
-                <div className="flex justify-between gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={skipFTUX}
-                    className="text-muted-foreground hover:text-foreground cursor-pointer"
-                  >
-                    Skip tutorial
-                  </Button>
-                  <div className="flex gap-2">
-                    {currentStepNumber > 1 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={previousStep}
-                        className="px-2 border cursor-pointer"
-                        aria-label="Previous step"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                      </Button>
-                    )}
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                align="center"
+                sideOffset={-180}
+                className="w-80 p-4 shadow-2xl"
+                onPointerDownOutside={(e) => e.preventDefault()}
+              >
+                <TooltipArrow />
+                <div className="flex flex-col gap-4">
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Step {currentStepNumber} of 3
+                    </span>
                     <Button
-                      size="sm"
-                      onClick={nextStep}
-                      className="font-semibold cursor-pointer"
+                      variant="ghost"
+                      size="icon"
+                      onClick={skipFTUX}
+                      className="h-5 w-5 hover:bg-secondary cursor-pointer"
+                      aria-label="Skip tutorial"
                     >
-                      Next
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
+
+                  {/* Description */}
+                  <p className="text-sm text-foreground leading-relaxed">
+                    <div>Store API keys, tokens, and sensitive data.</div>
+                    <div>Everything is end-to-end encrypted.</div>
+                  </p>
+
+                  {/* Actions */}
+                  <div className="flex justify-between gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={skipFTUX}
+                      className="text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      Skip tutorial
+                    </Button>
+                    <div className="flex gap-2">
+                      {currentStepNumber > 1 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={previousStep}
+                          className="px-2 border cursor-pointer"
+                          aria-label="Previous step"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        onClick={nextStep}
+                        className="font-semibold cursor-pointer"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
 
         {activeTab === "history" && (
@@ -444,9 +459,7 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
             return (
               <TooltipProvider key={tab.id}>
                 <Tooltip open={shouldShowIntegrationsTooltip} delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    {tabButton}
-                  </TooltipTrigger>
+                  <TooltipTrigger asChild>{tabButton}</TooltipTrigger>
                   <TooltipContent
                     side="bottom"
                     align="start"
@@ -477,7 +490,8 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
                         <div>
                           Connect{" "}
                           <GitHubIcon className="inline w-4 h-4 align-text-bottom" />{" "}
-                          GitHub repositories to automatically sync your secrets.
+                          GitHub repositories to automatically sync your
+                          secrets.
                         </div>
                       </p>
 
@@ -600,7 +614,12 @@ interface SearchResultsHeaderProps {
   onClose: () => void;
 }
 
-function SearchResultsHeader({ query, resultCount, isLoading, onClose }: SearchResultsHeaderProps) {
+function SearchResultsHeader({
+  query,
+  resultCount,
+  isLoading,
+  onClose,
+}: SearchResultsHeaderProps) {
   return (
     <div className="flex h-14 items-center justify-between px-4 border-b border-border/50 bg-card/20 backdrop-blur-sm flex-shrink-0">
       <div className="flex items-center gap-3">
@@ -632,7 +651,11 @@ interface SearchResultsListProps {
   onResultClick: () => void;
 }
 
-function SearchResultsList({ results, query, onResultClick }: SearchResultsListProps) {
+function SearchResultsList({
+  results,
+  query,
+  onResultClick,
+}: SearchResultsListProps) {
   if (results.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center py-12">
@@ -646,27 +669,33 @@ function SearchResultsList({ results, query, onResultClick }: SearchResultsListP
   }
 
   // Helper to get a snippet of content around the match
-  const getContentSnippet = (content: string, searchQuery: string): string | null => {
+  const getContentSnippet = (
+    content: string,
+    searchQuery: string
+  ): string | null => {
     const lowerContent = content.toLowerCase();
     const lowerQuery = searchQuery.toLowerCase();
     const matchIndex = lowerContent.indexOf(lowerQuery);
-    
+
     if (matchIndex === -1) return null;
-    
+
     const start = Math.max(0, matchIndex - 30);
     const end = Math.min(content.length, matchIndex + searchQuery.length + 50);
     let snippet = content.slice(start, end);
-    
+
     if (start > 0) snippet = "..." + snippet;
     if (end < content.length) snippet = snippet + "...";
-    
+
     return snippet;
   };
 
   return (
     <div className="space-y-2">
       {results.map((project) => {
-        const contentSnippet = getContentSnippet(project.decryptedContent, query);
+        const contentSnippet = getContentSnippet(
+          project.decryptedContent,
+          query
+        );
         const matchedInContent = contentSnippet !== null;
 
         return (

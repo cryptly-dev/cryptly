@@ -1,15 +1,7 @@
 import Editor, { loader } from "@monaco-editor/react";
 import { useCallback, useEffect, useRef } from "react";
 
-const REVEAL_KEY_LABEL =
-  typeof navigator !== "undefined" &&
-  /Mac|iPhone|iPad|iPod/i.test(navigator.platform)
-    ? "\u2325"
-    : "Alt";
-const TOOLTIP_DEFAULT_TEXT = `Click to copy | Hold ${REVEAL_KEY_LABEL} to view`;
-const TOOLTIP_REVEAL_TEXT = `Click to copy | Release ${REVEAL_KEY_LABEL} to hide`;
-
-const RECENT_EDIT_REVEAL_MS = 1500;
+const TOOLTIP_DEFAULT_TEXT = "Click to copy";
 
 interface BaseFileEditorProps {
   value: string;
@@ -140,6 +132,36 @@ function posInRange(
   return true;
 }
 
+interface MonacoSelectionLike {
+  startLineNumber: number;
+  startColumn: number;
+  endLineNumber: number;
+  endColumn: number;
+}
+
+function selectionTouchesRange(
+  sel: MonacoSelectionLike,
+  r: ValueRange
+): boolean {
+  // Compare selection start <= range end AND selection end >= range start.
+  const selStartBeforeOrAtRangeEnd =
+    sel.startLineNumber < r.endLine ||
+    (sel.startLineNumber === r.endLine && sel.startColumn <= r.endCol);
+  const selEndAfterOrAtRangeStart =
+    sel.endLineNumber > r.startLine ||
+    (sel.endLineNumber === r.startLine && sel.endColumn >= r.startCol);
+  return selStartBeforeOrAtRangeEnd && selEndAfterOrAtRangeStart;
+}
+
+function rangesEqual(a: ValueRange, b: ValueRange): boolean {
+  return (
+    a.startLine === b.startLine &&
+    a.startCol === b.startCol &&
+    a.endLine === b.endLine &&
+    a.endCol === b.endCol
+  );
+}
+
 interface ValueGroup {
   startLine: number;
   endLine: number;
@@ -166,9 +188,7 @@ function getValueGroups(model: any, ranges: ValueRange[]): ValueGroup[] {
       groups.push({
         startLine: start,
         endLine: end,
-        ranges: ranges.filter(
-          (r) => r.startLine >= start && r.endLine <= end
-        ),
+        ranges: ranges.filter((r) => r.startLine >= start && r.endLine <= end),
       });
     }
     blockStart = null;
@@ -315,11 +335,8 @@ export function BaseFileEditor({
   const groupZoneMapRef = useRef<
     Map<string, { group: ValueGroup; pill: HTMLElement }>
   >(new Map());
-  const revealKeyHeldRef = useRef<boolean>(false);
-  const revealedRangeRef = useRef<ValueRange | null>(null);
-  const keyHandlersCleanupRef = useRef<(() => void) | null>(null);
-  const recentEditRangesRef = useRef<ValueRange[]>([]);
-  const recentEditTimerRef = useRef<number | null>(null);
+  const hoverRevealedRangeRef = useRef<ValueRange | null>(null);
+  const caretRevealedRangesRef = useRef<ValueRange[]>([]);
 
   useEffect(() => {
     loader.init().then((monaco) => {
@@ -381,27 +398,19 @@ export function BaseFileEditor({
     if (!editor || !monacoInstance) return;
 
     const ranges = secretRangesRef.current;
-    const revealed = revealedRangeRef.current;
-    const recentEdits = recentEditRangesRef.current;
+    const hoverRevealed = hoverRevealedRangeRef.current;
+    const caretRevealed = caretRevealedRangesRef.current;
 
-    const isRevealedByAlt = (r: ValueRange) =>
-      !!revealed &&
-      r.startLine === revealed.startLine &&
-      r.startCol === revealed.startCol &&
-      r.endLine === revealed.endLine &&
-      r.endCol === revealed.endCol;
-
-    const isRecentlyEdited = (r: ValueRange) =>
-      recentEdits.some(
-        (er) =>
-          er.startLine === r.startLine &&
-          er.startCol === r.startCol &&
-          er.endLine === r.endLine &&
-          er.endCol === r.endCol
-      );
+    const isRevealed = (r: ValueRange) => {
+      if (hoverRevealed && rangesEqual(hoverRevealed, r)) return true;
+      for (const cr of caretRevealed) {
+        if (rangesEqual(cr, r)) return true;
+      }
+      return false;
+    };
 
     const decorations = ranges
-      .filter((r) => !isRevealedByAlt(r) && !isRecentlyEdited(r))
+      .filter((r) => !isRevealed(r))
       .map((r) => ({
         range: new monacoInstance.Range(
           r.startLine,
@@ -431,8 +440,8 @@ export function BaseFileEditor({
       tip.style.display = "none";
     }
     hoveredRangeRef.current = null;
-    if (revealedRangeRef.current) {
-      revealedRangeRef.current = null;
+    if (hoverRevealedRangeRef.current) {
+      hoverRevealedRangeRef.current = null;
       refreshMaskDecorations();
     }
   }, [refreshMaskDecorations]);
@@ -450,15 +459,11 @@ export function BaseFileEditor({
     });
     if (!visiblePos) return;
 
-    const desiredText = revealKeyHeldRef.current
-      ? TOOLTIP_REVEAL_TEXT
-      : TOOLTIP_DEFAULT_TEXT;
-
     let tip = tooltipRef.current;
     if (!tip) {
       tip = document.createElement("div");
       tip.className = "secret-tooltip";
-      tip.textContent = desiredText;
+      tip.textContent = TOOLTIP_DEFAULT_TEXT;
       domNode.appendChild(tip);
       tooltipRef.current = tip;
     } else {
@@ -469,8 +474,8 @@ export function BaseFileEditor({
       if (tip.classList.contains("copied")) {
         tip.classList.remove("copied");
       }
-      if (tip.textContent !== desiredText) {
-        tip.textContent = desiredText;
+      if (tip.textContent !== TOOLTIP_DEFAULT_TEXT) {
+        tip.textContent = TOOLTIP_DEFAULT_TEXT;
       }
     }
 
@@ -491,46 +496,41 @@ export function BaseFileEditor({
       const t = tooltipRef.current;
       if (t) {
         t.classList.remove("copied");
-        t.textContent = revealKeyHeldRef.current
-          ? TOOLTIP_REVEAL_TEXT
-          : TOOLTIP_DEFAULT_TEXT;
+        t.textContent = TOOLTIP_DEFAULT_TEXT;
       }
     }, 1200);
   }, []);
 
-  const flashCopied = useCallback(
-    (rangesToFlash: ValueRange[]) => {
-      const editor = editorRef.current;
-      const monacoInstance = monacoRef.current;
-      if (!editor || !monacoInstance || rangesToFlash.length === 0) return;
+  const flashCopied = useCallback((rangesToFlash: ValueRange[]) => {
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+    if (!editor || !monacoInstance || rangesToFlash.length === 0) return;
 
-      const decorations = rangesToFlash.map((range) => ({
-        range: new monacoInstance.Range(
-          range.startLine,
-          range.startCol,
-          range.endLine,
-          range.endCol
-        ),
-        options: {
-          inlineClassName: "secret-masked secret-copied",
-        },
-      }));
+    const decorations = rangesToFlash.map((range) => ({
+      range: new monacoInstance.Range(
+        range.startLine,
+        range.startCol,
+        range.endLine,
+        range.endCol
+      ),
+      options: {
+        inlineClassName: "secret-masked secret-copied",
+      },
+    }));
 
-      if (!flashDecorationsRef.current) {
-        flashDecorationsRef.current =
-          editor.createDecorationsCollection(decorations);
-      } else {
-        flashDecorationsRef.current.set(decorations);
+    if (!flashDecorationsRef.current) {
+      flashDecorationsRef.current =
+        editor.createDecorationsCollection(decorations);
+    } else {
+      flashDecorationsRef.current.set(decorations);
+    }
+
+    window.setTimeout(() => {
+      if (flashDecorationsRef.current) {
+        flashDecorationsRef.current.clear();
       }
-
-      window.setTimeout(() => {
-        if (flashDecorationsRef.current) {
-          flashDecorationsRef.current.clear();
-        }
-      }, 1500);
-    },
-    []
-  );
+    }, 1500);
+  }, []);
 
   const copyGroup = useCallback(
     (group: ValueGroup, pill: HTMLElement) => {
@@ -564,43 +564,40 @@ export function BaseFileEditor({
     [flashCopied]
   );
 
-  const applyGroupZones = useCallback(
-    (groups: ValueGroup[]) => {
-      const editor = editorRef.current;
-      if (!editor) return;
+  const applyGroupZones = useCallback((groups: ValueGroup[]) => {
+    const editor = editorRef.current;
+    if (!editor) return;
 
-      const groupsToShow = groups.filter((g) => g.ranges.length >= 2);
+    const groupsToShow = groups.filter((g) => g.ranges.length >= 2);
 
-      editor.changeViewZones((accessor: any) => {
-        for (const id of groupZoneIdsRef.current) {
-          accessor.removeZone(id);
-        }
-        groupZoneIdsRef.current = [];
-        groupZoneMapRef.current.clear();
+    editor.changeViewZones((accessor: any) => {
+      for (const id of groupZoneIdsRef.current) {
+        accessor.removeZone(id);
+      }
+      groupZoneIdsRef.current = [];
+      groupZoneMapRef.current.clear();
 
-        for (const group of groupsToShow) {
-          const zoneNode = document.createElement("div");
-          zoneNode.className = "secret-group-zone";
+      for (const group of groupsToShow) {
+        const zoneNode = document.createElement("div");
+        zoneNode.className = "secret-group-zone";
 
-          const pill = document.createElement("span");
-          pill.className = "secret-group-pill";
-          pill.textContent = "Copy whole group";
+        const pill = document.createElement("span");
+        pill.className = "secret-group-pill";
+        pill.textContent = "Copy whole group";
 
-          zoneNode.appendChild(pill);
+        zoneNode.appendChild(pill);
 
-          const id = accessor.addZone({
-            afterLineNumber: group.startLine - 1,
-            heightInPx: 22,
-            domNode: zoneNode,
-            suppressMouseDown: true,
-          });
-          groupZoneIdsRef.current.push(id);
-          groupZoneMapRef.current.set(id, { group, pill });
-        }
-      });
-    },
-    []
-  );
+        const id = accessor.addZone({
+          afterLineNumber: group.startLine - 1,
+          heightInPx: 22,
+          domNode: zoneNode,
+          suppressMouseDown: true,
+        });
+        groupZoneIdsRef.current.push(id);
+        groupZoneMapRef.current.set(id, { group, pill });
+      }
+    });
+  }, []);
 
   const clearGroupZones = useCallback(() => {
     const editor = editorRef.current;
@@ -614,6 +611,34 @@ export function BaseFileEditor({
     });
   }, []);
 
+  const recomputeCaretReveals = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const ranges = secretRangesRef.current;
+    const selections = editor.getSelections() ?? [];
+
+    const next: ValueRange[] = [];
+    for (const r of ranges) {
+      for (const sel of selections) {
+        if (selectionTouchesRange(sel, r)) {
+          next.push(r);
+          break;
+        }
+      }
+    }
+
+    const prev = caretRevealedRangesRef.current;
+    const sameLength = prev.length === next.length;
+    const sameContents =
+      sameLength && prev.every((p, i) => rangesEqual(p, next[i]));
+
+    if (sameContents) return;
+
+    caretRevealedRangesRef.current = next;
+    refreshMaskDecorations();
+  }, [refreshMaskDecorations]);
+
   const applySecretDecorations = useCallback(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -624,69 +649,29 @@ export function BaseFileEditor({
     const ranges = getValueRanges(model);
     secretRangesRef.current = ranges;
 
-    if (revealedRangeRef.current) {
-      const revealed = revealedRangeRef.current;
-      const stillExists = ranges.some(
-        (r) =>
-          r.startLine === revealed.startLine &&
-          r.startCol === revealed.startCol &&
-          r.endLine === revealed.endLine &&
-          r.endCol === revealed.endCol
-      );
-      if (!stillExists) revealedRangeRef.current = null;
-    }
-
-    if (recentEditRangesRef.current.length > 0) {
-      const filtered = recentEditRangesRef.current.filter((er) =>
-        ranges.some(
-          (r) =>
-            r.startLine === er.startLine &&
-            r.startCol === er.startCol &&
-            r.endLine === er.endLine &&
-            r.endCol === er.endCol
-        )
-      );
-      if (filtered.length !== recentEditRangesRef.current.length) {
-        recentEditRangesRef.current = filtered;
-      }
+    if (hoverRevealedRangeRef.current) {
+      const revealed = hoverRevealedRangeRef.current;
+      const stillExists = ranges.some((r) => rangesEqual(r, revealed));
+      if (!stillExists) hoverRevealedRangeRef.current = null;
     }
 
     refreshMaskDecorations();
+    recomputeCaretReveals();
 
     const groups = getValueGroups(model, ranges);
     applyGroupZones(groups);
-  }, [applyGroupZones, refreshMaskDecorations]);
+  }, [applyGroupZones, refreshMaskDecorations, recomputeCaretReveals]);
 
   const revealRange = useCallback(
     (range: ValueRange) => {
-      const current = revealedRangeRef.current;
-      if (
-        current &&
-        current.startLine === range.startLine &&
-        current.startCol === range.startCol &&
-        current.endLine === range.endLine &&
-        current.endCol === range.endCol
-      ) {
-        return;
-      }
-      revealedRangeRef.current = range;
+      const current = hoverRevealedRangeRef.current;
+      if (current && rangesEqual(current, range)) return;
+      hoverRevealedRangeRef.current = range;
       refreshMaskDecorations();
     },
     [refreshMaskDecorations]
   );
 
-  const unrevealRange = useCallback(() => {
-    if (!revealedRangeRef.current) return;
-    revealedRangeRef.current = null;
-    refreshMaskDecorations();
-  }, [refreshMaskDecorations]);
-
-  const setTooltipText = useCallback((text: string) => {
-    const tip = tooltipRef.current;
-    if (!tip) return;
-    if (tip.classList.contains("copied")) return;
-    if (tip.textContent !== text) tip.textContent = text;
-  }, []);
 
   const handleEditorMount = useCallback(
     (editor: any, monaco: any) => {
@@ -696,99 +681,14 @@ export function BaseFileEditor({
 
       applySecretDecorations();
 
-      const computeChangeEnd = (change: {
-        range: {
-          startLineNumber: number;
-          startColumn: number;
-        };
-        text: string;
-      }) => {
-        const text = change.text ?? "";
-        const newlineIdx = text.lastIndexOf("\n");
-        if (newlineIdx === -1) {
-          return {
-            line: change.range.startLineNumber,
-            col: change.range.startColumn + text.length,
-          };
-        }
-        const linesAdded = text.split("\n").length - 1;
-        const lastLineLength = text.length - newlineIdx - 1;
-        return {
-          line: change.range.startLineNumber + linesAdded,
-          col: lastLineLength + 1,
-        };
-      };
-
-      const positionTouchesRange = (
-        line: number,
-        col: number,
-        r: ValueRange
-      ) => {
-        if (line < r.startLine || line > r.endLine) return false;
-        if (line === r.startLine && col < r.startCol) return false;
-        if (line === r.endLine && col > r.endCol) return false;
-        return true;
-      };
-
-      const scheduleRecentEditClear = () => {
-        if (recentEditTimerRef.current !== null) {
-          window.clearTimeout(recentEditTimerRef.current);
-        }
-        recentEditTimerRef.current = window.setTimeout(() => {
-          recentEditTimerRef.current = null;
-          recentEditRangesRef.current = [];
-          refreshMaskDecorations();
-        }, RECENT_EDIT_REVEAL_MS);
-      };
-
-      editor.onDidChangeModelContent((event: any) => {
+      editor.onDidChangeModelContent(() => {
         applySecretDecorations();
-
-        const ranges = secretRangesRef.current;
-        if (ranges.length === 0) {
-          if (recentEditRangesRef.current.length > 0) {
-            recentEditRangesRef.current = [];
-            refreshMaskDecorations();
-          }
-          return;
-        }
-
-        const affected: ValueRange[] = [];
-        const seen = new Set<string>();
-        for (const change of event.changes ?? []) {
-          const startLine = change.range.startLineNumber;
-          const startCol = change.range.startColumn;
-          const end = computeChangeEnd(change);
-          for (const r of ranges) {
-            if (
-              positionTouchesRange(startLine, startCol, r) ||
-              positionTouchesRange(end.line, end.col, r)
-            ) {
-              const key = `${r.startLine}:${r.startCol}:${r.endLine}:${r.endCol}`;
-              if (!seen.has(key)) {
-                seen.add(key);
-                affected.push(r);
-              }
-            }
-          }
-        }
-
-        if (affected.length > 0) {
-          recentEditRangesRef.current = affected;
-          refreshMaskDecorations();
-          scheduleRecentEditClear();
-        } else if (recentEditRangesRef.current.length > 0) {
-          recentEditRangesRef.current = [];
-          if (recentEditTimerRef.current !== null) {
-            window.clearTimeout(recentEditTimerRef.current);
-            recentEditTimerRef.current = null;
-          }
-          refreshMaskDecorations();
-        }
       });
 
       const VIEW_ZONE_TARGET_TYPE =
         monaco.editor.MouseTargetType?.CONTENT_VIEW_ZONE ?? 8;
+      const CONTENT_TEXT_TARGET_TYPE =
+        monaco.editor.MouseTargetType?.CONTENT_TEXT ?? 6;
 
       let mouseDownInfo: {
         pos: { lineNumber: number; column: number };
@@ -878,9 +778,7 @@ export function BaseFileEditor({
                   ?.pill.classList.remove("hover");
               }
               hoveredZoneId = zoneId;
-              groupZoneMapRef.current
-                .get(zoneId)
-                ?.pill.classList.add("hover");
+              groupZoneMapRef.current.get(zoneId)?.pill.classList.add("hover");
               editorDom?.classList.add("secret-group-zone-hover");
             }
             hideTooltip();
@@ -896,13 +794,20 @@ export function BaseFileEditor({
           editorDom?.classList.remove("secret-group-zone-hover");
         }
 
+        if (targetType !== CONTENT_TEXT_TARGET_TYPE) {
+          hideTooltip();
+          return;
+        }
+
         const pos = e.target?.position;
         if (!pos) {
           hideTooltip();
           return;
         }
 
-        const range = secretRangesRef.current.find((r) => posInRange(pos, r));
+        const range = secretRangesRef.current.find(
+          (r) => pos.lineNumber >= r.startLine && pos.lineNumber <= r.endLine
+        );
         if (!range) {
           hideTooltip();
           return;
@@ -917,12 +822,12 @@ export function BaseFileEditor({
         }
 
         hoveredRangeRef.current = range;
-        if (revealKeyHeldRef.current) {
-          revealRange(range);
-        } else if (revealedRangeRef.current) {
-          unrevealRange();
-        }
+        revealRange(range);
         showTooltip(range);
+      });
+
+      editor.onDidChangeCursorSelection(() => {
+        recomputeCaretReveals();
       });
 
       editor.onDidScrollChange(() => {
@@ -944,49 +849,6 @@ export function BaseFileEditor({
           domNode.classList.remove("secret-group-zone-hover");
         });
       }
-
-      const isRevealKey = (event: KeyboardEvent) =>
-        event.key === "Alt" || event.altKey;
-
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (!isRevealKey(event)) return;
-        if (revealKeyHeldRef.current) return;
-        revealKeyHeldRef.current = true;
-        const hovered = hoveredRangeRef.current;
-        if (hovered) {
-          revealRange(hovered);
-          setTooltipText(TOOLTIP_REVEAL_TEXT);
-        }
-      };
-
-      const handleKeyUp = (event: KeyboardEvent) => {
-        if (event.key !== "Alt" && event.altKey) return;
-        if (!revealKeyHeldRef.current) return;
-        revealKeyHeldRef.current = false;
-        unrevealRange();
-        if (hoveredRangeRef.current) {
-          setTooltipText(TOOLTIP_DEFAULT_TEXT);
-        }
-      };
-
-      const handleBlur = () => {
-        if (!revealKeyHeldRef.current) return;
-        revealKeyHeldRef.current = false;
-        unrevealRange();
-        if (hoveredRangeRef.current) {
-          setTooltipText(TOOLTIP_DEFAULT_TEXT);
-        }
-      };
-
-      document.addEventListener("keydown", handleKeyDown);
-      document.addEventListener("keyup", handleKeyUp);
-      window.addEventListener("blur", handleBlur);
-
-      keyHandlersCleanupRef.current = () => {
-        document.removeEventListener("keydown", handleKeyDown);
-        document.removeEventListener("keyup", handleKeyUp);
-        window.removeEventListener("blur", handleBlur);
-      };
     },
     [
       applySecretDecorations,
@@ -996,8 +858,7 @@ export function BaseFileEditor({
       showTooltip,
       copyGroup,
       revealRange,
-      unrevealRange,
-      setTooltipText,
+      recomputeCaretReveals,
     ]
   );
 
@@ -1008,14 +869,6 @@ export function BaseFileEditor({
         tooltipRef.current = null;
       }
       clearGroupZones();
-      if (keyHandlersCleanupRef.current) {
-        keyHandlersCleanupRef.current();
-        keyHandlersCleanupRef.current = null;
-      }
-      if (recentEditTimerRef.current !== null) {
-        window.clearTimeout(recentEditTimerRef.current);
-        recentEditTimerRef.current = null;
-      }
     };
   }, [clearGroupZones]);
 

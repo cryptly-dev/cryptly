@@ -28,10 +28,10 @@ export function DesktopProjectsListItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center justify-between gap-2 rounded-sm px-3.5 py-2 text-sm transition-colors select-none",
+        "group relative flex items-center justify-between gap-2 rounded-sm px-3.5 py-2.5 text-sm transition-colors select-none",
         isActive
           ? "text-primary"
-          : "text-muted-foreground hover:bg-neutral-800/50 hover:text-foreground"
+          : "text-muted-foreground/55 hover:bg-neutral-800/50 hover:text-foreground"
       )}
     >
       {isActive && (
@@ -56,7 +56,7 @@ export function DesktopProjectsListItem({
         />
         <span
           className={cn(
-            "truncate block relative pointer-events-none text-[13px] font-normal",
+            "truncate block relative pointer-events-none text-[15px] font-normal",
             isActive && "[text-shadow:0_0_0.4px_currentColor]"
           )}
         >
@@ -67,7 +67,7 @@ export function DesktopProjectsListItem({
         <span
           className={cn(
             "text-[11px] tabular-nums transition-opacity group-hover:opacity-0",
-            isActive ? "text-primary/60" : "text-muted-foreground/50"
+            isActive ? "text-primary/70" : "text-muted-foreground/40"
           )}
           title={new Date(project.updatedAt).toLocaleString()}
         >
