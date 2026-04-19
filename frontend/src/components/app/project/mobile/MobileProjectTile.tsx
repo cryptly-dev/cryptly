@@ -50,6 +50,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
 import { useEffect, useMemo, useState } from "react";
+import { ProjectSwitchLoadingBar } from "../ProjectSwitchLoadingBar";
 import { SavePushPill } from "../SavePushPill";
 import { MobileFileEditor } from "./MobileFileEditor";
 import { MobileHistoryView } from "./MobileHistoryView";
@@ -185,6 +186,7 @@ export function MobileProjectTile() {
               </div>
             ) : (
               <div className="h-full relative">
+                <ProjectSwitchLoadingBar />
                 <MobileFileEditor
                   value={inputValue}
                   onChange={(v) => setInputValue(v)}

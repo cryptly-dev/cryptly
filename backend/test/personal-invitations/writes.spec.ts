@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import * as request from 'supertest';
 import { Role } from '../../src/shared/types/role.enum';
 import { createTestApp } from '../utils/bootstrap';
@@ -164,6 +165,30 @@ describe('PersonalInvitationCoreController (writes)', () => {
           invitedUserId: invitee.id,
           role: Role.Read,
         });
+
+      expect(response.status).toEqual(403);
+    });
+
+    it('does not create personal invitation when invited user is already a project member', async () => {
+      const { token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
+      });
+      const { user: member } = await bootstrap.utils.userUtils.createDefault({
+        email: 'member@test.com',
+      });
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
+      await bootstrap.utils.projectUtils.addMemberToProject(project.id, member.id, Role.Read);
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .post(`/projects/${project.id}/personal-invitations`)
+        .set('authorization', `Bearer ${adminToken}`)
+        .send({
+          invitedUserId: member.id,
+          role: Role.Write,
+        });
+
+      expect(response.status).toEqual(400);
+      expect(response.body.message).toEqual('User is already a project member');
     });
 
     it('does not create when not logged in', async () => {
@@ -219,6 +244,49 @@ describe('PersonalInvitationCoreController (writes)', () => {
         displayName: invitee.displayName,
         role: Role.Read,
       });
+    });
+
+    it('returns 400 when accepting invitation while already a project member', async () => {
+      const { user: admin, token: adminToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'admin@test.com',
+      });
+      const { user: invitee, token: inviteeToken } = await bootstrap.utils.userUtils.createDefault({
+        email: 'invitee@test.com',
+      });
+      const project = await bootstrap.utils.projectUtils.createProject(adminToken);
+      const firstInvitation =
+        await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(
+          adminToken,
+          invitee.id,
+          project.id,
+        );
+      await request(bootstrap.app.getHttpServer())
+        .post(`/personal-invitations/${firstInvitation.id}/accept`)
+        .set('authorization', `Bearer ${inviteeToken}`)
+        .send();
+
+      const secondInvitationDoc = await bootstrap.models.personalInvitationModel.create({
+        projectId: new Types.ObjectId(project.id),
+        authorId: new Types.ObjectId(admin.id),
+        invitedUserId: new Types.ObjectId(invitee.id),
+        role: Role.Write,
+      });
+
+      const secondAcceptResponse = await request(bootstrap.app.getHttpServer())
+        .post(`/personal-invitations/${secondInvitationDoc._id.toString()}/accept`)
+        .set('authorization', `Bearer ${inviteeToken}`)
+        .send();
+
+      expect(secondAcceptResponse.status).toEqual(400);
+      expect(secondAcceptResponse.body.message).toEqual('User is already a project member');
+
+      const listResponse = await request(bootstrap.app.getHttpServer())
+        .get('/users/me/projects')
+        .set('authorization', `Bearer ${inviteeToken}`);
+
+      expect(listResponse.status).toEqual(200);
+      const matching = listResponse.body.filter((p: { id: string }) => p.id === project.id);
+      expect(matching.length).toEqual(1);
     });
 
     it('accepts invitation and adds user to project as write', async () => {

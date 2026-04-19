@@ -1,19 +1,21 @@
 import { type Project } from "@/lib/api/projects.api";
 import { cn, getCompactRelativeTime } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { GripVertical } from "lucide-react";
-import { motion, type DragControls } from "motion/react";
+import { GripVertical, Loader2 } from "lucide-react";
+import { AnimatePresence, motion, type DragControls } from "motion/react";
 import { useEffect, useState } from "react";
 
 interface DesktopProjectsListItemProps {
   project: Project;
   isActive: boolean;
+  isLoading?: boolean;
   dragControls: DragControls;
 }
 
 export function DesktopProjectsListItem({
   project,
   isActive,
+  isLoading = false,
   dragControls,
 }: DesktopProjectsListItemProps) {
   const [, setNow] = useState(Date.now());
@@ -28,18 +30,31 @@ export function DesktopProjectsListItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center justify-between gap-2 rounded-sm px-3.5 py-2.5 text-sm transition-colors select-none",
+        "group relative flex items-center justify-between gap-2 overflow-hidden rounded-sm px-3.5 py-2.5 text-sm transition-colors select-none",
         isActive
           ? "text-primary"
-          : "text-muted-foreground/55 hover:bg-neutral-800/50 hover:text-foreground"
+          : isLoading
+            ? "text-foreground"
+            : "text-muted-foreground/55 hover:bg-neutral-800/50 hover:text-foreground"
       )}
     >
-      {isActive && (
-        <motion.div
-          layoutId="active-project"
-          className="absolute inset-0 bg-neutral-800 rounded-sm pointer-events-none"
-          transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
-        />
+      <AnimatePresence initial={false}>
+        {isActive && (
+          <motion.div
+            key="active-bg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="absolute inset-0 bg-neutral-800 rounded-sm pointer-events-none"
+          />
+        )}
+      </AnimatePresence>
+      {isLoading && !isActive && (
+        <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-sm">
+          <span className="absolute inset-0 bg-neutral-800/40" />
+          <span className="absolute inset-y-0 -left-1/2 w-1/2 bg-gradient-to-r from-transparent via-primary/25 to-transparent animate-project-item-shimmer" />
+        </span>
       )}
       <Link
         to="/app/project/$projectId"
@@ -48,12 +63,13 @@ export function DesktopProjectsListItem({
         className="absolute inset-0 rounded-sm cursor-pointer"
       />
       <div className="relative z-10 flex items-center gap-2 min-w-0 flex-1 pointer-events-none">
-        {/* <div
-          className={cn(
-            "w-1.5 h-1.5 rounded-full flex-shrink-0",
-            isActive ? "bg-primary" : "bg-muted-foreground/40"
-          )}
-        /> */}
+        {isLoading && (
+          <Loader2
+            className="w-1.5 h-1.5 flex-shrink-0 animate-spin text-primary"
+            strokeWidth={4}
+            aria-label="Loading project"
+          />
+        )}
         <span
           className={cn(
             "truncate block relative pointer-events-none text-[15px] font-normal",

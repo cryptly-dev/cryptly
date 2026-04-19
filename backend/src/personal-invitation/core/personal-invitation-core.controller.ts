@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -14,6 +15,7 @@ import { ProjectMemberGuard } from 'src/project/core/guards/project-member.guard
 import { RequireRole } from 'src/project/decorators/require-project-role.decorator';
 import { Role } from 'src/shared/types/role.enum';
 import { CurrentUserId } from '../../auth/core/decorators/current-user-id.decorator';
+import { ProjectNormalized } from '../../project/core/entities/project.interface';
 import { ProjectReadService } from '../../project/read/project-read.service';
 import { ProjectWriteService } from '../../project/write/project-write.service';
 import { UserReadService } from '../../user/read/user-read.service';
@@ -110,6 +112,9 @@ export class PersonalInvitationCoreController {
     @Param('projectId') projectId: string,
     @Body() body: CreatePersonalInvitationBody,
   ): Promise<PersonalInvitationSerialized> {
+    const project = await this.projectReadService.findByIdOrThrow(projectId);
+    this.requireIsNotMember(project, body.invitedUserId);
+
     const invitation = await this.personalInvitationWriteService.create({
       ...body,
       authorId: userId,
@@ -117,8 +122,6 @@ export class PersonalInvitationCoreController {
     });
     const author = await this.userReadService.readByIdOrThrow(userId);
     const invitedUser = await this.userReadService.readByIdOrThrow(body.invitedUserId);
-
-    const project = await this.projectReadService.findByIdOrThrow(projectId);
 
     return PersonalInvitationSerializer.serialize(invitation, author, invitedUser, project.name);
   }
@@ -134,6 +137,9 @@ export class PersonalInvitationCoreController {
     if (invitation.invitedUserId !== userId) {
       throw new ForbiddenException('You are not the invited user');
     }
+
+    const project = await this.projectReadService.findByIdOrThrow(invitation.projectId.toString());
+    this.requireIsNotMember(project, userId);
 
     await this.projectWriteService.addMemberWithoutSettingSecretsKey(
       invitation.projectId.toString(),
@@ -177,5 +183,11 @@ export class PersonalInvitationCoreController {
       invitation.projectId.toString(),
       invitation.invitedUserId,
     );
+  }
+
+  private requireIsNotMember(project: ProjectNormalized, userId: string): void {
+    if (project.members[userId] !== undefined) {
+      throw new BadRequestException('User is already a project member');
+    }
   }
 }
