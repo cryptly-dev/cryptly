@@ -1,8 +1,9 @@
 import { type Project } from "@/lib/api/projects.api";
+import { Spinner } from "@/components/ui/spinner";
 import { cn, getCompactRelativeTime } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { GripVertical } from "lucide-react";
-import { motion, type DragControls } from "motion/react";
+import { type DragControls } from "motion/react";
 import { useEffect, useState } from "react";
 
 interface DesktopProjectsListItemProps {
@@ -29,19 +30,15 @@ export function DesktopProjectsListItem({
   const timeAgo = getCompactRelativeTime(project.updatedAt);
 
   return (
-    <motion.div
+    <div
       className={cn(
-        "group relative flex items-center justify-between gap-2 overflow-hidden rounded-sm px-3.5 py-2.5 text-sm transition-colors select-none origin-left",
+        "group relative flex items-center justify-between gap-2 overflow-hidden rounded-sm px-3.5 py-2.5 text-sm transition-colors select-none",
         isActive
           ? "text-primary"
           : isLoading
             ? "bg-neutral-800/40 text-foreground"
             : "text-muted-foreground/55 hover:bg-neutral-800/40 hover:text-foreground",
       )}
-      animate={{
-        x: isActive ? 4 : isLoading ? 2 : 0,
-      }}
-      transition={{ type: "spring", stiffness: 420, damping: 18 }}
     >
       {isActive && (
         <div className="absolute inset-0 bg-neutral-800 rounded-sm pointer-events-none" />
@@ -53,6 +50,16 @@ export function DesktopProjectsListItem({
         className="absolute inset-0 rounded-sm cursor-pointer"
       />
       <div className="relative z-10 flex items-center gap-2 min-w-0 flex-1 pointer-events-none">
+        <span
+          aria-hidden
+          className="flex h-3 w-3 flex-shrink-0 items-center justify-center"
+        >
+          {isLoading ? (
+            <Spinner className="h-3 w-3 text-primary" />
+          ) : isActive ? (
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          ) : null}
+        </span>
         <span
           className={cn(
             "truncate block relative pointer-events-none text-[15px] font-normal",
@@ -81,7 +88,7 @@ export function DesktopProjectsListItem({
       >
         <GripVertical className="w-3.5 h-3.5 text-muted-foreground/60" />
       </div>
-    </motion.div>
+    </div>
   );
 }
 
