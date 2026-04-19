@@ -242,7 +242,7 @@ export function DesktopProjectsList() {
         </div>
 
         {/* Projects List */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-2">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar px-2">
           {/* Inline Add Project Input */}
           {isAddingProject && (
             <motion.div
