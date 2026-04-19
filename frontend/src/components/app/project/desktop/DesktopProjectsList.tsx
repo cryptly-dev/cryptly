@@ -85,7 +85,7 @@ export function DesktopProjectsList() {
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const newProjectInputRef = useRef<HTMLInputElement>(null);
 
-  const { activeProject } = useProjects();
+  const { activeProject, pendingProjectId } = useProjects();
 
   useEffect(() => {
     if (userData?.displayName) {
@@ -315,12 +315,14 @@ export function DesktopProjectsList() {
             >
               {localProjects.map((project) => {
                 const isActive = project.id === activeProject?.id;
+                const isLoading = project.id === pendingProjectId;
 
                 return (
                   <ProjectListItem
                     key={project.id}
                     project={project}
                     isActive={isActive}
+                    isLoading={isLoading}
                     itemVariants={itemVariants}
                     onDragEnd={() => {
                       finalizeProjectsOrder(localProjects);
@@ -503,11 +505,13 @@ export function DesktopProjectsList() {
 function ProjectListItem({
   project,
   isActive,
+  isLoading,
   itemVariants,
   onDragEnd,
 }: {
   project: Project;
   isActive: boolean;
+  isLoading: boolean;
   itemVariants: any;
   onDragEnd: () => void;
 }) {
@@ -525,6 +529,7 @@ function ProjectListItem({
       <DesktopProjectsListItem
         project={project}
         isActive={isActive}
+        isLoading={isLoading}
         dragControls={dragControls}
       />
     </Reorder.Item>
