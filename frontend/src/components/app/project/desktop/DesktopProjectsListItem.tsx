@@ -39,7 +39,6 @@ export function DesktopProjectsListItem({
             : "text-muted-foreground/55 hover:bg-neutral-800/40 hover:text-foreground",
       )}
       animate={{
-        scale: isActive ? 1.03 : isLoading ? 0.98 : 1,
         x: isActive ? 4 : isLoading ? 2 : 0,
       }}
       transition={{ type: "spring", stiffness: 420, damping: 18 }}
