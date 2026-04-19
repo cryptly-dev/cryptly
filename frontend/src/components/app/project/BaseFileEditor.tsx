@@ -1644,6 +1644,13 @@ export function BaseFileEditor({
       return;
     }
     lastParentValueRef.current = value;
+    // Reset the emission baseline too. Without this, lastEmittedValueRef
+    // can keep pointing at a string we emitted in a previous project
+    // session; if a future external `value` (e.g. switching projects)
+    // happens to equal that stale emission, the echo guard above would
+    // trip and we'd silently skip the model reset, leaving the editor
+    // showing the prior project's contents.
+    lastEmittedValueRef.current = value;
 
     const editor = editorRef.current;
     const monacoInstance = monacoRef.current;
