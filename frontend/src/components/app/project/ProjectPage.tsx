@@ -12,7 +12,6 @@ import { projectsLogic } from "@/lib/logics/projectsLogic";
 import { suggestedUsersLogic } from "@/lib/logics/suggestedUsersLogic";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { BindLogic, useValues } from "kea";
-import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export function ProjectPage() {
@@ -65,7 +64,6 @@ export function ProjectPage() {
           onReady={() => setDisplayedProjectId(projectId)}
         />
       )}
-      <ProjectSwitchLoadingBar visible={isSwitching} />
       <BindLogic logic={projectLogic} props={{ projectId: displayedProjectId }}>
         <BindLogic
           logic={invitationsLogic}
@@ -140,27 +138,6 @@ function PendingProjectLoader({
   }, [projectData, projectDataLoading, projectId, onReady]);
 
   return null;
-}
-
-function ProjectSwitchLoadingBar({ visible }: { visible: boolean }) {
-  return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          key="project-switch-loading-bar"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-          className="pointer-events-none fixed inset-x-0 top-0 z-50 h-[2px] overflow-hidden"
-          aria-hidden
-        >
-          <div className="absolute inset-0 bg-primary/15" />
-          <div className="absolute top-0 bottom-0 left-0 w-1/3 bg-primary animate-project-switch-bar" />
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
 }
 
 function ProjectPageContent() {
