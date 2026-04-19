@@ -1,6 +1,7 @@
 import {
   actions,
   connect,
+  events,
   kea,
   key,
   listeners,
@@ -252,6 +253,12 @@ export const projectLogic = kea<projectLogicType>([
         },
       },
     ],
+  })),
+
+  events(({ values }) => ({
+    beforeUnmount: () => {
+      values.syncConnection?.close();
+    },
   })),
 
   selectors(({ values }) => ({
