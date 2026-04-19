@@ -31,6 +31,7 @@ import {
   IconArrowLeft,
   IconArrowRight,
   IconCheck,
+  IconChevronRight,
   IconCopy,
   IconCrown,
   IconEye,
@@ -82,10 +83,10 @@ const ROLE_META: Record<
 };
 
 // ────────────────────────────────────────────────────────────
-// Member card (vertical, clickable)
+// Member row (horizontal, clickable)
 // ────────────────────────────────────────────────────────────
 
-function MemberCard({
+function MemberRow({
   member,
   onClick,
 }: {
@@ -94,34 +95,37 @@ function MemberCard({
 }) {
   const { userData } = useValues(authLogic);
   const roleMeta = ROLE_META[member.role];
+  const RoleIcon = roleMeta?.icon;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
+      className="group flex items-center gap-3 px-4 py-3 hover:bg-neutral-800/40 transition-colors cursor-pointer w-full text-left"
     >
-      <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium overflow-hidden">
+      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium overflow-hidden shrink-0">
         {member.avatarUrl ? (
           <img
             src={member.avatarUrl}
             alt={member.displayName}
-            className="size-12 rounded-full object-cover"
+            className="size-8 rounded-full object-cover"
           />
         ) : (
-          <span className="text-lg">
-            {member.displayName.charAt(0).toUpperCase()}
-          </span>
+          <span>{member.displayName.charAt(0).toUpperCase()}</span>
         )}
       </div>
 
-      <div className="text-sm font-medium truncate w-full text-center">
-        {member.id === userData?.id ? "You" : member.displayName}
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium truncate">
+          {member.id === userData?.id ? "You" : member.displayName}
+        </div>
+        <div className="text-xs text-muted-foreground truncate inline-flex items-center gap-1">
+          {RoleIcon && <RoleIcon className="size-3" />}
+          {roleMeta?.label ?? member.role}
+        </div>
       </div>
 
-      <div className="text-xs px-2 py-1 rounded capitalize bg-muted text-muted-foreground">
-        {roleMeta?.label ?? member.role}
-      </div>
+      <IconChevronRight className="size-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
     </button>
   );
 }
@@ -275,9 +279,9 @@ function MembersSection() {
         <IconUsers className="size-4 text-muted-foreground" />
         <h3 className="text-sm font-medium">Members</h3>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="rounded-lg border border-border/50 bg-neutral-800/20 overflow-hidden divide-y divide-border/50">
         {projectData.members.map((member) => (
-          <MemberCard
+          <MemberRow
             key={member.id}
             member={member}
             onClick={() => setSelectedMemberId(member.id)}
@@ -295,14 +299,14 @@ function MembersSection() {
 }
 
 // ────────────────────────────────────────────────────────────
-// Active invite card (vertical)
+// Active invite row (horizontal)
 // ────────────────────────────────────────────────────────────
 
 type ActiveInvite =
   | { type: "link"; data: Invitation }
   | { type: "personal"; data: PersonalInvitation };
 
-function ActiveInviteCard({ invite }: { invite: ActiveInvite }) {
+function ActiveInviteRow({ invite }: { invite: ActiveInvite }) {
   const { deleteInvitation } = useAsyncActions(invitationsLogic);
   const { deletePersonalInvitation } = useActions(personalInvitationsLogic);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
@@ -324,8 +328,44 @@ function ActiveInviteCard({ invite }: { invite: ActiveInvite }) {
   };
 
   return (
-    <div className="group relative flex flex-col items-center gap-2 p-4 rounded-lg bg-neutral-800/50 border border-border/50">
-      <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="group flex items-center gap-3 px-4 py-3 hover:bg-neutral-800/40 transition-colors">
+      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium overflow-hidden shrink-0">
+        {invite.type === "personal" ? (
+          invite.data.invitedUser.avatarUrl ? (
+            <img
+              src={invite.data.invitedUser.avatarUrl}
+              alt={invite.data.invitedUser.displayName}
+              className="size-8 rounded-full object-cover"
+            />
+          ) : (
+            <span>
+              {invite.data.invitedUser.displayName.charAt(0).toUpperCase()}
+            </span>
+          )
+        ) : (
+          <IconLink className="size-4" />
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium truncate">
+          {invite.type === "personal"
+            ? invite.data.invitedUser.displayName
+            : "Invite link"}
+        </div>
+        <div className="text-xs text-muted-foreground truncate">
+          {invite.type === "personal" ? (
+            <>
+              {invite.data.role} &middot;{" "}
+              {getRelativeTime(invite.data.createdAt)}
+            </>
+          ) : (
+            <>ID: {invite.data.id.slice(-8)}</>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1">
         {invite.type === "link" && (
           <Button
             type="button"
@@ -337,7 +377,7 @@ function ActiveInviteCard({ invite }: { invite: ActiveInvite }) {
                 `${import.meta.env.VITE_APP_URL}/invite/${invite.data.id}`
               )
             }
-            className="size-6 p-0 cursor-pointer"
+            className="cursor-pointer h-8 px-2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
             aria-label="Copy link"
           >
             {copiedLinkId === invite.data.id ? (
@@ -354,48 +394,13 @@ function ActiveInviteCard({ invite }: { invite: ActiveInvite }) {
           variant="ghost"
           onClick={handleRevoke}
           disabled={isLoading}
-          className="size-6 p-0 text-destructive hover:text-destructive cursor-pointer"
+          className="cursor-pointer h-8 px-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
           aria-label={
             invite.type === "link" ? "Revoke link" : "Revoke invitation"
           }
         >
           <IconTrash className="size-3.5" />
         </Button>
-      </div>
-
-      <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium overflow-hidden">
-        {invite.type === "personal" ? (
-          invite.data.invitedUser.avatarUrl ? (
-            <img
-              src={invite.data.invitedUser.avatarUrl}
-              alt={invite.data.invitedUser.displayName}
-              className="size-12 rounded-full object-cover"
-            />
-          ) : (
-            <span className="text-lg">
-              {invite.data.invitedUser.displayName.charAt(0).toUpperCase()}
-            </span>
-          )
-        ) : (
-          <IconLink className="size-5" />
-        )}
-      </div>
-
-      <div className="text-sm font-medium truncate w-full text-center">
-        {invite.type === "personal"
-          ? invite.data.invitedUser.displayName
-          : "Invite link"}
-      </div>
-
-      <div className="text-xs text-muted-foreground text-center">
-        {invite.type === "personal" ? (
-          <>
-            {invite.data.role} &middot;{" "}
-            {getRelativeTime(invite.data.createdAt)}
-          </>
-        ) : (
-          <>ID: {invite.data.id.slice(-8)}</>
-        )}
       </div>
     </div>
   );
@@ -472,9 +477,9 @@ function ActiveInvitesSection() {
         <IconUserPlus className="size-4 text-muted-foreground" />
         <h3 className="text-sm font-medium">Active invites</h3>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="rounded-lg border border-border/50 bg-neutral-800/20 overflow-hidden divide-y divide-border/50">
         {allInvites.map((invite) => (
-          <ActiveInviteCard
+          <ActiveInviteRow
             key={
               invite.type === "link"
                 ? `link-${invite.data.id}`
