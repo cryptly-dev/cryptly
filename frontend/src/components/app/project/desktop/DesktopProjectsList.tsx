@@ -208,14 +208,14 @@ export function DesktopProjectsList() {
       <div className="flex-1 overflow-hidden flex flex-col">
         {/* Section Header */}
         <div className="px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs uppercase font-normal text-muted-foreground">
+          <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
             <FolderOpen className="w-4 h-4" />
             <span>Projects</span>
             {projectsLoading ? (
               <Spinner className="w-3.5 h-3.5 text-muted-foreground" />
             ) : (
               localProjects && (
-                <span className="text-muted-foreground font-normal">
+                <span className="text-muted-foreground">
                   ({localProjects.length})
                 </span>
               )

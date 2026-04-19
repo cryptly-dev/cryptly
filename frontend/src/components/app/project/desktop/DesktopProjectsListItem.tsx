@@ -66,7 +66,7 @@ export function DesktopProjectsListItem({
       <div className="relative z-10 flex items-center gap-1.5 flex-shrink-0 pointer-events-none">
         <span
           className={cn(
-            "text-[11px] tabular-nums transition-opacity group-hover:opacity-0",
+            "text-[13px] tabular-nums transition-opacity group-hover:opacity-0",
             isActive ? "text-primary/70" : "text-muted-foreground/40"
           )}
           title={new Date(project.updatedAt).toLocaleString()}
