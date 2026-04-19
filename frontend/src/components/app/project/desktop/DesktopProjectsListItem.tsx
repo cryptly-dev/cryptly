@@ -1,13 +1,14 @@
 import { type Project } from "@/lib/api/projects.api";
 import { cn, getCompactRelativeTime } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { GripVertical, Loader2 } from "lucide-react";
-import { type DragControls } from "motion/react";
+import { GripVertical } from "lucide-react";
+import { motion, type DragControls } from "motion/react";
 import { useEffect, useState } from "react";
 
 interface DesktopProjectsListItemProps {
   project: Project;
   isActive: boolean;
+  /** Row is the project we're switching to; show same bg as hover. */
   isLoading?: boolean;
   dragControls: DragControls;
 }
@@ -28,21 +29,23 @@ export function DesktopProjectsListItem({
   const timeAgo = getCompactRelativeTime(project.updatedAt);
 
   return (
-    <div
+    <motion.div
       className={cn(
-        "group relative flex items-center justify-between gap-2 overflow-hidden rounded-sm px-3.5 py-2.5 text-sm transition-colors select-none",
+        "group relative flex items-center justify-between gap-2 overflow-hidden rounded-sm px-3.5 py-2.5 text-sm transition-colors select-none origin-left",
         isActive
           ? "text-primary"
           : isLoading
-            ? "text-foreground"
-            : "text-muted-foreground/55 hover:bg-neutral-800/50 hover:text-foreground",
+            ? "bg-neutral-800/40 text-foreground"
+            : "text-muted-foreground/55 hover:bg-neutral-800/40 hover:text-foreground",
       )}
+      animate={{
+        scale: isActive ? 1.03 : isLoading ? 0.98 : 1,
+        x: isActive ? 4 : isLoading ? 2 : 0,
+      }}
+      transition={{ type: "spring", stiffness: 420, damping: 18 }}
     >
       {isActive && (
         <div className="absolute inset-0 bg-neutral-800 rounded-sm pointer-events-none" />
-      )}
-      {isLoading && !isActive && (
-        <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-sm bg-neutral-800/40" />
       )}
       <Link
         to="/app/project/$projectId"
@@ -51,13 +54,6 @@ export function DesktopProjectsListItem({
         className="absolute inset-0 rounded-sm cursor-pointer"
       />
       <div className="relative z-10 flex items-center gap-2 min-w-0 flex-1 pointer-events-none">
-        {isLoading && (
-          <Loader2
-            className="w-1.5 h-1.5 flex-shrink-0 animate-spin text-primary"
-            strokeWidth={4}
-            aria-label="Loading project"
-          />
-        )}
         <span
           className={cn(
             "truncate block relative pointer-events-none text-[15px] font-normal",
@@ -86,7 +82,7 @@ export function DesktopProjectsListItem({
       >
         <GripVertical className="w-3.5 h-3.5 text-muted-foreground/60" />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
