@@ -9,6 +9,8 @@ const REVEAL_KEY_LABEL =
 const TOOLTIP_DEFAULT_TEXT = `Click to copy | Hold ${REVEAL_KEY_LABEL} to view`;
 const TOOLTIP_REVEAL_TEXT = `Click to copy | Release ${REVEAL_KEY_LABEL} to hide`;
 
+const RECENT_EDIT_REVEAL_MS = 1500;
+
 interface BaseFileEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -309,6 +311,8 @@ export function BaseFileEditor({
   const revealKeyHeldRef = useRef<boolean>(false);
   const revealedRangeRef = useRef<ValueRange | null>(null);
   const keyHandlersCleanupRef = useRef<(() => void) | null>(null);
+  const recentEditRangesRef = useRef<ValueRange[]>([]);
+  const recentEditTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     loader.init().then((monaco) => {
@@ -371,16 +375,26 @@ export function BaseFileEditor({
 
     const ranges = secretRangesRef.current;
     const revealed = revealedRangeRef.current;
+    const recentEdits = recentEditRangesRef.current;
+
+    const isRevealedByAlt = (r: ValueRange) =>
+      !!revealed &&
+      r.startLine === revealed.startLine &&
+      r.startCol === revealed.startCol &&
+      r.endLine === revealed.endLine &&
+      r.endCol === revealed.endCol;
+
+    const isRecentlyEdited = (r: ValueRange) =>
+      recentEdits.some(
+        (er) =>
+          er.startLine === r.startLine &&
+          er.startCol === r.startCol &&
+          er.endLine === r.endLine &&
+          er.endCol === r.endCol
+      );
 
     const decorations = ranges
-      .filter(
-        (r) =>
-          !revealed ||
-          r.startLine !== revealed.startLine ||
-          r.startCol !== revealed.startCol ||
-          r.endLine !== revealed.endLine ||
-          r.endCol !== revealed.endCol
-      )
+      .filter((r) => !isRevealedByAlt(r) && !isRecentlyEdited(r))
       .map((r) => ({
         range: new monacoInstance.Range(
           r.startLine,
@@ -615,6 +629,21 @@ export function BaseFileEditor({
       if (!stillExists) revealedRangeRef.current = null;
     }
 
+    if (recentEditRangesRef.current.length > 0) {
+      const filtered = recentEditRangesRef.current.filter((er) =>
+        ranges.some(
+          (r) =>
+            r.startLine === er.startLine &&
+            r.startCol === er.startCol &&
+            r.endLine === er.endLine &&
+            r.endCol === er.endCol
+        )
+      );
+      if (filtered.length !== recentEditRangesRef.current.length) {
+        recentEditRangesRef.current = filtered;
+      }
+    }
+
     refreshMaskDecorations();
 
     const groups = getValueGroups(model, ranges);
@@ -660,8 +689,95 @@ export function BaseFileEditor({
 
       applySecretDecorations();
 
-      editor.onDidChangeModelContent(() => {
+      const computeChangeEnd = (change: {
+        range: {
+          startLineNumber: number;
+          startColumn: number;
+        };
+        text: string;
+      }) => {
+        const text = change.text ?? "";
+        const newlineIdx = text.lastIndexOf("\n");
+        if (newlineIdx === -1) {
+          return {
+            line: change.range.startLineNumber,
+            col: change.range.startColumn + text.length,
+          };
+        }
+        const linesAdded = text.split("\n").length - 1;
+        const lastLineLength = text.length - newlineIdx - 1;
+        return {
+          line: change.range.startLineNumber + linesAdded,
+          col: lastLineLength + 1,
+        };
+      };
+
+      const positionTouchesRange = (
+        line: number,
+        col: number,
+        r: ValueRange
+      ) => {
+        if (line < r.startLine || line > r.endLine) return false;
+        if (line === r.startLine && col < r.startCol) return false;
+        if (line === r.endLine && col > r.endCol) return false;
+        return true;
+      };
+
+      const scheduleRecentEditClear = () => {
+        if (recentEditTimerRef.current !== null) {
+          window.clearTimeout(recentEditTimerRef.current);
+        }
+        recentEditTimerRef.current = window.setTimeout(() => {
+          recentEditTimerRef.current = null;
+          recentEditRangesRef.current = [];
+          refreshMaskDecorations();
+        }, RECENT_EDIT_REVEAL_MS);
+      };
+
+      editor.onDidChangeModelContent((event: any) => {
         applySecretDecorations();
+
+        const ranges = secretRangesRef.current;
+        if (ranges.length === 0) {
+          if (recentEditRangesRef.current.length > 0) {
+            recentEditRangesRef.current = [];
+            refreshMaskDecorations();
+          }
+          return;
+        }
+
+        const affected: ValueRange[] = [];
+        const seen = new Set<string>();
+        for (const change of event.changes ?? []) {
+          const startLine = change.range.startLineNumber;
+          const startCol = change.range.startColumn;
+          const end = computeChangeEnd(change);
+          for (const r of ranges) {
+            if (
+              positionTouchesRange(startLine, startCol, r) ||
+              positionTouchesRange(end.line, end.col, r)
+            ) {
+              const key = `${r.startLine}:${r.startCol}:${r.endLine}:${r.endCol}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                affected.push(r);
+              }
+            }
+          }
+        }
+
+        if (affected.length > 0) {
+          recentEditRangesRef.current = affected;
+          refreshMaskDecorations();
+          scheduleRecentEditClear();
+        } else if (recentEditRangesRef.current.length > 0) {
+          recentEditRangesRef.current = [];
+          if (recentEditTimerRef.current !== null) {
+            window.clearTimeout(recentEditTimerRef.current);
+            recentEditTimerRef.current = null;
+          }
+          refreshMaskDecorations();
+        }
       });
 
       const VIEW_ZONE_TARGET_TYPE =
@@ -888,6 +1004,10 @@ export function BaseFileEditor({
       if (keyHandlersCleanupRef.current) {
         keyHandlersCleanupRef.current();
         keyHandlersCleanupRef.current = null;
+      }
+      if (recentEditTimerRef.current !== null) {
+        window.clearTimeout(recentEditTimerRef.current);
+        recentEditTimerRef.current = null;
       }
     };
   }, [clearGroupZones]);
