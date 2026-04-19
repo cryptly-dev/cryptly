@@ -28,6 +28,14 @@ interface ValueRange {
   endCol: number;
 }
 
+const SENSITIVE_KEY_PATTERN =
+  /(^|_)(SECRET|SECRETS|TOKEN|TOKENS|KEY|KEYS|PASSWORD|PASS|PWD|AUTH|AUTHORIZATION|CREDENTIAL|CREDENTIALS|PRIVATE|DSN|SALT|HASH|CERT|CERTIFICATE|SIGNATURE)($|_)/;
+
+function isSensitiveKey(key: string): boolean {
+  if (!/^[A-Z_][A-Z0-9_]*$/.test(key)) return false;
+  return SENSITIVE_KEY_PATTERN.test(key);
+}
+
 function getValueRanges(model: any): ValueRange[] {
   const lineCount = model.getLineCount();
   const ranges: ValueRange[] = [];
@@ -67,8 +75,7 @@ function getValueRanges(model: any): ValueRange[] {
     if (eqIdx === -1) continue;
 
     const key = text.substring(0, eqIdx).trim();
-    // Only treat conventional env-style UPPERCASE keys as having secret values.
-    if (!/^[A-Z_][A-Z0-9_]*$/.test(key)) continue;
+    if (!isSensitiveKey(key)) continue;
 
     const afterEq = text.substring(eqIdx + 1);
     if (afterEq.length === 0) continue;
