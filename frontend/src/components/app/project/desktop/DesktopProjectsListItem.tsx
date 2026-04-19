@@ -48,12 +48,12 @@ export function DesktopProjectsListItem({
         className="absolute inset-0 rounded-sm cursor-pointer"
       />
       <div className="relative z-10 flex items-center gap-2 min-w-0 flex-1 pointer-events-none">
-        <div
+        {/* <div
           className={cn(
             "w-1.5 h-1.5 rounded-full flex-shrink-0",
             isActive ? "bg-primary" : "bg-muted-foreground/40"
           )}
-        />
+        /> */}
         <span
           className={cn(
             "truncate block relative pointer-events-none text-[15px] font-normal",

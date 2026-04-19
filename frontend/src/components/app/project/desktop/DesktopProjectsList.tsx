@@ -208,7 +208,7 @@ export function DesktopProjectsList() {
       <div className="flex-1 overflow-hidden flex flex-col">
         {/* Section Header */}
         <div className="px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs uppercase font-normal text-muted-foreground">
             <FolderOpen className="w-4 h-4" />
             <span>Projects</span>
             {projectsLoading ? (
