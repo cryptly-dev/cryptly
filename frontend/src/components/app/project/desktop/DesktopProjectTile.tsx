@@ -1,3 +1,4 @@
+import { ProjectSwitchLoadingBar } from "@/components/app/project/ProjectSwitchLoadingBar";
 import { SavePushPill } from "@/components/app/project/SavePushPill";
 import { DesktopHistoryView } from "@/components/app/project/desktop/DesktopHistoryView";
 import { FileEditor } from "@/components/app/project/FileEditor";
@@ -187,6 +188,7 @@ export function DesktopProjectTile() {
           >
             <TooltipTrigger asChild>
                 <div className="relative h-full">
+                  <ProjectSwitchLoadingBar />
                   <div className="h-full">
                     <FileEditor
                       value={inputValue}
