@@ -1,30 +1,62 @@
-import { cn, getRelativeTime } from "@/lib/utils";
-import { useValues, useActions } from "kea";
+import { Kbd } from "@/components/ui/kbd";
 import { projectLogic } from "@/lib/logics/projectLogic";
-import { DiffEditor } from "@/components/app/project/DiffEditor";
+import { cn } from "@/lib/utils";
+import { useValues } from "kea";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
+import { V1Timeline } from "./history-variants/V1Timeline";
+import { V2Feed } from "./history-variants/V2Feed";
+import { V3Analytics } from "./history-variants/V3Analytics";
+import { V4Command } from "./history-variants/V4Command";
+import { V5Grouped } from "./history-variants/V5Grouped";
+import { V6Flat } from "./history-variants/V6Flat";
+import { V7Grouped } from "./history-variants/V7Grouped";
+
+const VARIANTS = [
+  { name: "Timeline", component: V1Timeline },
+  { name: "Activity feed", component: V2Feed },
+  { name: "Analytics", component: V3Analytics },
+  { name: "Command", component: V4Command },
+  { name: "Grouped", component: V5Grouped },
+  { name: "Flat + heatmap", component: V6Flat },
+  { name: "Grouped + heatmap", component: V7Grouped },
+] as const;
 
 export function DesktopHistoryView() {
-  const { patches, selectedHistoryChangeId, projectVersionsLoading } =
-    useValues(projectLogic);
-  const { selectHistoryChange } = useActions(projectLogic);
+  const { patches, projectVersionsLoading } = useValues(projectLogic);
 
+  const [variantIdx, setVariantIdx] = useState(0);
   const [, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setRefreshKey((prev) => prev + 1);
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // Get the currently selected patch
-  const selectedPatch = patches.find(
-    (patch) => patch.id === selectedHistoryChangeId
-  )?.content;
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inInput =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (inInput) return;
 
-  // Handle loading state
+      if (e.key === "]") {
+        e.preventDefault();
+        setVariantIdx((i) => (i + 1) % VARIANTS.length);
+      } else if (e.key === "[") {
+        e.preventDefault();
+        setVariantIdx((i) => (i - 1 + VARIANTS.length) % VARIANTS.length);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
+
   if (!patches.length && projectVersionsLoading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -33,7 +65,6 @@ export function DesktopHistoryView() {
     );
   }
 
-  // Handle empty state
   if (!patches.length && !projectVersionsLoading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -45,77 +76,65 @@ export function DesktopHistoryView() {
     );
   }
 
-  return (
-    <div className="h-full flex">
-      {/* Left side - List of changes */}
-      <div className="w-72 flex flex-col border-r border-border/50">
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
-          <div className="space-y-0.5">
-            {patches.map((patch) => (
-              <button
-                key={patch.id}
-                onClick={() => {
-                  selectHistoryChange(patch.id, patch.content);
-                }}
-                className={cn(
-                  "w-full text-left px-3 py-2.5 rounded-md transition-all duration-150 cursor-pointer",
-                  selectedHistoryChangeId === patch.id
-                    ? "bg-neutral-800 text-primary"
-                    : "hover:bg-neutral-800"
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                    <img
-                      src={patch.author.avatarUrl || DEFAULT_AVATAR}
-                      alt={patch.author.displayName}
-                      className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                    />
-                    <p className="text-sm font-medium truncate flex-1 min-w-0">
-                      {patch.author.displayName}
-                    </p>
-                  </div>
-                  <span
-                    className="text-xs text-muted-foreground whitespace-nowrap"
-                    title={formatDate(patch.createdAt)}
-                  >
-                    {getRelativeTime(patch.createdAt)}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+  const ActiveVariant = VARIANTS[variantIdx].component;
 
-      {/* Right side - Diff editor */}
-      <div className="flex-1 overflow-hidden">
-        {selectedPatch ? (
-          <DiffEditor value={selectedPatch} />
-        ) : (
-          <div className="h-full flex items-start justify-center pt-12">
-            <div className="text-sm text-muted-foreground">
-              Select a version to view changes
-            </div>
-          </div>
-        )}
-      </div>
+  return (
+    <div className="h-full relative">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={variantIdx}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="h-full"
+        >
+          <ActiveVariant />
+        </motion.div>
+      </AnimatePresence>
+      <VariantBadge variantIdx={variantIdx} />
     </div>
   );
 }
 
-// Helper function to format date for tooltip
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function VariantBadge({ variantIdx }: { variantIdx: number }) {
+  return (
+    <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 z-50">
+      <div className="flex items-center gap-2 rounded-full bg-neutral-900/90 border border-border/70 backdrop-blur-md px-3 py-1.5 shadow-xl shadow-black/40">
+        <div className="flex items-center gap-1">
+          <Kbd className="bg-neutral-800 text-neutral-200 border border-border/70">
+            [
+          </Kbd>
+          <Kbd className="bg-neutral-800 text-neutral-200 border border-border/70">
+            ]
+          </Kbd>
+        </div>
+        <div className="flex items-center gap-1 ml-0.5">
+          {VARIANTS.map((v, i) => (
+            <span
+              key={v.name}
+              className={cn(
+                "block rounded-full transition-all duration-200",
+                i === variantIdx
+                  ? "w-4 h-1.5 bg-primary"
+                  : "w-1.5 h-1.5 bg-neutral-700"
+              )}
+            />
+          ))}
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={variantIdx}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.15 }}
+            className="text-xs font-semibold text-foreground tabular-nums"
+          >
+            {variantIdx + 1}/{VARIANTS.length} · {VARIANTS[variantIdx].name}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
 }
-
-// Default avatar URL
-const DEFAULT_AVATAR =
-  "https://lh3.googleusercontent.com/a/ACg8ocLTdCSYO1ZsGrEcdHjKzsoi-ZM1fFd8TqoezaiIQXAe3AUwcQ=s96-c";
