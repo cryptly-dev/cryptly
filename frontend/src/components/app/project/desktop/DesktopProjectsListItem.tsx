@@ -30,12 +30,12 @@ export function DesktopProjectsListItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center justify-between gap-2 overflow-hidden rounded-sm px-3.5 py-2 text-sm transition-colors select-none",
+        "group relative flex items-center justify-between gap-2 overflow-hidden rounded-sm px-3.5 py-2.5 text-sm transition-colors select-none",
         isActive
           ? "text-primary"
           : isLoading
             ? "text-foreground"
-            : "text-muted-foreground hover:bg-neutral-800/50 hover:text-foreground"
+            : "text-muted-foreground/55 hover:bg-neutral-800/50 hover:text-foreground"
       )}
     >
       <AnimatePresence initial={false}>
@@ -63,23 +63,16 @@ export function DesktopProjectsListItem({
         className="absolute inset-0 rounded-sm cursor-pointer"
       />
       <div className="relative z-10 flex items-center gap-2 min-w-0 flex-1 pointer-events-none">
-        {isLoading ? (
+        {isLoading && (
           <Loader2
             className="w-1.5 h-1.5 flex-shrink-0 animate-spin text-primary"
             strokeWidth={4}
             aria-label="Loading project"
           />
-        ) : (
-          <div
-            className={cn(
-              "w-1.5 h-1.5 rounded-full flex-shrink-0",
-              isActive ? "bg-primary" : "bg-muted-foreground/40"
-            )}
-          />
         )}
         <span
           className={cn(
-            "truncate block relative pointer-events-none text-[13px] font-normal",
+            "truncate block relative pointer-events-none text-[15px] font-normal",
             isActive && "[text-shadow:0_0_0.4px_currentColor]"
           )}
         >
@@ -89,8 +82,8 @@ export function DesktopProjectsListItem({
       <div className="relative z-10 flex items-center gap-1.5 flex-shrink-0 pointer-events-none">
         <span
           className={cn(
-            "text-[11px] tabular-nums transition-opacity group-hover:opacity-0",
-            isActive ? "text-primary/60" : "text-muted-foreground/50"
+            "text-[13px] tabular-nums transition-opacity group-hover:opacity-0",
+            isActive ? "text-primary/70" : "text-muted-foreground/40"
           )}
           title={new Date(project.updatedAt).toLocaleString()}
         >
