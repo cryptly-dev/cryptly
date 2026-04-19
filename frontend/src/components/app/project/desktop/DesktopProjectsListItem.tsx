@@ -2,7 +2,7 @@ import { type Project } from "@/lib/api/projects.api";
 import { cn, getCompactRelativeTime } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { GripVertical } from "lucide-react";
-import { m, motion, type DragControls } from "motion/react";
+import { motion, type DragControls } from "motion/react";
 import { useEffect, useState } from "react";
 
 interface DesktopProjectsListItemProps {
@@ -28,7 +28,7 @@ export function DesktopProjectsListItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors select-none",
+        "group relative flex items-center justify-between gap-2 rounded-sm px-3.5 py-2 text-sm transition-colors select-none",
         isActive
           ? "text-primary"
           : "text-muted-foreground hover:bg-neutral-800/50 hover:text-foreground"
