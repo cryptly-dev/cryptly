@@ -11,6 +11,8 @@ import { V4Command } from "./history-variants/V4Command";
 import { V5Grouped } from "./history-variants/V5Grouped";
 import { V6Flat } from "./history-variants/V6Flat";
 import { V7Grouped } from "./history-variants/V7Grouped";
+import { V8Minimal } from "./history-variants/V8Minimal";
+import { V9Dropdowns } from "./history-variants/V9Dropdowns";
 
 const VARIANTS = [
   { name: "Timeline", component: V1Timeline },
@@ -20,6 +22,8 @@ const VARIANTS = [
   { name: "Grouped", component: V5Grouped },
   { name: "Flat + heatmap", component: V6Flat },
   { name: "Grouped + heatmap", component: V7Grouped },
+  { name: "Minimal", component: V8Minimal },
+  { name: "Dropdowns", component: V9Dropdowns },
 ] as const;
 
 export function DesktopHistoryView() {
