@@ -1,6 +1,14 @@
 import Editor, { loader } from "@monaco-editor/react";
 import { useCallback, useEffect, useRef } from "react";
 
+const REVEAL_KEY_LABEL =
+  typeof navigator !== "undefined" &&
+  /Mac|iPhone|iPad|iPod/i.test(navigator.platform)
+    ? "\u2325"
+    : "Alt";
+const TOOLTIP_DEFAULT_TEXT = `Click to copy | Hold ${REVEAL_KEY_LABEL} to view`;
+const TOOLTIP_REVEAL_TEXT = `Click to copy | Release ${REVEAL_KEY_LABEL} to hide`;
+
 interface BaseFileEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -237,8 +245,8 @@ function injectMaskingCSS() {
       will-change: transform;
     }
     .secret-tooltip.copied {
-      background: rgba(34, 197, 94, 0.18);
-      border-color: rgba(34, 197, 94, 0.5);
+      background: #14271c;
+      border-color: rgba(34, 197, 94, 0.55);
       color: #b6f0c2;
     }
     .secret-group-zone {
@@ -298,6 +306,9 @@ export function BaseFileEditor({
   const groupZoneMapRef = useRef<
     Map<string, { group: ValueGroup; pill: HTMLElement }>
   >(new Map());
+  const revealKeyHeldRef = useRef<boolean>(false);
+  const revealedRangeRef = useRef<ValueRange | null>(null);
+  const keyHandlersCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     loader.init().then((monaco) => {
@@ -353,6 +364,42 @@ export function BaseFileEditor({
 
   const tooltipResetTimerRef = useRef<number | null>(null);
 
+  const refreshMaskDecorations = useCallback(() => {
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+    if (!editor || !monacoInstance) return;
+
+    const ranges = secretRangesRef.current;
+    const revealed = revealedRangeRef.current;
+
+    const decorations = ranges
+      .filter(
+        (r) =>
+          !revealed ||
+          r.startLine !== revealed.startLine ||
+          r.startCol !== revealed.startCol ||
+          r.endLine !== revealed.endLine ||
+          r.endCol !== revealed.endCol
+      )
+      .map((r) => ({
+        range: new monacoInstance.Range(
+          r.startLine,
+          r.startCol,
+          r.endLine,
+          r.endCol
+        ),
+        options: {
+          inlineClassName: "secret-masked",
+        },
+      }));
+
+    if (!decorationsRef.current) {
+      decorationsRef.current = editor.createDecorationsCollection(decorations);
+    } else {
+      decorationsRef.current.set(decorations);
+    }
+  }, []);
+
   const hideTooltip = useCallback(() => {
     if (tooltipResetTimerRef.current !== null) {
       window.clearTimeout(tooltipResetTimerRef.current);
@@ -363,7 +410,11 @@ export function BaseFileEditor({
       tip.style.display = "none";
     }
     hoveredRangeRef.current = null;
-  }, []);
+    if (revealedRangeRef.current) {
+      revealedRangeRef.current = null;
+      refreshMaskDecorations();
+    }
+  }, [refreshMaskDecorations]);
 
   const showTooltip = useCallback((range: ValueRange) => {
     const editor = editorRef.current;
@@ -378,18 +429,28 @@ export function BaseFileEditor({
     });
     if (!visiblePos) return;
 
+    const desiredText = revealKeyHeldRef.current
+      ? TOOLTIP_REVEAL_TEXT
+      : TOOLTIP_DEFAULT_TEXT;
+
     let tip = tooltipRef.current;
     if (!tip) {
       tip = document.createElement("div");
       tip.className = "secret-tooltip";
-      tip.textContent = "Click to copy";
+      tip.textContent = desiredText;
       domNode.appendChild(tip);
       tooltipRef.current = tip;
-    } else if (
-      !tip.classList.contains("copied") &&
-      tip.textContent !== "Click to copy"
-    ) {
-      tip.textContent = "Click to copy";
+    } else {
+      if (tooltipResetTimerRef.current !== null) {
+        window.clearTimeout(tooltipResetTimerRef.current);
+        tooltipResetTimerRef.current = null;
+      }
+      if (tip.classList.contains("copied")) {
+        tip.classList.remove("copied");
+      }
+      if (tip.textContent !== desiredText) {
+        tip.textContent = desiredText;
+      }
     }
 
     if (tip.style.display === "none") tip.style.display = "";
@@ -409,7 +470,9 @@ export function BaseFileEditor({
       const t = tooltipRef.current;
       if (t) {
         t.classList.remove("copied");
-        t.textContent = "Click to copy";
+        t.textContent = revealKeyHeldRef.current
+          ? TOOLTIP_REVEAL_TEXT
+          : TOOLTIP_DEFAULT_TEXT;
       }
     }, 1200);
   }, []);
@@ -537,33 +600,57 @@ export function BaseFileEditor({
     const model = editor.getModel();
     if (!model) return;
 
-    const monacoInstance = monacoRef.current;
-    if (!monacoInstance) return;
-
     const ranges = getValueRanges(model);
     secretRangesRef.current = ranges;
-    const groups = getValueGroups(model, ranges);
 
-    const decorations = ranges.map((r) => ({
-      range: new monacoInstance.Range(
-        r.startLine,
-        r.startCol,
-        r.endLine,
-        r.endCol
-      ),
-      options: {
-        inlineClassName: "secret-masked",
-      },
-    }));
-
-    if (!decorationsRef.current) {
-      decorationsRef.current = editor.createDecorationsCollection(decorations);
-    } else {
-      decorationsRef.current.set(decorations);
+    if (revealedRangeRef.current) {
+      const revealed = revealedRangeRef.current;
+      const stillExists = ranges.some(
+        (r) =>
+          r.startLine === revealed.startLine &&
+          r.startCol === revealed.startCol &&
+          r.endLine === revealed.endLine &&
+          r.endCol === revealed.endCol
+      );
+      if (!stillExists) revealedRangeRef.current = null;
     }
 
+    refreshMaskDecorations();
+
+    const groups = getValueGroups(model, ranges);
     applyGroupZones(groups);
-  }, [applyGroupZones]);
+  }, [applyGroupZones, refreshMaskDecorations]);
+
+  const revealRange = useCallback(
+    (range: ValueRange) => {
+      const current = revealedRangeRef.current;
+      if (
+        current &&
+        current.startLine === range.startLine &&
+        current.startCol === range.startCol &&
+        current.endLine === range.endLine &&
+        current.endCol === range.endCol
+      ) {
+        return;
+      }
+      revealedRangeRef.current = range;
+      refreshMaskDecorations();
+    },
+    [refreshMaskDecorations]
+  );
+
+  const unrevealRange = useCallback(() => {
+    if (!revealedRangeRef.current) return;
+    revealedRangeRef.current = null;
+    refreshMaskDecorations();
+  }, [refreshMaskDecorations]);
+
+  const setTooltipText = useCallback((text: string) => {
+    const tip = tooltipRef.current;
+    if (!tip) return;
+    if (tip.classList.contains("copied")) return;
+    if (tip.textContent !== text) tip.textContent = text;
+  }, []);
 
   const handleEditorMount = useCallback(
     (editor: any, monaco: any) => {
@@ -707,6 +794,11 @@ export function BaseFileEditor({
         }
 
         hoveredRangeRef.current = range;
+        if (revealKeyHeldRef.current) {
+          revealRange(range);
+        } else if (revealedRangeRef.current) {
+          unrevealRange();
+        }
         showTooltip(range);
       });
 
@@ -729,6 +821,49 @@ export function BaseFileEditor({
           domNode.classList.remove("secret-group-zone-hover");
         });
       }
+
+      const isRevealKey = (event: KeyboardEvent) =>
+        event.key === "Alt" || event.altKey;
+
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (!isRevealKey(event)) return;
+        if (revealKeyHeldRef.current) return;
+        revealKeyHeldRef.current = true;
+        const hovered = hoveredRangeRef.current;
+        if (hovered) {
+          revealRange(hovered);
+          setTooltipText(TOOLTIP_REVEAL_TEXT);
+        }
+      };
+
+      const handleKeyUp = (event: KeyboardEvent) => {
+        if (event.key !== "Alt" && event.altKey) return;
+        if (!revealKeyHeldRef.current) return;
+        revealKeyHeldRef.current = false;
+        unrevealRange();
+        if (hoveredRangeRef.current) {
+          setTooltipText(TOOLTIP_DEFAULT_TEXT);
+        }
+      };
+
+      const handleBlur = () => {
+        if (!revealKeyHeldRef.current) return;
+        revealKeyHeldRef.current = false;
+        unrevealRange();
+        if (hoveredRangeRef.current) {
+          setTooltipText(TOOLTIP_DEFAULT_TEXT);
+        }
+      };
+
+      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("keyup", handleKeyUp);
+      window.addEventListener("blur", handleBlur);
+
+      keyHandlersCleanupRef.current = () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        document.removeEventListener("keyup", handleKeyUp);
+        window.removeEventListener("blur", handleBlur);
+      };
     },
     [
       applySecretDecorations,
@@ -737,6 +872,9 @@ export function BaseFileEditor({
       hideTooltip,
       showTooltip,
       copyGroup,
+      revealRange,
+      unrevealRange,
+      setTooltipText,
     ]
   );
 
@@ -747,6 +885,10 @@ export function BaseFileEditor({
         tooltipRef.current = null;
       }
       clearGroupZones();
+      if (keyHandlersCleanupRef.current) {
+        keyHandlersCleanupRef.current();
+        keyHandlersCleanupRef.current = null;
+      }
     };
   }, [clearGroupZones]);
 
