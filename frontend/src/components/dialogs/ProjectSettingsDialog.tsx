@@ -6,11 +6,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  InputAction,
+  InputWithActions,
+} from "@/components/ui/input-with-actions";
+import { Spinner } from "@/components/ui/spinner";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { authLogic } from "@/lib/logics/authLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
-import { IconEdit, IconTrash, IconUserMinus } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconEdit,
+  IconTrash,
+  IconUserMinus,
+  IconX,
+} from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
 import { useEffect, useMemo, useState } from "react";
 
@@ -64,7 +75,7 @@ function RenameProjectSection() {
           <IconEdit className="size-4 text-muted-foreground" />
           <h3 className="text-sm font-medium">Rename project</h3>
         </div>
-        <div className="text-center py-6 px-4 bg-neutral-800 rounded-md border border-dashed">
+        <div className="rounded-lg border border-dashed border-border/50 bg-neutral-800/20 px-4 py-6 text-center">
           <div className="text-sm text-muted-foreground">
             Only <span className="font-medium underline">Admins</span> can
             rename projects.
@@ -82,56 +93,61 @@ function RenameProjectSection() {
       </div>
 
       {showRenameForm ? (
-        <div className="flex gap-2">
-          <input
-            id="project-name"
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 rounded-md border px-3 py-2 bg-background text-base sm:text-sm"
-            autoFocus
-            required
-          />
-          <Button
-            onClick={handleRename}
-            isLoading={updateProjectLoading}
-            disabled={
-              !newName.trim() ||
-              newName.trim() === projectData?.name ||
-              isRenaming
-            }
-            className="cursor-pointer"
-          >
-            {isRenaming ? "Renaming…" : "Save"}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => setShowRenameForm(false)}
-            disabled={isRenaming}
-            className="cursor-pointer"
-          >
-            Cancel
-          </Button>
-        </div>
+        <InputWithActions
+          type="text"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          placeholder="Project name"
+          actions={
+            <>
+              <InputAction
+                onClick={() => setShowRenameForm(false)}
+                disabled={isRenaming}
+                aria-label="Cancel"
+              >
+                <IconX className="size-4" />
+              </InputAction>
+              <button
+                type="button"
+                onClick={handleRename}
+                disabled={
+                  !newName.trim() ||
+                  newName.trim() === projectData?.name ||
+                  isRenaming ||
+                  updateProjectLoading
+                }
+                aria-label="Save"
+                className="flex items-center justify-center size-8 shrink-0 cursor-pointer rounded-md bg-white text-neutral-900 hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isRenaming || updateProjectLoading ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <IconCheck className="size-4" />
+                )}
+              </button>
+            </>
+          }
+        />
       ) : (
-        <div className="flex items-center gap-3 p-3 bg-neutral-800 rounded-md">
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-foreground/90 truncate">
-              {projectData?.name}
+        <div className="rounded-lg border border-border/50 bg-neutral-800/20 overflow-hidden">
+          <div className="group flex items-center gap-3 px-4 py-2.5 hover:bg-neutral-800/40 transition-colors">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">
+                {projectData?.name}
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              Current project name
-            </div>
+            <Button
+              onClick={() => setShowRenameForm(true)}
+              variant="ghost"
+              size="sm"
+              className="cursor-pointer h-8 px-2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <IconEdit className="size-4 mr-1.5" />
+              Rename
+            </Button>
           </div>
-          <Button
-            onClick={() => setShowRenameForm(true)}
-            variant="ghost"
-            size="sm"
-            className="cursor-pointer"
-          >
-            <IconEdit className="size-4" />
-          </Button>
         </div>
       )}
     </div>
@@ -180,7 +196,7 @@ function DangerZoneSection() {
       </div>
 
       {showDeleteConfirm ? (
-        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
           <div className="text-sm font-medium text-destructive mb-3">
             {isAdmin
               ? "Are you sure you want to delete this project?"
@@ -211,25 +227,26 @@ function DangerZoneSection() {
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3 p-3 bg-neutral-800 rounded-md">
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-foreground/90">
-              {actionText}
+        <div className="rounded-lg border border-border/50 bg-neutral-800/20 overflow-hidden">
+          <div className="group flex items-center gap-3 px-4 py-3 hover:bg-neutral-800/40 transition-colors">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">{actionText}</div>
+              <div className="text-xs text-muted-foreground">
+                {isAdmin
+                  ? "Permanently delete this project for all members"
+                  : "Remove yourself from this project"}
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {isAdmin
-                ? "Permanently delete this project for all members"
-                : "Remove yourself from this project"}
-            </div>
+            <Button
+              onClick={() => setShowDeleteConfirm(true)}
+              variant="ghost"
+              size="sm"
+              className="cursor-pointer h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <ActionIcon className="size-4 mr-1.5" />
+              {isAdmin ? "Delete" : "Leave"}
+            </Button>
           </div>
-          <Button
-            onClick={() => setShowDeleteConfirm(true)}
-            variant="ghost"
-            size="sm"
-            className="cursor-pointer text-destructive hover:text-destructive"
-          >
-            <ActionIcon className="size-4" />
-          </Button>
         </div>
       )}
     </div>

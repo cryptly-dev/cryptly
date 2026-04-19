@@ -22,20 +22,23 @@ import type { Integration } from "@/lib/api/integrations.api";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { commonLogic } from "@/lib/logics/commonLogic";
-import { integrationsLogic } from "@/lib/logics/integrationsLogic";
+import {
+  integrationsLogic,
+  type RepoWithInstallation,
+} from "@/lib/logics/integrationsLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import {
   IconArrowLeft,
+  IconArrowRight,
   IconBraces,
   IconBrandGithub,
   IconExternalLink,
-  IconLink,
   IconPlus,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
-import { CloudUpload } from "lucide-react";
+import { Wand2 } from "lucide-react";
 import posthog from "posthog-js";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 
 // ────────────────────────────────────────────────────────────
 // Integration row
@@ -130,7 +133,7 @@ function SectionHeader({
   label,
   loading,
 }: {
-  icon: typeof IconLink;
+  icon: ComponentType<{ className?: string }>;
   label: string;
   loading: boolean;
 }) {
@@ -192,7 +195,7 @@ function IntegrationsSection({
 }
 
 // ────────────────────────────────────────────────────────────
-// Suggested integration (grid, always visible)
+// Suggested integration (flat ghost rows)
 // ────────────────────────────────────────────────────────────
 
 function SuggestedIntegrationSection() {
@@ -207,9 +210,7 @@ function SuggestedIntegrationSection() {
   const isLoading =
     installationsLoading || integrationsLoading || allRepositoriesLoading;
 
-  const handleConnect = async (
-    repo: (typeof suggestedIntegrations)[0]["repo"]
-  ) => {
+  const handleConnect = async (repo: RepoWithInstallation) => {
     setConnectingId(repo.id);
     await createIntegration(Number(repo.id), repo.installationEntityId);
     setConnectingId(null);
@@ -225,42 +226,54 @@ function SuggestedIntegrationSection() {
 
   return (
     <div className="space-y-3">
-      <SectionHeader icon={IconPlus} label="Suggested" loading={isLoading} />
+      <SectionHeader icon={Wand2} label="Suggested" loading={isLoading} />
       <p className="text-xs text-muted-foreground">
-        Based on your project name, click to connect instantly.
+        We found these repositories on your GitHub account based on your Cryptly
+        project name.
       </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {suggestedIntegrations.map(({ repo }) => (
-          <button
-            key={repo.id}
-            type="button"
-            disabled={connectingId !== null}
-            onClick={() => handleConnect(repo)}
-            className="w-full flex flex-col items-center gap-2 p-4 rounded-lg border border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-              {repo.avatarUrl ? (
-                <img
-                  src={repo.avatarUrl}
-                  alt={repo.owner}
-                  className="size-12 rounded-full object-cover"
-                />
+      <div className="space-y-1">
+        {suggestedIntegrations.map(({ repo }) => {
+          const isConnecting = connectingId === repo.id;
+          return (
+            <button
+              key={repo.id}
+              type="button"
+              disabled={connectingId !== null}
+              onClick={() => handleConnect(repo)}
+              className={`group w-full flex items-center gap-3 rounded-md px-3 py-2 text-left transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                isConnecting
+                  ? "bg-primary/10"
+                  : "hover:bg-primary/10 disabled:opacity-50"
+              }`}
+            >
+              <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                {repo.avatarUrl ? (
+                  <img
+                    src={repo.avatarUrl}
+                    alt={repo.owner}
+                    className="size-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <IconBrandGithub className="size-3.5" />
+                )}
+              </div>
+              <span className="flex-1 min-w-0 truncate text-sm">
+                <span className="text-muted-foreground">{repo.owner}/</span>
+                <span className="font-medium">{repo.name}</span>
+              </span>
+              {isConnecting ? (
+                <Spinner className="size-3.5 text-primary" />
               ) : (
-                <IconBrandGithub className="size-5" />
+                <IconArrowRight className="size-3.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
               )}
-            </div>
-            <div className="text-sm font-medium truncate w-full text-center">
-              {repo.name}
-            </div>
-            <div className="text-xs text-muted-foreground truncate w-full">
-              {repo.owner}
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
+
 
 // ────────────────────────────────────────────────────────────
 // Add Integration wizard
@@ -534,25 +547,6 @@ export function IntegrationsTabContent() {
         </p>
       </div>
 
-      {integrations.length > 0 && (
-        <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-neutral-800/30 px-4 py-3">
-          <BulbIcon className="size-4 text-amber-500 shrink-0" />
-
-          <p className="text-xs text-muted-foreground">
-            Hit{" "}
-            <CloudUpload className="inline size-3.5 align-text-bottom text-muted-foreground" />{" "}
-            Push in the{" "}
-            <span className="inline-flex items-center gap-1 align-middle bg-secondary/50 px-1.5 py-0.5 rounded text-[11px] text-foreground font-medium">
-              <IconBraces className="size-3" />
-              Editor
-            </span>{" "}
-            to push secrets to{" "}
-            <IconBrandGithub className="inline size-3.5 align-text-bottom text-muted-foreground" />{" "}
-            GitHub Actions
-          </p>
-        </div>
-      )}
-
       <IntegrationsSection
         canConnect={currentUserRole === ProjectMemberRole.Admin}
         onConnect={() => setWizardOpen(true)}
@@ -561,7 +555,31 @@ export function IntegrationsTabContent() {
         <SuggestedIntegrationSection />
       )}
 
+      {integrations.length > 0 && <PushTip />}
+
       <AddIntegrationWizard open={wizardOpen} onOpenChange={setWizardOpen} />
+    </div>
+  );
+}
+
+function PushTip() {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-neutral-800/30 px-4 py-3">
+      <BulbIcon className="size-4 text-amber-500 shrink-0" />
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        Hit{" "}
+        <span className="inline-flex items-center justify-center rounded-md border bg-secondary/50 px-2 py-0.5 text-[11px] text-foreground font-medium align-middle mx-0.5">
+          Push
+        </span>{" "}
+        in the{" "}
+        <span className="inline-flex items-center gap-1 align-middle bg-secondary/50 px-1.5 py-0.5 rounded text-[11px] text-foreground font-medium">
+          <IconBraces className="size-3" />
+          Editor
+        </span>{" "}
+        to sync your secrets with{" "}
+        <IconBrandGithub className="inline size-3.5 align-text-bottom text-muted-foreground" />{" "}
+        GitHub Actions.
+      </p>
     </div>
   );
 }
