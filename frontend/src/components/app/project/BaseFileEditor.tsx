@@ -342,7 +342,9 @@ function assembleRealText(
   const out: string[] = [];
   let cursor = 0;
   for (const e of entries) {
-    if (e.start < cursor) continue; // overlapping decorations — skip
+    // Overlap or zero-advance guard: any decoration whose start is at or
+    // before the current cursor would either duplicate or rewind output.
+    if (e.start < cursor) continue;
     out.push(fullText.slice(cursor, e.start));
     out.push(decorationToReal.get(e.id) ?? fullText.slice(e.start, e.end));
     cursor = e.end;
@@ -639,6 +641,12 @@ export function BaseFileEditor({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  // Tracks the last `out` we emitted to the parent. The external-value
+  // useEffect bails when the incoming `value` equals this — prevents the
+  // echo loop where parent synchronously feeds our emission back as the
+  // next `value` prop on every keystroke.
+  const lastEmittedValueRef = useRef<string>(value);
+
   // Pre-mount masking (G1): synchronously mask `value` BEFORE Monaco mounts,
   // so plaintext never enters the DOM, not even for one frame. Only honored
   // for the very first render — subsequent `value` prop changes go through
@@ -775,12 +783,15 @@ export function BaseFileEditor({
       if (!range) return;
       const current = model.getValueInRange(range);
       if (current === real) return;
+      // Skip if lengths differ — that means the decoration's range no
+      // longer matches the stored value (user edited boundary text), so
+      // we'd corrupt the model. Caller can re-ingest later.
+      if (current.length !== real.length) return;
       withInternalEdit(() => {
         editor.executeEdits("mask-expand", [
           {
             range,
             text: real,
-            forceMoveMarkers: true,
           },
         ]);
       });
@@ -809,7 +820,6 @@ export function BaseFileEditor({
           {
             range,
             text: bullets,
-            forceMoveMarkers: true,
           },
         ]);
       });
@@ -1116,25 +1126,34 @@ export function BaseFileEditor({
     refreshMaskDecorations,
   ]);
 
-  // Returns true if the given monaco range matches one of our tracking
-  // decoration ranges (so we can detect "this parsed value range is
-  // already being tracked").
+  // Find a tracking decoration whose range overlaps the parsed value
+  // range. Used by applySecretDecorations to decide whether to ingest a
+  // newly-parsed range as a fresh secret. Overlap (rather than exact
+  // start/end match) is forgiving toward decoration drift caused by
+  // edits at boundaries.
   const findOverlappingTrackingDecoration = useCallback(
     (model: any, parsedRange: ValueRange): string | null => {
       for (const decId of trackingDecorationIdsRef.current) {
         const r = model.getDecorationRange(decId);
         if (!r) continue;
-        const overlaps =
-          r.startLineNumber <= parsedRange.endLine &&
-          r.endLineNumber >= parsedRange.startLine;
-        if (!overlaps) continue;
-        // Tighter check: same start position.
+        // Empty decoration: skip.
         if (
-          r.startLineNumber === parsedRange.startLine &&
-          r.startColumn === parsedRange.startCol
+          r.startLineNumber === r.endLineNumber &&
+          r.startColumn === r.endColumn
         ) {
-          return decId;
+          continue;
         }
+        // Line-level overlap.
+        if (
+          r.startLineNumber > parsedRange.endLine ||
+          r.endLineNumber < parsedRange.startLine
+        ) {
+          continue;
+        }
+        // Column-level overlap on shared line(s). Since both ranges sit
+        // on the value side of a `KEY=` line (or span quoted multilines),
+        // any line-level overlap is enough.
+        return decId;
       }
       return null;
     },
@@ -1190,7 +1209,6 @@ export function BaseFileEditor({
             range.endCol
           ),
           text: bulletsForSubstring(original),
-          forceMoveMarkers: true,
         }));
         editor.executeEdits("mask-ingest", edits);
 
@@ -1218,13 +1236,20 @@ export function BaseFileEditor({
       });
     }
 
-    // Step 2: prune tracking decorations whose model range no longer
-    // corresponds to a parsed value range AND that aren't currently
-    // expanded (we leave expanded ranges alone — the user is editing).
-    const parsedKeys = new Set<string>();
-    for (const pr of parsed) {
-      parsedKeys.add(`${pr.startLine}:${pr.startCol}`);
-    }
+    // Step 2: prune tracking decorations that no longer overlap any parsed
+    // value range AND aren't currently expanded (we leave expanded ranges
+    // alone — the user is editing the real text there).
+    const decHasParsedOverlap = (r: {
+      startLineNumber: number;
+      endLineNumber: number;
+    }): boolean => {
+      for (const pr of parsed) {
+        if (r.startLineNumber > pr.endLine) continue;
+        if (r.endLineNumber < pr.startLine) continue;
+        return true;
+      }
+      return false;
+    };
 
     const toDrop: string[] = [];
     for (const decId of trackingDecorationIdsRef.current) {
@@ -1237,8 +1262,7 @@ export function BaseFileEditor({
       const empty =
         r.startLineNumber === r.endLineNumber &&
         r.startColumn === r.endColumn;
-      const key = `${r.startLineNumber}:${r.startColumn}`;
-      if (empty || !parsedKeys.has(key)) {
+      if (empty || !decHasParsedOverlap(r)) {
         toDrop.push(decId);
       }
     }
@@ -1341,10 +1365,11 @@ export function BaseFileEditor({
     if (internalEditDepthRef.current > 0) return;
     let out = buildRealText();
     out = out.replace(/\n*$/, "") + "\n";
-    // NB: lastParentValueRef is intentionally NOT updated here. It only
-    // moves when the parent sends us a new value (G7/G10 — avoids the
-    // echo loop where parent re-emits a normalized version of what we
-    // sent).
+    // Track the emission so the next `value` prop tick (parent echoes
+    // our string straight back) is recognized as an echo and skipped.
+    // NB: lastParentValueRef is intentionally NOT updated here — it only
+    // moves when the useEffect actually rebuilds in response to parent.
+    lastEmittedValueRef.current = out;
     onChangeRef.current(out);
   }, [buildRealText]);
 
@@ -1608,9 +1633,16 @@ export function BaseFileEditor({
   );
 
   // External `value` prop changes (G7/G10). If parent is just echoing what
-  // we sent, do nothing. Otherwise tear down + re-mask wholesale.
+  // we sent (either as our last emission or as the previously-acknowledged
+  // value), do nothing. Otherwise tear down + re-mask wholesale.
   useEffect(() => {
     if (value === lastParentValueRef.current) return;
+    if (value === lastEmittedValueRef.current) {
+      // Echo of our own emission. Mark it as the new acknowledged value so
+      // the next prop tick that genuinely matches it is also skipped.
+      lastParentValueRef.current = value;
+      return;
+    }
     lastParentValueRef.current = value;
 
     const editor = editorRef.current;
