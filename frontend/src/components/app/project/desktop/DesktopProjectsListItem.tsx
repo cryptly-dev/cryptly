@@ -2,7 +2,7 @@ import { type Project } from "@/lib/api/projects.api";
 import { cn, getCompactRelativeTime } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { GripVertical, Loader2 } from "lucide-react";
-import { AnimatePresence, motion, type DragControls } from "motion/react";
+import { type DragControls } from "motion/react";
 import { useEffect, useState } from "react";
 
 interface DesktopProjectsListItemProps {
@@ -35,26 +35,14 @@ export function DesktopProjectsListItem({
           ? "text-primary"
           : isLoading
             ? "text-foreground"
-            : "text-muted-foreground/55 hover:bg-neutral-800/50 hover:text-foreground"
+            : "text-muted-foreground/55 hover:bg-neutral-800/50 hover:text-foreground",
       )}
     >
-      <AnimatePresence initial={false}>
-        {isActive && (
-          <motion.div
-            key="active-bg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute inset-0 bg-neutral-800 rounded-sm pointer-events-none"
-          />
-        )}
-      </AnimatePresence>
+      {isActive && (
+        <div className="absolute inset-0 bg-neutral-800 rounded-sm pointer-events-none" />
+      )}
       {isLoading && !isActive && (
-        <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-sm">
-          <span className="absolute inset-0 bg-neutral-800/40" />
-          <span className="absolute inset-y-0 -left-1/2 w-1/2 bg-gradient-to-r from-transparent via-primary/25 to-transparent animate-project-item-shimmer" />
-        </span>
+        <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-sm bg-neutral-800/40" />
       )}
       <Link
         to="/app/project/$projectId"
@@ -73,7 +61,7 @@ export function DesktopProjectsListItem({
         <span
           className={cn(
             "truncate block relative pointer-events-none text-[15px] font-normal",
-            isActive && "[text-shadow:0_0_0.4px_currentColor]"
+            isActive && "[text-shadow:0_0_0.4px_currentColor]",
           )}
         >
           {project.name}
@@ -83,7 +71,7 @@ export function DesktopProjectsListItem({
         <span
           className={cn(
             "text-[13px] tabular-nums transition-opacity group-hover:opacity-0",
-            isActive ? "text-primary/70" : "text-muted-foreground/40"
+            isActive ? "text-primary/70" : "text-muted-foreground/40",
           )}
           title={new Date(project.updatedAt).toLocaleString()}
         >
