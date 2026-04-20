@@ -18,9 +18,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WizardStepper } from "@/components/ui/wizard-stepper";
-import type { Integration } from "@/lib/api/integrations.api";
+import {
+  IntegrationsApi,
+  type Integration,
+} from "@/lib/api/integrations.api";
 import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { useProjects } from "@/lib/hooks/useProjects";
+import { authLogic } from "@/lib/logics/authLogic";
 import { commonLogic } from "@/lib/logics/commonLogic";
 import {
   integrationsLogic,
@@ -39,6 +43,9 @@ import { useActions, useAsyncActions, useValues } from "kea";
 import { Wand2 } from "lucide-react";
 import posthog from "posthog-js";
 import { useEffect, useState, type ComponentType } from "react";
+
+const isGithubLocalMock =
+  import.meta.env.VITE_GITHUB_LOCAL_MOCK === "true";
 
 // ────────────────────────────────────────────────────────────
 // Integration row
@@ -299,6 +306,7 @@ function AddIntegrationWizard({
   onOpenChange: (open: boolean) => void;
 }) {
   const { activeProject } = useProjects();
+  const { jwtToken } = useValues(authLogic);
   const {
     installations,
     repositories,
@@ -330,8 +338,21 @@ function AddIntegrationWizard({
     setRepoSearch("");
   }, [selectedInstallationEntityId]);
 
-  const handleInstallApp = () => {
+  const handleInstallApp = async () => {
     setShouldReopenIntegrationsDialog(true);
+    if (isGithubLocalMock && jwtToken) {
+      try {
+        const { githubInstallationId } =
+          await IntegrationsApi.bootstrapLocalGithubMock(jwtToken);
+        await IntegrationsApi.createInstallation(jwtToken, {
+          githubInstallationId,
+        });
+        window.location.href = `${import.meta.env.VITE_APP_URL}/app/callbacks/integrations/github?installation_id=${githubInstallationId}&state=${encodeURIComponent(`"projectId=${activeProject?.id}"`)}`;
+      } catch (e) {
+        console.error(e);
+      }
+      return;
+    }
     window.location.href = `https://github.com/apps/cryptly-dev/installations/new?state="projectId=${activeProject?.id}"`;
   };
 
