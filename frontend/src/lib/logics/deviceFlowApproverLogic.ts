@@ -9,6 +9,7 @@ import {
   selectors,
 } from "kea";
 import { subscriptions } from "kea-subscriptions";
+import { createAuthedFetch } from "../auth/tokenRefresh";
 import { getDeviceId, getDeviceName } from "../utils";
 import { authLogic } from "./authLogic";
 import type { deviceFlowApproverLogicType } from "./deviceFlowApproverLogicType";
@@ -72,14 +73,7 @@ export const deviceFlowApproverLogic = kea<deviceFlowApproverLogicType>([
         url: `${
           import.meta.env.VITE_API_URL
         }/auth/device-flow/messages?role=approver&deviceId=${deviceId}&deviceName=${getDeviceName()}`,
-        fetch: (input, init) =>
-          fetch(input, {
-            ...(init || {}),
-            headers: {
-              ...(init?.headers || {}),
-              Authorization: `Bearer ${values.jwtToken}`,
-            },
-          }),
+        fetch: createAuthedFetch(() => values.jwtToken),
       });
 
       eventSource.onMessage((event) => {

@@ -21,6 +21,7 @@ import {
   type DecryptedVersion,
   type ProjectMember,
 } from "../api/projects.api";
+import { createAuthedFetch } from "../auth/tokenRefresh";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
 import { authLogic } from "./authLogic";
@@ -301,14 +302,7 @@ export const projectLogic = kea<projectLogicType>([
       const connect = () => {
         const eventSource = new EventSourceWrapper({
           url: `${import.meta.env.VITE_API_URL}/projects/${projectId}/events`,
-          fetch: (input, init) =>
-            fetch(input, {
-              ...(init || {}),
-              headers: {
-                ...(init?.headers || {}),
-                Authorization: `Bearer ${values.jwtToken}`,
-              },
-            }),
+          fetch: createAuthedFetch(() => values.jwtToken),
         });
 
         eventSource.onMessage((event) => {
@@ -326,7 +320,10 @@ export const projectLogic = kea<projectLogicType>([
         eventSource.onError(() => {
           eventSource.close();
 
-          if (values.shouldReconnect) {
+          if (
+            values.shouldReconnect &&
+            authLogic.findMounted()?.values.isLoggedIn
+          ) {
             setTimeout(() => {
               connect();
             }, 3000);
