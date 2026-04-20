@@ -44,7 +44,6 @@ interface SearchSuggestion {
   iconBg: string;
   iconFg: string;
   verb: React.ReactNode;
-  hint: string;
 }
 
 const SEARCH_SUGGESTIONS: SearchSuggestion[] = [
@@ -55,11 +54,9 @@ const SEARCH_SUGGESTIONS: SearchSuggestion[] = [
     iconFg: "text-emerald-400",
     verb: (
       <>
-        was <span className="text-emerald-400 font-medium">added</span> in an
-        edit
+        was <span className="text-emerald-400 font-medium">added</span>
       </>
     ),
-    hint: "Only lines that appear in the new version",
   },
   {
     mode: "removed",
@@ -68,36 +65,23 @@ const SEARCH_SUGGESTIONS: SearchSuggestion[] = [
     iconFg: "text-rose-400",
     verb: (
       <>
-        was <span className="text-rose-400 font-medium">removed</span> in an
-        edit
+        was <span className="text-rose-400 font-medium">removed</span>
       </>
     ),
-    hint: "Only lines that disappeared from the previous version",
   },
   {
     mode: "changed",
     icon: ArrowDownUp,
-    iconBg: "bg-amber-500/15",
-    iconFg: "text-amber-400",
-    verb: (
-      <>
-        was <span className="text-amber-400 font-medium">added or removed</span>
-      </>
-    ),
-    hint: "Either side of the diff",
+    iconBg: "bg-neutral-800",
+    iconFg: "text-neutral-300",
+    verb: <>was added or removed</>,
   },
   {
     mode: "anywhere",
     icon: Sparkles,
-    iconBg: "bg-sky-500/15",
-    iconFg: "text-sky-400",
-    verb: (
-      <>
-        appears <span className="text-sky-400 font-medium">anywhere</span> in an
-        edit
-      </>
-    ),
-    hint: "Match content, author or email",
+    iconBg: "bg-neutral-800",
+    iconFg: "text-neutral-300",
+    verb: <>appears anywhere</>,
   },
 ];
 
@@ -147,9 +131,17 @@ export function DesktopHistoryView() {
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [pinnedAuthorIds, setPinnedAuthorIds] = useState<string[]>([]);
   const [overflowOpen, setOverflowOpen] = useState(false);
+  const [kbNavActive, setKbNavActive] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const searchRootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!kbNavActive) return;
+    const drop = () => setKbNavActive(false);
+    document.addEventListener("mousemove", drop);
+    return () => document.removeEventListener("mousemove", drop);
+  }, [kbNavActive]);
 
   const [, setNow] = useState(0);
   useEffect(() => {
@@ -328,6 +320,13 @@ export function DesktopHistoryView() {
       );
       const moveBy = (delta: number) => {
         e.preventDefault();
+        if (
+          document.activeElement instanceof HTMLElement &&
+          document.activeElement.tagName === "BUTTON"
+        ) {
+          document.activeElement.blur();
+        }
+        setKbNavActive(true);
         const nextIdx =
           currentIdx < 0
             ? 0
@@ -474,7 +473,7 @@ export function DesktopHistoryView() {
                       onClick={() => applyMode(s.mode)}
                       onMouseEnter={() => setHighlightIdx(i)}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 text-left cursor-pointer transition-colors",
+                        "w-full flex items-center gap-3 px-3 py-1.5 text-left cursor-pointer transition-colors focus:outline-none",
                         isHighlighted
                           ? "bg-neutral-800/80"
                           : "hover:bg-neutral-900/60"
@@ -482,32 +481,23 @@ export function DesktopHistoryView() {
                     >
                       <div
                         className={cn(
-                          "flex items-center justify-center size-6 rounded-md flex-shrink-0",
+                          "flex items-center justify-center size-5 rounded-md flex-shrink-0",
                           s.iconBg,
                           s.iconFg
                         )}
                       >
-                        <Icon className="size-3.5" />
+                        <Icon className="size-3" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm text-foreground">
-                          <span className="font-mono text-foreground">
-                            "{trimmedQuery}"
-                          </span>{" "}
-                          <span className="text-muted-foreground">
-                            {s.verb}
-                          </span>
-                        </div>
-                        <div className="text-[10.5px] text-muted-foreground/70 mt-0.5">
-                          {s.hint}
-                        </div>
+                      <div className="flex-1 min-w-0 text-sm">
+                        <span className="font-mono text-foreground">
+                          "{trimmedQuery}"
+                        </span>{" "}
+                        <span className="text-muted-foreground">{s.verb}</span>
                       </div>
                       {isHighlighted && (
-                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground flex-shrink-0">
-                          <Kbd className="bg-neutral-800 text-neutral-300 border border-border/60 px-1">
-                            <CornerDownLeft className="size-2.5" />
-                          </Kbd>
-                        </div>
+                        <Kbd className="bg-neutral-800 text-neutral-300 border border-border/60 px-1 flex-shrink-0">
+                          <CornerDownLeft className="size-2.5" />
+                        </Kbd>
                       )}
                     </button>
                   );
@@ -649,10 +639,12 @@ export function DesktopHistoryView() {
                   key={patch.id}
                   onClick={() => selectHistoryChange(patch.id, patch.content)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 border-l-2 cursor-pointer transition-colors text-left",
+                    "w-full flex items-center gap-3 px-3 py-2 border-l-2 cursor-pointer transition-colors text-left focus:outline-none focus-visible:outline-none",
                     isSelected
                       ? "bg-neutral-900 border-primary"
-                      : "border-transparent hover:bg-neutral-900/60"
+                      : kbNavActive
+                        ? "border-transparent"
+                        : "border-transparent hover:bg-neutral-900/60"
                   )}
                 >
                   <img
@@ -724,6 +716,13 @@ export function DesktopHistoryView() {
         <div className="flex items-center justify-between gap-3 px-3 py-2 border-t border-border/50 bg-black/60 text-[11px] text-muted-foreground">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
+              <Kbd className="bg-neutral-800 text-neutral-300 border border-border/60">
+                ↑
+              </Kbd>
+              <Kbd className="bg-neutral-800 text-neutral-300 border border-border/60">
+                ↓
+              </Kbd>
+              <span className="text-muted-foreground/50">·</span>
               <Kbd className="bg-neutral-800 text-neutral-300 border border-border/60">
                 j
               </Kbd>

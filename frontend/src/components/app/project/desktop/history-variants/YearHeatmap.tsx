@@ -16,10 +16,10 @@ interface HoverState {
   day: DayCell;
 }
 
-const WEEKS = 52;
-const SQ = 9;
-const GAP = 2;
-const LABEL_WIDTH = 22;
+const WEEKS = 26;
+const SQ = 12;
+const GAP = 3;
+const LABEL_WIDTH = 26;
 
 function getIntensity(count: number): string {
   if (count === 0) return "rgba(255,255,255,0.04)";
