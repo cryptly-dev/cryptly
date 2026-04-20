@@ -16,6 +16,7 @@ import { CurrentUserId } from '../../../auth/core/decorators/current-user-id.dec
 import { Public } from '../../../auth/core/decorators/is-public';
 import { ProjectMemberGuard } from '../../../project/core/guards/project-member.guard';
 import { ProjectReadService } from '../../../project/read/project-read.service';
+import { getEnvConfig } from '../../../shared/config/env-config';
 import { TokenResponse } from '../../../shared/responses/token.response';
 import { Role } from '../../../shared/types/role.enum';
 import { GithubRepositorySerialized } from '../client/dto/github-repository.dto';
@@ -104,10 +105,30 @@ export class GithubExternalConnectionCoreController {
   }
 
   @ApiResponse({ type: GithubInstallationSerialized, isArray: true })
+  @Get('users/me/external-connections/github/local-mock/bootstrap')
+  public async getLocalGithubMockBootstrap(
+    @CurrentUserId() currentUserId: string,
+  ): Promise<{ githubInstallationId: number }> {
+    if (!getEnvConfig().githubLocalMock) {
+      throw new ForbiddenException('Local GitHub mock is not enabled');
+    }
+
+    const installation = await this.installationWriteService.ensureLocalMockInstallationForUser(
+      currentUserId,
+    );
+
+    return { githubInstallationId: installation.githubInstallationId };
+  }
+
+  @ApiResponse({ type: GithubInstallationSerialized, isArray: true })
   @Get('users/me/external-connections/github/installations')
   public async getCurrentUserInstallations(
     @CurrentUserId() currentUserId: string,
   ): Promise<GithubInstallationSerialized[]> {
+    if (getEnvConfig().githubLocalMock) {
+      await this.installationWriteService.ensureLocalMockInstallationForUser(currentUserId);
+    }
+
     const installations = await this.installationReadService.findByUserId(currentUserId);
 
     const ghInstallations = await Promise.all(

@@ -29,6 +29,9 @@ import { keyLogic } from "./keyLogic";
 import type { projectLogicType } from "./projectLogicType";
 import { projectsLogic } from "./projectsLogic";
 
+const isGithubLocalMock =
+  import.meta.env.VITE_GITHUB_LOCAL_MOCK === "true";
+
 export interface ProjectLogicProps {
   projectId: string;
 }
@@ -394,6 +397,11 @@ export const projectLogic = kea<projectLogicType>([
           values.integrations,
           values.inputValue
         );
+        if (isGithubLocalMock) {
+          toast.success("Pushed to GitHub (local mock — no secrets sent)", {
+            richColors: true,
+          });
+        }
       } finally {
         actions.setIsPushing(false);
       }
