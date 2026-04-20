@@ -18,6 +18,7 @@ export function PushButton() {
     isPushing,
     integrations,
     currentUserRole,
+    secretsSyncedWithGithub,
   } = useValues(projectLogic);
   const { pushToIntegrations } = useAsyncActions(projectLogic);
   const isReadOnly = currentUserRole === ProjectMemberRole.Read;
@@ -122,7 +123,9 @@ export function PushButton() {
         tooltip={
           !showSlideToConfirm
             ? {
-                title: "Push to integrations",
+                title: secretsSyncedWithGithub
+                  ? "Push to GitHub (saved version already pushed)"
+                  : "Push to GitHub",
                 description: tooltipDescription,
               }
             : undefined

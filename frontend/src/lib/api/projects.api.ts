@@ -23,6 +23,10 @@ export interface Project {
   encryptedSecrets: string;
   members: ProjectMember[];
   updatedAt: string;
+  /** Current saved secrets version id (matches history). */
+  latestSecretsVersionId: string;
+  /** Last version id successfully pushed to GitHub; null if never pushed or secrets changed since. */
+  lastGithubPushedSecretsVersionId: string | null;
   integrations: {
     githubInstallationId: number;
   };

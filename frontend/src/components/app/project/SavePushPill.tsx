@@ -47,6 +47,7 @@ export function SavePushPill({
     isPushing,
     integrations,
     currentUserRole,
+    secretsSyncedWithGithub,
   } = useValues(projectLogic);
   const { updateProjectContent } = useActions(projectLogic);
   const { pushToIntegrations } = useAsyncActions(projectLogic);
@@ -231,6 +232,27 @@ export function SavePushPill({
       {/* Divider */}
       {style.divider && (
         <div className={cn("w-px self-stretch my-2", style.divider)} />
+      )}
+
+      {hasIntegrations && (
+        <div
+          className="px-2 max-sm:hidden shrink-0"
+          title={
+            secretsSyncedWithGithub
+              ? "Saved version was pushed to GitHub"
+              : "Saved version differs from last push — push again to update GitHub"
+          }
+        >
+          {secretsSyncedWithGithub ? (
+            <span className="text-xs font-medium text-green-500/90 whitespace-nowrap">
+              Pushed
+            </span>
+          ) : (
+            <span className="text-xs font-medium text-amber-500/85 whitespace-nowrap">
+              Not pushed
+            </span>
+          )}
+        </div>
       )}
 
       {/* Push */}

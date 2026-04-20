@@ -236,4 +236,15 @@ export class IntegrationsApi {
       })
     );
   }
+
+  public static async recordGithubPush(
+    jwtToken: string,
+    projectId: string
+  ): Promise<void> {
+    await axios.post<void>(
+      `/projects/${projectId}/external-connections/github/record-push`,
+      {},
+      { headers: { Authorization: `Bearer ${jwtToken}` } }
+    );
+  }
 }

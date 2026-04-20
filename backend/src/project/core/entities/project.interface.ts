@@ -12,6 +12,7 @@ export class ProjectNormalized {
   public encryptedSecretsKeys: Record<string, string>;
   public createdAt: Date;
   public updatedAt: Date;
+  public lastGithubPushedSecretsVersionId?: string | null;
 }
 
 export class ProjectMemberSerialized extends UserPartialSerialized {
@@ -40,4 +41,10 @@ export class ProjectSerialized {
 
   @ApiProperty()
   public updatedAt: string;
+
+  @ApiProperty()
+  public latestSecretsVersionId: string;
+
+  @ApiPropertyOptional()
+  public lastGithubPushedSecretsVersionId?: string | null;
 }

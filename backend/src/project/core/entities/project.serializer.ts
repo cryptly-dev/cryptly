@@ -11,6 +11,7 @@ export class ProjectSerializer {
       encryptedSecretsKeys: entity.encryptedSecretsKeys,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      lastGithubPushedSecretsVersionId: entity.lastGithubPushedSecretsVersionId?.toString() ?? null,
     };
   }
 
@@ -18,6 +19,7 @@ export class ProjectSerializer {
     normalized: ProjectNormalized,
     membersDetails: UserPartialSerialized[],
     latestSecrets: string,
+    latestSecretsVersionId: string,
   ): ProjectSerialized {
     const members: ProjectMemberSerialized[] = [];
 
@@ -36,6 +38,8 @@ export class ProjectSerializer {
       encryptedSecrets: latestSecrets,
       createdAt: normalized.createdAt.toISOString(),
       updatedAt: normalized.updatedAt.toISOString(),
+      latestSecretsVersionId,
+      lastGithubPushedSecretsVersionId: normalized.lastGithubPushedSecretsVersionId ?? null,
     };
   }
 }

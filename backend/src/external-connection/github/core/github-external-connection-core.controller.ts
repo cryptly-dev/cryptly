@@ -5,17 +5,21 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  HttpCode,
   NotFoundException,
   Param,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Types } from 'mongoose';
 import { RequireRole } from 'src/project/decorators/require-project-role.decorator';
 import { CurrentUserId } from '../../../auth/core/decorators/current-user-id.decorator';
 import { Public } from '../../../auth/core/decorators/is-public';
 import { ProjectMemberGuard } from '../../../project/core/guards/project-member.guard';
 import { ProjectReadService } from '../../../project/read/project-read.service';
+import { ProjectWriteService } from '../../../project/write/project-write.service';
+import { ProjectSecretsVersionReadService } from '../../../project-secrets-version/read/project-secrets-version-read.service';
 import { getEnvConfig } from '../../../shared/config/env-config';
 import { TokenResponse } from '../../../shared/responses/token.response';
 import { Role } from '../../../shared/types/role.enum';
@@ -45,6 +49,8 @@ export class GithubExternalConnectionCoreController {
     private readonly integrationReadService: GithubIntegrationReadService,
     private readonly integrationWriteService: GithubIntegrationWriteService,
     private readonly projectReadService: ProjectReadService,
+    private readonly projectWriteService: ProjectWriteService,
+    private readonly projectSecretsVersionReadService: ProjectSecretsVersionReadService,
   ) {}
 
   @ApiResponse({ type: GithubRepositorySerialized, isArray: true })
@@ -232,6 +238,18 @@ export class GithubExternalConnectionCoreController {
   }
 
   @ApiResponse({ type: TokenResponse })
+  @Post('/projects/:projectId/external-connections/github/record-push')
+  @UseGuards(ProjectMemberGuard)
+  @RequireRole(Role.Admin, Role.Write)
+  @HttpCode(204)
+  public async recordGithubPush(@Param('projectId') projectId: string): Promise<void> {
+    await this.projectReadService.findByIdOrThrow(projectId);
+    const latestVersion = await this.projectSecretsVersionReadService.findLatestByProjectId(
+      new Types.ObjectId(projectId),
+    );
+    await this.projectWriteService.setLastGithubPushedSecretsVersionId(projectId, latestVersion.id);
+  }
+
   @Get('/projects/:projectId/external-connections/github/integrations/:integrationId/access-token')
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Admin, Role.Write)

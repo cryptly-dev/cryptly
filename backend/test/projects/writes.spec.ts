@@ -48,6 +48,8 @@ describe('ProjectCoreController (writes)', () => {
         encryptedSecrets: '',
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
+        latestSecretsVersionId: expect.any(String),
+        lastGithubPushedSecretsVersionId: null,
       });
     });
 
@@ -253,6 +255,8 @@ describe('ProjectCoreController (writes)', () => {
         encryptedSecrets: 'new-secrets',
         createdAt: expect.any(String),
         updatedAt: '2025-09-23T01:00:00.000Z',
+        latestSecretsVersionId: expect.any(String),
+        lastGithubPushedSecretsVersionId: null,
       });
     });
   });

@@ -92,6 +92,7 @@ export class ProjectCoreController {
         { ...p, updatedAt: latestVersionsMap.get(p.id)!!.updatedAt },
         membersHydrated,
         latestVersionsMap.get(p.id)!!.encryptedSecrets,
+        latestVersionsMap.get(p.id)!!.id,
       ),
     );
 
@@ -144,7 +145,16 @@ export class ProjectCoreController {
     const members = await this.userReadService.readByIds([userId]);
     const membersHydrated = members.map((user) => UserSerializer.serializePartial(user));
 
-    return ProjectSerializer.serialize(project, membersHydrated, body.encryptedSecrets);
+    const latestVersion = await this.projectSecretsVersionReadService.findLatestByProjectId(
+      new Types.ObjectId(project.id),
+    );
+
+    return ProjectSerializer.serialize(
+      project,
+      membersHydrated,
+      body.encryptedSecrets,
+      latestVersion.id,
+    );
   }
 
   @Get('projects/:projectId')
@@ -164,6 +174,7 @@ export class ProjectCoreController {
       { ...project, updatedAt: latestVersion.updatedAt },
       membersHydrated,
       latestVersion.encryptedSecrets,
+      latestVersion.id,
     );
   }
 
@@ -253,6 +264,7 @@ export class ProjectCoreController {
       { ...updatedProject, updatedAt: latestVersion.updatedAt },
       membersHydrated,
       latestVersion.encryptedSecrets,
+      latestVersion.id,
     );
   }
 

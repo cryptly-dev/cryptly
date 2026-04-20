@@ -19,6 +19,10 @@ export class ProjectEntity {
 
   @Prop()
   public updatedAt: Date;
+
+  /** Secrets version id last successfully pushed to GitHub Actions (ProjectSecretsVersion _id). */
+  @Prop({ type: mongoose.Schema.Types.ObjectId })
+  public lastGithubPushedSecretsVersionId?: Types.ObjectId;
 }
 
 export type ProjectDocument = HydratedDocument<ProjectEntity>;

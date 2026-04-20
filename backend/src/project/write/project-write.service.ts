@@ -113,6 +113,10 @@ export class ProjectWriteService {
         authorId: new Types.ObjectId(authorId),
         encryptedSecrets: dto.encryptedSecrets,
       });
+      await this.projectModel.updateOne(
+        { _id: new Types.ObjectId(id) },
+        { $unset: { lastGithubPushedSecretsVersionId: '' } },
+      );
     }
 
     const updateQuery = this.buildUpdateQuery(dto);
@@ -175,5 +179,22 @@ export class ProjectWriteService {
       { _id: new Types.ObjectId(projectId) },
       { $unset: { [`encryptedSecretsKeys.${userId}`]: '' } },
     );
+  }
+
+  public async setLastGithubPushedSecretsVersionId(
+    projectId: string,
+    secretsVersionId: string,
+  ): Promise<ProjectNormalized> {
+    const project = await this.projectModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(projectId) },
+      { $set: { lastGithubPushedSecretsVersionId: new Types.ObjectId(secretsVersionId) } },
+      { new: true },
+    );
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return ProjectSerializer.normalize(project);
   }
 }

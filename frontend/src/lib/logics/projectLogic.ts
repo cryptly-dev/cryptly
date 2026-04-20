@@ -43,6 +43,8 @@ export interface DecryptedProject {
   passphraseAsKey: string;
   members: ProjectMember[];
   updatedAt: string;
+  latestSecretsVersionId: string;
+  lastGithubPushedSecretsVersionId: string | null;
   integrations: {
     githubInstallationId: number;
   };
@@ -222,6 +224,9 @@ export const projectLogic = kea<projectLogicType>([
             passphraseAsKey: projectKeyDecrypted,
             members: projectData?.members!,
             updatedAt: projectData?.updatedAt!,
+            latestSecretsVersionId: projectData.latestSecretsVersionId,
+            lastGithubPushedSecretsVersionId:
+              projectData.lastGithubPushedSecretsVersionId,
             integrations: projectData?.integrations!,
           };
         },
@@ -272,6 +277,17 @@ export const projectLogic = kea<projectLogicType>([
         return (
           normalizeEditorText(inputValue) !==
           normalizeEditorText(projectData.content)
+        );
+      },
+    ],
+    /** Saved editor state matches what was last pushed to GitHub (until you save new changes). */
+    secretsSyncedWithGithub: [
+      (s) => [s.projectData],
+      (projectData: DecryptedProject | null) => {
+        if (!projectData?.lastGithubPushedSecretsVersionId) return false;
+        return (
+          projectData.lastGithubPushedSecretsVersionId ===
+          projectData.latestSecretsVersionId
         );
       },
     ],
@@ -360,6 +376,8 @@ export const projectLogic = kea<projectLogicType>([
           updatedAt: updatedAt,
         });
       }
+
+      await asyncActions.loadProjectData();
     },
     updateProjectContent: async () => {
       actions.setIsSubmitting(true);
@@ -397,6 +415,17 @@ export const projectLogic = kea<projectLogicType>([
           values.integrations,
           values.inputValue
         );
+        await IntegrationsApi.recordGithubPush(
+          values.jwtToken!,
+          props.projectId
+        );
+        const latestId = values.projectData?.latestSecretsVersionId;
+        if (values.projectData && latestId) {
+          actions.setProjectData({
+            ...values.projectData,
+            lastGithubPushedSecretsVersionId: latestId,
+          });
+        }
         if (isGithubLocalMock) {
           toast.success("Pushed to GitHub (local mock — no secrets sent)", {
             richColors: true,

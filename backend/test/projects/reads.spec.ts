@@ -41,6 +41,8 @@ describe('ProjectCoreController (reads)', () => {
         encryptedSecrets: '',
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
+        latestSecretsVersionId: expect.any(String),
+        lastGithubPushedSecretsVersionId: null,
       });
     });
 
@@ -82,6 +84,8 @@ describe('ProjectCoreController (reads)', () => {
         encryptedSecrets: '',
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
+        latestSecretsVersionId: expect.any(String),
+        lastGithubPushedSecretsVersionId: null,
       });
     });
 
@@ -163,6 +167,8 @@ describe('ProjectCoreController (reads)', () => {
             encryptedSecrets: '',
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
+            latestSecretsVersionId: expect.any(String),
+            lastGithubPushedSecretsVersionId: null,
           },
           {
             id: projectB.id,
@@ -179,6 +185,8 @@ describe('ProjectCoreController (reads)', () => {
             encryptedSecrets: '',
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
+            latestSecretsVersionId: expect.any(String),
+            lastGithubPushedSecretsVersionId: null,
           },
         ]),
       );
