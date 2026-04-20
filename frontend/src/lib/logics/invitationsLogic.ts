@@ -12,6 +12,7 @@ import {
 
 import { loaders } from "kea-loaders";
 import { InvitationsApi, type Invitation } from "../api/invitations.api";
+import { ProjectMemberRole } from "../api/projects.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
 import { authLogic } from "./authLogic";
@@ -31,6 +32,7 @@ export const invitationsLogic = kea<invitationsLogicType>([
 
   connect({
     values: [authLogic, ["jwtToken"], projectLogic, ["projectData"]],
+    selectors: [projectLogic, ["currentUserRole"]],
   }),
 
   actions({
@@ -114,8 +116,13 @@ export const invitationsLogic = kea<invitationsLogicType>([
     },
   })),
 
-  events(({ asyncActions }) => ({
+  events(({ asyncActions, values }) => ({
     afterMount: () => {
+      // Endpoint requires Admin on the server; skip the call otherwise so
+      // non-admin project members don't rack up console-visible 403s. The
+      // ProjectAccessDialog guards its own render on `projectData`, so the
+      // role selector is populated by the time this logic mounts.
+      if (values.currentUserRole !== ProjectMemberRole.Admin) return;
       asyncActions.loadInvitations();
     },
   })),
