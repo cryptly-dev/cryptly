@@ -136,6 +136,36 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
     [uploadPastedImage]
   );
 
+  const handleCoverImagePaste = useCallback(
+    (event: React.ClipboardEvent<HTMLInputElement>) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (!file) continue;
+          event.preventDefault();
+          void (async () => {
+            setUploadingImage(true);
+            try {
+              const result = await uploadImage(file);
+              setCoverImageUrl(result.displayUrl || result.url);
+              toast.success("Cover image uploaded");
+            } catch (err) {
+              const message =
+                (err as { message?: string })?.message || "Image upload failed";
+              toast.error(message);
+            } finally {
+              setUploadingImage(false);
+            }
+          })();
+          return;
+        }
+      }
+    },
+    []
+  );
+
   const handleSave = useCallback(async () => {
     if (!jwtToken) {
       toast.error("Not authenticated");
@@ -306,7 +336,8 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
               type="text"
               value={coverImageUrl}
               onChange={(e) => setCoverImageUrl(e.target.value)}
-              placeholder="Cover image URL (optional)"
+              onPaste={handleCoverImagePaste}
+              placeholder="Cover image URL — or paste an image"
               className="w-full bg-transparent text-sm text-neutral-300 placeholder:text-neutral-700 focus:outline-none border-b border-neutral-900 py-2"
             />
           </div>
