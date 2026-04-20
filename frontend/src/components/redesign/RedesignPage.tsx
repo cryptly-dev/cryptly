@@ -101,7 +101,7 @@ function Hero() {
   return (
     <section className="min-h-screen flex items-center">
       <div className="mx-auto max-w-6xl w-full px-6 py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-16 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-center">
           <div>
             <Pill>
               <Lock className="h-3 w-3" /> Zero-knowledge by construction
