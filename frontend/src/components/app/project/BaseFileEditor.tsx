@@ -23,6 +23,11 @@ interface ValueRange {
   endCol: number;
 }
 
+interface ParsedSecret {
+  range: ValueRange;
+  key: string;
+}
+
 interface MonacoSelectionLike {
   startLineNumber: number;
   startColumn: number;
@@ -30,12 +35,13 @@ interface MonacoSelectionLike {
   endColumn: number;
 }
 
-function getValueRanges(model: any): ValueRange[] {
+function getValueRanges(model: any): ParsedSecret[] {
   const lineCount = model.getLineCount();
-  const ranges: ValueRange[] = [];
+  const ranges: ParsedSecret[] = [];
 
   let inQuote: string | null = null;
-  let current: { startLine: number; startCol: number } | null = null;
+  let current: { startLine: number; startCol: number; key: string } | null =
+    null;
 
   for (let line = 1; line <= lineCount; line++) {
     const text = model.getLineContent(line);
@@ -48,10 +54,15 @@ function getValueRanges(model: any): ValueRange[] {
           continue;
         }
         if (text[i] === inQuote) {
+          const { startLine, startCol, key } = current!;
           ranges.push({
-            ...current!,
-            endLine: line,
-            endCol: i + 2,
+            range: {
+              startLine,
+              startCol,
+              endLine: line,
+              endCol: i + 2,
+            },
+            key,
           });
           inQuote = null;
           current = null;
@@ -87,10 +98,13 @@ function getValueRanges(model: any): ValueRange[] {
         }
         if (afterEq[i] === firstChar) {
           ranges.push({
-            startLine: line,
-            startCol: valueStartCol,
-            endLine: line,
-            endCol: eqIdx + 1 + i + 2,
+            range: {
+              startLine: line,
+              startCol: valueStartCol,
+              endLine: line,
+              endCol: eqIdx + 1 + i + 2,
+            },
+            key,
           });
           closed = true;
           break;
@@ -98,14 +112,17 @@ function getValueRanges(model: any): ValueRange[] {
       }
       if (!closed) {
         inQuote = firstChar;
-        current = { startLine: line, startCol: valueStartCol };
+        current = { startLine: line, startCol: valueStartCol, key };
       }
     } else {
       ranges.push({
-        startLine: line,
-        startCol: valueStartCol,
-        endLine: line,
-        endCol: text.length + 1,
+        range: {
+          startLine: line,
+          startCol: valueStartCol,
+          endLine: line,
+          endCol: text.length + 1,
+        },
+        key,
       });
     }
   }
@@ -113,10 +130,15 @@ function getValueRanges(model: any): ValueRange[] {
   // Unclosed string at EOF
   if (inQuote && current) {
     const lastLine = lineCount;
+    const { startLine, startCol, key } = current;
     ranges.push({
-      ...current,
-      endLine: lastLine,
-      endCol: model.getLineContent(lastLine).length + 1,
+      range: {
+        startLine,
+        startCol,
+        endLine: lastLine,
+        endCol: model.getLineContent(lastLine).length + 1,
+      },
+      key,
     });
   }
 
@@ -131,12 +153,13 @@ function getValueRanges(model: any): ValueRange[] {
  * MUST stay in lockstep with `getValueRanges`. There is a dev-mode runtime
  * assertion (see `assertParserParity`) that compares the two.
  */
-function parseValueRangesFromString(text: string): ValueRange[] {
+function parseValueRangesFromString(text: string): ParsedSecret[] {
   const lines = text.split("\n");
-  const ranges: ValueRange[] = [];
+  const ranges: ParsedSecret[] = [];
 
   let inQuote: string | null = null;
-  let current: { startLine: number; startCol: number } | null = null;
+  let current: { startLine: number; startCol: number; key: string } | null =
+    null;
 
   for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
     const line = lineIdx + 1;
@@ -149,10 +172,15 @@ function parseValueRangesFromString(text: string): ValueRange[] {
           continue;
         }
         if (lineText[i] === inQuote) {
+          const { startLine, startCol, key } = current!;
           ranges.push({
-            ...current!,
-            endLine: line,
-            endCol: i + 2,
+            range: {
+              startLine,
+              startCol,
+              endLine: line,
+              endCol: i + 2,
+            },
+            key,
           });
           inQuote = null;
           current = null;
@@ -186,10 +214,13 @@ function parseValueRangesFromString(text: string): ValueRange[] {
         }
         if (afterEq[i] === firstChar) {
           ranges.push({
-            startLine: line,
-            startCol: valueStartCol,
-            endLine: line,
-            endCol: eqIdx + 1 + i + 2,
+            range: {
+              startLine: line,
+              startCol: valueStartCol,
+              endLine: line,
+              endCol: eqIdx + 1 + i + 2,
+            },
+            key,
           });
           closed = true;
           break;
@@ -197,24 +228,32 @@ function parseValueRangesFromString(text: string): ValueRange[] {
       }
       if (!closed) {
         inQuote = firstChar;
-        current = { startLine: line, startCol: valueStartCol };
+        current = { startLine: line, startCol: valueStartCol, key };
       }
     } else {
       ranges.push({
-        startLine: line,
-        startCol: valueStartCol,
-        endLine: line,
-        endCol: lineText.length + 1,
+        range: {
+          startLine: line,
+          startCol: valueStartCol,
+          endLine: line,
+          endCol: lineText.length + 1,
+        },
+        key,
       });
     }
   }
 
   if (inQuote && current) {
     const lastLine = lines.length;
+    const { startLine, startCol, key } = current;
     ranges.push({
-      ...current,
-      endLine: lastLine,
-      endCol: lines[lastLine - 1].length + 1,
+      range: {
+        startLine,
+        startCol,
+        endLine: lastLine,
+        endCol: lines[lastLine - 1].length + 1,
+      },
+      key,
     });
   }
 
@@ -245,6 +284,7 @@ function bulletsForSubstring(s: string): string {
 interface MaskEntry {
   range: ValueRange;
   original: string;
+  key: string;
 }
 
 interface MaskResult {
@@ -259,31 +299,33 @@ interface MaskResult {
  * stash them keyed by decoration id after the editor mounts.
  */
 function maskText(text: string): MaskResult {
-  const ranges = parseValueRangesFromString(text);
-  if (ranges.length === 0) {
+  const parsed = parseValueRangesFromString(text);
+  if (parsed.length === 0) {
     return { masked: text, entries: [] };
   }
 
   const lines = text.split("\n");
   const lineLengths = lines.map((l) => l.length);
 
-  const sorted = [...ranges].sort((a, b) => {
-    if (a.startLine !== b.startLine) return a.startLine - b.startLine;
-    return a.startCol - b.startCol;
+  const sorted = [...parsed].sort((a, b) => {
+    if (a.range.startLine !== b.range.startLine)
+      return a.range.startLine - b.range.startLine;
+    return a.range.startCol - b.range.startCol;
   });
 
   const out: string[] = [];
   const entries: MaskEntry[] = [];
   let cursor = 0;
 
-  for (const r of sorted) {
+  for (const p of sorted) {
+    const r = p.range;
     const start = lineColToOffset(lineLengths, r.startLine, r.startCol);
     const end = lineColToOffset(lineLengths, r.endLine, r.endCol);
     if (start < cursor) continue; // shouldn't happen with valid ranges
     out.push(text.slice(cursor, start));
     const original = text.slice(start, end);
     out.push(bulletsForSubstring(original));
-    entries.push({ range: r, original });
+    entries.push({ range: r, original, key: p.key });
     cursor = end;
   }
   out.push(text.slice(cursor));
@@ -395,7 +437,7 @@ function assertParserParity(model: any): void {
       return;
     }
     for (let i = 0; i < fromModel.length; i++) {
-      if (!rangesEqual(fromModel[i], fromString[i])) {
+      if (!rangesEqual(fromModel[i].range, fromString[i].range)) {
         console.warn("[BaseFileEditor] parser parity mismatch at index", i, {
           fromModel: fromModel[i],
           fromString: fromString[i],
@@ -448,8 +490,9 @@ interface ValueGroup {
 }
 
 /** Group = max run of non-blank lines containing ≥1 KEY=VALUE pair, bounded by blank lines or file edges. */
-function getValueGroups(model: any, ranges: ValueRange[]): ValueGroup[] {
+function getValueGroups(model: any, parsed: ParsedSecret[]): ValueGroup[] {
   const lineCount = model.getLineCount();
+  const ranges = parsed.map((p) => p.range);
   const linesWithValues = new Set<number>();
   for (const r of ranges) {
     for (let l = r.startLine; l <= r.endLine; l++) linesWithValues.add(l);
@@ -518,6 +561,18 @@ function injectMaskingCSS() {
     }
     .secret-masked::selection {
       background: rgba(100, 148, 237, 0.3);
+    }
+    .secret-locked {
+      color: transparent !important;
+      background-image: radial-gradient(circle, #d29922 1.5px, transparent 1.5px);
+      background-size: 8.4px 100%;
+      background-repeat: repeat-x;
+      background-position: 2px center;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .secret-locked::selection {
+      background: rgba(210, 153, 34, 0.25);
     }
     .secret-group-zone-hover .view-line,
     .secret-group-zone-hover .view-lines,
@@ -624,6 +679,10 @@ export function BaseFileEditor({
   // the map holds the real plaintext keyed by decoration id.
   const trackingDecorationIdsRef = useRef<Set<string>>(new Set());
   const decorationToRealRef = useRef<Map<string, string>>(new Map());
+
+  // Decoration IDs whose secret key starts with `_` — locked secrets that
+  // never reveal in-DOM. Populated on ingest and updated on key rename.
+  const lockedDecIdsRef = useRef<Set<string>>(new Set());
 
   // Re-entrancy counter (G5). We treat depth > 0 as "this content change is
   // ours, not the user's", so onDidChangeContent can skip ingest + onChange.
@@ -743,9 +802,12 @@ export function BaseFileEditor({
       ) {
         continue;
       }
+      const inlineClassName = lockedDecIdsRef.current.has(decId)
+        ? "secret-locked"
+        : "secret-masked";
       decorations.push({
         range,
-        options: { inlineClassName: "secret-masked" },
+        options: { inlineClassName },
       });
     }
 
@@ -783,9 +845,6 @@ export function BaseFileEditor({
       if (!range) return;
       const current = model.getValueInRange(range);
       if (current === real) return;
-      // Skip if lengths differ — that means the decoration's range no
-      // longer matches the stored value (user edited boundary text), so
-      // we'd corrupt the model. Caller can re-ingest later.
       if (current.length !== real.length) return;
       withInternalEdit(() => {
         editor.executeEdits("mask-expand", [
@@ -803,6 +862,11 @@ export function BaseFileEditor({
   // expanded, then collapse back to bullets.
   const collapseDecorationInModel = useCallback(
     (decId: string) => {
+      // Safety belt: prevents bullet-overwrite corruption if a stray
+      // collapse fires on a locked secret (locked decorations are never
+      // expanded, so the model holds bullets that would overwrite the
+      // real value in decorationToRealRef).
+      if (lockedDecIdsRef.current.has(decId)) return;
       const editor = editorRef.current;
       const monacoInstance = monacoRef.current;
       const model = editor?.getModel();
@@ -1072,6 +1136,7 @@ export function BaseFileEditor({
     const next = new Set<string>();
 
     for (const decId of trackingDecorationIdsRef.current) {
+      if (lockedDecIdsRef.current.has(decId)) continue;
       const range = model.getDecorationRange(decId);
       if (!range) continue;
       const rValueRange: ValueRange = {
@@ -1177,17 +1242,22 @@ export function BaseFileEditor({
 
     // Step 1: ingest any newly-discovered ranges that have no overlap with
     // an existing tracking decoration.
-    const toIngest: ValueRange[] = [];
+    const toIngest: ParsedSecret[] = [];
     for (const pr of parsed) {
-      const existing = findOverlappingTrackingDecoration(model, pr);
+      const existing = findOverlappingTrackingDecoration(model, pr.range);
       if (existing == null) toIngest.push(pr);
     }
 
     if (toIngest.length > 0) {
       // Read all originals BEFORE we start mutating the model, so offsets
       // we computed via `parsed` stay valid.
-      const ingestPlan: Array<{ range: ValueRange; original: string }> = [];
-      for (const r of toIngest) {
+      const ingestPlan: Array<{
+        range: ValueRange;
+        original: string;
+        key: string;
+      }> = [];
+      for (const pr of toIngest) {
+        const r = pr.range;
         const monacoRange = new monacoInstance.Range(
           r.startLine,
           r.startCol,
@@ -1195,7 +1265,7 @@ export function BaseFileEditor({
           r.endCol
         );
         const original = model.getValueInRange(monacoRange);
-        ingestPlan.push({ range: r, original });
+        ingestPlan.push({ range: r, original, key: pr.key });
       }
 
       withInternalEdit(() => {
@@ -1232,8 +1302,23 @@ export function BaseFileEditor({
           const id = newIds[i];
           trackingDecorationIdsRef.current.add(id);
           decorationToRealRef.current.set(id, ingestPlan[i].original);
+          if (ingestPlan[i].key.startsWith("_")) {
+            lockedDecIdsRef.current.add(id);
+          }
         }
       });
+    }
+
+    // Step 1b: re-evaluate locked status across all surviving tracking
+    // decorations. Handles `MY_KEY` ↔ `_MY_KEY` rename transitions.
+    for (const pr of parsed) {
+      const decId = findOverlappingTrackingDecoration(model, pr.range);
+      if (decId == null) continue;
+      if (pr.key.startsWith("_")) {
+        lockedDecIdsRef.current.add(decId);
+      } else {
+        lockedDecIdsRef.current.delete(decId);
+      }
     }
 
     // Step 2: prune tracking decorations that no longer overlap any parsed
@@ -1244,8 +1329,8 @@ export function BaseFileEditor({
       endLineNumber: number;
     }): boolean => {
       for (const pr of parsed) {
-        if (r.startLineNumber > pr.endLine) continue;
-        if (r.endLineNumber < pr.startLine) continue;
+        if (r.startLineNumber > pr.range.endLine) continue;
+        if (r.endLineNumber < pr.range.startLine) continue;
         return true;
       }
       return false;
@@ -1272,6 +1357,7 @@ export function BaseFileEditor({
       for (const id of toDrop) {
         trackingDecorationIdsRef.current.delete(id);
         decorationToRealRef.current.delete(id);
+        lockedDecIdsRef.current.delete(id);
       }
     }
 
@@ -1292,6 +1378,7 @@ export function BaseFileEditor({
   const revealDecoration = useCallback(
     (decId: string) => {
       if (hoverRevealedDecIdRef.current === decId) return;
+      if (lockedDecIdsRef.current.has(decId)) return;
       // Collapse the previously hover-revealed one, if any (and not held
       // by the caret).
       const prev = hoverRevealedDecIdRef.current;
@@ -1402,6 +1489,9 @@ export function BaseFileEditor({
         for (let i = 0; i < ids.length; i++) {
           trackingDecorationIdsRef.current.add(ids[i]);
           decorationToRealRef.current.set(ids[i], initial.entries[i].original);
+          if (initial.entries[i].key.startsWith("_")) {
+            lockedDecIdsRef.current.add(ids[i]);
+          }
         }
         // Seal the undo stack so the user's first Cmd+Z doesn't try to
         // reach back to "before mount".
@@ -1638,8 +1728,6 @@ export function BaseFileEditor({
   useEffect(() => {
     if (value === lastParentValueRef.current) return;
     if (value === lastEmittedValueRef.current) {
-      // Echo of our own emission. Mark it as the new acknowledged value so
-      // the next prop tick that genuinely matches it is also skipped.
       lastParentValueRef.current = value;
       return;
     }
@@ -1676,6 +1764,7 @@ export function BaseFileEditor({
     }
     trackingDecorationIdsRef.current.clear();
     decorationToRealRef.current.clear();
+    lockedDecIdsRef.current.clear();
 
     // Re-seed.
     const result = maskText(value);
@@ -1685,6 +1774,15 @@ export function BaseFileEditor({
       editor.executeEdits("external-value-reset", [
         { range: fullRange, text: result.masked, forceMoveMarkers: true },
       ]);
+      // Fallback: `editor.executeEdits` can silently no-op in edge cases
+      // during a project switch (e.g. when monaco transiently rejects the
+      // edit). `model.setValue` bypasses the editor-level edit pipeline
+      // and guarantees the model text is replaced. Without this safety
+      // net, the previous project's masked bullets can linger in the DOM
+      // while our refs all report a clean, re-seeded state.
+      if (model.getValue() !== result.masked) {
+        model.setValue(result.masked);
+      }
 
       if (result.entries.length > 0) {
         const decs = result.entries.map((entry) => ({
@@ -1707,6 +1805,9 @@ export function BaseFileEditor({
             ids[i],
             result.entries[i].original
           );
+          if (result.entries[i].key.startsWith("_")) {
+            lockedDecIdsRef.current.add(ids[i]);
+          }
         }
       }
 

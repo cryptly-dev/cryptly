@@ -55,7 +55,7 @@ export const projectsLogic = kea<projectsLogicType>([
     addProject: async ({ project, navigateCallback }): Promise<void> => {
       const projectKey = await SymmetricCrypto.generateProjectKey();
 
-      const content = `# this is comment\nKEY="value"`;
+      const content = `# Secrets are masked by default - hover or click to reveal.\nKEY="value"\n\n# Prefix a key with _ for maximum security: the value will never be shown in the editor.\n# Click to copy is the only way to retrieve it.\n__TOP_SECRET__="change-me"`;
       const contentEncrypted = await SymmetricCrypto.encrypt(
         content,
         projectKey
