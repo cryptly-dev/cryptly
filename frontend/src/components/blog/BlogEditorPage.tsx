@@ -1,10 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  BlogApi,
-  uploadImageToFreeimage,
-  type BlogPost,
-} from "@/lib/api/blog.api";
+import { BlogApi, uploadImage, type BlogPost } from "@/lib/api/blog.api";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 import { authLogic } from "@/lib/logics/authLogic";
 import { useNavigate } from "@tanstack/react-router";
@@ -103,7 +99,7 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
       insertAtCursor(placeholderMarkdown);
       setUploadingImage(true);
       try {
-        const result = await uploadImageToFreeimage(file);
+        const result = await uploadImage(file);
         setContent((prev) =>
           prev.replace(
             placeholderMarkdown,

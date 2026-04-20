@@ -105,6 +105,10 @@ axios.interceptors.response.use(
       router.navigate({ to: "/app/login" });
     }
 
+    if (status === 404 && requestUrl === "/users/me") {
+      authLogic.findMounted()?.actions.logout();
+    }
+
     return Promise.reject(error);
   }
 );

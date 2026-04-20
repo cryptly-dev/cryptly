@@ -18,7 +18,7 @@ import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppDeveloperRouteImport } from './routes/app/developer'
 import { Route as AppProjectIndexRouteImport } from './routes/app/project/index'
-import { Route as BlogSlugEditRouteImport } from './routes/blog/$slug.edit'
+import { Route as BlogEditSlugRouteImport } from './routes/blog/edit/$slug'
 import { Route as AppProjectProjectIdRouteImport } from './routes/app/project/$projectId'
 import { Route as AppCallbacksOauthGoogleRouteImport } from './routes/app/callbacks/oauth/google'
 import { Route as AppCallbacksOauthGithubRouteImport } from './routes/app/callbacks/oauth/github'
@@ -69,10 +69,10 @@ const AppProjectIndexRoute = AppProjectIndexRouteImport.update({
   path: '/project/',
   getParentRoute: () => AppRoute,
 } as any)
-const BlogSlugEditRoute = BlogSlugEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => BlogSlugRoute,
+const BlogEditSlugRoute = BlogEditSlugRouteImport.update({
+  id: '/blog/edit/$slug',
+  path: '/blog/edit/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppProjectProjectIdRoute = AppProjectProjectIdRouteImport.update({
   id: '/project/$projectId',
@@ -101,12 +101,12 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
-  '/blog/$slug': typeof BlogSlugRouteWithChildren
+  '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
   '/blog': typeof BlogIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
-  '/blog/$slug/edit': typeof BlogSlugEditRoute
+  '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project': typeof AppProjectIndexRoute
   '/app/callbacks/integrations/github': typeof AppCallbacksIntegrationsGithubRoute
   '/app/callbacks/oauth/github': typeof AppCallbacksOauthGithubRoute
@@ -117,12 +117,12 @@ export interface FileRoutesByTo {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
-  '/blog/$slug': typeof BlogSlugRouteWithChildren
+  '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
   '/blog': typeof BlogIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
-  '/blog/$slug/edit': typeof BlogSlugEditRoute
+  '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project': typeof AppProjectIndexRoute
   '/app/callbacks/integrations/github': typeof AppCallbacksIntegrationsGithubRoute
   '/app/callbacks/oauth/github': typeof AppCallbacksOauthGithubRoute
@@ -134,12 +134,12 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
-  '/blog/$slug': typeof BlogSlugRouteWithChildren
+  '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
   '/blog/': typeof BlogIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
-  '/blog/$slug/edit': typeof BlogSlugEditRoute
+  '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project/': typeof AppProjectIndexRoute
   '/app/callbacks/integrations/github': typeof AppCallbacksIntegrationsGithubRoute
   '/app/callbacks/oauth/github': typeof AppCallbacksOauthGithubRoute
@@ -157,7 +157,7 @@ export interface FileRouteTypes {
     | '/invite/$inviteId'
     | '/blog'
     | '/app/project/$projectId'
-    | '/blog/$slug/edit'
+    | '/blog/edit/$slug'
     | '/app/project'
     | '/app/callbacks/integrations/github'
     | '/app/callbacks/oauth/github'
@@ -173,7 +173,7 @@ export interface FileRouteTypes {
     | '/invite/$inviteId'
     | '/blog'
     | '/app/project/$projectId'
-    | '/blog/$slug/edit'
+    | '/blog/edit/$slug'
     | '/app/project'
     | '/app/callbacks/integrations/github'
     | '/app/callbacks/oauth/github'
@@ -189,7 +189,7 @@ export interface FileRouteTypes {
     | '/invite/$inviteId'
     | '/blog/'
     | '/app/project/$projectId'
-    | '/blog/$slug/edit'
+    | '/blog/edit/$slug'
     | '/app/project/'
     | '/app/callbacks/integrations/github'
     | '/app/callbacks/oauth/github'
@@ -199,10 +199,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  BlogSlugRoute: typeof BlogSlugRouteWithChildren
+  BlogSlugRoute: typeof BlogSlugRoute
   BlogNewRoute: typeof BlogNewRoute
   InviteInviteIdRoute: typeof InviteInviteIdRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  BlogEditSlugRoute: typeof BlogEditSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -270,12 +271,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/blog/$slug/edit': {
-      id: '/blog/$slug/edit'
-      path: '/edit'
-      fullPath: '/blog/$slug/edit'
-      preLoaderRoute: typeof BlogSlugEditRouteImport
-      parentRoute: typeof BlogSlugRoute
+    '/blog/edit/$slug': {
+      id: '/blog/edit/$slug'
+      path: '/blog/edit/$slug'
+      fullPath: '/blog/edit/$slug'
+      preLoaderRoute: typeof BlogEditSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/project/$projectId': {
       id: '/app/project/$projectId'
@@ -330,25 +331,14 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
-interface BlogSlugRouteChildren {
-  BlogSlugEditRoute: typeof BlogSlugEditRoute
-}
-
-const BlogSlugRouteChildren: BlogSlugRouteChildren = {
-  BlogSlugEditRoute: BlogSlugEditRoute,
-}
-
-const BlogSlugRouteWithChildren = BlogSlugRoute._addFileChildren(
-  BlogSlugRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  BlogSlugRoute: BlogSlugRouteWithChildren,
+  BlogSlugRoute: BlogSlugRoute,
   BlogNewRoute: BlogNewRoute,
   InviteInviteIdRoute: InviteInviteIdRoute,
   BlogIndexRoute: BlogIndexRoute,
+  BlogEditSlugRoute: BlogEditSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

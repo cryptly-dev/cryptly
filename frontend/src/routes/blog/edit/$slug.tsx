@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BlogEditorPage } from "@/components/blog/BlogEditorPage";
 
-export const Route = createFileRoute("/blog/$slug/edit")({
+export const Route = createFileRoute("/blog/edit/$slug")({
   component: BlogEditTanstackPage,
 });
 

@@ -57,7 +57,7 @@ export function BlogListPage() {
           </h1>
           <p className="mt-6 text-lg text-neutral-400 max-w-2xl">
             Notes from the Cryptly team. Engineering deep dives, product
-            thinking, and the occasional rant about .env files.
+            thinking, and UX insights.
           </p>
         </motion.div>
 

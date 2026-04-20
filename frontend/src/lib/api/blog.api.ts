@@ -86,19 +86,14 @@ export interface UploadImageResult {
   displayUrl: string;
 }
 
-const FREEIMAGE_API_KEY = "6d207e02198a847aa98d0a2a901485a5";
+const IMGBB_API_KEY = "0baaf5df435c58c7f85fd01d775bbe73";
 
-export async function uploadImageToFreeimage(
-  file: Blob
-): Promise<UploadImageResult> {
+export async function uploadImage(file: Blob): Promise<UploadImageResult> {
   const formData = new FormData();
-  formData.append("key", FREEIMAGE_API_KEY);
-  formData.append("action", "upload");
-  formData.append("source", file as Blob);
-  formData.append("format", "json");
+  formData.append("image", file as Blob);
 
   const response = await axios.post(
-    "https://freeimage.host/api/1/upload",
+    `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
     formData,
     {
       transformRequest: [(data) => data],
@@ -106,20 +101,21 @@ export async function uploadImageToFreeimage(
   );
 
   const data = response.data as {
-    status_code: number;
-    status_txt: string;
-    image?: {
+    status: number;
+    success: boolean;
+    error?: { message?: string };
+    data?: {
       url: string;
       display_url: string;
     };
   };
 
-  if (data.status_code !== 200 || !data.image) {
-    throw new Error(data.status_txt || "Image upload failed");
+  if (!data.success || !data.data) {
+    throw new Error(data.error?.message || "Image upload failed");
   }
 
   return {
-    url: data.image.url,
-    displayUrl: data.image.display_url,
+    url: data.data.url,
+    displayUrl: data.data.display_url,
   };
 }

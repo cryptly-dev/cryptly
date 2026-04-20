@@ -101,7 +101,7 @@ export function BlogPostPage() {
 
                 {isAdmin && (
                   <Link
-                    to="/blog/$slug/edit"
+                    to="/blog/edit/$slug"
                     params={{ slug: post.slug }}
                     className="inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 text-xs text-neutral-300 hover:border-neutral-700 hover:bg-neutral-900 transition-colors"
                   >
