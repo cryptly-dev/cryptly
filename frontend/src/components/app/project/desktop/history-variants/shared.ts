@@ -158,10 +158,10 @@ export interface TimeRangeOption {
 }
 
 export const TIME_RANGES: TimeRangeOption[] = [
-  { key: "all", label: "All time", days: null },
-  { key: "today", label: "Today", days: 1 },
-  { key: "week", label: "Last 7 days", days: 7 },
-  { key: "month", label: "Last 30 days", days: 30 },
+  { key: "all", label: "All", days: null },
+  { key: "today", label: "-24h", days: 1 },
+  { key: "week", label: "-7d", days: 7 },
+  { key: "month", label: "-30d", days: 30 },
 ];
 
 export function filterByTimeRange(patches: Patch[], days: number | null) {
