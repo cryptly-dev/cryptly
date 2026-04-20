@@ -5,6 +5,9 @@ import { useValues } from "kea";
 import posthog from "posthog-js";
 import { useEffect } from "react";
 
+const isGithubLocalMock =
+  import.meta.env.VITE_GITHUB_LOCAL_MOCK === "true";
+
 export const Route = createFileRoute("/app/callbacks/integrations/github")({
   component: RouteComponent,
 });
@@ -47,9 +50,11 @@ function RouteComponent() {
     projectId: string,
     installationId: string
   ) => {
-    await IntegrationsApi.createInstallation(jwtToken!, {
-      githubInstallationId: parseInt(installationId!),
-    });
+    if (!isGithubLocalMock) {
+      await IntegrationsApi.createInstallation(jwtToken!, {
+        githubInstallationId: parseInt(installationId!),
+      });
+    }
 
     navigate({
       to: "/app/project/$projectId",

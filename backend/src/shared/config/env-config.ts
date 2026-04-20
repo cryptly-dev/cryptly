@@ -26,6 +26,8 @@ export interface EnvConfig {
     refreshTokenExpiresIn: string;
     allowLocalLogin: boolean;
   };
+  /** Stub GitHub App/API; serve fixed demo installations and repos for local dev. */
+  githubLocalMock: boolean;
   logdash: {
     apiKey: string;
   };
@@ -74,6 +76,7 @@ export const EnvConfigs: EnvConfigs = {
       refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',
       allowLocalLogin: process.env.ALLOW_LOCAL_LOGIN === 'true',
     },
+    githubLocalMock: process.env.GITHUB_LOCAL_MOCK === 'true',
     logdash: {
       apiKey: process.env.LOGDASH_API_KEY!,
     },
@@ -115,6 +118,7 @@ export const EnvConfigs: EnvConfigs = {
       refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',
       allowLocalLogin: process.env.ALLOW_LOCAL_LOGIN === 'true',
     },
+    githubLocalMock: process.env.GITHUB_LOCAL_MOCK === 'true',
     logdash: {
       apiKey: process.env.LOGDASH_API_KEY!,
     },
