@@ -1,6 +1,6 @@
 import type { Patch } from "@/lib/logics/projectLogic";
 import { cn } from "@/lib/utils";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { dateToISODayKey } from "./shared";
 
 interface DayCell {
@@ -16,10 +16,11 @@ interface HoverState {
   day: DayCell;
 }
 
-const WEEKS = 26;
 const SQ = 12;
 const GAP = 3;
 const LABEL_WIDTH = 26;
+const MIN_WEEKS = 4;
+const FALLBACK_WEEKS = 26;
 
 function getIntensity(count: number): string {
   if (count === 0) return "rgba(255,255,255,0.04)";
@@ -50,7 +51,26 @@ export function YearHeatmap({
   onDayClick: (key: string | null) => void;
 }) {
   const [hover, setHover] = useState<HoverState | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    setContainerWidth(el.getBoundingClientRect().width);
+    const ro = new ResizeObserver((entries) => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const effectiveWeeks = useMemo(() => {
+    if (containerWidth <= 0) return FALLBACK_WEEKS;
+    const available = containerWidth - LABEL_WIDTH;
+    const count = Math.floor((available + GAP) / (SQ + GAP));
+    return Math.max(MIN_WEEKS, count);
+  }, [containerWidth]);
 
   const { weeks, monthLabels } = useMemo(() => {
     const today = new Date();
@@ -58,7 +78,7 @@ export function YearHeatmap({
     const end = new Date(today);
     end.setDate(end.getDate() + (6 - end.getDay()));
     const start = new Date(end);
-    start.setDate(start.getDate() - (WEEKS * 7 - 1));
+    start.setDate(start.getDate() - (effectiveWeeks * 7 - 1));
 
     const dayMap = new Map<string, number>();
     for (const p of patches) {
@@ -73,7 +93,7 @@ export function YearHeatmap({
     const monthsSeen = new Set<string>();
     const cursor = new Date(start);
 
-    for (let w = 0; w < WEEKS; w++) {
+    for (let w = 0; w < effectiveWeeks; w++) {
       const week: DayCell[] = [];
       for (let d = 0; d < 7; d++) {
         const date = new Date(cursor);
@@ -102,14 +122,17 @@ export function YearHeatmap({
       weeks.push(week);
     }
     return { weeks, monthLabels };
-  }, [patches]);
+  }, [patches, effectiveWeeks]);
 
-  const gridWidth = WEEKS * (SQ + GAP);
+  const gridWidth = effectiveWeeks * (SQ + GAP) - GAP;
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative w-full">
       {/* Month labels */}
-      <div className="relative h-3 mb-1" style={{ marginLeft: LABEL_WIDTH, width: gridWidth }}>
+      <div
+        className="relative h-3 mb-1"
+        style={{ marginLeft: LABEL_WIDTH, width: gridWidth }}
+      >
         {monthLabels.map((m) => (
           <span
             key={m.weekIdx}
