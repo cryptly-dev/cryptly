@@ -1,11 +1,10 @@
 import Beams from "@/components/Beams";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { authLogic } from "@/lib/logics/authLogic";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useValues } from "kea";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Newspaper } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect } from "react";
 import { ComplianceSection } from "./ComplianceSection";
 import { HowItWorksSection } from "./HowItWorksSection";
 import { WhyCryptlySection } from "./WhyCryptlySection";
@@ -15,12 +14,6 @@ import { ReviewsSection } from "./ReviewsSection";
 export function IndexPage() {
   const navigate = useNavigate();
   const { isLoggedIn } = useValues(authLogic);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      navigate({ to: "/app/project", replace: true });
-    }
-  }, [isLoggedIn, navigate]);
 
   const handleDashboardClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -95,6 +88,14 @@ export function IndexPage() {
               <GitHubIcon className="h-5 w-5" />
               <span>Source</span>
             </a>
+
+            <Link
+              to="/blog"
+              className="group inline-flex items-center justify-center gap-2 rounded-full border border-neutral-700 bg-neutral-900/70 px-8 py-3 font-semibold text-white transition-all hover:border-neutral-600 hover:bg-neutral-800/70"
+            >
+              <Newspaper className="h-5 w-5" />
+              <span>Blog</span>
+            </Link>
           </motion.div>
         </motion.div>
         <motion.div
@@ -199,6 +200,9 @@ export function IndexPage() {
             © 2025 Cryptly. Ship faster with proper secrets management.
           </div>
           <div className="flex items-center gap-6 text-sm text-neutral-500">
+            <Link to="/blog" className="hover:text-neutral-300 transition-colors">
+              Blog
+            </Link>
             <a
               href="https://github.com/cryptly-dev/cryptly"
               target="_blank"

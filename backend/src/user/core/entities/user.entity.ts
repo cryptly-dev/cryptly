@@ -27,6 +27,9 @@ export class UserEntity {
   @Prop({ type: [String], default: [] })
   projectsOrder: string[];
 
+  @Prop({ default: false })
+  isAdmin: boolean;
+
   @Prop()
   createdAt: Date;
 
