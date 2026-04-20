@@ -64,8 +64,12 @@ export function BlogMarkdown({ content, className }: BlogMarkdownProps) {
             </blockquote>
           ),
           code: ({ className, children, ...props }) => {
-            const isInline = !className;
-            if (isInline) {
+            const text = Array.isArray(children)
+              ? children.join("")
+              : String(children ?? "");
+            const isBlock =
+              !!className?.startsWith("language-") || text.includes("\n");
+            if (!isBlock) {
               return (
                 <code
                   className="rounded-[4px] bg-neutral-800/80 px-1.5 py-0.5 text-[0.9em] text-neutral-100 font-mono"
@@ -76,13 +80,16 @@ export function BlogMarkdown({ content, className }: BlogMarkdownProps) {
               );
             }
             return (
-              <code className={`${className ?? ""} font-mono text-sm`} {...props}>
+              <code
+                className={`${className ?? ""} font-mono text-sm text-neutral-200 bg-transparent p-0`}
+                {...props}
+              >
                 {children}
               </code>
             );
           },
           pre: ({ children }) => (
-            <pre className="my-6 overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900/80 p-4 text-sm leading-relaxed">
+            <pre className="my-6 overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900/80 p-4 text-sm leading-relaxed [&_code]:bg-transparent [&_code]:p-0 [&_code]:rounded-none [&_code]:text-neutral-200">
               {children}
             </pre>
           ),
