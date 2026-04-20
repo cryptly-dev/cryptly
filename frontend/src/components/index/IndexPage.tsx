@@ -1,7 +1,7 @@
 import Beams from "@/components/Beams";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { authLogic } from "@/lib/logics/authLogic";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useValues } from "kea";
 import { ArrowRight, Check } from "lucide-react";
 import { motion } from "motion/react";
@@ -95,6 +95,13 @@ export function IndexPage() {
               <GitHubIcon className="h-5 w-5" />
               <span>Source</span>
             </a>
+
+            <Link
+              to="/blog"
+              className="group inline-flex items-center justify-center gap-2 rounded-full border border-neutral-700 bg-neutral-900/70 px-8 py-3 font-semibold text-white transition-all hover:border-neutral-600 hover:bg-neutral-800/70"
+            >
+              Blog
+            </Link>
           </motion.div>
         </motion.div>
         <motion.div

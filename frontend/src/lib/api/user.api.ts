@@ -8,6 +8,8 @@ export interface User {
   displayName: string;
   publicKey?: string;
   privateKeyEncrypted?: string;
+  /** Present when returned from GET /users/me */
+  blogAdmin?: boolean;
 }
 
 export interface SuggestedUser {

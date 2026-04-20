@@ -9,9 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteInviteIdRouteImport } from './routes/invite/$inviteId'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppDeveloperRouteImport } from './routes/app/developer'
 import { Route as AppProjectIndexRouteImport } from './routes/app/project/index'
@@ -20,6 +22,11 @@ import { Route as AppCallbacksOauthGoogleRouteImport } from './routes/app/callba
 import { Route as AppCallbacksOauthGithubRouteImport } from './routes/app/callbacks/oauth/github'
 import { Route as AppCallbacksIntegrationsGithubRouteImport } from './routes/app/callbacks/integrations/github'
 
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -34,6 +41,11 @@ const InviteInviteIdRoute = InviteInviteIdRouteImport.update({
   id: '/invite/$inviteId',
   path: '/invite/$inviteId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 const AppLoginRoute = AppLoginRouteImport.update({
   id: '/login',
@@ -75,8 +87,10 @@ const AppCallbacksIntegrationsGithubRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/blog': typeof BlogRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/app/project': typeof AppProjectIndexRoute
@@ -87,8 +101,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/blog': typeof BlogRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/app/project': typeof AppProjectIndexRoute
@@ -100,8 +116,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/blog': typeof BlogRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/app/project/': typeof AppProjectIndexRoute
@@ -114,8 +132,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/blog'
     | '/app/developer'
     | '/app/login'
+    | '/blog/$slug'
     | '/invite/$inviteId'
     | '/app/project/$projectId'
     | '/app/project'
@@ -126,8 +146,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/app'
+    | '/blog'
     | '/app/developer'
     | '/app/login'
+    | '/blog/$slug'
     | '/invite/$inviteId'
     | '/app/project/$projectId'
     | '/app/project'
@@ -138,8 +160,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/blog'
     | '/app/developer'
     | '/app/login'
+    | '/blog/$slug'
     | '/invite/$inviteId'
     | '/app/project/$projectId'
     | '/app/project/'
@@ -151,11 +175,19 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  BlogRoute: typeof BlogRouteWithChildren
   InviteInviteIdRoute: typeof InviteInviteIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -176,6 +208,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/invite/$inviteId'
       preLoaderRoute: typeof InviteInviteIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/app/login': {
       id: '/app/login'
@@ -251,9 +290,20 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  BlogRoute: BlogRouteWithChildren,
   InviteInviteIdRoute: InviteInviteIdRoute,
 }
 export const routeTree = rootRouteImport

@@ -41,6 +41,11 @@ export interface EnvConfig {
     };
     webhookSecret: string;
   };
+  blog: {
+    /** Comma-separated list of emails allowed to create blog posts */
+    adminEmails: string[];
+    freeimageHostApiKey: string;
+  };
 }
 
 interface EnvConfigs {
@@ -89,6 +94,10 @@ export const EnvConfigs: EnvConfigs = {
       },
       webhookSecret: process.env.GH_WEBHOOKS_SECRET!,
     },
+  blog: {
+    adminEmails: parseEmailList(process.env.BLOG_ADMIN_EMAILS),
+    freeimageHostApiKey: process.env.FREEIMAGE_HOST_API_KEY ?? '',
+  },
   },
   [OurEnv.Dev]: {
     oauth: {
@@ -130,8 +139,22 @@ export const EnvConfigs: EnvConfigs = {
       },
       webhookSecret: process.env.GH_WEBHOOKS_SECRET!,
     },
+    blog: {
+      adminEmails: parseEmailList(process.env.BLOG_ADMIN_EMAILS),
+      freeimageHostApiKey: process.env.FREEIMAGE_HOST_API_KEY ?? '',
+    },
   },
 };
+
+function parseEmailList(raw: string | undefined): string[] {
+  if (!raw?.trim()) {
+    return [];
+  }
+  return raw
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
 
 export function getEnvConfig(): EnvConfig {
   const env = getOurEnv();

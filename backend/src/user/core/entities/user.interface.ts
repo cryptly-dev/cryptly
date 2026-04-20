@@ -38,4 +38,7 @@ export class UserSerialized extends UserPartialSerialized {
 
   @ApiPropertyOptional()
   public privateKeyEncrypted?: string;
+
+  @ApiPropertyOptional()
+  public blogAdmin?: boolean;
 }

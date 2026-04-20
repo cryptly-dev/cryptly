@@ -9,6 +9,7 @@ import { GetPublicKeysResponse } from './dto/get-public-keys.response';
 import { UpdateUserBody } from './dto/update-user.body';
 import { UserSerialized } from './entities/user.interface';
 import { UserSerializer } from './entities/user.serializer';
+import { isBlogAdminEmail } from '../../blog/core/blog-admin-emails';
 
 @Controller('users')
 @ApiTags('Users')
@@ -25,7 +26,10 @@ export class UserCoreController {
   public async readCurrentUser(@CurrentUserId() userId: string): Promise<UserSerialized> {
     const user = await this.userReadService.readByIdOrThrow(userId);
 
-    return UserSerializer.serialize(user, { showEmailAddress: true });
+    const serialized = UserSerializer.serialize(user, { showEmailAddress: true });
+    serialized.blogAdmin = isBlogAdminEmail(user.email);
+
+    return serialized;
   }
 
   @Patch('me')
