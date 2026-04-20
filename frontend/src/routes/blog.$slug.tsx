@@ -39,8 +39,7 @@ function BlogPostPage() {
   }, [slug]);
 
   return (
-    <div className="min-h-screen bg-black text-neutral-100">
-      <article className="mx-auto max-w-3xl px-4 py-12">
+    <article className="mx-auto max-w-3xl px-4 py-12">
         <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
           <Link
             to="/blog"
@@ -93,7 +92,6 @@ function BlogPostPage() {
             <MarkdownContent markdown={post.bodyMarkdown} />
           </>
         )}
-      </article>
-    </div>
+    </article>
   );
 }
