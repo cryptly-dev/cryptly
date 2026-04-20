@@ -26,6 +26,10 @@ interface ValueRange {
 interface ParsedSecret {
   range: ValueRange;
   key: string;
+  // `false` when the parser hit EOF mid-quoted-value — used by the
+  // drift-reconcile path to skip structurally incomplete ranges, which
+  // would otherwise span to end-of-file and swallow everything below.
+  closed: boolean;
 }
 
 interface MonacoSelectionLike {
@@ -63,6 +67,7 @@ function getValueRanges(model: any): ParsedSecret[] {
               endCol: i + 2,
             },
             key,
+            closed: true,
           });
           inQuote = null;
           current = null;
@@ -105,6 +110,7 @@ function getValueRanges(model: any): ParsedSecret[] {
               endCol: eqIdx + 1 + i + 2,
             },
             key,
+            closed: true,
           });
           closed = true;
           break;
@@ -123,11 +129,14 @@ function getValueRanges(model: any): ParsedSecret[] {
           endCol: text.length + 1,
         },
         key,
+        closed: true,
       });
     }
   }
 
-  // Unclosed string at EOF
+  // Unclosed string at EOF — emit the range so ingest can still pre-mask
+  // legitimately-pasted multiline values, but mark it as structurally
+  // incomplete so the drift-reconcile path skips it.
   if (inQuote && current) {
     const lastLine = lineCount;
     const { startLine, startCol, key } = current;
@@ -139,6 +148,7 @@ function getValueRanges(model: any): ParsedSecret[] {
         endCol: model.getLineContent(lastLine).length + 1,
       },
       key,
+      closed: false,
     });
   }
 
@@ -181,6 +191,7 @@ function parseValueRangesFromString(text: string): ParsedSecret[] {
               endCol: i + 2,
             },
             key,
+            closed: true,
           });
           inQuote = null;
           current = null;
@@ -221,6 +232,7 @@ function parseValueRangesFromString(text: string): ParsedSecret[] {
               endCol: eqIdx + 1 + i + 2,
             },
             key,
+            closed: true,
           });
           closed = true;
           break;
@@ -239,6 +251,7 @@ function parseValueRangesFromString(text: string): ParsedSecret[] {
           endCol: lineText.length + 1,
         },
         key,
+        closed: true,
       });
     }
   }
@@ -254,6 +267,7 @@ function parseValueRangesFromString(text: string): ParsedSecret[] {
         endCol: lines[lastLine - 1].length + 1,
       },
       key,
+      closed: false,
     });
   }
 
@@ -437,7 +451,10 @@ function assertParserParity(model: any): void {
       return;
     }
     for (let i = 0; i < fromModel.length; i++) {
-      if (!rangesEqual(fromModel[i].range, fromString[i].range)) {
+      if (
+        !rangesEqual(fromModel[i].range, fromString[i].range) ||
+        fromModel[i].closed !== fromString[i].closed
+      ) {
         console.warn("[BaseFileEditor] parser parity mismatch at index", i, {
           fromModel: fromModel[i],
           fromString: fromString[i],
@@ -684,6 +701,17 @@ export function BaseFileEditor({
   // never reveal in-DOM. Populated on ingest and updated on key rename.
   const lockedDecIdsRef = useRef<Set<string>>(new Set());
 
+  // Pre-edit offset snapshot per tracking decoration. Refreshed after every
+  // internal edit (ingest, expand/collapse, mask-after-typing, drift
+  // reconcile, initial mount) so that the NEXT user-driven keystroke's
+  // change events can be mapped onto the right slot inside each stored real
+  // value. Without this, typing into a collapsed decoration would leave us
+  // staring at bullets-mixed-with-typed-chars and guessing which bullets
+  // correspond to which plaintext chars.
+  const decorationPreEditOffsetsRef = useRef<
+    Map<string, { start: number; length: number }>
+  >(new Map());
+
   // Re-entrancy counter (G5). We treat depth > 0 as "this content change is
   // ours, not the user's", so onDidChangeContent can skip ingest + onChange.
   const internalEditDepthRef = useRef(0);
@@ -830,6 +858,126 @@ export function BaseFileEditor({
     }
   }, []);
 
+  // Refresh `decorationPreEditOffsetsRef` to mirror the current model
+  // positions of every tracking decoration. MUST be called at the tail of
+  // any path that mutates decorations or model text on our behalf; the
+  // snapshot is the "as of just-before-the-next-user-keystroke" reference
+  // used by `applyTypingChangesToReal`.
+  const snapshotDecorationOffsets = useCallback(() => {
+    const model = editorRef.current?.getModel();
+    const snap = decorationPreEditOffsetsRef.current;
+    snap.clear();
+    if (!model) return;
+    for (const decId of trackingDecorationIdsRef.current) {
+      const range = model.getDecorationRange(decId);
+      if (!range) continue;
+      const start = model.getOffsetAt({
+        lineNumber: range.startLineNumber,
+        column: range.startColumn,
+      });
+      const end = model.getOffsetAt({
+        lineNumber: range.endLineNumber,
+        column: range.endColumn,
+      });
+      snap.set(decId, { start, length: end - start });
+    }
+  }, []);
+
+  // Fast-path: splice user-typed text into the correct slot of each
+  // affected decoration's stored real value, then re-mask the model with
+  // bullets. Runs on every non-internal `onDidChangeModelContent` before
+  // `applySecretDecorations`, using the pre-edit offset snapshot captured
+  // at the end of the previous turn.
+  //
+  // We only touch decorations where every change is fully contained within
+  // the pre-edit range — multi-cursor / wide selections that straddle a
+  // boundary are left to the drift-reconcile fallback in
+  // `applySecretDecorations`, which still handles them (imperfectly, but
+  // safely).
+  const applyTypingChangesToReal = useCallback(
+    (
+      model: ReturnType<NonNullable<typeof editorRef.current>["getModel"]>,
+      changes: Array<{
+        rangeOffset: number;
+        rangeLength: number;
+        text: string;
+      }>
+    ) => {
+      const editor = editorRef.current;
+      if (!editor || !model || changes.length === 0) return;
+      const snap = decorationPreEditOffsetsRef.current;
+      if (snap.size === 0) return;
+      const expanded = getExpandedIds();
+
+      // Per decoration, collect the changes that fall fully inside its
+      // pre-edit range. Skip expanded decorations — those carry plaintext
+      // in the model and the expand/collapse cycle handles their edits.
+      const touched = new Map<
+        string,
+        Array<{ offsetWithin: number; rangeLength: number; text: string }>
+      >();
+      for (const [decId, { start: decStart, length: decLen }] of snap) {
+        if (expanded.has(decId)) continue;
+        const decEnd = decStart + decLen;
+        const relevant: Array<{
+          offsetWithin: number;
+          rangeLength: number;
+          text: string;
+        }> = [];
+        for (const ch of changes) {
+          const chStart = ch.rangeOffset;
+          const chEnd = ch.rangeOffset + ch.rangeLength;
+          if (chStart >= decStart && chEnd <= decEnd) {
+            relevant.push({
+              offsetWithin: chStart - decStart,
+              rangeLength: ch.rangeLength,
+              text: ch.text,
+            });
+          }
+        }
+        if (relevant.length > 0) touched.set(decId, relevant);
+      }
+
+      if (touched.size === 0) return;
+
+      // Apply changes to each decoration's stored real. Process in
+      // descending offset order so earlier splices don't shift the slots
+      // targeted by later splices.
+      for (const [decId, decChanges] of touched) {
+        const oldReal = decorationToRealRef.current.get(decId) ?? "";
+        decChanges.sort((a, b) => b.offsetWithin - a.offsetWithin);
+        let newReal = oldReal;
+        for (const ch of decChanges) {
+          newReal =
+            newReal.slice(0, ch.offsetWithin) +
+            ch.text +
+            newReal.slice(ch.offsetWithin + ch.rangeLength);
+        }
+        decorationToRealRef.current.set(decId, newReal);
+      }
+
+      // Re-mask the model: replace each touched decoration's current range
+      // with bullets matching the new real length. This runs inside
+      // withInternalEdit so the recursive onDidChangeModelContent bails.
+      withInternalEdit(() => {
+        const maskEdits: Array<{ range: unknown; text: string }> = [];
+        for (const decId of touched.keys()) {
+          const postRange = model.getDecorationRange(decId);
+          if (!postRange) continue;
+          const real = decorationToRealRef.current.get(decId) ?? "";
+          const expectedBullets = bulletsForSubstring(real);
+          const currentText = model.getValueInRange(postRange);
+          if (currentText === expectedBullets) continue;
+          maskEdits.push({ range: postRange, text: expectedBullets });
+        }
+        if (maskEdits.length > 0) {
+          editor.executeEdits("mask-after-typing", maskEdits);
+        }
+      });
+    },
+    [getExpandedIds, withInternalEdit]
+  );
+
   // Replace the model text inside `decId`'s current range with the real
   // plaintext. Decoration is "sticky" — its range tracks the new text length
   // automatically. Same-width by construction, so range stays correct.
@@ -854,8 +1002,9 @@ export function BaseFileEditor({
           },
         ]);
       });
+      snapshotDecorationOffsets();
     },
-    [withInternalEdit]
+    [snapshotDecorationOffsets, withInternalEdit]
   );
 
   // Capture whatever the user typed inside the decoration while it was
@@ -887,8 +1036,9 @@ export function BaseFileEditor({
           },
         ]);
       });
+      snapshotDecorationOffsets();
     },
-    [withInternalEdit]
+    [snapshotDecorationOffsets, withInternalEdit]
   );
 
   const hideTooltip = useCallback(() => {
@@ -1321,6 +1471,97 @@ export function BaseFileEditor({
       }
     }
 
+    // Step 1c: reconcile drift between model text and decoration state.
+    // When the user types inside (or at the edge of) a collapsed
+    // decoration, Monaco rewrites the model text from bullets to
+    // plaintext in-place. Chars typed at the edge also fall *outside* the
+    // decoration range because of our `NeverGrowsWhenTypingAtEdges`
+    // stickiness, so we can't rely on the decoration's own range to find
+    // the full drift. Instead we walk *parsed* value ranges (which always
+    // cover the complete `"..."` region) and, for each one whose model
+    // text contains any non-bullet char, capture that text as the new
+    // real value, re-mask it in-place, and snap the decoration back to
+    // the full parsed range.
+    //
+    // Without this:
+    //   * locked keys leak their freshly-typed plaintext to the DOM
+    //   * hover-reveal silently bails (length mismatch guard)
+    //   * click-to-copy pulls the stale real value
+    const driftEdits: Array<{
+      range: ReturnType<typeof monacoInstance.Range>;
+      text: string;
+    }> = [];
+    const driftUpdates: Array<{
+      decId: string;
+      real: string;
+      range: ReturnType<typeof monacoInstance.Range>;
+    }> = [];
+    for (const pr of parsed) {
+      // Structurally incomplete (mid-edit unclosed quote): the parser's
+      // range balloons all the way to EOF. Masking that would wipe every
+      // non-secret line below. Wait for the user to close the quote.
+      if (!pr.closed) continue;
+      const decId = findOverlappingTrackingDecoration(model, pr.range);
+      if (decId == null) continue;
+      if (expanded.has(decId)) continue;
+      const parsedRange = new monacoInstance.Range(
+        pr.range.startLine,
+        pr.range.startCol,
+        pr.range.endLine,
+        pr.range.endCol
+      );
+      const curr = model.getValueInRange(parsedRange);
+      if (curr.length === 0) continue;
+      let pure = true;
+      for (let i = 0; i < curr.length; i++) {
+        const c = curr.charCodeAt(i);
+        // BULLET (U+2022) and newline are the only "masked" characters.
+        if (c !== 0x2022 && c !== 0x0a) {
+          pure = false;
+          break;
+        }
+      }
+      if (pure) continue;
+      // If the fast path (`applyTypingChangesToReal`) already updated the
+      // stored real via the change event, its length matches the current
+      // parsed-range length and we must NOT overwrite it with `curr` —
+      // `curr` is bullets-plus-edge-plaintext, which is exactly the broken
+      // "save the bullets as real" behavior we're trying to kill. Only
+      // capture `curr` as the new real when lengths disagree (i.e., the
+      // fast path didn't run or missed wholesale).
+      const storedReal = decorationToRealRef.current.get(decId);
+      const newReal =
+        storedReal != null && storedReal.length === curr.length
+          ? storedReal
+          : curr;
+      driftUpdates.push({ decId, real: newReal, range: parsedRange });
+      driftEdits.push({
+        range: parsedRange,
+        text: bulletsForSubstring(newReal),
+      });
+    }
+    if (driftEdits.length > 0) {
+      withInternalEdit(() => {
+        editor.executeEdits("mask-drift-reconcile", driftEdits);
+        // Snap each reconciled decoration back to its full parsed range
+        // so the next edit at either edge stays captured.
+        model.changeDecorations((accessor: unknown) => {
+          const a = accessor as {
+            changeDecoration: (
+              id: string,
+              newRange: ReturnType<typeof monacoInstance.Range>
+            ) => void;
+          };
+          for (const { decId, range } of driftUpdates) {
+            a.changeDecoration(decId, range);
+          }
+        });
+      });
+      for (const { decId, real } of driftUpdates) {
+        decorationToRealRef.current.set(decId, real);
+      }
+    }
+
     // Step 2: prune tracking decorations that no longer overlap any parsed
     // value range AND aren't currently expanded (we leave expanded ranges
     // alone — the user is editing the real text there).
@@ -1366,12 +1607,17 @@ export function BaseFileEditor({
 
     const groups = getValueGroups(model, parsed);
     applyGroupZones(groups);
+
+    // Re-snapshot AFTER ingest / prune / drift-reconcile so the next user
+    // keystroke's change events land on accurate pre-edit offsets.
+    snapshotDecorationOffsets();
   }, [
     applyGroupZones,
     findOverlappingTrackingDecoration,
     getExpandedIds,
     recomputeCaretReveals,
     refreshMaskDecorations,
+    snapshotDecorationOffsets,
     withInternalEdit,
   ]);
 
@@ -1506,11 +1752,26 @@ export function BaseFileEditor({
       }
       refreshMaskDecorations();
 
-      editor.onDidChangeModelContent(() => {
-        if (internalEditDepthRef.current > 0) return;
-        applySecretDecorations();
-        handleEditorChange();
-      });
+      // Seed the pre-edit offset snapshot with the initially-ingested
+      // decorations so the user's very first keystroke can be merged into
+      // the correct slot of the stored real value.
+      snapshotDecorationOffsets();
+
+      editor.onDidChangeModelContent(
+        (e: { changes?: Array<{ rangeOffset: number; rangeLength: number; text: string }> }) => {
+          if (internalEditDepthRef.current > 0) return;
+          const model = editor.getModel();
+          // Splice user-typed text into stored real values FIRST, while we
+          // still have the pre-edit offset snapshot. This masks the model
+          // before any DOM paint can flash plaintext, and keeps the
+          // real-value map authoritative for click-to-copy / onChange.
+          if (model && e?.changes) {
+            applyTypingChangesToReal(model, e.changes);
+          }
+          applySecretDecorations();
+          handleEditorChange();
+        }
+      );
 
       const VIEW_ZONE_TARGET_TYPE =
         monaco.editor.MouseTargetType?.CONTENT_VIEW_ZONE ?? 8;
@@ -1706,6 +1967,7 @@ export function BaseFileEditor({
     [
       applyGroupZones,
       applySecretDecorations,
+      applyTypingChangesToReal,
       buildRealText,
       copyGroup,
       findDecorationAtPosition,
@@ -1718,6 +1980,7 @@ export function BaseFileEditor({
       refreshMaskDecorations,
       revealDecoration,
       showTooltipAtDecoration,
+      snapshotDecorationOffsets,
       withInternalEdit,
     ]
   );
@@ -1846,6 +2109,12 @@ export function BaseFileEditor({
     padding,
     readOnly,
     readOnlyMessage: { value: "Read-only access" },
+    quickSuggestions: false,
+    suggestOnTriggerCharacters: false,
+    wordBasedSuggestions: "off" as const,
+    parameterHints: { enabled: false },
+    tabCompletion: "off" as const,
+    snippetSuggestions: "none" as const,
     ...(lineNumbersMinChars && { lineNumbersMinChars }),
   };
 
