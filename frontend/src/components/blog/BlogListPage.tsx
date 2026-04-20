@@ -46,10 +46,6 @@ export function BlogListPage() {
           transition={{ duration: 0.6, ease: [0, 0.55, 0.45, 1] }}
           className="mb-16"
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1 text-xs text-neutral-400 mb-6">
-            <Newspaper className="w-3.5 h-3.5" />
-            The Cryptly blog
-          </div>
           <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">
             Writing on secrets,
             <br />
