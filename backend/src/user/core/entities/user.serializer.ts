@@ -21,6 +21,7 @@ export class UserSerializer {
       privateKeyEncrypted: entity.privateKeyEncrypted,
       publicKey: entity.publicKey,
       projectsOrder: entity.projectsOrder || [],
+      isAdmin: entity.isAdmin ?? false,
     };
   }
 
@@ -35,6 +36,7 @@ export class UserSerializer {
       displayName: normalized.displayName,
       privateKeyEncrypted: normalized.privateKeyEncrypted,
       publicKey: normalized.publicKey,
+      isAdmin: normalized.isAdmin ?? false,
     };
 
     if (params?.showEmailAddress) {

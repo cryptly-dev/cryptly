@@ -13,6 +13,7 @@ export class UserNormalized extends UserPartialNormalized {
   public authMethod: AuthMethod;
   public privateKeyEncrypted?: string;
   public projectsOrder: string[];
+  public isAdmin: boolean;
 }
 
 export class UserPartialSerialized {
@@ -38,4 +39,7 @@ export class UserSerialized extends UserPartialSerialized {
 
   @ApiPropertyOptional()
   public privateKeyEncrypted?: string;
+
+  @ApiProperty()
+  public isAdmin: boolean;
 }

@@ -1,4 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CustomJwtService } from '../custom-jwt/custom-jwt.service';
 import { UserReadService } from '../../user/read/user-read.service';
 import { UserWriteService } from '../../user/write/user-write.service';
@@ -9,7 +14,7 @@ import { getEnvConfig } from '../../shared/config/env-config';
 import { RefreshTokenWriteService } from '../refresh-token/write/refresh-token-write.service';
 
 @Injectable()
-export class LocalAuthLoginService {
+export class LocalAuthLoginService implements OnApplicationBootstrap {
   private readonly logger = new Logger(LocalAuthLoginService.name);
 
   constructor(
@@ -18,6 +23,17 @@ export class LocalAuthLoginService {
     private readonly userWriteService: UserWriteService,
     private readonly refreshTokenWriteService: RefreshTokenWriteService,
   ) {}
+
+  public async onApplicationBootstrap(): Promise<void> {
+    if (!getEnvConfig().auth.allowLocalLogin) {
+      return;
+    }
+
+    const promoted = await this.userWriteService.promoteAllLocalUsersToAdmin();
+    if (promoted > 0) {
+      this.logger.log(`Promoted ${promoted} local user(s) to admin`);
+    }
+  }
 
   public async login(dto: LocalLoginBody): Promise<TokenResponse> {
     const config = getEnvConfig();

@@ -11,10 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as InviteInviteIdRouteImport } from './routes/invite/$inviteId'
+import { Route as BlogNewRouteImport } from './routes/blog/new'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppDeveloperRouteImport } from './routes/app/developer'
 import { Route as AppProjectIndexRouteImport } from './routes/app/project/index'
+import { Route as BlogEditSlugRouteImport } from './routes/blog/edit/$slug'
 import { Route as AppProjectProjectIdRouteImport } from './routes/app/project/$projectId'
 import { Route as AppCallbacksOauthGoogleRouteImport } from './routes/app/callbacks/oauth/google'
 import { Route as AppCallbacksOauthGithubRouteImport } from './routes/app/callbacks/oauth/github'
@@ -30,9 +34,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InviteInviteIdRoute = InviteInviteIdRouteImport.update({
   id: '/invite/$inviteId',
   path: '/invite/$inviteId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogNewRoute = BlogNewRouteImport.update({
+  id: '/blog/new',
+  path: '/blog/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppLoginRoute = AppLoginRouteImport.update({
@@ -49,6 +68,11 @@ const AppProjectIndexRoute = AppProjectIndexRouteImport.update({
   id: '/project/',
   path: '/project/',
   getParentRoute: () => AppRoute,
+} as any)
+const BlogEditSlugRoute = BlogEditSlugRouteImport.update({
+  id: '/blog/edit/$slug',
+  path: '/blog/edit/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppProjectProjectIdRoute = AppProjectProjectIdRouteImport.update({
   id: '/project/$projectId',
@@ -77,8 +101,12 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
+  '/blog': typeof BlogIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
+  '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project': typeof AppProjectIndexRoute
   '/app/callbacks/integrations/github': typeof AppCallbacksIntegrationsGithubRoute
   '/app/callbacks/oauth/github': typeof AppCallbacksOauthGithubRoute
@@ -89,8 +117,12 @@ export interface FileRoutesByTo {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
+  '/blog': typeof BlogIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
+  '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project': typeof AppProjectIndexRoute
   '/app/callbacks/integrations/github': typeof AppCallbacksIntegrationsGithubRoute
   '/app/callbacks/oauth/github': typeof AppCallbacksOauthGithubRoute
@@ -102,8 +134,12 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
+  '/blog/': typeof BlogIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
+  '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project/': typeof AppProjectIndexRoute
   '/app/callbacks/integrations/github': typeof AppCallbacksIntegrationsGithubRoute
   '/app/callbacks/oauth/github': typeof AppCallbacksOauthGithubRoute
@@ -116,8 +152,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/developer'
     | '/app/login'
+    | '/blog/$slug'
+    | '/blog/new'
     | '/invite/$inviteId'
+    | '/blog'
     | '/app/project/$projectId'
+    | '/blog/edit/$slug'
     | '/app/project'
     | '/app/callbacks/integrations/github'
     | '/app/callbacks/oauth/github'
@@ -128,8 +168,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/developer'
     | '/app/login'
+    | '/blog/$slug'
+    | '/blog/new'
     | '/invite/$inviteId'
+    | '/blog'
     | '/app/project/$projectId'
+    | '/blog/edit/$slug'
     | '/app/project'
     | '/app/callbacks/integrations/github'
     | '/app/callbacks/oauth/github'
@@ -140,8 +184,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/developer'
     | '/app/login'
+    | '/blog/$slug'
+    | '/blog/new'
     | '/invite/$inviteId'
+    | '/blog/'
     | '/app/project/$projectId'
+    | '/blog/edit/$slug'
     | '/app/project/'
     | '/app/callbacks/integrations/github'
     | '/app/callbacks/oauth/github'
@@ -151,7 +199,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogNewRoute: typeof BlogNewRoute
   InviteInviteIdRoute: typeof InviteInviteIdRoute
+  BlogIndexRoute: typeof BlogIndexRoute
+  BlogEditSlugRoute: typeof BlogEditSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,11 +222,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/invite/$inviteId': {
       id: '/invite/$inviteId'
       path: '/invite/$inviteId'
       fullPath: '/invite/$inviteId'
       preLoaderRoute: typeof InviteInviteIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/new': {
+      id: '/blog/new'
+      path: '/blog/new'
+      fullPath: '/blog/new'
+      preLoaderRoute: typeof BlogNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/login': {
@@ -197,6 +270,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/project'
       preLoaderRoute: typeof AppProjectIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/blog/edit/$slug': {
+      id: '/blog/edit/$slug'
+      path: '/blog/edit/$slug'
+      fullPath: '/blog/edit/$slug'
+      preLoaderRoute: typeof BlogEditSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/project/$projectId': {
       id: '/app/project/$projectId'
@@ -254,7 +334,11 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  BlogSlugRoute: BlogSlugRoute,
+  BlogNewRoute: BlogNewRoute,
   InviteInviteIdRoute: InviteInviteIdRoute,
+  BlogIndexRoute: BlogIndexRoute,
+  BlogEditSlugRoute: BlogEditSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

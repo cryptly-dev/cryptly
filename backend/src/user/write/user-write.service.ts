@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, UpdateQuery } from 'mongoose';
+import { AuthMethod } from '../core/enum/auth-method.enum';
 import { UserEntity } from '../core/entities/user.entity';
 import { UserNormalized } from '../core/entities/user.interface';
 import { UserSerializer } from '../core/entities/user.serializer';
@@ -49,9 +50,19 @@ export class UserWriteService {
       authMethod: dto.authMethod,
       avatarUrl: dto.avatarUrl,
       displayName: this.generateRandomDisplayName(),
+      isAdmin: dto.authMethod === AuthMethod.Local,
     });
 
     return UserSerializer.normalize(user);
+  }
+
+  public async promoteAllLocalUsersToAdmin(): Promise<number> {
+    const result = await this.userModel.updateMany(
+      { authMethod: AuthMethod.Local, isAdmin: { $ne: true } },
+      { $set: { isAdmin: true } },
+    );
+
+    return result.modifiedCount ?? 0;
   }
 
   public async update(id: string, dto: UpdateUserDto): Promise<UserNormalized> {
