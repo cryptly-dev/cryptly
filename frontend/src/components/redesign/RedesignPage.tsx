@@ -1,3 +1,4 @@
+import Beams from "@/components/Beams";
 import { ReviewsSection } from "@/components/index/ReviewsSection";
 import { BracketsIcon } from "@/components/ui/BracketsIcon";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
@@ -216,11 +217,11 @@ function MockEditorTile() {
   );
 }
 
-function Hero() {
+function HeroBody() {
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center">
+    <div className="relative z-10 w-full flex flex-col items-center">
       <div className="mx-auto max-w-4xl w-full px-6 pt-24">
-        <div className="rounded-2xl border border-neutral-800 bg-gradient-to-b from-neutral-950 to-[#0a0a0c] overflow-hidden shadow-2xl shadow-black/70">
+        <div className="rounded-2xl border border-neutral-800 bg-background overflow-hidden shadow-2xl shadow-black/70">
           <div className="flex h-[480px]">
             <aside className="h-full w-60 flex-shrink-0 border-r border-border/50">
               <MockSidebar />
@@ -271,6 +272,28 @@ function Hero() {
           </span>
         </div>
       </div>
+    </div>
+  );
+}
+
+function HeroWithBeams() {
+  return (
+    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-black">
+      <div className="absolute inset-0 z-0">
+        <Beams
+          beamWidth={2}
+          beamHeight={30}
+          beamNumber={20}
+          lightColor="#ffffff"
+          speed={2}
+          noiseIntensity={1.75}
+          scale={0.2}
+          rotation={30}
+        />
+      </div>
+      <div className="absolute top-0 h-64 bg-gradient-to-b from-black to-transparent w-full z-0 pointer-events-none" />
+      <div className="absolute bottom-0 h-64 bg-gradient-to-t from-black to-transparent w-full z-0 pointer-events-none" />
+      <HeroBody />
     </section>
   );
 }
@@ -487,7 +510,7 @@ function FinalCTA() {
 export function RedesignPage() {
   return (
     <div className="min-h-screen bg-black text-neutral-100">
-      <Hero />
+      <HeroWithBeams />
       <TwoViewsSection />
       <InviteSection />
       <PricingSection />
