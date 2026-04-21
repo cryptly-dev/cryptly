@@ -9,10 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RedesignRouteImport } from './routes/redesign'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RedesignIndexRouteImport } from './routes/redesign/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
+import { Route as RedesignVariantRouteImport } from './routes/redesign/$variant'
 import { Route as InviteInviteIdRouteImport } from './routes/invite/$inviteId'
 import { Route as BlogNewRouteImport } from './routes/blog/new'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
@@ -25,11 +26,6 @@ import { Route as AppCallbacksOauthGoogleRouteImport } from './routes/app/callba
 import { Route as AppCallbacksOauthGithubRouteImport } from './routes/app/callbacks/oauth/github'
 import { Route as AppCallbacksIntegrationsGithubRouteImport } from './routes/app/callbacks/integrations/github'
 
-const RedesignRoute = RedesignRouteImport.update({
-  id: '/redesign',
-  path: '/redesign',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -40,9 +36,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RedesignIndexRoute = RedesignIndexRouteImport.update({
+  id: '/redesign/',
+  path: '/redesign/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedesignVariantRoute = RedesignVariantRouteImport.update({
+  id: '/redesign/$variant',
+  path: '/redesign/$variant',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteInviteIdRoute = InviteInviteIdRouteImport.update({
@@ -105,13 +111,14 @@ const AppCallbacksIntegrationsGithubRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/redesign': typeof RedesignRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
+  '/redesign/$variant': typeof RedesignVariantRoute
   '/blog': typeof BlogIndexRoute
+  '/redesign': typeof RedesignIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project': typeof AppProjectIndexRoute
@@ -122,13 +129,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/redesign': typeof RedesignRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
+  '/redesign/$variant': typeof RedesignVariantRoute
   '/blog': typeof BlogIndexRoute
+  '/redesign': typeof RedesignIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project': typeof AppProjectIndexRoute
@@ -140,13 +148,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/redesign': typeof RedesignRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
+  '/redesign/$variant': typeof RedesignVariantRoute
   '/blog/': typeof BlogIndexRoute
+  '/redesign/': typeof RedesignIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project/': typeof AppProjectIndexRoute
@@ -159,13 +168,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
-    | '/redesign'
     | '/app/developer'
     | '/app/login'
     | '/blog/$slug'
     | '/blog/new'
     | '/invite/$inviteId'
+    | '/redesign/$variant'
     | '/blog'
+    | '/redesign'
     | '/app/project/$projectId'
     | '/blog/edit/$slug'
     | '/app/project'
@@ -176,13 +186,14 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/app'
-    | '/redesign'
     | '/app/developer'
     | '/app/login'
     | '/blog/$slug'
     | '/blog/new'
     | '/invite/$inviteId'
+    | '/redesign/$variant'
     | '/blog'
+    | '/redesign'
     | '/app/project/$projectId'
     | '/blog/edit/$slug'
     | '/app/project'
@@ -193,13 +204,14 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
-    | '/redesign'
     | '/app/developer'
     | '/app/login'
     | '/blog/$slug'
     | '/blog/new'
     | '/invite/$inviteId'
+    | '/redesign/$variant'
     | '/blog/'
+    | '/redesign/'
     | '/app/project/$projectId'
     | '/blog/edit/$slug'
     | '/app/project/'
@@ -211,23 +223,17 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  RedesignRoute: typeof RedesignRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogNewRoute: typeof BlogNewRoute
   InviteInviteIdRoute: typeof InviteInviteIdRoute
+  RedesignVariantRoute: typeof RedesignVariantRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  RedesignIndexRoute: typeof RedesignIndexRoute
   BlogEditSlugRoute: typeof BlogEditSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/redesign': {
-      id: '/redesign'
-      path: '/redesign'
-      fullPath: '/redesign'
-      preLoaderRoute: typeof RedesignRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -242,11 +248,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/redesign/': {
+      id: '/redesign/'
+      path: '/redesign'
+      fullPath: '/redesign'
+      preLoaderRoute: typeof RedesignIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
       fullPath: '/blog'
       preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redesign/$variant': {
+      id: '/redesign/$variant'
+      path: '/redesign/$variant'
+      fullPath: '/redesign/$variant'
+      preLoaderRoute: typeof RedesignVariantRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$inviteId': {
@@ -354,11 +374,12 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  RedesignRoute: RedesignRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogNewRoute: BlogNewRoute,
   InviteInviteIdRoute: InviteInviteIdRoute,
+  RedesignVariantRoute: RedesignVariantRoute,
   BlogIndexRoute: BlogIndexRoute,
+  RedesignIndexRoute: RedesignIndexRoute,
   BlogEditSlugRoute: BlogEditSlugRoute,
 }
 export const routeTree = rootRouteImport
