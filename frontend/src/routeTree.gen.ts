@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RedesignRouteImport } from './routes/redesign'
+import { Route as MagneticRouteImport } from './routes/magnetic'
+import { Route as BringYourTeamRouteImport } from './routes/bring-your-team'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
@@ -28,6 +30,16 @@ import { Route as AppCallbacksIntegrationsGithubRouteImport } from './routes/app
 const RedesignRoute = RedesignRouteImport.update({
   id: '/redesign',
   path: '/redesign',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MagneticRoute = MagneticRouteImport.update({
+  id: '/magnetic',
+  path: '/magnetic',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BringYourTeamRoute = BringYourTeamRouteImport.update({
+  id: '/bring-your-team',
+  path: '/bring-your-team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -105,6 +117,8 @@ const AppCallbacksIntegrationsGithubRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/bring-your-team': typeof BringYourTeamRoute
+  '/magnetic': typeof MagneticRoute
   '/redesign': typeof RedesignRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
@@ -122,6 +136,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/bring-your-team': typeof BringYourTeamRoute
+  '/magnetic': typeof MagneticRoute
   '/redesign': typeof RedesignRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
@@ -140,6 +156,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/bring-your-team': typeof BringYourTeamRoute
+  '/magnetic': typeof MagneticRoute
   '/redesign': typeof RedesignRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
@@ -159,6 +177,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/bring-your-team'
+    | '/magnetic'
     | '/redesign'
     | '/app/developer'
     | '/app/login'
@@ -176,6 +196,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/app'
+    | '/bring-your-team'
+    | '/magnetic'
     | '/redesign'
     | '/app/developer'
     | '/app/login'
@@ -193,6 +215,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/bring-your-team'
+    | '/magnetic'
     | '/redesign'
     | '/app/developer'
     | '/app/login'
@@ -211,6 +235,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  BringYourTeamRoute: typeof BringYourTeamRoute
+  MagneticRoute: typeof MagneticRoute
   RedesignRoute: typeof RedesignRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogNewRoute: typeof BlogNewRoute
@@ -226,6 +252,20 @@ declare module '@tanstack/react-router' {
       path: '/redesign'
       fullPath: '/redesign'
       preLoaderRoute: typeof RedesignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/magnetic': {
+      id: '/magnetic'
+      path: '/magnetic'
+      fullPath: '/magnetic'
+      preLoaderRoute: typeof MagneticRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bring-your-team': {
+      id: '/bring-your-team'
+      path: '/bring-your-team'
+      fullPath: '/bring-your-team'
+      preLoaderRoute: typeof BringYourTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -354,6 +394,8 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  BringYourTeamRoute: BringYourTeamRoute,
+  MagneticRoute: MagneticRoute,
   RedesignRoute: RedesignRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogNewRoute: BlogNewRoute,

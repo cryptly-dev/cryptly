@@ -118,18 +118,17 @@ export function CryptlyOnCryptlySection() {
         title="This is what a breach of our servers would publish."
         subtitle={
           <>
-            Our own production secrets, pulled live from our database. We're
-            comfortable pasting them on a public landing page because there's
-            nothing here to read. Here is the{" "}
+            An example of what our database actually stores for a project's
+            secrets. One opaque blob, encrypted in your browser before it ever
+            left it.{" "}
             <a
-              href="https://github.com/cryptly-dev/cryptly/blob/main/frontend/src/components/Beams.tsx"
+              href="https://cryptly.dev/blog/how-encryption-works"
               target="_blank"
               rel="noreferrer"
               className="text-neutral-200 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
             >
-              code fragment
-            </a>{" "}
-            that dumps them.
+              Read how our encryption works →
+            </a>
           </>
         }
       />

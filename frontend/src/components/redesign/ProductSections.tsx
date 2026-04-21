@@ -7,8 +7,8 @@ import { IconBrandGithub, IconUsers } from "@tabler/icons-react";
 import {
   ArrowDownUp,
   Check,
-  CloudUpload,
   Copy,
+  CornerDownLeft,
   KeyRound,
   Link2,
   Lock,
@@ -20,8 +20,10 @@ import {
   Trash2,
   UserPlus,
   Users,
+  X,
 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import type { LucideIcon } from "lucide-react";
+import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { SectionShell } from "./common";
 
@@ -258,7 +260,7 @@ export function InviteSection() {
           </div>
         </div>
 
-        <Card className="overflow-hidden min-h-[260px]">
+        <Card className="overflow-hidden">
           <AnimatePresence mode="wait">
             {method === "link" && <InviteLinkMethod key="link" />}
             {method === "suggested" && <InviteSuggestedMethod key="suggested" />}
@@ -284,6 +286,21 @@ function MethodWrap({ children }: { children: React.ReactNode }) {
   );
 }
 
+function MethodIntro({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-5">
+      <div className="text-sm font-semibold text-neutral-100">{title}</div>
+      <p className="mt-1 text-sm text-neutral-400 leading-relaxed">{children}</p>
+    </div>
+  );
+}
+
 function InviteLinkMethod() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedPass, setCopiedPass] = useState(false);
@@ -296,64 +313,9 @@ function InviteLinkMethod() {
   };
   return (
     <MethodWrap>
-      <div className="space-y-3">
-        <div>
-          <div className="mb-1.5 flex items-center gap-2 text-[10px] uppercase tracking-wider text-neutral-500">
-            <Link2 className="h-3 w-3" /> Invite link
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 rounded-md bg-neutral-950 border border-neutral-900 px-3 py-2 text-sm font-mono text-neutral-300 truncate">
-              https://{link}
-            </div>
-            <button
-              type="button"
-              onClick={() => copy(`https://${link}`, setCopiedLink)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm transition-colors",
-                copiedLink
-                  ? "border-emerald-700/50 text-emerald-400 bg-emerald-500/5"
-                  : "bg-white text-black hover:bg-neutral-100 border-transparent"
-              )}
-            >
-              {copiedLink ? (
-                <Check className="h-3.5 w-3.5" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <div className="mb-1.5 flex items-center gap-2 text-[10px] uppercase tracking-wider text-neutral-500">
-            <KeyRound className="h-3 w-3" /> One-time passphrase · share separately
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 rounded-md bg-neutral-950 border border-neutral-900 px-3 py-2 text-sm font-mono text-sky-300 truncate">
-              {tempPassphrase}
-            </div>
-            <button
-              type="button"
-              onClick={() => copy(tempPassphrase, setCopiedPass)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm transition-colors",
-                copiedPass
-                  ? "border-emerald-700/50 text-emerald-400 bg-emerald-500/5"
-                  : "bg-neutral-900 text-neutral-300 hover:bg-neutral-800 border-neutral-800"
-              )}
-            >
-              {copiedPass ? (
-                <Check className="h-3.5 w-3.5" />
-              ) : (
-                <Copy className="h-3.5 w-3.5" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-5 text-xs text-neutral-500">
-        Two factors, two channels.{" "}
+      <MethodIntro title="Link + passphrase, over two channels.">
+        Cryptly mints a one-time link and a passphrase. Send the link in Slack,
+        the passphrase over text — a leaked link alone is useless.{" "}
         <a
           href="https://cryptly.dev/blog/how-inviting-works"
           target="_blank"
@@ -362,6 +324,54 @@ function InviteLinkMethod() {
         >
           How it works →
         </a>
+      </MethodIntro>
+
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Link2 className="h-4 w-4 text-neutral-500 shrink-0" />
+          <div className="flex-1 rounded-md bg-neutral-950 border border-neutral-900 px-3 py-2 text-sm font-mono text-neutral-300 truncate">
+            https://{link}
+          </div>
+          <button
+            type="button"
+            onClick={() => copy(`https://${link}`, setCopiedLink)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm transition-colors",
+              copiedLink
+                ? "border-emerald-700/50 text-emerald-400 bg-emerald-500/5"
+                : "bg-white text-black hover:bg-neutral-100 border-transparent"
+            )}
+          >
+            {copiedLink ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <KeyRound className="h-4 w-4 text-neutral-500 shrink-0" />
+          <div className="flex-1 rounded-md bg-neutral-950 border border-neutral-900 px-3 py-2 text-sm font-mono text-sky-300 truncate">
+            {tempPassphrase}
+          </div>
+          <button
+            type="button"
+            onClick={() => copy(tempPassphrase, setCopiedPass)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm transition-colors",
+              copiedPass
+                ? "border-emerald-700/50 text-emerald-400 bg-emerald-500/5"
+                : "bg-neutral-900 text-neutral-300 hover:bg-neutral-800 border-neutral-800"
+            )}
+          >
+            {copiedPass ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </div>
       </div>
     </MethodWrap>
   );
@@ -407,9 +417,11 @@ function InviteSuggestedMethod() {
   ];
   return (
     <MethodWrap>
-      <div className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-wider text-neutral-500">
-        <Sparkles className="h-3 w-3" /> From your GitHub collaborators
-      </div>
+      <MethodIntro title="Invite who's already around.">
+        We pull collaborators from the GitHub repos linked to this project — the
+        people who already ship with you. One click sends them a key-wrapped
+        invite.
+      </MethodIntro>
       <div className="rounded-xl border border-neutral-800 bg-black/40 divide-y divide-neutral-900">
         {people.map((p) => {
           const isAdded = !!added[p.id];
@@ -492,9 +504,10 @@ function InviteTeamsMethod() {
   ];
   return (
     <MethodWrap>
-      <div className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-wider text-neutral-500">
-        <Users className="h-3 w-3" /> Preview · coming soon
-      </div>
+      <MethodIntro title="Invite a whole team at once.">
+        Define groups once — frontend, infra, on-call — and grant project access
+        to all of them with a single click. Coming soon.
+      </MethodIntro>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {teams.map((t) => (
           <div
@@ -568,14 +581,7 @@ export function GithubSyncSection() {
     );
   };
 
-  useEffect(() => {
-    const t = window.setTimeout(run, 400);
-    return () => {
-      clearTimers();
-      window.clearTimeout(t);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => clearTimers, []);
 
   const done = !running && pushedCount === SYNC_SECRETS.length;
 
@@ -592,50 +598,32 @@ export function GithubSyncSection() {
             {/* Left: Cryptly editor — replica of the real product */}
             <div className="relative flex flex-col border-b md:border-b-0 md:border-r border-neutral-900 bg-background">
               <GithubEditorTabs />
-              <div className="font-mono text-[12px] leading-7 py-2">
+              <div className="font-mono text-[13px] leading-[1.9] py-3">
                 {SYNC_SECRETS.map((r, i) => (
                   <div
                     key={r.key}
-                    className="flex items-baseline px-0 hover:bg-white/[0.02]"
+                    className="group flex items-stretch hover:bg-white/[0.025] transition-colors"
                   >
-                    <span className="w-10 text-right text-neutral-700 tabular-nums shrink-0 select-none border-r border-neutral-900 py-0.5">
+                    <span className="w-12 px-3 text-right text-neutral-700 border-r border-neutral-900 shrink-0 select-none py-0.5 tabular-nums">
                       {i + 1}
                     </span>
-                    <span className="pl-4 pr-4 text-sky-400 shrink-0">
-                      {r.key}
-                    </span>
-                    <span className="text-neutral-600">=</span>
-                    <span className="text-neutral-500 truncate pr-4">
-                      {"•".repeat(Math.min(r.value.length, 22))}
-                    </span>
+                    <div className="pl-6 pr-4 py-0.5 flex items-baseline min-w-0 flex-1">
+                      <span className="text-sky-400 shrink-0">{r.key}</span>
+                      <span className="text-neutral-500 shrink-0">=</span>
+                      <span className="text-neutral-500 truncate min-w-0">
+                        {"•".repeat(Math.min(r.value.length, 22))}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
-              {/* Floating Save+Push pill — matches real SavePushPill */}
-              <div className="absolute inset-x-0 bottom-4 flex justify-center pointer-events-none">
-                <div className="pointer-events-auto inline-flex rounded-md overflow-hidden shadow-lg shadow-black/60">
-                  <div className="inline-flex h-10 items-center gap-2 px-4 font-semibold whitespace-nowrap bg-primary text-primary-foreground border border-primary select-none">
-                    <Check className="h-4 w-4" />
-                    Saved
-                  </div>
-                  <button
-                    type="button"
+              <div className="absolute inset-x-0 bottom-8 flex justify-center pointer-events-none">
+                <div className="pointer-events-auto">
+                  <MagneticPushButton
+                    running={running}
+                    done={done}
                     onClick={run}
-                    disabled={running}
-                    aria-label="Push to GitHub"
-                    className={cn(
-                      "h-10 w-10 grid place-items-center border border-l-0 border-neutral-800 bg-secondary/50 hover:bg-secondary text-neutral-200 transition-colors",
-                      running && "cursor-wait text-neutral-500"
-                    )}
-                  >
-                    {running ? (
-                      <span className="inline-block h-4 w-4 rounded-full border-2 border-neutral-500/40 border-t-neutral-300 animate-spin" />
-                    ) : done ? (
-                      <Check className="h-5 w-5 text-emerald-400" />
-                    ) : (
-                      <CloudUpload className="h-5 w-5" />
-                    )}
-                  </button>
+                  />
                 </div>
               </div>
             </div>
@@ -729,25 +717,91 @@ export function GithubSyncSection() {
                   </div>
                 </div>
 
-                <div className="mt-4 min-h-[20px] text-[12px]">
-                  {done && (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="inline-flex items-center gap-2 text-emerald-400"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      {SYNC_SECRETS.length} secrets pushed — encrypted against
-                      this repo's public key
-                    </motion.span>
-                  )}
-                </div>
               </div>
             </div>
           </div>
         </Card>
       </div>
     </SectionShell>
+  );
+}
+
+function MagneticPushButton({
+  running,
+  done,
+  onClick,
+}: {
+  running: boolean;
+  done: boolean;
+  onClick: () => void;
+}) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const scale = useMotionValue(1);
+  const sx = useSpring(x, { stiffness: 360, damping: 28, mass: 0.5 });
+  const sy = useSpring(y, { stiffness: 360, damping: 28, mass: 0.5 });
+  const sScale = useSpring(scale, { stiffness: 320, damping: 22 });
+
+  useEffect(() => {
+    const OUTER = 200;
+    const INNER = 70;
+    const handle = (e: MouseEvent) => {
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const distance = Math.hypot(dx, dy);
+      if (distance < INNER) {
+        x.set(dx);
+        y.set(dy);
+        scale.set(1.08);
+      } else if (distance < OUTER) {
+        const t = (OUTER - distance) / (OUTER - INNER);
+        const pull = Math.pow(t, 1.6) * 0.35;
+        x.set(dx * pull);
+        y.set(dy * pull);
+        scale.set(1 + t * 0.02);
+      } else {
+        x.set(0);
+        y.set(0);
+        scale.set(1);
+      }
+    };
+    window.addEventListener("mousemove", handle);
+    return () => window.removeEventListener("mousemove", handle);
+  }, [x, y, scale]);
+
+  return (
+    <motion.button
+      ref={ref}
+      type="button"
+      onClick={onClick}
+      disabled={running}
+      style={{ x: sx, y: sy, scale: sScale }}
+      whileTap={{ scale: 0.96 }}
+      className={cn(
+        "inline-flex items-center gap-2.5 rounded-full bg-white text-black h-12 px-7 text-sm font-semibold tracking-tight",
+        running && "cursor-wait"
+      )}
+    >
+      {running ? (
+        <>
+          <span className="h-4 w-4 rounded-full border-2 border-black/20 border-t-black animate-spin" />
+          Pushing…
+        </>
+      ) : done ? (
+        <>
+          <Check className="h-4 w-4" />
+          Pushed
+        </>
+      ) : (
+        "Push"
+      )}
+    </motion.button>
   );
 }
 
@@ -924,17 +978,113 @@ const TIME_RANGES = [
   { key: "30d", label: "-30d" },
 ];
 
+type SearchMode = "added" | "removed" | "changed" | "anywhere";
+
+interface SearchSuggestion {
+  mode: SearchMode;
+  icon: LucideIcon;
+  iconBg: string;
+  iconFg: string;
+  verb: React.ReactNode;
+}
+
+const SEARCH_SUGGESTIONS: SearchSuggestion[] = [
+  {
+    mode: "added",
+    icon: Plus,
+    iconBg: "bg-emerald-500/15",
+    iconFg: "text-emerald-400",
+    verb: (
+      <>
+        was <span className="text-emerald-400 font-medium">added</span>
+      </>
+    ),
+  },
+  {
+    mode: "removed",
+    icon: Minus,
+    iconBg: "bg-rose-500/15",
+    iconFg: "text-rose-400",
+    verb: (
+      <>
+        was <span className="text-rose-400 font-medium">removed</span>
+      </>
+    ),
+  },
+  {
+    mode: "changed",
+    icon: ArrowDownUp,
+    iconBg: "bg-neutral-800",
+    iconFg: "text-neutral-300",
+    verb: <>was added or removed</>,
+  },
+  {
+    mode: "anywhere",
+    icon: Sparkles,
+    iconBg: "bg-neutral-800",
+    iconFg: "text-neutral-300",
+    verb: <>appears anywhere</>,
+  },
+];
+
+function patchDiffContent(p: HistoryPatch): string {
+  return p.diff.map((d) => d.text).join("\n");
+}
+
+function matchesHistory(
+  p: HistoryPatch,
+  query: string,
+  mode: SearchMode
+): boolean {
+  const q = query.toLowerCase();
+  const content = patchDiffContent(p);
+  if (mode === "anywhere") {
+    return (
+      p.author.name.toLowerCase().includes(q) ||
+      content.toLowerCase().includes(q)
+    );
+  }
+  const lines = content.split("\n");
+  const isAdded = (l: string) => l.startsWith("+") && !l.startsWith("+++");
+  const isRemoved = (l: string) => l.startsWith("-") && !l.startsWith("---");
+  for (const line of lines) {
+    if (!line.toLowerCase().includes(q)) continue;
+    if (mode === "added" && isAdded(line)) return true;
+    if (mode === "removed" && isRemoved(line)) return true;
+    if (mode === "changed" && (isAdded(line) || isRemoved(line))) return true;
+  }
+  return false;
+}
+
 export function HistorySection() {
   const [selectedId, setSelectedId] = useState(PATCHES[0].id);
   const [timeRange, setTimeRange] = useState("all");
   const [authorFilter, setAuthorFilter] = useState<string | null>(null);
 
+  const [query, setQuery] = useState("");
+  const [activeMode, setActiveMode] = useState<SearchMode | null>(null);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState(0);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const searchRootRef = useRef<HTMLDivElement>(null);
+
   const selected = PATCHES.find((p) => p.id === selectedId) ?? PATCHES[0];
+
+  const trimmedQuery = query.trim();
+  const effectiveMode: SearchMode = activeMode ?? "anywhere";
+  const showSuggestions = suggestionsOpen && trimmedQuery.length > 0;
+  const activeSuggestion =
+    activeMode != null
+      ? SEARCH_SUGGESTIONS.find((s) => s.mode === activeMode)
+      : null;
 
   const filtered = PATCHES.filter((p) => {
     if (authorFilter && p.author.id !== authorFilter) return false;
     if (timeRange === "24h" && !/^(\d+m|\dh)$/.test(p.when)) return false;
     if (timeRange === "7d" && p.when.endsWith("d") && parseInt(p.when) > 7)
+      return false;
+    if (trimmedQuery && !matchesHistory(p, trimmedQuery, effectiveMode))
       return false;
     return true;
   });
@@ -949,6 +1099,126 @@ export function HistorySection() {
     { ...AUTHORS.marcus, count: PATCHES.filter((p) => p.author.id === "marcus").length },
     { ...AUTHORS.priya, count: PATCHES.filter((p) => p.author.id === "priya").length },
   ];
+
+  const applyMode = (mode: SearchMode) => {
+    setActiveMode(mode);
+    setSuggestionsOpen(false);
+    inputRef.current?.focus();
+  };
+
+  const clearSearch = () => {
+    setQuery("");
+    setActiveMode(null);
+    setSuggestionsOpen(false);
+  };
+
+  useEffect(() => {
+    if (!showSuggestions) return;
+    setHighlightIdx((idx) =>
+      idx >= SEARCH_SUGGESTIONS.length || idx < 0 ? 0 : idx
+    );
+  }, [showSuggestions]);
+
+  useEffect(() => {
+    if (!suggestionsOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        searchRootRef.current &&
+        !searchRootRef.current.contains(e.target as Node)
+      ) {
+        setSuggestionsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [suggestionsOpen]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typingInInput =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+
+      if (e.key === "/" && !typingInInput) {
+        e.preventDefault();
+        inputRef.current?.focus();
+        if (trimmedQuery) setSuggestionsOpen(true);
+        return;
+      }
+
+      if (target === inputRef.current) {
+        if (showSuggestions) {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setHighlightIdx((i) => (i + 1) % SEARCH_SUGGESTIONS.length);
+            return;
+          }
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setHighlightIdx(
+              (i) =>
+                (i - 1 + SEARCH_SUGGESTIONS.length) % SEARCH_SUGGESTIONS.length
+            );
+            return;
+          }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            applyMode(SEARCH_SUGGESTIONS[highlightIdx].mode);
+            return;
+          }
+          if (e.key === "Escape") {
+            e.preventDefault();
+            setSuggestionsOpen(false);
+            return;
+          }
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          clearSearch();
+          inputRef.current?.blur();
+          return;
+        }
+        return;
+      }
+
+      if (typingInInput) return;
+      if (filtered.length === 0) return;
+      const currentIdx = filtered.findIndex((p) => p.id === selectedId);
+      const moveBy = (delta: number) => {
+        e.preventDefault();
+        if (
+          document.activeElement instanceof HTMLElement &&
+          document.activeElement.tagName === "BUTTON"
+        ) {
+          document.activeElement.blur();
+        }
+        const nextIdx =
+          currentIdx < 0
+            ? 0
+            : Math.max(0, Math.min(filtered.length - 1, currentIdx + delta));
+        const next = filtered[nextIdx];
+        if (next) setSelectedId(next.id);
+      };
+      if (
+        (e.key === "j" || e.key === "ArrowDown") &&
+        !e.metaKey &&
+        !e.ctrlKey
+      ) {
+        moveBy(1);
+      } else if (
+        (e.key === "k" || e.key === "ArrowUp") &&
+        !e.metaKey &&
+        !e.ctrlKey
+      ) {
+        moveBy(-1);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [filtered, selectedId, showSuggestions, highlightIdx, trimmedQuery]);
 
   return (
     <SectionShell>
@@ -966,19 +1236,156 @@ export function HistorySection() {
             {/* Sidebar */}
             <div className="flex flex-col border-r border-border/50 bg-[#0a0a0a] min-h-0">
               {/* Search bar */}
-              <div className="relative border-b border-border/50 bg-neutral-900">
-                <div className="flex items-center h-10">
-                  <Search className="ml-3 size-3.5 text-muted-foreground pointer-events-none flex-shrink-0" />
+              <div
+                ref={searchRootRef}
+                className="relative border-b border-border/50 bg-neutral-900"
+              >
+                <div className="relative flex items-center h-10">
+                  {activeSuggestion ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveMode(null);
+                        if (trimmedQuery) setSuggestionsOpen(true);
+                        inputRef.current?.focus();
+                      }}
+                      className={cn(
+                        "flex items-center gap-1 ml-2 pl-1.5 pr-1.5 h-6 rounded-md text-[11px] font-medium cursor-pointer hover:brightness-110 transition-all flex-shrink-0",
+                        activeSuggestion.iconBg,
+                        activeSuggestion.iconFg
+                      )}
+                      title="Change mode"
+                    >
+                      <activeSuggestion.icon className="size-3" />
+                      <span className="capitalize">
+                        {activeSuggestion.mode}
+                      </span>
+                      <X className="size-2.5 opacity-60" />
+                    </button>
+                  ) : (
+                    <Search className="ml-3 size-3.5 text-muted-foreground pointer-events-none flex-shrink-0" />
+                  )}
                   <input
-                    placeholder="Search edits — author, email, diff content…"
+                    ref={inputRef}
+                    value={query}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setQuery(next);
+                      setHighlightIdx(0);
+                      if (next.trim().length === 0) {
+                        setActiveMode(null);
+                        setSuggestionsOpen(false);
+                      } else if (!activeMode) {
+                        setSuggestionsOpen(true);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (trimmedQuery && !activeMode) setSuggestionsOpen(true);
+                    }}
+                    placeholder={
+                      activeSuggestion
+                        ? "Refine your search…"
+                        : "Search edits — author, diff content…"
+                    }
                     className="flex-1 h-full bg-transparent border-0 pl-2.5 pr-10 text-sm font-mono placeholder:text-muted-foreground/60 focus:outline-none min-w-0"
                   />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <Kbd className="bg-neutral-800 text-neutral-400 border border-border/60">
-                      /
-                    </Kbd>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    {query || activeMode ? (
+                      <button
+                        type="button"
+                        onClick={clearSearch}
+                        className="p-1 rounded-sm hover:bg-neutral-800 cursor-pointer"
+                        aria-label="Clear search"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    ) : (
+                      <Kbd className="bg-neutral-800 text-neutral-400 border border-border/60">
+                        /
+                      </Kbd>
+                    )}
                   </div>
                 </div>
+
+                {showSuggestions && (
+                  <div className="absolute top-full left-0 right-0 z-40 border-x border-b border-border/70 bg-neutral-950/95 backdrop-blur-md shadow-2xl shadow-black/50">
+                    <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium border-b border-border/50 bg-black/40">
+                      What do you mean by{" "}
+                      <span className="text-foreground font-mono normal-case">
+                        "{trimmedQuery}"
+                      </span>
+                      ?
+                    </div>
+                    <div className="py-1">
+                      {SEARCH_SUGGESTIONS.map((s, i) => {
+                        const Icon = s.icon;
+                        const isHighlighted = i === highlightIdx;
+                        return (
+                          <button
+                            key={s.mode}
+                            type="button"
+                            onClick={() => applyMode(s.mode)}
+                            onMouseEnter={() => setHighlightIdx(i)}
+                            className={cn(
+                              "w-full flex items-center gap-3 px-3 py-1.5 text-left cursor-pointer transition-colors focus:outline-none",
+                              isHighlighted
+                                ? "bg-neutral-800/80"
+                                : "hover:bg-neutral-900/60"
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                "flex items-center justify-center size-5 rounded-md flex-shrink-0",
+                                s.iconBg,
+                                s.iconFg
+                              )}
+                            >
+                              <Icon className="size-3" />
+                            </div>
+                            <div className="flex-1 min-w-0 text-sm">
+                              <span className="font-mono text-foreground">
+                                "{trimmedQuery}"
+                              </span>{" "}
+                              <span className="text-muted-foreground">
+                                {s.verb}
+                              </span>
+                            </div>
+                            {isHighlighted && (
+                              <Kbd className="bg-neutral-800 text-neutral-300 border border-border/60 px-1 flex-shrink-0">
+                                <CornerDownLeft className="size-2.5" />
+                              </Kbd>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between px-3 py-1.5 border-t border-border/50 bg-black/40 text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1">
+                          <Kbd className="bg-neutral-800 text-neutral-300 border border-border/60 px-1">
+                            ↑
+                          </Kbd>
+                          <Kbd className="bg-neutral-800 text-neutral-300 border border-border/60 px-1">
+                            ↓
+                          </Kbd>
+                          <span>navigate</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Kbd className="bg-neutral-800 text-neutral-300 border border-border/60 px-1">
+                            ↵
+                          </Kbd>
+                          <span>apply</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Kbd className="bg-neutral-800 text-neutral-300 border border-border/60 px-1">
+                            esc
+                          </Kbd>
+                          <span>dismiss</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               {/* Filters */}
               <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50 overflow-x-auto">
@@ -1161,18 +1568,8 @@ export function HistorySection() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
-            <Plus className="h-3 w-3 text-emerald-400" /> adds
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Minus className="h-3 w-3 text-rose-400" /> removes
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <ArrowDownUp className="h-3 w-3 text-neutral-400" /> rotations
-          </span>
-          <span>·</span>
-          <span>All decrypted client-side. The server only sees the ciphertext blobs.</span>
+        <div className="mt-6 text-center text-xs text-muted-foreground">
+          All decrypted client-side. The server only sees the ciphertext blobs.
         </div>
       </div>
     </SectionShell>

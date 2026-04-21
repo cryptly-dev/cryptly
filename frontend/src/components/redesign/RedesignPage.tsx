@@ -5,6 +5,7 @@ import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { HistoryIcon } from "@/components/ui/HistoryIcon";
 import { cn } from "@/lib/utils";
 import { IconBrandGithub, IconUsers } from "@tabler/icons-react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowRight,
   Book,
@@ -13,8 +14,11 @@ import {
   Heart,
   KeyRound,
   Lock,
+  Minus,
   Newspaper,
+  Plus,
 } from "lucide-react";
+import { useState } from "react";
 import { GhostCTA, HoverRevealMask, PrimaryCTA, SectionShell } from "./common";
 import {
   GithubSyncSection,
@@ -22,10 +26,7 @@ import {
   InviteSection,
   ThreePillarsSection,
 } from "./ProductSections";
-import {
-  CryptlyOnCryptlySection,
-  DevToolsNetworkSection,
-} from "./SecuritySections";
+import { CryptlyOnCryptlySection } from "./SecuritySections";
 
 type Row = { key: string; value: string; comment?: boolean };
 
@@ -219,7 +220,20 @@ function PricingSection() {
     <SectionShell>
       <SectionTitle
         title="$0. Every feature. Every seat."
-        subtitle="We don't have a team plan because we don't have a personal plan to sell you up from."
+        subtitle={
+          <>
+            No team plan, because there's no personal plan to sell you up from —{" "}
+            <a
+              href="https://cryptly.dev/blog/why-is-it-free"
+              target="_blank"
+              rel="noreferrer"
+              className="text-neutral-200 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
+            >
+              we wrote about it here
+            </a>
+            .
+          </>
+        }
       />
       <div className="mt-20 md:mt-24 max-w-md mx-auto">
         <Card className="text-center">
@@ -246,19 +260,150 @@ function PricingSection() {
               </div>
             ))}
           </div>
-          <div className="mt-6 pt-6 border-t border-neutral-900 text-sm text-neutral-400">
-            Wondering what the catch is?{" "}
+        </Card>
+      </div>
+    </SectionShell>
+  );
+}
+
+const FAQS: { q: string; a: React.ReactNode }[] = [
+  {
+    q: "What does zero-knowledge actually mean here?",
+    a: (
+      <>
+        Every secret is encrypted in your browser with a key derived from your
+        passphrase. Our servers receive an opaque blob and store it as-is. If
+        you lose the passphrase, we physically cannot help you recover the
+        data — which is the same thing that makes a breach of our database
+        worthless to an attacker.
+      </>
+    ),
+  },
+  {
+    q: "How is it free — and will it stay free?",
+    a: (
+      <>
+        Cryptly is open source and runs on cheap infrastructure because it
+        stores ciphertext, not user data. There's no plaintext to process, no
+        AI to train, no analytics to sell. We{" "}
+        <a
+          href="https://cryptly.dev/blog/why-is-it-free"
+          target="_blank"
+          rel="noreferrer"
+          className="text-neutral-200 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
+        >
+          wrote about why here
+        </a>
+        .
+      </>
+    ),
+  },
+  {
+    q: "What happens if I lose my passphrase?",
+    a: (
+      <>
+        The vault becomes unrecoverable. That's by design — it's what lets us
+        truthfully say we can't read your secrets. We recommend storing the
+        passphrase in a personal password manager and giving at least one
+        teammate access to the project so the vault isn't single-owner.
+      </>
+    ),
+  },
+  {
+    q: "What encryption does it actually use?",
+    a: (
+      <>
+        AES-256-GCM for project secrets, RSA-OAEP for re-wrapping keys per
+        member, PBKDF2-SHA256 for deriving the passphrase key. All
+        widely-reviewed primitives, all run client-side. We{" "}
+        <a
+          href="https://cryptly.dev/blog/how-encryption-works"
+          target="_blank"
+          rel="noreferrer"
+          className="text-neutral-200 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
+        >
+          wrote up the details here
+        </a>
+        .
+      </>
+    ),
+  },
+  {
+    q: "Does it work with my CI / GitHub Actions?",
+    a: (
+      <>
+        Yes. Connect a repo and Cryptly re-encrypts each secret against that
+        repo's public key in your browser, then forwards the ciphertext to
+        GitHub. We never see the plaintext — GitHub gets the values exactly
+        the way its own UI would have uploaded them.
+      </>
+    ),
+  },
+];
+
+function FAQItem({ q, a }: { q: string; a: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-neutral-900 last:border-b-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-4 py-5 text-left group"
+        aria-expanded={open}
+      >
+        <span className="flex-1 text-base md:text-lg text-neutral-100 font-medium tracking-tight">
+          {q}
+        </span>
+        <span className="shrink-0 h-8 w-8 rounded-full border border-neutral-800 grid place-items-center text-neutral-400 group-hover:border-neutral-700 group-hover:text-neutral-200 transition-colors">
+          {open ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+        </span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 0.61, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="pb-6 pr-12 text-neutral-400 leading-relaxed">
+              {a}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function FAQSection() {
+  return (
+    <SectionShell>
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-[1.1]">
+            Questions people ask.
+          </h2>
+          <p className="mt-4 text-lg text-neutral-400">
+            If yours isn't here, we're in the{" "}
             <a
-              href="https://cryptly.dev/blog/why-is-it-free"
+              href="https://github.com/cryptly-dev/cryptly/discussions"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-neutral-200 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
+              className="text-neutral-200 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
             >
-              Here's why it's free
-              <ArrowRight className="h-3.5 w-3.5" />
+              GitHub discussions
             </a>
-          </div>
-        </Card>
+            .
+          </p>
+        </div>
+        <div className="mt-16 md:mt-20 rounded-2xl border border-neutral-900 bg-neutral-950/40 px-6 md:px-8">
+          {FAQS.map((f) => (
+            <FAQItem key={f.q} q={f.q} a={f.a} />
+          ))}
+        </div>
       </div>
     </SectionShell>
   );
@@ -313,13 +458,13 @@ export function RedesignPage() {
     <div className="min-h-screen bg-black text-neutral-100">
       <HeroWithBeams />
       <ThreePillarsSection />
-      <DevToolsNetworkSection />
       <CryptlyOnCryptlySection />
       <GithubSyncSection />
       <HistorySection />
       <InviteSection />
       <PricingSection />
       <ReviewsSection />
+      <FAQSection />
       <FinalCTA />
     </div>
   );
