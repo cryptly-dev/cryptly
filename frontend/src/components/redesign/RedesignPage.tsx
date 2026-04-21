@@ -9,17 +9,18 @@ import {
   ArrowRight,
   Book,
   Check,
-  ChevronDown,
   Code2,
   Heart,
   KeyRound,
   Lock,
   Newspaper,
-  Send,
-  Shield,
-  UserPlus,
 } from "lucide-react";
 import { GhostCTA, HoverRevealMask, PrimaryCTA, SectionShell } from "./common";
+import {
+  GithubSyncSection,
+  HistorySection,
+  InviteSection,
+} from "./ProductSections";
 import {
   CryptlyOnCryptlySection,
   DevToolsNetworkSection,
@@ -83,7 +84,7 @@ function ProEditor({ rows }: { rows: Row[] }) {
 
 function MockEditorTile() {
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col">
       <div className="flex h-14 items-center justify-between px-3 border-b border-border/50 bg-card/20 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-1">
           {TABS.map((tab) => {
@@ -108,7 +109,7 @@ function MockEditorTile() {
         <div />
       </div>
 
-      <div className="flex-1 overflow-hidden py-3">
+      <div className="py-3">
         <ProEditor rows={ROWS} />
       </div>
     </div>
@@ -145,9 +146,7 @@ function HeroBody() {
           </div>
           <div>
             <div className="rounded-2xl border border-neutral-800 bg-background overflow-hidden shadow-2xl shadow-black/70">
-              <div className="h-[480px]">
-                <MockEditorTile />
-              </div>
+              <MockEditorTile />
             </div>
           </div>
         </div>
@@ -218,40 +217,6 @@ function Card({
     >
       {children}
     </div>
-  );
-}
-
-function InviteSection() {
-  return (
-    <SectionShell>
-      <SectionTitle
-        eyebrow="Team"
-        title="Invite someone without mailing them your vault."
-        subtitle="They generate their own keypair. We re-wrap the project key for them. You never send plaintext."
-      />
-      <Card className="mt-20 md:mt-24 max-w-xl mx-auto">
-        <div className="flex items-center gap-3">
-          <UserPlus className="h-4 w-4 text-neutral-500 shrink-0" />
-          <div className="flex-1 rounded-lg border border-neutral-800 bg-black px-3 py-2.5 text-sm text-neutral-300 font-mono select-none">
-            david@team.dev
-          </div>
-          <div className="rounded-lg border border-neutral-800 bg-black px-3 py-2.5 text-sm text-neutral-300 inline-flex items-center gap-2 select-none">
-            <span>Write</span>
-            <ChevronDown className="h-3.5 w-3.5 text-neutral-500" />
-          </div>
-          <div className="rounded-full bg-white text-black px-4 py-2 text-sm font-medium inline-flex items-center gap-2 select-none">
-            <Send className="h-3.5 w-3.5" />
-            <span>Invite</span>
-          </div>
-        </div>
-        <div className="mt-4 flex items-center gap-2 text-xs text-neutral-500">
-          <Shield className="h-3.5 w-3.5" />
-          <span>
-            Your passphrase never leaves this device. They'll set their own.
-          </span>
-        </div>
-      </Card>
-    </SectionShell>
   );
 }
 
@@ -344,6 +309,8 @@ export function RedesignPage() {
       <HeroWithBeams />
       <DevToolsNetworkSection />
       <CryptlyOnCryptlySection />
+      <GithubSyncSection />
+      <HistorySection />
       <InviteSection />
       <PricingSection />
       <ReviewsSection />
