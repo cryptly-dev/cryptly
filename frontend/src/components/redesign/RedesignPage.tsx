@@ -3,7 +3,6 @@ import { ReviewsSection } from "@/components/index/ReviewsSection";
 import { BracketsIcon } from "@/components/ui/BracketsIcon";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { HistoryIcon } from "@/components/ui/HistoryIcon";
-import { SlidersIcon } from "@/components/ui/SlidersIcon";
 import { cn } from "@/lib/utils";
 import { IconBrandGithub, IconUsers } from "@tabler/icons-react";
 import {
@@ -11,14 +10,12 @@ import {
   Book,
   Check,
   ChevronDown,
-  ChevronRight,
   Code2,
   Fingerprint,
-  FolderOpen,
   Heart,
   KeyRound,
   Lock,
-  Plus,
+  Newspaper,
   Send,
   Server,
   Shield,
@@ -44,15 +41,6 @@ const ROWS: Row[] = [
   { key: "SENTRY_DSN", value: "https://abc@o42.ingest.sentry.io/99" },
 ];
 
-type MockProject = { name: string; timeAgo: string; active?: boolean };
-
-const PROJECTS: MockProject[] = [
-  { name: "api-service", timeAgo: "2m", active: true },
-  { name: "web-app", timeAgo: "1h" },
-  { name: "mobile", timeAgo: "3d" },
-  { name: "admin-dashboard", timeAgo: "1w" },
-];
-
 type Tab = {
   id: string;
   label: string;
@@ -65,7 +53,6 @@ const TABS: Tab[] = [
   { id: "history", label: "History", Icon: HistoryIcon },
   { id: "members", label: "Members", Icon: IconUsers },
   { id: "integrations", label: "GitHub secrets", Icon: IconBrandGithub },
-  { id: "settings", label: "Settings", Icon: SlidersIcon },
 ];
 
 function ProEditor({ rows }: { rows: Row[] }) {
@@ -95,90 +82,6 @@ function ProEditor({ rows }: { rows: Row[] }) {
           )}
         </div>
       ))}
-    </div>
-  );
-}
-
-function MockSidebar() {
-  return (
-    <div className="h-full flex flex-col bg-card/40">
-      <div className="flex-1 overflow-hidden flex flex-col pt-4">
-        <div className="px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
-            <FolderOpen className="w-4 h-4" />
-            <span>Projects</span>
-            <span className="text-muted-foreground">({PROJECTS.length})</span>
-          </div>
-          <div className="text-muted-foreground rounded-md w-6 h-6 flex items-center justify-center">
-            <Plus className="w-4 h-4" />
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-hidden px-2">
-          <nav className="space-y-0.5">
-            {PROJECTS.map((p) => (
-              <div
-                key={p.name}
-                className={cn(
-                  "group relative flex items-center justify-between gap-2 overflow-hidden rounded-sm px-3.5 py-2.5 text-sm transition-colors select-none",
-                  p.active
-                    ? "text-primary"
-                    : "text-muted-foreground/55 hover:bg-neutral-800/40 hover:text-foreground"
-                )}
-              >
-                {p.active && (
-                  <div className="absolute inset-0 bg-neutral-800 rounded-sm pointer-events-none" />
-                )}
-                <div className="relative z-10 flex items-center gap-2 min-w-0 flex-1">
-                  <span
-                    aria-hidden
-                    className="flex h-3 w-3 flex-shrink-0 items-center justify-center"
-                  >
-                    {p.active && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    )}
-                  </span>
-                  <span
-                    className={cn(
-                      "truncate block text-[15px] font-normal",
-                      p.active && "[text-shadow:0_0_0.4px_currentColor]"
-                    )}
-                  >
-                    {p.name}
-                  </span>
-                </div>
-                <div className="relative z-10 flex items-center gap-1.5 flex-shrink-0">
-                  <span
-                    className={cn(
-                      "text-[13px] tabular-nums",
-                      p.active
-                        ? "text-primary/70"
-                        : "text-muted-foreground/40"
-                    )}
-                  >
-                    {p.timeAgo}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </nav>
-        </div>
-      </div>
-
-      <div className="border-t border-border/50 p-3">
-        <div className="w-full flex items-center gap-3 p-2 rounded-lg text-left">
-          <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-medium text-neutral-300 flex-shrink-0">
-            EP
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">emily-park</p>
-            <p className="text-xs text-muted-foreground truncate">
-              emily@acme.dev
-            </p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-        </div>
-      </div>
     </div>
   );
 }
@@ -219,57 +122,39 @@ function MockEditorTile() {
 
 function HeroBody() {
   return (
-    <div className="relative z-10 w-full flex flex-col items-center">
-      <div className="mx-auto max-w-4xl w-full px-6 pt-24">
-        <div className="rounded-2xl border border-neutral-800 bg-background overflow-hidden shadow-2xl shadow-black/70">
-          <div className="flex h-[480px]">
-            <aside className="h-full w-60 flex-shrink-0 border-r border-border/50">
-              <MockSidebar />
-            </aside>
-            <main className="flex-1 h-full min-w-0">
-              <MockEditorTile />
-            </main>
+    <div className="relative z-10 w-full">
+      <div className="mx-auto max-w-6xl w-full px-6 py-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-center">
+          <div>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold text-neutral-100 leading-[1.02] tracking-tight">
+              Your secrets are none of our business.
+            </h1>
+            <p className="mt-6 text-lg text-neutral-400 max-w-xl">
+              A secrets manager built so that even we can't read what's in
+              it. Open source. Free. Unapologetically small.
+            </p>
+            <div className="mt-10 flex flex-wrap items-center gap-3">
+              <PrimaryCTA href="/app/login">
+                <span>Open dashboard</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </PrimaryCTA>
+              <GhostCTA href="https://github.com/cryptly-dev/cryptly">
+                <GitHubIcon className="h-4 w-4" />
+                <span>Source on GitHub</span>
+              </GhostCTA>
+              <GhostCTA href="/blog">
+                <Newspaper className="h-4 w-4" />
+                <span>Blog</span>
+              </GhostCTA>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div
-        className="mx-auto max-w-4xl w-full px-6 pb-24 text-center"
-        style={{ marginTop: "2rem" }}
-      >
-        <h1 className="text-5xl md:text-7xl font-semibold text-neutral-100 leading-[1.02] tracking-tight">
-          Secrets should be{" "}
-          <span className="text-neutral-500">boring.</span>
-          <br />
-          We made them boring.
-        </h1>
-        <p className="mx-auto mt-6 text-lg text-neutral-400 max-w-2xl">
-          Cryptly stores your{" "}
-          <code className="text-neutral-200">.env</code> files encrypted in
-          your browser. Our servers hold the ciphertext. The only thing we
-          can see is that you exist.
-        </p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <PrimaryCTA href="/app/login">
-            <span>Open dashboard</span>
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </PrimaryCTA>
-          <GhostCTA href="https://github.com/cryptly-dev/cryptly">
-            <GitHubIcon className="h-4 w-4" />
-            <span>Source on GitHub</span>
-          </GhostCTA>
-        </div>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-neutral-500">
-          <span className="inline-flex items-center gap-1.5">
-            <Check className="h-3.5 w-3.5 text-neutral-400" /> End-to-end
-            encrypted
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Check className="h-3.5 w-3.5 text-neutral-400" /> Free, forever
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Check className="h-3.5 w-3.5 text-neutral-400" /> Open source
-          </span>
+          <div>
+            <div className="rounded-2xl border border-neutral-800 bg-background overflow-hidden shadow-2xl shadow-black/70">
+              <div className="h-[480px]">
+                <MockEditorTile />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
