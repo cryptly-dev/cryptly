@@ -81,6 +81,7 @@ export class BlogCoreController {
       excerpt: body.excerpt,
       coverImageUrl: body.coverImageUrl,
       authorId: userId,
+      createdAt: body.createdAt ? new Date(body.createdAt) : undefined,
     });
 
     const author = await this.userReadService.readByIdOrThrow(userId);
@@ -95,7 +96,11 @@ export class BlogCoreController {
     @Param('id') id: string,
     @Body() body: UpdateBlogPostBody,
   ): Promise<BlogPostSerialized> {
-    const post = await this.blogWriteService.update(id, body);
+    const { createdAt, ...rest } = body;
+    const post = await this.blogWriteService.update(id, {
+      ...rest,
+      createdAt: createdAt ? new Date(createdAt) : undefined,
+    });
     const author = await this.userReadService.readByIdOrThrow(post.authorId);
 
     return BlogPostSerializer.serialize(post, UserSerializer.serializePartial(author));

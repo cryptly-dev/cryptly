@@ -24,6 +24,7 @@ export interface CreateBlogPostDto {
   excerpt?: string;
   coverImageUrl?: string;
   slug?: string;
+  createdAt?: string;
 }
 
 export interface UpdateBlogPostDto {
@@ -32,6 +33,7 @@ export interface UpdateBlogPostDto {
   excerpt?: string;
   coverImageUrl?: string;
   slug?: string;
+  createdAt?: string;
 }
 
 export class BlogApi {

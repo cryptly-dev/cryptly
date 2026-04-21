@@ -244,22 +244,7 @@ function PricingSection() {
           <div className="mt-1 text-sm text-neutral-500">
             per seat · per month · per year · per whatever
           </div>
-          <div className="mt-6 space-y-2 text-sm text-left">
-            {[
-              "Unlimited projects",
-              "Unlimited secrets",
-              "Unlimited team members",
-              "Unlimited GitHub repos",
-              "Unlimited everything, honestly",
-            ].map((f) => (
-              <div
-                key={f}
-                className="flex items-center gap-2 text-neutral-300"
-              >
-                <Check className="h-4 w-4 text-neutral-500" /> {f}
-              </div>
-            ))}
-          </div>
+         
         </Card>
       </div>
     </SectionShell>
@@ -283,8 +268,7 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
     q: "How is it free — and will it stay free?",
     a: (
       <>
-        Cryptly is open source and runs on cheap infrastructure because it
-        stores ciphertext, not user data. There's no plaintext to process, no
+        Cryptly is open source and runs on cheap infrastructure. There's no plaintext to process, no
         AI to train, no analytics to sell. We{" "}
         <a
           href="https://cryptly.dev/blog/why-is-it-free"
@@ -420,18 +404,17 @@ function FinalCTA() {
           Stop Slack-messaging your .env files.
         </h2>
         <p className="mt-5 text-neutral-400 text-lg leading-relaxed">
-          Sign in with GitHub. Set a passphrase. Paste. You're done in three
+          Sign in. Set a passphrase. Paste. You're done in three
           minutes, and you'll never paste a secret into a DM again.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <PrimaryCTA href="/app/login">
-            <GitHubIcon className="h-4 w-4" />
-            <span>Sign in with GitHub</span>
+            <span>Sign in </span>
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </PrimaryCTA>
-          <GhostCTA href="https://github.com/cryptly-dev/cryptly">
+          <GhostCTA href="/blog">
             <Book className="h-4 w-4" />
-            <span>Read the docs</span>
+            <span>Read the blog</span>
           </GhostCTA>
         </div>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-neutral-500">

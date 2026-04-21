@@ -5,4 +5,5 @@ export class CreateBlogPostDto {
   public excerpt?: string;
   public coverImageUrl?: string;
   public authorId: string;
+  public createdAt?: Date;
 }

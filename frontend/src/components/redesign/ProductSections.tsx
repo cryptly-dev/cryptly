@@ -495,7 +495,7 @@ function InviteTeamsMethod() {
   return (
     <MethodWrap>
       <MethodIntro title="Invite a whole team at once.">
-        Define groups once — frontend, infra, on-call — and grant project access
+        Define groups once and grant project access
         to all of them with a single click. Coming soon.
       </MethodIntro>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
