@@ -3,19 +3,21 @@ import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 import {
   ArrowDownUp,
-  Calendar,
   Check,
   ChevronDown,
   Clock,
   Copy,
-  GitBranch,
+  KeyRound,
   Link2,
+  Lock,
   Minus,
+  Pencil,
   Plus,
   RefreshCw,
   Search,
   Shield,
   Sparkles,
+  Trash2,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -24,21 +26,14 @@ import { useEffect, useRef, useState } from "react";
 import { SectionShell } from "./common";
 
 function SectionTitle({
-  eyebrow,
   title,
   subtitle,
 }: {
-  eyebrow?: string;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
 }) {
   return (
     <div className="max-w-3xl mx-auto text-center">
-      {eyebrow && (
-        <div className="mb-4 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
-          {eyebrow}
-        </div>
-      )}
       <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-[1.1]">
         {title}
       </h2>
@@ -68,6 +63,96 @@ function Card({
   );
 }
 
+// ── Three-pillars section ────────────────────────────────────────────────────
+export function ThreePillarsSection() {
+  const pillars = [
+    {
+      Icon: Lock,
+      title: "Zero-trust storage.",
+      body: (
+        <>
+          Every secret is AES-256 encrypted inside your browser before it ever
+          leaves your device. Our database only ever sees a ciphertext blob —
+          we could not read your secrets if a court ordered us to.
+        </>
+      ),
+      accent: "text-sky-300",
+      tile: "bg-sky-500/10 border-sky-500/20 text-sky-300",
+    },
+    {
+      Icon: Users,
+      title: "Secure collaboration.",
+      body: (
+        <>
+          Invite your team into a project. The vault is re-wrapped for each
+          member's public key in your browser, so shared secrets stay
+          end-to-end encrypted. No plaintext. No "just Slack me the .env".{" "}
+          <a
+            href="https://cryptly.dev/blog/how-inviting-works"
+            target="_blank"
+            rel="noreferrer"
+            className="text-neutral-200 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
+          >
+            See how invites work
+          </a>
+          .
+        </>
+      ),
+      accent: "text-emerald-300",
+      tile: "bg-emerald-500/10 border-emerald-500/20 text-emerald-300",
+    },
+    {
+      Icon: null,
+      title: "GitHub Actions sync.",
+      body: (
+        <>
+          Push secrets straight into GitHub Actions with one click. Your
+          browser re-encrypts each value against the repo's public key. We
+          forward ciphertext — never see what's inside.
+        </>
+      ),
+      accent: "text-neutral-200",
+      tile: "bg-white/5 border-neutral-700/50 text-white",
+    },
+  ] as const;
+
+  return (
+    <SectionShell>
+      <SectionTitle
+        title="The whole pitch, in three lines."
+        subtitle="Storage, collaboration, and deployment — each one built so we never hold the key."
+      />
+      <div className="mt-20 md:mt-24 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 max-w-6xl mx-auto">
+        {pillars.map((p, i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-neutral-900 bg-neutral-950/60 p-6 md:p-7 flex flex-col"
+          >
+            <div
+              className={cn(
+                "h-10 w-10 rounded-xl border grid place-items-center",
+                p.tile
+              )}
+            >
+              {p.Icon ? (
+                <p.Icon className="h-5 w-5" />
+              ) : (
+                <GitHubIcon className="h-5 w-5" />
+              )}
+            </div>
+            <div className="mt-5 text-lg font-semibold text-neutral-100 tracking-tight">
+              {p.title}
+            </div>
+            <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+              {p.body}
+            </p>
+          </div>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
 // ── Invite section — 3 ways ──────────────────────────────────────────────────
 type InviteMethod = "link" | "suggested" | "teams";
 
@@ -77,7 +162,6 @@ export function InviteSection() {
   return (
     <SectionShell>
       <SectionTitle
-        eyebrow="Bring in your team"
         title="Three ways in. None of them leak your vault."
         subtitle="They generate their own keypair. We re-wrap the project key for them. Plaintext stays on your device."
       />
@@ -168,52 +252,102 @@ function MethodWrap({ children }: { children: React.ReactNode }) {
 }
 
 function InviteLinkMethod() {
-  const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedPass, setCopiedPass] = useState(false);
   const link = "cryptly.dev/invite/a3f9-k2m-7bxQ";
-  const handleCopy = () => {
-    navigator.clipboard?.writeText(`https://${link}`).catch(() => {});
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1400);
+  const tempPassphrase = "sunrise-otter-42";
+  const copy = (
+    text: string,
+    setter: (v: boolean) => void
+  ) => {
+    navigator.clipboard?.writeText(text).catch(() => {});
+    setter(true);
+    window.setTimeout(() => setter(false), 1400);
   };
   return (
     <MethodWrap>
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
-        <Link2 className="h-3 w-3" /> A link worth sharing
-      </div>
-      <div className="mt-3 text-xl font-semibold text-neutral-100">
-        Send a link. They unlock it with their own passphrase.
+      <div className="text-xl font-semibold text-neutral-100">
+        Two pieces. One of them is not the link.
       </div>
       <p className="mt-2 text-sm text-neutral-400">
-        The link is a handshake — not a key. Useless on its own.
+        Your browser mints a throwaway passphrase when it generates the link.
+        The receiver needs both — the link <em>and</em> the passphrase — to
+        join. Send them through different channels and you're done.{" "}
+        <a
+          href="https://cryptly.dev/blog/how-inviting-works"
+          target="_blank"
+          rel="noreferrer"
+          className="text-neutral-300 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
+        >
+          How it works →
+        </a>
       </p>
 
-      <div className="mt-6 rounded-xl border border-neutral-800 bg-black/50 p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex-1 rounded-md bg-neutral-950 border border-neutral-900 px-3 py-2 text-sm font-mono text-neutral-300 truncate">
-            https://{link}
+      <div className="mt-6 rounded-xl border border-neutral-800 bg-black/50 p-4 space-y-3">
+        <div>
+          <div className="mb-1.5 flex items-center gap-2 text-[10px] uppercase tracking-wider text-neutral-500">
+            <Link2 className="h-3 w-3" /> 1. The link — safe to share anywhere
           </div>
-          <button
-            type="button"
-            onClick={handleCopy}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm transition-colors",
-              copied
-                ? "border-emerald-700/50 text-emerald-400 bg-emerald-500/5"
-                : "bg-white text-black hover:bg-neutral-100 border-transparent"
-            )}
-          >
-            {copied ? (
-              <>
-                <Check className="h-3.5 w-3.5" /> Copied
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" /> Copy link
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 rounded-md bg-neutral-950 border border-neutral-900 px-3 py-2 text-sm font-mono text-neutral-300 truncate">
+              https://{link}
+            </div>
+            <button
+              type="button"
+              onClick={() => copy(`https://${link}`, setCopiedLink)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm transition-colors",
+                copiedLink
+                  ? "border-emerald-700/50 text-emerald-400 bg-emerald-500/5"
+                  : "bg-white text-black hover:bg-neutral-100 border-transparent"
+              )}
+            >
+              {copiedLink ? (
+                <>
+                  <Check className="h-3.5 w-3.5" /> Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5" /> Copy
+                </>
+              )}
+            </button>
+          </div>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+
+        <div>
+          <div className="mb-1.5 flex items-center gap-2 text-[10px] uppercase tracking-wider text-neutral-500">
+            <KeyRound className="h-3 w-3" /> 2. The one-time passphrase — send
+            it separately
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 rounded-md bg-neutral-950 border border-neutral-900 px-3 py-2 text-sm font-mono text-sky-300 truncate">
+              {tempPassphrase}
+            </div>
+            <button
+              type="button"
+              onClick={() => copy(tempPassphrase, setCopiedPass)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm transition-colors",
+                copiedPass
+                  ? "border-emerald-700/50 text-emerald-400 bg-emerald-500/5"
+                  : "bg-neutral-900 text-neutral-300 hover:bg-neutral-800 border-neutral-800"
+              )}
+            >
+              {copiedPass ? (
+                <>
+                  <Check className="h-3.5 w-3.5" /> Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5" /> Copy
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs pt-1">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 text-neutral-300">
             Role: Write
             <ChevronDown className="h-3 w-3 text-neutral-500" />
@@ -221,7 +355,6 @@ function InviteLinkMethod() {
           <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 text-neutral-300">
             <Clock className="h-3 w-3 text-neutral-500" />
             Expires in 24 hours
-            <ChevronDown className="h-3 w-3 text-neutral-500" />
           </div>
           <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 text-neutral-300">
             <Shield className="h-3 w-3 text-neutral-500" />
@@ -233,9 +366,9 @@ function InviteLinkMethod() {
       <div className="mt-5 flex items-start gap-2 text-xs text-neutral-500">
         <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0" />
         <span>
-          When they click it they generate their own keypair. Your browser
-          re-wraps the project key against their public key. At no point does a
-          plaintext secret leave your device.
+          The passphrase never hits our servers. Slack them the link, text them
+          the passphrase — if either channel leaks, the other half is still
+          useless.
         </span>
       </div>
     </MethodWrap>
@@ -458,26 +591,19 @@ function InviteTeamsMethod() {
   );
 }
 
-// ── GitHub sync section ──────────────────────────────────────────────────────
-type SyncStatus = "idle" | "pending" | "syncing" | "synced";
-
+// ── GitHub integration section ──────────────────────────────────────────────
 const SYNC_SECRETS = [
-  "DATABASE_URL",
-  "REDIS_URL",
-  "JWT_SECRET",
-  "STRIPE_SECRET_KEY",
-  "OPENAI_API_KEY",
-  "SENTRY_DSN",
-  "CLOUDFLARE_API_TOKEN",
-  "GITHUB_APP_PRIVATE_KEY",
+  { key: "DATABASE_URL", value: "postgres://u:p@db.internal/app" },
+  { key: "REDIS_URL", value: "redis://default:r3dis@redis:6379" },
+  { key: "JWT_SECRET", value: "kJ9f2LmN8aQq3PzVxT4wYrUi" },
+  { key: "STRIPE_SECRET_KEY", value: "sk_live_72Mky8qRt9tWnOpC" },
+  { key: "OPENAI_API_KEY", value: "sk-proj-AbcDef123xyz456" },
+  { key: "SENTRY_DSN", value: "https://abc@o42.ingest.sentry.io/99" },
 ];
 
 export function GithubSyncSection() {
-  const [status, setStatus] = useState<SyncStatus[]>(
-    SYNC_SECRETS.map(() => "pending")
-  );
+  const [pushedCount, setPushedCount] = useState(0);
   const [running, setRunning] = useState(false);
-  const [doneAt, setDoneAt] = useState<number | null>(null);
   const timersRef = useRef<number[]>([]);
 
   const clearTimers = () => {
@@ -488,211 +614,218 @@ export function GithubSyncSection() {
   const run = () => {
     clearTimers();
     setRunning(true);
-    setDoneAt(null);
-    setStatus(SYNC_SECRETS.map(() => "pending"));
+    setPushedCount(0);
 
     SYNC_SECRETS.forEach((_, i) => {
-      const startAt = 200 + i * 90;
       timersRef.current.push(
-        window.setTimeout(() => {
-          setStatus((prev) => {
-            const next = [...prev];
-            next[i] = "syncing";
-            return next;
-          });
-        }, startAt)
-      );
-      timersRef.current.push(
-        window.setTimeout(() => {
-          setStatus((prev) => {
-            const next = [...prev];
-            next[i] = "synced";
-            return next;
-          });
-        }, startAt + 260)
+        window.setTimeout(
+          () => setPushedCount(i + 1),
+          300 + i * 220
+        )
       );
     });
-    const total = 200 + SYNC_SECRETS.length * 90 + 260;
     timersRef.current.push(
-      window.setTimeout(() => {
-        setRunning(false);
-        setDoneAt(Math.round(total));
-      }, total)
+      window.setTimeout(
+        () => setRunning(false),
+        300 + SYNC_SECRETS.length * 220 + 200
+      )
     );
   };
 
   useEffect(() => {
-    run();
-    return clearTimers;
+    const t = window.setTimeout(run, 400);
+    return () => {
+      clearTimers();
+      window.clearTimeout(t);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const syncedCount = status.filter((s) => s === "synced").length;
-  const progress = (syncedCount / SYNC_SECRETS.length) * 100;
+  const done = !running && pushedCount === SYNC_SECRETS.length;
 
   return (
     <SectionShell>
       <SectionTitle
-        eyebrow="GitHub Actions · one-click sync"
-        title="Push every secret to every repo. Never decrypted on our side."
-        subtitle="Your browser decrypts locally, re-encrypts each value against each repo's public key, and calls the GitHub API. We forward ciphertext and a smile."
+        title="GitHub integration."
+        subtitle="Push every secret into GitHub Actions with one click. We re-encrypt each value against the repo's public key in your browser — GitHub gets what it expects, we never see plaintext."
       />
 
-      <div className="mt-20 md:mt-24 max-w-4xl mx-auto">
-        <Card className="overflow-hidden">
-          {/* Header — Cryptly → GitHub */}
-          <div className="px-5 py-4 border-b border-neutral-900 flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="grid place-items-center h-8 w-8 rounded-lg bg-white text-black font-bold text-xs">
-                c
+      <div className="mt-20 md:mt-24 max-w-6xl mx-auto">
+        <Card className="overflow-hidden p-0 bg-black">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+            {/* Left: Cryptly editor */}
+            <div className="flex flex-col border-b md:border-b-0 md:border-r border-neutral-900 bg-[#0a0a0a]">
+              <div className="flex items-center justify-between h-11 px-4 border-b border-neutral-900 bg-neutral-950/70">
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="grid place-items-center h-5 w-5 rounded-md bg-white text-black font-bold text-[10px]">
+                    c
+                  </div>
+                  <span className="text-neutral-300 font-mono">
+                    cryptly · production
+                  </span>
+                </div>
+                <span className="text-[10px] uppercase tracking-wider text-neutral-600">
+                  Editor
+                </span>
               </div>
-              <div className="text-sm">
-                <div className="text-neutral-200 font-medium">
-                  cryptly / production
-                </div>
-                <div className="text-[11px] text-neutral-500">
-                  {SYNC_SECRETS.length} secrets tracked
-                </div>
+              <div className="flex-1 font-mono text-[12px] leading-7 py-2">
+                {SYNC_SECRETS.map((r, i) => (
+                  <div
+                    key={r.key}
+                    className="flex items-baseline px-4 hover:bg-white/[0.02]"
+                  >
+                    <span className="w-6 text-right text-neutral-700 tabular-nums shrink-0 select-none">
+                      {i + 1}
+                    </span>
+                    <span className="ml-4 text-sky-400 shrink-0">{r.key}</span>
+                    <span className="text-neutral-600">=</span>
+                    <span className="text-neutral-500 truncate">
+                      {"•".repeat(Math.min(r.value.length, 22))}
+                    </span>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="flex-1 relative mx-2">
-              <div className="h-px bg-neutral-900 w-full" />
-              <motion.div
-                className="absolute inset-0 flex items-center"
-                animate={{ x: running ? ["0%", "100%"] : "0%" }}
-                transition={{
-                  duration: 1.6,
-                  repeat: running ? Infinity : 0,
-                  ease: "linear",
-                }}
-              >
-                <div className="h-1.5 w-10 rounded-full bg-gradient-to-r from-transparent via-sky-400 to-transparent" />
-              </motion.div>
-            </div>
-            <div className="flex items-center gap-2">
-              <GitHubIcon className="h-5 w-5" />
-              <div className="text-sm">
-                <div className="text-neutral-200 font-medium">
-                  cryptly-dev/api
-                </div>
-                <div className="text-[11px] text-neutral-500 inline-flex items-center gap-1">
-                  <GitBranch className="h-3 w-3" /> main
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="h-0.5 bg-neutral-900/80 relative">
-            <motion.div
-              className="absolute inset-y-0 left-0 bg-gradient-to-r from-sky-500 via-emerald-500 to-emerald-400"
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.25 }}
-            />
-          </div>
-
-          {/* Secret list */}
-          <div className="divide-y divide-neutral-900">
-            {SYNC_SECRETS.map((key, i) => {
-              const s = status[i];
-              return (
-                <div
-                  key={key}
-                  className="flex items-center gap-3 px-5 py-2.5"
+              <div className="p-4 border-t border-neutral-900 bg-neutral-950/40">
+                <button
+                  type="button"
+                  onClick={run}
+                  disabled={running}
+                  className={cn(
+                    "w-full inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
+                    running
+                      ? "bg-neutral-900 text-neutral-500 cursor-wait border border-neutral-800"
+                      : done
+                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/15"
+                        : "bg-white text-black hover:bg-neutral-100"
+                  )}
                 >
-                  <span className="font-mono text-sm text-sky-400 flex-1 truncate">
-                    {key}
-                  </span>
-                  <span className="text-[11px] text-neutral-600 font-mono hidden md:inline">
-                    {s === "synced" ? "pushed via GitHub API" : "re-encrypting locally"}
-                  </span>
-                  <div className="w-24 flex items-center justify-end">
-                    {s === "pending" && (
-                      <span className="text-[11px] text-neutral-600">
-                        queued
-                      </span>
-                    )}
-                    {s === "syncing" && (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] text-sky-400">
-                        <span className="h-3 w-3 rounded-full border-2 border-sky-400/30 border-t-sky-400 animate-spin" />
-                        pushing
-                      </span>
-                    )}
-                    {s === "synced" && (
-                      <motion.span
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="inline-flex items-center gap-1.5 text-[11px] text-emerald-400"
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                        synced
-                      </motion.span>
-                    )}
+                  {running ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      Pushing {pushedCount}/{SYNC_SECRETS.length}…
+                    </>
+                  ) : done ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" />
+                      Synced · push again
+                    </>
+                  ) : (
+                    <>
+                      <GitHubIcon className="h-3.5 w-3.5" />
+                      Push to cryptly-dev/api
+                    </>
+                  )}
+                </button>
+                <div className="mt-2 text-[11px] text-neutral-500 text-center">
+                  Re-encrypted per repo · pushed via GitHub API
+                </div>
+              </div>
+            </div>
+
+            {/* Right: GitHub UI mimic */}
+            <div className="bg-[#0d1117] flex flex-col">
+              <div className="flex items-center gap-2 h-11 px-4 border-b border-[#30363d] text-[11px] text-[#8b949e]">
+                <GitHubIcon className="h-3.5 w-3.5 text-white" />
+                <span className="text-white">cryptly-dev / api</span>
+                <span>›</span>
+                <span>Settings</span>
+                <span>›</span>
+                <span>Secrets and variables</span>
+                <span>›</span>
+                <span className="text-white">Actions</span>
+              </div>
+              <div className="p-5 flex-1">
+                <h3 className="text-[#e6edf3] text-[20px] font-semibold leading-tight">
+                  Actions secrets and variables
+                </h3>
+                <p className="mt-2 text-[13px] text-[#8b949e] leading-relaxed">
+                  Secrets and variables allow you to manage reusable
+                  configuration data.{" "}
+                  <span className="text-[#4493f8]">Learn more.</span>
+                </p>
+
+                <div className="mt-4 flex items-center gap-5 border-b border-[#30363d]">
+                  <div className="relative pb-2 text-[13px] text-[#e6edf3] font-medium">
+                    Secrets
+                    <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-[#f78166]" />
+                  </div>
+                  <div className="pb-2 text-[13px] text-[#8b949e]">
+                    Variables
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Footer / CTA */}
-          <div className="px-5 py-4 border-t border-neutral-900 flex items-center justify-between gap-3 bg-black/30">
-            <div className="text-xs text-neutral-500">
-              {running ? (
-                <span>
-                  Pushing{" "}
-                  <span className="text-neutral-200 tabular-nums">
-                    {syncedCount}
-                  </span>{" "}
-                  of {SYNC_SECRETS.length} · ciphertext only
-                </span>
-              ) : doneAt != null ? (
-                <span className="text-emerald-400 inline-flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5" />
-                  {SYNC_SECRETS.length} secrets synced in {doneAt}ms
-                </span>
-              ) : (
-                <span>Ready to sync</span>
-              )}
+                <div className="mt-5 flex items-center justify-between">
+                  <h4 className="text-[#e6edf3] text-[14px] font-semibold">
+                    Repository secrets
+                  </h4>
+                  <button
+                    type="button"
+                    className="rounded-md bg-[#238636] hover:bg-[#2ea043] px-3 py-1.5 text-[12px] font-medium text-white border border-[#2ea043]/40"
+                  >
+                    New repository secret
+                  </button>
+                </div>
+
+                <div className="mt-3 rounded-md border border-[#30363d] bg-[#0d1117] overflow-hidden">
+                  <div className="grid grid-cols-[1fr_140px_80px] items-center gap-2 px-4 h-9 bg-[#161b22] border-b border-[#30363d] text-[11px] font-medium text-[#8b949e]">
+                    <span>Name</span>
+                    <span>Last updated</span>
+                    <span />
+                  </div>
+
+                  {pushedCount === 0 ? (
+                    <div className="px-4 py-10 text-center text-[13px] text-[#8b949e]">
+                      This environment has no secrets.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-[#21262d]">
+                      <AnimatePresence initial={false}>
+                        {SYNC_SECRETS.slice(0, pushedCount).map((r, i) => (
+                          <motion.div
+                            key={r.key}
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.25 }}
+                            className="grid grid-cols-[1fr_140px_80px] items-center gap-2 px-4 h-10 text-[13px] hover:bg-white/[0.02]"
+                          >
+                            <span className="flex items-center gap-2 text-[#e6edf3] min-w-0">
+                              <Lock className="h-3.5 w-3.5 text-[#8b949e] shrink-0" />
+                              <span className="font-mono truncate">
+                                {r.key}
+                              </span>
+                            </span>
+                            <span className="text-[#8b949e]">
+                              {i === pushedCount - 1 && running
+                                ? "just now"
+                                : "just now"}
+                            </span>
+                            <span className="flex items-center gap-3 justify-end text-[#8b949e]">
+                              <Pencil className="h-3.5 w-3.5 hover:text-[#e6edf3]" />
+                              <Trash2 className="h-3.5 w-3.5 hover:text-[#e6edf3]" />
+                            </span>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
+
+                {done && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="mt-4 inline-flex items-center gap-2 text-[12px] text-emerald-400"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    {SYNC_SECRETS.length} secrets pushed — all encrypted against
+                    this repo's public key
+                  </motion.div>
+                )}
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={run}
-              disabled={running}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                running
-                  ? "bg-neutral-900 text-neutral-500 cursor-wait"
-                  : "bg-white text-black hover:bg-neutral-100"
-              )}
-            >
-              <RefreshCw
-                className={cn("h-3.5 w-3.5", running && "animate-spin")}
-              />
-              {running ? "Syncing…" : doneAt != null ? "Sync again" : "Push to GitHub"}
-            </button>
           </div>
         </Card>
-
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-neutral-500">
-          <div className="rounded-xl border border-neutral-900 bg-neutral-950/40 px-4 py-3">
-            <div className="text-neutral-200 font-medium text-sm">
-              Decrypted locally
-            </div>
-            <div className="mt-1">Your passphrase unwraps the project key in your browser.</div>
-          </div>
-          <div className="rounded-xl border border-neutral-900 bg-neutral-950/40 px-4 py-3">
-            <div className="text-neutral-200 font-medium text-sm">
-              Re-encrypted per repo
-            </div>
-            <div className="mt-1">Each value is wrapped against GitHub's per-repo public key.</div>
-          </div>
-          <div className="rounded-xl border border-neutral-900 bg-neutral-950/40 px-4 py-3">
-            <div className="text-neutral-200 font-medium text-sm">
-              Pushed via GitHub API
-            </div>
-            <div className="mt-1">Our server relays the bytes — never sees them in the clear.</div>
-          </div>
-        </div>
       </div>
     </SectionShell>
   );
@@ -900,9 +1033,8 @@ export function HistorySection() {
   return (
     <SectionShell>
       <SectionTitle
-        eyebrow="History tab · the real thing"
-        title="Every save is a diff, with a face on it."
-        subtitle="The history tab of the app, rendered right here. Click a row, see the diff. Yes — it's the same component."
+        title="Time travel, with receipts."
+        subtitle="Every save becomes a signed diff. Scrub through months of rotations, filter by who touched what, and search inside the diff itself — decrypted only in your browser, never on our servers."
       />
 
       <div className="mt-20 md:mt-24 max-w-6xl mx-auto">
@@ -1025,34 +1157,9 @@ export function HistorySection() {
                   })
                 )}
               </div>
-              {/* Mini heatmap */}
+              {/* Heatmap — GitHub-style grid */}
               <div className="px-4 pt-3 pb-3 border-t border-border/50 bg-card/20">
-                <div className="flex items-end gap-0.5 h-10">
-                  {[1, 2, 4, 3, 6, 2, 1, 0, 3, 5, 7, 4, 2, 1, 3, 5, 8, 6, 3, 2, 1, 0, 4, 6, 9, 5, 3, 1, 2, 4].map(
-                    (n, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "flex-1 rounded-[2px]",
-                          n === 0 && "bg-neutral-900",
-                          n > 0 && n <= 2 && "bg-emerald-500/20",
-                          n > 2 && n <= 5 && "bg-emerald-500/40",
-                          n > 5 && "bg-emerald-500/70"
-                        )}
-                        style={{ height: `${20 + n * 8}%` }}
-                      />
-                    )
-                  )}
-                </div>
-                <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <Calendar className="h-2.5 w-2.5" />
-                    last 30 days
-                  </span>
-                  <span className="tabular-nums">
-                    {PATCHES.length} changes
-                  </span>
-                </div>
+                <HistoryHeatmap />
               </div>
               {/* Footer */}
               <div className="flex items-center justify-between gap-3 px-3 py-2 border-t border-border/50 bg-black/60 text-[11px] text-muted-foreground">
@@ -1174,6 +1281,92 @@ function HistoryChip({
     >
       {children}
     </button>
+  );
+}
+
+function HistoryHeatmap() {
+  const WEEKS = 22;
+  const SQ = 11;
+  const GAP = 3;
+  // Seeded pseudo-random sequence for stable visuals
+  const counts: number[] = [];
+  let seed = 0x9e3779b9;
+  for (let i = 0; i < WEEKS * 7; i++) {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    const r = seed / 0x7fffffff;
+    // bias toward mid-low values, with occasional bursts
+    const v = r < 0.4 ? 0 : r < 0.7 ? 1 + Math.floor(r * 3) : 3 + Math.floor(r * 7);
+    counts.push(v);
+  }
+  const intensity = (n: number) => {
+    if (n === 0) return "rgba(255,255,255,0.04)";
+    if (n === 1) return "rgba(96,165,250,0.35)";
+    if (n < 4) return "rgba(96,165,250,0.55)";
+    if (n < 8) return "rgba(96,165,250,0.8)";
+    return "rgb(96,165,250)";
+  };
+  const total = counts.reduce((a, b) => a + b, 0);
+  return (
+    <div>
+      <div className="flex items-start">
+        <div
+          className="relative flex-shrink-0 text-[9px] text-muted-foreground"
+          style={{ width: 22, height: 7 * (SQ + GAP) - GAP }}
+        >
+          <span className="absolute" style={{ top: (SQ + GAP) * 1 - 2 }}>
+            Mon
+          </span>
+          <span className="absolute" style={{ top: (SQ + GAP) * 3 - 2 }}>
+            Wed
+          </span>
+          <span className="absolute" style={{ top: (SQ + GAP) * 5 - 2 }}>
+            Fri
+          </span>
+        </div>
+        <div className="flex" style={{ gap: GAP }}>
+          {Array.from({ length: WEEKS }).map((_, w) => (
+            <div
+              key={w}
+              className="flex flex-col"
+              style={{ gap: GAP }}
+            >
+              {Array.from({ length: 7 }).map((_, d) => {
+                const n = counts[w * 7 + d];
+                return (
+                  <div
+                    key={d}
+                    className="rounded-[2px]"
+                    style={{
+                      width: SQ,
+                      height: SQ,
+                      backgroundColor: intensity(n),
+                    }}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-2 flex items-center justify-between text-[9px] text-muted-foreground">
+        <span className="tabular-nums">{total} changes · last {WEEKS}w</span>
+        <div className="flex items-center gap-1">
+          <span>Less</span>
+          {[0, 1, 3, 6, 9].map((n, i) => (
+            <span
+              key={i}
+              className="rounded-[2px]"
+              style={{
+                width: 10,
+                height: 10,
+                backgroundColor: intensity(n),
+              }}
+            />
+          ))}
+          <span>More</span>
+        </div>
+      </div>
+    </div>
   );
 }
 

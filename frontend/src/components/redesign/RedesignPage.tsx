@@ -20,6 +20,7 @@ import {
   GithubSyncSection,
   HistorySection,
   InviteSection,
+  ThreePillarsSection,
 } from "./ProductSections";
 import {
   CryptlyOnCryptlySection,
@@ -178,21 +179,14 @@ function HeroWithBeams() {
 }
 
 function SectionTitle({
-  eyebrow,
   title,
   subtitle,
 }: {
-  eyebrow?: string;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
 }) {
   return (
     <div className="max-w-3xl mx-auto text-center">
-      {eyebrow && (
-        <div className="mb-4 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
-          {eyebrow}
-        </div>
-      )}
       <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-[1.1]">
         {title}
       </h2>
@@ -224,7 +218,6 @@ function PricingSection() {
   return (
     <SectionShell>
       <SectionTitle
-        eyebrow="Pricing"
         title="$0. Every feature. Every seat."
         subtitle="We don't have a team plan because we don't have a personal plan to sell you up from."
       />
@@ -252,6 +245,18 @@ function PricingSection() {
                 <Check className="h-4 w-4 text-neutral-500" /> {f}
               </div>
             ))}
+          </div>
+          <div className="mt-6 pt-6 border-t border-neutral-900 text-sm text-neutral-400">
+            Wondering what the catch is?{" "}
+            <a
+              href="https://cryptly.dev/blog/why-is-it-free"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-neutral-200 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
+            >
+              Here's why it's free
+              <ArrowRight className="h-3.5 w-3.5" />
+            </a>
           </div>
         </Card>
       </div>
@@ -307,6 +312,7 @@ export function RedesignPage() {
   return (
     <div className="min-h-screen bg-black text-neutral-100">
       <HeroWithBeams />
+      <ThreePillarsSection />
       <DevToolsNetworkSection />
       <CryptlyOnCryptlySection />
       <GithubSyncSection />

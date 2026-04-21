@@ -4,21 +4,14 @@ import { useMemo, useRef, useState } from "react";
 import { fakeCiphertext, SectionShell } from "./common";
 
 function SectionTitle({
-  eyebrow,
   title,
   subtitle,
 }: {
-  eyebrow?: string;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
 }) {
   return (
     <div className="max-w-3xl mx-auto text-center">
-      {eyebrow && (
-        <div className="mb-4 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
-          {eyebrow}
-        </div>
-      )}
       <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-[1.1]">
         {title}
       </h2>
@@ -56,7 +49,6 @@ export function DevToolsNetworkSection() {
   return (
     <SectionShell>
       <SectionTitle
-        eyebrow="End-to-end encryption · zero trust"
         title="The only thing that leaves your browser is ciphertext."
         subtitle="Open DevTools. Watch the network tab. This is the literal request that hits our API when you save."
       />
@@ -86,9 +78,11 @@ export function DevToolsNetworkSection() {
           </div>
           <pre className="p-4 font-mono text-[12px] leading-5 text-neutral-400 break-all whitespace-pre-wrap">
             <span className="text-neutral-600">{"{"}</span>
+            {"\n  "}
             <span className="text-sky-400">"encryptedSecrets"</span>
             <span className="text-neutral-500">: </span>
             <span className="text-neutral-500">"{CIPHERTEXT}"</span>
+            {"\n"}
             <span className="text-neutral-600">{"}"}</span>
           </pre>
           <div className="px-4 py-2 border-t border-neutral-900 text-[11px] text-neutral-500">
@@ -121,13 +115,12 @@ export function CryptlyOnCryptlySection() {
   return (
     <SectionShell>
       <SectionTitle
-        eyebrow="We use Cryptly to store Cryptly's secrets"
-        title="Our actual production secrets."
+        title="This is what a breach of our servers would publish."
         subtitle={
           <>
-            Read raw from our database, right now. We can paste them on a
-            public landing page because there's nothing here to read. Don't
-            believe us? Here is a{" "}
+            Our own production secrets, pulled live from our database. We're
+            comfortable pasting them on a public landing page because there's
+            nothing here to read. Here is the{" "}
             <a
               href="https://github.com/cryptly-dev/cryptly/blob/main/frontend/src/components/Beams.tsx"
               target="_blank"
@@ -136,7 +129,7 @@ export function CryptlyOnCryptlySection() {
             >
               code fragment
             </a>{" "}
-            which does that!
+            that dumps them.
           </>
         }
       />
