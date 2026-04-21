@@ -3,6 +3,7 @@ import { ReviewsSection } from "@/components/index/ReviewsSection";
 import { BracketsIcon } from "@/components/ui/BracketsIcon";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { HistoryIcon } from "@/components/ui/HistoryIcon";
+import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 import { IconBrandGithub, IconUsers } from "@tabler/icons-react";
 import {
@@ -11,24 +12,17 @@ import {
   Check,
   ChevronDown,
   Code2,
-  Fingerprint,
   Heart,
   KeyRound,
   Lock,
   Newspaper,
   Send,
-  Server,
   Shield,
   UserPlus,
 } from "lucide-react";
-import {
-  GhostCTA,
-  HoverRevealMask,
-  MockEnvEditor,
-  PrimaryCTA,
-  SectionShell,
-  fakeCiphertext,
-} from "./common";
+import { useEffect, useState } from "react";
+import { GhostCTA, HoverRevealMask, PrimaryCTA, SectionShell } from "./common";
+import { TWO_VIEWS_VARIANTS } from "./TwoViewsVariants";
 
 type Row = { key: string; value: string; comment?: boolean };
 
@@ -226,52 +220,64 @@ function Card({
   );
 }
 
-function TwoViewsSection() {
+function TwoViewsVariantSwitcher() {
+  const [index, setIndex] = useState(0);
+  const total = TWO_VIEWS_VARIANTS.length;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (
+        t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === "[") {
+        e.preventDefault();
+        setIndex((i) => (i - 1 + total) % total);
+      } else if (e.key === "]") {
+        e.preventDefault();
+        setIndex((i) => (i + 1) % total);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [total]);
+
+  const current = TWO_VIEWS_VARIANTS[index];
+
   return (
-    <SectionShell>
-      <SectionTitle
-        eyebrow="Zero knowledge, not zero effort"
-        title={
-          <>
-            This is what <span className="text-neutral-500">you</span> see.
-            <br />
-            This is what <span className="text-neutral-500">we</span> see.
-          </>
-        }
-        subtitle="Same data, two views. The only difference is whether the passphrase is on this device."
-      />
-      <div className="mt-20 md:mt-24 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="p-0 overflow-hidden">
-          <div className="px-4 py-2 border-b border-neutral-900 flex items-center justify-between text-xs text-neutral-500">
-            <span className="inline-flex items-center gap-1.5">
-              <Fingerprint className="h-3.5 w-3.5" /> You
-            </span>
-            <span>decrypted in-browser</span>
+    <>
+      {current.render()}
+      <div className="fixed bottom-4 right-4 z-50 select-none">
+        <div className="rounded-xl border border-neutral-800 bg-black/80 backdrop-blur px-4 py-3 shadow-2xl shadow-black/50 flex items-center gap-3 min-w-[280px]">
+          <div className="flex flex-col">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+              "You see / We see" variant
+            </div>
+            <div className="text-sm text-neutral-100 font-medium leading-tight mt-0.5">
+              {current.title}
+            </div>
+            <div className="text-[11px] text-neutral-500 leading-tight mt-0.5">
+              {current.concept}
+            </div>
           </div>
-          <div className="p-4">
-            <MockEnvEditor
-              showLineNumbers={false}
-              rows={[
-                { key: "DATABASE_URL", value: "postgres://u:p@db/app" },
-                { key: "JWT_SECRET", value: "kJ9f2LmN8aQq3PzVxT" },
-                { key: "STRIPE_KEY", value: "sk_live_abc123def456" },
-              ]}
-            />
+          <div className="ml-auto flex flex-col items-end gap-1.5">
+            <div className="font-mono text-sm text-neutral-200 tabular-nums">
+              {index + 1}
+              <span className="text-neutral-600"> / {total}</span>
+            </div>
+            <div className="flex items-center gap-1 text-neutral-500">
+              <Kbd className="!bg-neutral-800 !text-neutral-200">[</Kbd>
+              <Kbd className="!bg-neutral-800 !text-neutral-200">]</Kbd>
+            </div>
           </div>
-        </Card>
-        <Card className="p-0 overflow-hidden">
-          <div className="px-4 py-2 border-b border-neutral-900 flex items-center justify-between text-xs text-neutral-500">
-            <span className="inline-flex items-center gap-1.5">
-              <Server className="h-3.5 w-3.5" /> Our servers
-            </span>
-            <span>ciphertext only</span>
-          </div>
-          <div className="p-4 font-mono text-[11px] leading-5 text-neutral-500 break-all">
-            {fakeCiphertext("cryptly-two-views", 520)}
-          </div>
-        </Card>
+        </div>
       </div>
-    </SectionShell>
+    </>
   );
 }
 
@@ -396,7 +402,7 @@ export function RedesignPage() {
   return (
     <div className="min-h-screen bg-black text-neutral-100">
       <HeroWithBeams />
-      <TwoViewsSection />
+      <TwoViewsVariantSwitcher />
       <InviteSection />
       <PricingSection />
       <ReviewsSection />
