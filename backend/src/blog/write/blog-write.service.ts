@@ -27,6 +27,9 @@ export class BlogWriteService {
       excerpt: dto.excerpt,
       coverImageUrl: dto.coverImageUrl,
       authorId: new Types.ObjectId(dto.authorId),
+      ...(dto.createdAt
+        ? { createdAt: dto.createdAt, updatedAt: dto.createdAt }
+        : {}),
     });
 
     return BlogPostSerializer.normalize(post);
@@ -49,6 +52,7 @@ export class BlogWriteService {
     if (dto.content !== undefined) updateQuery.content = dto.content;
     if (dto.excerpt !== undefined) updateQuery.excerpt = dto.excerpt;
     if (dto.coverImageUrl !== undefined) updateQuery.coverImageUrl = dto.coverImageUrl;
+    if (dto.createdAt !== undefined) updateQuery.createdAt = dto.createdAt;
 
     const post = await this.blogPostModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },

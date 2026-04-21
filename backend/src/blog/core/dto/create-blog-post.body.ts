@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateBlogPostBody {
   @ApiProperty()
@@ -28,4 +34,9 @@ export class CreateBlogPostBody {
   @IsOptional()
   @IsString()
   public slug?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  public createdAt?: string;
 }
