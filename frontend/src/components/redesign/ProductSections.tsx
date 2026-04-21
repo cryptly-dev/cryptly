@@ -313,16 +313,15 @@ function InviteLinkMethod() {
   };
   return (
     <MethodWrap>
-      <MethodIntro title="Link + passphrase, over two channels.">
-        Cryptly mints a one-time link and a passphrase. Send the link in Slack,
-        the passphrase over text — a leaked link alone is useless.{" "}
+      <MethodIntro title="Link and a passphrase.">
+        Cryptly mints a one-time link and a passphrase. Send each over a different channel — a leaked link alone is useless.{" "}
         <a
           href="https://cryptly.dev/blog/how-inviting-works"
           target="_blank"
           rel="noreferrer"
           className="text-neutral-300 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
         >
-          How it works →
+          We wrote about it here.
         </a>
       </MethodIntro>
 
@@ -407,20 +406,11 @@ function InviteSuggestedMethod() {
       avatar: "/avatars/priya-patel.svg",
       reason: "Owns cryptly-dev/web-frontend",
     },
-    {
-      id: "nina",
-      name: "Nina Gupta",
-      handle: "ngupta",
-      avatar: "/avatars/nina-gupta.svg",
-      reason: "Reviewed 3 PRs in cryptly-dev/api",
-    },
   ];
   return (
     <MethodWrap>
       <MethodIntro title="Invite who's already around.">
-        We pull collaborators from the GitHub repos linked to this project — the
-        people who already ship with you. One click sends them a key-wrapped
-        invite.
+        We pull collaborators you've already worked with in your Cryptly projects.
       </MethodIntro>
       <div className="rounded-xl border border-neutral-800 bg-black/40 divide-y divide-neutral-900">
         {people.map((p) => {

@@ -101,17 +101,10 @@ export function DevToolsNetworkSection() {
 // career-ending mistake. Single wall of characters, no split cards.
 export function CryptlyOnCryptlySection() {
   const dump = useMemo(
-    () => fakeCiphertext("cryptly-on-cryptly-prod", 2400),
+    () => fakeCiphertext("cryptly-on-cryptly-prod", 1200),
     []
   );
-  const [copied, setCopied] = useState(false);
-  const timerRef = useRef<number | null>(null);
-  const handleCopy = () => {
-    navigator.clipboard?.writeText(dump).catch(() => {});
-    setCopied(true);
-    if (timerRef.current) window.clearTimeout(timerRef.current);
-    timerRef.current = window.setTimeout(() => setCopied(false), 1600);
-  };
+
   return (
     <SectionShell>
       <SectionTitle
@@ -137,36 +130,16 @@ export function CryptlyOnCryptlySection() {
           <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-900 text-xs">
             <div className="flex items-center gap-2 text-neutral-400">
               <Database className="h-3.5 w-3.5" />
-              <span className="font-mono">Cryptly (backend)</span>
+              <span className="font-mono">Some project</span>
             </div>
-            <button
-              type="button"
-              onClick={handleCopy}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] transition-colors",
-                copied
-                  ? "border-emerald-700/50 text-emerald-400 bg-emerald-500/5"
-                  : "border-neutral-800 text-neutral-400 hover:text-neutral-200 hover:border-neutral-700 bg-neutral-900/60"
-              )}
-              aria-label="Copy ciphertext"
-            >
-              {copied ? (
-                <>
-                  <Check className="h-3 w-3" /> Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3 w-3" /> Copy
-                </>
-              )}
-            </button>
+           
           </div>
           <div className="relative">
             <div
               className="p-5 md:p-6 font-mono text-[11px] md:text-[12px] leading-5 text-neutral-500 break-all overflow-hidden"
               style={{
                 display: "-webkit-box",
-                WebkitLineClamp: 5,
+                WebkitLineClamp: 3,
                 WebkitBoxOrient: "vertical",
               }}
             >
@@ -174,8 +147,8 @@ export function CryptlyOnCryptlySection() {
             </div>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-neutral-950/80 to-transparent" />
             <div className="px-5 pb-3 text-[11px] text-neutral-600 flex items-center gap-1">
-              <Lock className="h-3 w-3" /> AES-256-GCM · truncated for your
-              eyes — there's nothing else to see anyway
+              truncated for your
+              eyes
             </div>
           </div>
         </Card>
