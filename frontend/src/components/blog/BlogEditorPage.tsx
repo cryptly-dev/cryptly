@@ -16,6 +16,13 @@ interface BlogEditorPageProps {
   slug?: string;
 }
 
+function toLocalDateTimeInput(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 const PLACEHOLDER = `# Your next post
 
 Write in markdown on the left. Preview renders live on the right.
@@ -41,6 +48,8 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [slugInput, setSlugInput] = useState("");
+  const [releaseDate, setReleaseDate] = useState("");
   const [content, setContent] = useState(PLACEHOLDER);
   const [postId, setPostId] = useState<string | null>(null);
   const [loadingPost, setLoadingPost] = useState(mode === "edit");
@@ -59,6 +68,8 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
         setTitle(post.title);
         setExcerpt(post.excerpt ?? "");
         setCoverImageUrl(post.coverImageUrl ?? "");
+        setSlugInput(post.slug);
+        setReleaseDate(toLocalDateTimeInput(post.createdAt));
         setContent(post.content);
         setPostId(post.id);
       })
@@ -187,6 +198,8 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
         content,
         excerpt: excerpt.trim() || undefined,
         coverImageUrl: coverImageUrl.trim() || undefined,
+        slug: slugInput.trim() || undefined,
+        createdAt: releaseDate ? new Date(releaseDate).toISOString() : undefined,
       };
 
       if (mode === "create") {
@@ -208,7 +221,7 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
     } finally {
       setSaving(false);
     }
-  }, [jwtToken, title, content, excerpt, coverImageUrl, mode, postId, navigate]);
+  }, [jwtToken, title, content, excerpt, coverImageUrl, slugInput, releaseDate, mode, postId, navigate]);
 
   const handleDelete = useCallback(async () => {
     if (!jwtToken || !postId) return;
@@ -338,6 +351,21 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
               onChange={(e) => setCoverImageUrl(e.target.value)}
               onPaste={handleCoverImagePaste}
               placeholder="Cover image URL — or paste an image"
+              className="w-full bg-transparent text-sm text-neutral-300 placeholder:text-neutral-700 focus:outline-none border-b border-neutral-900 py-2"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input
+              type="text"
+              value={slugInput}
+              onChange={(e) => setSlugInput(e.target.value)}
+              placeholder="Slug (leave empty to auto-generate)"
+              className="w-full bg-transparent text-sm text-neutral-300 placeholder:text-neutral-700 focus:outline-none border-b border-neutral-900 py-2"
+            />
+            <input
+              type="datetime-local"
+              value={releaseDate}
+              onChange={(e) => setReleaseDate(e.target.value)}
               className="w-full bg-transparent text-sm text-neutral-300 placeholder:text-neutral-700 focus:outline-none border-b border-neutral-900 py-2"
             />
           </div>

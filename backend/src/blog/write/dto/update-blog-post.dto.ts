@@ -4,4 +4,5 @@ export class UpdateBlogPostDto {
   public content?: string;
   public excerpt?: string;
   public coverImageUrl?: string;
+  public createdAt?: Date;
 }
