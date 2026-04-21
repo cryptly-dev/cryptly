@@ -9,7 +9,6 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowRight,
   Book,
-  Check,
   Code2,
   Heart,
   KeyRound,
