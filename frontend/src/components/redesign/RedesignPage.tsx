@@ -3,7 +3,6 @@ import { ReviewsSection } from "@/components/index/ReviewsSection";
 import { BracketsIcon } from "@/components/ui/BracketsIcon";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { HistoryIcon } from "@/components/ui/HistoryIcon";
-import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
 import { IconBrandGithub, IconUsers } from "@tabler/icons-react";
 import {
@@ -20,9 +19,11 @@ import {
   Shield,
   UserPlus,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { GhostCTA, HoverRevealMask, PrimaryCTA, SectionShell } from "./common";
-import { TWO_VIEWS_VARIANTS } from "./TwoViewsVariants";
+import {
+  CryptlyOnCryptlySection,
+  DevToolsNetworkSection,
+} from "./SecuritySections";
 
 type Row = { key: string; value: string; comment?: boolean };
 
@@ -220,67 +221,6 @@ function Card({
   );
 }
 
-function TwoViewsVariantSwitcher() {
-  const [index, setIndex] = useState(0);
-  const total = TWO_VIEWS_VARIANTS.length;
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (
-        t &&
-        (t.tagName === "INPUT" ||
-          t.tagName === "TEXTAREA" ||
-          t.isContentEditable)
-      ) {
-        return;
-      }
-      if (e.key === "[") {
-        e.preventDefault();
-        setIndex((i) => (i - 1 + total) % total);
-      } else if (e.key === "]") {
-        e.preventDefault();
-        setIndex((i) => (i + 1) % total);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [total]);
-
-  const current = TWO_VIEWS_VARIANTS[index];
-
-  return (
-    <>
-      {current.render()}
-      <div className="fixed bottom-4 right-4 z-50 select-none">
-        <div className="rounded-xl border border-neutral-800 bg-black/80 backdrop-blur px-4 py-3 shadow-2xl shadow-black/50 flex items-center gap-3 min-w-[280px]">
-          <div className="flex flex-col">
-            <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
-              "You see / We see" variant
-            </div>
-            <div className="text-sm text-neutral-100 font-medium leading-tight mt-0.5">
-              {current.title}
-            </div>
-            <div className="text-[11px] text-neutral-500 leading-tight mt-0.5">
-              {current.concept}
-            </div>
-          </div>
-          <div className="ml-auto flex flex-col items-end gap-1.5">
-            <div className="font-mono text-sm text-neutral-200 tabular-nums">
-              {index + 1}
-              <span className="text-neutral-600"> / {total}</span>
-            </div>
-            <div className="flex items-center gap-1 text-neutral-500">
-              <Kbd className="!bg-neutral-800 !text-neutral-200">[</Kbd>
-              <Kbd className="!bg-neutral-800 !text-neutral-200">]</Kbd>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
 function InviteSection() {
   return (
     <SectionShell>
@@ -402,7 +342,8 @@ export function RedesignPage() {
   return (
     <div className="min-h-screen bg-black text-neutral-100">
       <HeroWithBeams />
-      <TwoViewsVariantSwitcher />
+      <DevToolsNetworkSection />
+      <CryptlyOnCryptlySection />
       <InviteSection />
       <PricingSection />
       <ReviewsSection />
