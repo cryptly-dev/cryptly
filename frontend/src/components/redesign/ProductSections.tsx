@@ -1,11 +1,13 @@
+import { BracketsIcon } from "@/components/ui/BracketsIcon";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
+import { HistoryIcon } from "@/components/ui/HistoryIcon";
 import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
+import { IconBrandGithub, IconUsers } from "@tabler/icons-react";
 import {
   ArrowDownUp,
   Check,
-  ChevronDown,
-  Clock,
+  CloudUpload,
   Copy,
   KeyRound,
   Link2,
@@ -13,9 +15,7 @@ import {
   Minus,
   Pencil,
   Plus,
-  RefreshCw,
   Search,
-  Shield,
   Sparkles,
   Trash2,
   UserPlus,
@@ -59,6 +59,42 @@ function Card({
       )}
     >
       {children}
+    </div>
+  );
+}
+
+function GithubEditorTabs() {
+  const tabs = [
+    { id: "editor", label: "Editor", Icon: BracketsIcon, active: true },
+    { id: "history", label: "History", Icon: HistoryIcon, active: false },
+    { id: "members", label: "Members", Icon: IconUsers, active: false },
+    {
+      id: "integrations",
+      label: "GitHub secrets",
+      Icon: IconBrandGithub,
+      active: false,
+    },
+  ];
+  return (
+    <div className="flex h-14 items-center justify-between px-3 border-b border-border/50 bg-card/20 backdrop-blur-sm flex-shrink-0">
+      <div className="flex items-center gap-1">
+        {tabs.map((t) => (
+          <div
+            key={t.id}
+            className={cn(
+              "relative flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md",
+              t.active ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            {t.active && (
+              <div className="absolute inset-0 bg-neutral-800 rounded-md" />
+            )}
+            <t.Icon className="relative z-10 size-4" />
+            <span className="relative z-10">{t.label}</span>
+          </div>
+        ))}
+      </div>
+      <div />
     </div>
   );
 }
@@ -161,12 +197,9 @@ export function InviteSection() {
 
   return (
     <SectionShell>
-      <SectionTitle
-        title="Three ways in. None of them leak your vault."
-        subtitle="They generate their own keypair. We re-wrap the project key for them. Plaintext stays on your device."
-      />
+      <SectionTitle title="Bring your team." />
 
-      <div className="mt-20 md:mt-24 max-w-4xl mx-auto">
+      <div className="mt-16 md:mt-20 max-w-3xl mx-auto">
         <div className="flex items-center justify-center mb-6">
           <div className="inline-flex rounded-full border border-neutral-800 bg-neutral-950/60 p-1">
             {(
@@ -225,7 +258,7 @@ export function InviteSection() {
           </div>
         </div>
 
-        <Card className="overflow-hidden min-h-[320px]">
+        <Card className="overflow-hidden min-h-[260px]">
           <AnimatePresence mode="wait">
             {method === "link" && <InviteLinkMethod key="link" />}
             {method === "suggested" && <InviteSuggestedMethod key="suggested" />}
@@ -256,37 +289,17 @@ function InviteLinkMethod() {
   const [copiedPass, setCopiedPass] = useState(false);
   const link = "cryptly.dev/invite/a3f9-k2m-7bxQ";
   const tempPassphrase = "sunrise-otter-42";
-  const copy = (
-    text: string,
-    setter: (v: boolean) => void
-  ) => {
+  const copy = (text: string, setter: (v: boolean) => void) => {
     navigator.clipboard?.writeText(text).catch(() => {});
     setter(true);
     window.setTimeout(() => setter(false), 1400);
   };
   return (
     <MethodWrap>
-      <div className="text-xl font-semibold text-neutral-100">
-        Two pieces. One of them is not the link.
-      </div>
-      <p className="mt-2 text-sm text-neutral-400">
-        Your browser mints a throwaway passphrase when it generates the link.
-        The receiver needs both — the link <em>and</em> the passphrase — to
-        join. Send them through different channels and you're done.{" "}
-        <a
-          href="https://cryptly.dev/blog/how-inviting-works"
-          target="_blank"
-          rel="noreferrer"
-          className="text-neutral-300 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
-        >
-          How it works →
-        </a>
-      </p>
-
-      <div className="mt-6 rounded-xl border border-neutral-800 bg-black/50 p-4 space-y-3">
+      <div className="space-y-3">
         <div>
           <div className="mb-1.5 flex items-center gap-2 text-[10px] uppercase tracking-wider text-neutral-500">
-            <Link2 className="h-3 w-3" /> 1. The link — safe to share anywhere
+            <Link2 className="h-3 w-3" /> Invite link
           </div>
           <div className="flex items-center gap-2">
             <div className="flex-1 rounded-md bg-neutral-950 border border-neutral-900 px-3 py-2 text-sm font-mono text-neutral-300 truncate">
@@ -303,13 +316,9 @@ function InviteLinkMethod() {
               )}
             >
               {copiedLink ? (
-                <>
-                  <Check className="h-3.5 w-3.5" /> Copied
-                </>
+                <Check className="h-3.5 w-3.5" />
               ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5" /> Copy
-                </>
+                <Copy className="h-3.5 w-3.5" />
               )}
             </button>
           </div>
@@ -317,8 +326,7 @@ function InviteLinkMethod() {
 
         <div>
           <div className="mb-1.5 flex items-center gap-2 text-[10px] uppercase tracking-wider text-neutral-500">
-            <KeyRound className="h-3 w-3" /> 2. The one-time passphrase — send
-            it separately
+            <KeyRound className="h-3 w-3" /> One-time passphrase · share separately
           </div>
           <div className="flex items-center gap-2">
             <div className="flex-1 rounded-md bg-neutral-950 border border-neutral-900 px-3 py-2 text-sm font-mono text-sky-300 truncate">
@@ -335,41 +343,25 @@ function InviteLinkMethod() {
               )}
             >
               {copiedPass ? (
-                <>
-                  <Check className="h-3.5 w-3.5" /> Copied
-                </>
+                <Check className="h-3.5 w-3.5" />
               ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5" /> Copy
-                </>
+                <Copy className="h-3.5 w-3.5" />
               )}
             </button>
           </div>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs pt-1">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 text-neutral-300">
-            Role: Write
-            <ChevronDown className="h-3 w-3 text-neutral-500" />
-          </div>
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 text-neutral-300">
-            <Clock className="h-3 w-3 text-neutral-500" />
-            Expires in 24 hours
-          </div>
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 text-neutral-300">
-            <Shield className="h-3 w-3 text-neutral-500" />
-            One-time
-          </div>
-        </div>
       </div>
 
-      <div className="mt-5 flex items-start gap-2 text-xs text-neutral-500">
-        <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-        <span>
-          The passphrase never hits our servers. Slack them the link, text them
-          the passphrase — if either channel leaks, the other half is still
-          useless.
-        </span>
+      <div className="mt-5 text-xs text-neutral-500">
+        Two factors, two channels.{" "}
+        <a
+          href="https://cryptly.dev/blog/how-inviting-works"
+          target="_blank"
+          rel="noreferrer"
+          className="text-neutral-300 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
+        >
+          How it works →
+        </a>
       </div>
     </MethodWrap>
   );
@@ -415,37 +407,25 @@ function InviteSuggestedMethod() {
   ];
   return (
     <MethodWrap>
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
-        <Sparkles className="h-3 w-3" /> Smart guesses, no snooping
+      <div className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-wider text-neutral-500">
+        <Sparkles className="h-3 w-3" /> From your GitHub collaborators
       </div>
-      <div className="mt-3 text-xl font-semibold text-neutral-100">
-        People your repo already trusts.
-      </div>
-      <p className="mt-2 text-sm text-neutral-400">
-        Pulled from your GitHub repo's collaborators in your browser. We don't
-        see this list — your browser just asks GitHub directly.
-      </p>
-
-      <div className="mt-6 rounded-xl border border-neutral-800 bg-black/40 divide-y divide-neutral-900">
+      <div className="rounded-xl border border-neutral-800 bg-black/40 divide-y divide-neutral-900">
         {people.map((p) => {
           const isAdded = !!added[p.id];
           return (
-            <div
-              key={p.id}
-              className="flex items-center gap-3 px-4 py-3"
-            >
+            <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">
               <img
                 src={p.avatar}
                 alt=""
-                className="h-8 w-8 rounded-full border border-neutral-800"
+                className="h-7 w-7 rounded-full border border-neutral-800"
               />
               <div className="flex-1 min-w-0">
                 <div className="text-sm text-neutral-200 truncate">
-                  {p.name}{" "}
-                  <span className="text-neutral-600 font-mono">@{p.handle}</span>
+                  {p.name}
                 </div>
-                <div className="text-xs text-neutral-500 truncate">
-                  {p.reason}
+                <div className="text-xs text-neutral-600 font-mono truncate">
+                  @{p.handle}
                 </div>
               </div>
               <button
@@ -473,15 +453,6 @@ function InviteSuggestedMethod() {
             </div>
           );
         })}
-      </div>
-
-      <div className="mt-5 flex items-start gap-2 text-xs text-neutral-500">
-        <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-        <span>
-          Your GitHub token never touches our backend. The "suggest" endpoint
-          is just <code className="text-neutral-300">fetch</code> from your
-          browser to github.com.
-        </span>
       </div>
     </MethodWrap>
   );
@@ -521,71 +492,36 @@ function InviteTeamsMethod() {
   ];
   return (
     <MethodWrap>
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
-        <Users className="h-3 w-3" /> Coming soon
+      <div className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-wider text-neutral-500">
+        <Users className="h-3 w-3" /> Preview · coming soon
       </div>
-      <div className="mt-3 text-xl font-semibold text-neutral-100">
-        Invite a whole team with a click.
-      </div>
-      <p className="mt-2 text-sm text-neutral-400">
-        Group collaborators into teams and manage their access in one place.
-        Launching alongside SSO later this year.
-      </p>
-
-      <div className="mt-6 relative rounded-xl border border-dashed border-neutral-800 bg-black/30 p-5">
-        <div className="absolute top-3 right-3 inline-flex items-center rounded-full bg-neutral-900 border border-neutral-800 px-2 py-0.5 text-[10px] uppercase tracking-wider text-neutral-400">
-          Preview
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {teams.map((t) => (
-            <div
-              key={t.name}
-              className="rounded-lg border border-neutral-900 bg-neutral-950/80 p-4"
-            >
-              <div className="flex -space-x-2">
-                {t.avatars.slice(0, 4).map((a, i) => (
-                  <img
-                    key={i}
-                    src={a}
-                    alt=""
-                    className="h-7 w-7 rounded-full border-2 border-neutral-950"
-                  />
-                ))}
-                {t.members > 4 && (
-                  <div className="h-7 w-7 rounded-full border-2 border-neutral-950 bg-neutral-900 text-[10px] text-neutral-400 flex items-center justify-center">
-                    +{t.members - 4}
-                  </div>
-                )}
-              </div>
-              <div className="mt-3 text-sm text-neutral-200 font-medium">
-                {t.name}
-              </div>
-              <div className="text-xs text-neutral-500">
-                {t.members} members
-              </div>
-              <button
-                type="button"
-                disabled
-                className="mt-3 w-full rounded-md border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 text-xs text-neutral-500 cursor-not-allowed"
-              >
-                Invite team
-              </button>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {teams.map((t) => (
+          <div
+            key={t.name}
+            className="rounded-lg border border-dashed border-neutral-800 bg-black/30 p-4"
+          >
+            <div className="flex -space-x-2">
+              {t.avatars.slice(0, 4).map((a, i) => (
+                <img
+                  key={i}
+                  src={a}
+                  alt=""
+                  className="h-7 w-7 rounded-full border-2 border-neutral-950"
+                />
+              ))}
+              {t.members > 4 && (
+                <div className="h-7 w-7 rounded-full border-2 border-neutral-950 bg-neutral-900 text-[10px] text-neutral-400 flex items-center justify-center">
+                  +{t.members - 4}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-5 text-xs text-neutral-500">
-        Want early access?{" "}
-        <a
-          href="https://github.com/cryptly-dev/cryptly/issues"
-          target="_blank"
-          rel="noreferrer"
-          className="text-neutral-300 underline decoration-neutral-700 underline-offset-4 hover:decoration-neutral-400"
-        >
-          Tell us in the issues
-        </a>
-        .
+            <div className="mt-3 text-sm text-neutral-200 font-medium">
+              {t.name}
+            </div>
+            <div className="text-xs text-neutral-500">{t.members} members</div>
+          </div>
+        ))}
       </div>
     </MethodWrap>
   );
@@ -653,76 +589,58 @@ export function GithubSyncSection() {
       <div className="mt-20 md:mt-24 max-w-6xl mx-auto">
         <Card className="overflow-hidden p-0 bg-black">
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-            {/* Left: Cryptly editor */}
-            <div className="flex flex-col border-b md:border-b-0 md:border-r border-neutral-900 bg-[#0a0a0a]">
-              <div className="flex items-center justify-between h-11 px-4 border-b border-neutral-900 bg-neutral-950/70">
-                <div className="flex items-center gap-2 text-xs">
-                  <div className="grid place-items-center h-5 w-5 rounded-md bg-white text-black font-bold text-[10px]">
-                    c
-                  </div>
-                  <span className="text-neutral-300 font-mono">
-                    cryptly · production
-                  </span>
-                </div>
-                <span className="text-[10px] uppercase tracking-wider text-neutral-600">
-                  Editor
-                </span>
-              </div>
-              <div className="flex-1 font-mono text-[12px] leading-7 py-2">
+            {/* Left: Cryptly editor — replica of the real product */}
+            <div className="relative flex flex-col border-b md:border-b-0 md:border-r border-neutral-900 bg-background">
+              <GithubEditorTabs />
+              <div className="font-mono text-[12px] leading-7 py-2">
                 {SYNC_SECRETS.map((r, i) => (
                   <div
                     key={r.key}
-                    className="flex items-baseline px-4 hover:bg-white/[0.02]"
+                    className="flex items-baseline px-0 hover:bg-white/[0.02]"
                   >
-                    <span className="w-6 text-right text-neutral-700 tabular-nums shrink-0 select-none">
+                    <span className="w-10 text-right text-neutral-700 tabular-nums shrink-0 select-none border-r border-neutral-900 py-0.5">
                       {i + 1}
                     </span>
-                    <span className="ml-4 text-sky-400 shrink-0">{r.key}</span>
+                    <span className="pl-4 pr-4 text-sky-400 shrink-0">
+                      {r.key}
+                    </span>
                     <span className="text-neutral-600">=</span>
-                    <span className="text-neutral-500 truncate">
+                    <span className="text-neutral-500 truncate pr-4">
                       {"•".repeat(Math.min(r.value.length, 22))}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="p-4 border-t border-neutral-900 bg-neutral-950/40">
-                <button
-                  type="button"
-                  onClick={run}
-                  disabled={running}
-                  className={cn(
-                    "w-full inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
-                    running
-                      ? "bg-neutral-900 text-neutral-500 cursor-wait border border-neutral-800"
-                      : done
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/15"
-                        : "bg-white text-black hover:bg-neutral-100"
-                  )}
-                >
-                  {running ? (
-                    <>
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                      Pushing {pushedCount}/{SYNC_SECRETS.length}…
-                    </>
-                  ) : done ? (
-                    <>
-                      <Check className="h-3.5 w-3.5" />
-                      Synced · push again
-                    </>
-                  ) : (
-                    <>
-                      <GitHubIcon className="h-3.5 w-3.5" />
-                      Push to cryptly-dev/api
-                    </>
-                  )}
-                </button>
-                <div className="mt-2 text-[11px] text-neutral-500 text-center">
-                  Re-encrypted per repo · pushed via GitHub API
+              {/* Floating Save+Push pill — matches real SavePushPill */}
+              <div className="absolute inset-x-0 bottom-4 flex justify-center pointer-events-none">
+                <div className="pointer-events-auto inline-flex rounded-md overflow-hidden shadow-lg shadow-black/60">
+                  <div className="inline-flex h-10 items-center gap-2 px-4 font-semibold whitespace-nowrap bg-primary text-primary-foreground border border-primary select-none">
+                    <Check className="h-4 w-4" />
+                    Saved
+                  </div>
+                  <button
+                    type="button"
+                    onClick={run}
+                    disabled={running}
+                    aria-label="Push to GitHub"
+                    className={cn(
+                      "h-10 w-10 grid place-items-center border border-l-0 border-neutral-800 bg-secondary/50 hover:bg-secondary text-neutral-200 transition-colors",
+                      running && "cursor-wait text-neutral-500"
+                    )}
+                  >
+                    {running ? (
+                      <span className="inline-block h-4 w-4 rounded-full border-2 border-neutral-500/40 border-t-neutral-300 animate-spin" />
+                    ) : done ? (
+                      <Check className="h-5 w-5 text-emerald-400" />
+                    ) : (
+                      <CloudUpload className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Right: GitHub UI mimic */}
+            {/* Right: GitHub UI mimic — fixed height so the card doesn't jump */}
             <div className="bg-[#0d1117] flex flex-col">
               <div className="flex items-center gap-2 h-11 px-4 border-b border-[#30363d] text-[11px] text-[#8b949e]">
                 <GitHubIcon className="h-3.5 w-3.5 text-white" />
@@ -734,7 +652,7 @@ export function GithubSyncSection() {
                 <span>›</span>
                 <span className="text-white">Actions</span>
               </div>
-              <div className="p-5 flex-1">
+              <div className="p-5 flex-1 flex flex-col">
                 <h3 className="text-[#e6edf3] text-[20px] font-semibold leading-tight">
                   Actions secrets and variables
                 </h3>
@@ -766,21 +684,25 @@ export function GithubSyncSection() {
                   </button>
                 </div>
 
-                <div className="mt-3 rounded-md border border-[#30363d] bg-[#0d1117] overflow-hidden">
-                  <div className="grid grid-cols-[1fr_140px_80px] items-center gap-2 px-4 h-9 bg-[#161b22] border-b border-[#30363d] text-[11px] font-medium text-[#8b949e]">
+                <div className="mt-3 rounded-md border border-[#30363d] bg-[#0d1117] overflow-hidden flex flex-col">
+                  <div className="grid grid-cols-[1fr_140px_80px] items-center gap-2 px-4 h-9 bg-[#161b22] border-b border-[#30363d] text-[11px] font-medium text-[#8b949e] flex-shrink-0">
                     <span>Name</span>
                     <span>Last updated</span>
                     <span />
                   </div>
-
-                  {pushedCount === 0 ? (
-                    <div className="px-4 py-10 text-center text-[13px] text-[#8b949e]">
-                      This environment has no secrets.
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-[#21262d]">
+                  {/* Reserve space so the card doesn't jump as rows append */}
+                  <div
+                    className="relative"
+                    style={{ height: SYNC_SECRETS.length * 40 }}
+                  >
+                    {pushedCount === 0 && (
+                      <div className="absolute inset-0 grid place-items-center text-[13px] text-[#8b949e]">
+                        This environment has no secrets.
+                      </div>
+                    )}
+                    <div className="absolute inset-0 divide-y divide-[#21262d]">
                       <AnimatePresence initial={false}>
-                        {SYNC_SECRETS.slice(0, pushedCount).map((r, i) => (
+                        {SYNC_SECRETS.slice(0, pushedCount).map((r) => (
                           <motion.div
                             key={r.key}
                             initial={{ opacity: 0, y: -6 }}
@@ -795,11 +717,7 @@ export function GithubSyncSection() {
                                 {r.key}
                               </span>
                             </span>
-                            <span className="text-[#8b949e]">
-                              {i === pushedCount - 1 && running
-                                ? "just now"
-                                : "just now"}
-                            </span>
+                            <span className="text-[#8b949e]">just now</span>
                             <span className="flex items-center gap-3 justify-end text-[#8b949e]">
                               <Pencil className="h-3.5 w-3.5 hover:text-[#e6edf3]" />
                               <Trash2 className="h-3.5 w-3.5 hover:text-[#e6edf3]" />
@@ -808,20 +726,22 @@ export function GithubSyncSection() {
                         ))}
                       </AnimatePresence>
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                {done && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="mt-4 inline-flex items-center gap-2 text-[12px] text-emerald-400"
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                    {SYNC_SECRETS.length} secrets pushed — all encrypted against
-                    this repo's public key
-                  </motion.div>
-                )}
+                <div className="mt-4 min-h-[20px] text-[12px]">
+                  {done && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="inline-flex items-center gap-2 text-emerald-400"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      {SYNC_SECRETS.length} secrets pushed — encrypted against
+                      this repo's public key
+                    </motion.span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
