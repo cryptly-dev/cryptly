@@ -12,6 +12,11 @@ import { VariantA7 } from "./A7";
 import { VariantA8 } from "./A8";
 import { VariantA9 } from "./A9";
 import { VariantA10 } from "./A10";
+import { VariantA11 } from "./A11";
+import { VariantA12 } from "./A12";
+import { VariantA13 } from "./A13";
+import { VariantA14 } from "./A14";
+import { VariantA15 } from "./A15";
 import { VariantB1 } from "./B1";
 import { VariantB2 } from "./B2";
 import { VariantB3 } from "./B3";
@@ -22,6 +27,11 @@ import { VariantB7 } from "./B7";
 import { VariantB8 } from "./B8";
 import { VariantB9 } from "./B9";
 import { VariantB10 } from "./B10";
+import { VariantB11 } from "./B11";
+import { VariantB12 } from "./B12";
+import { VariantB13 } from "./B13";
+import { VariantB14 } from "./B14";
+import { VariantB15 } from "./B15";
 import { VariantC1 } from "./C1";
 import { VariantC2 } from "./C2";
 import { VariantC3 } from "./C3";
@@ -32,6 +42,11 @@ import { VariantC7 } from "./C7";
 import { VariantC8 } from "./C8";
 import { VariantC9 } from "./C9";
 import { VariantC10 } from "./C10";
+import { VariantC11 } from "./C11";
+import { VariantC12 } from "./C12";
+import { VariantC13 } from "./C13";
+import { VariantC14 } from "./C14";
+import { VariantC15 } from "./C15";
 import { VariantD1 } from "./D1";
 import { VariantD2 } from "./D2";
 import { VariantD3 } from "./D3";
@@ -42,6 +57,11 @@ import { VariantD7 } from "./D7";
 import { VariantD8 } from "./D8";
 import { VariantD9 } from "./D9";
 import { VariantD10 } from "./D10";
+import { VariantD11 } from "./D11";
+import { VariantD12 } from "./D12";
+import { VariantD13 } from "./D13";
+import { VariantD14 } from "./D14";
+import { VariantD15 } from "./D15";
 
 const COMPONENTS: Record<string, ComponentType> = {
   a1: VariantA1,
@@ -54,6 +74,11 @@ const COMPONENTS: Record<string, ComponentType> = {
   a8: VariantA8,
   a9: VariantA9,
   a10: VariantA10,
+  a11: VariantA11,
+  a12: VariantA12,
+  a13: VariantA13,
+  a14: VariantA14,
+  a15: VariantA15,
   b1: VariantB1,
   b2: VariantB2,
   b3: VariantB3,
@@ -64,6 +89,11 @@ const COMPONENTS: Record<string, ComponentType> = {
   b8: VariantB8,
   b9: VariantB9,
   b10: VariantB10,
+  b11: VariantB11,
+  b12: VariantB12,
+  b13: VariantB13,
+  b14: VariantB14,
+  b15: VariantB15,
   c1: VariantC1,
   c2: VariantC2,
   c3: VariantC3,
@@ -74,6 +104,11 @@ const COMPONENTS: Record<string, ComponentType> = {
   c8: VariantC8,
   c9: VariantC9,
   c10: VariantC10,
+  c11: VariantC11,
+  c12: VariantC12,
+  c13: VariantC13,
+  c14: VariantC14,
+  c15: VariantC15,
   d1: VariantD1,
   d2: VariantD2,
   d3: VariantD3,
@@ -84,6 +119,11 @@ const COMPONENTS: Record<string, ComponentType> = {
   d8: VariantD8,
   d9: VariantD9,
   d10: VariantD10,
+  d11: VariantD11,
+  d12: VariantD12,
+  d13: VariantD13,
+  d14: VariantD14,
+  d15: VariantD15,
 };
 
 export function VariantPage() {

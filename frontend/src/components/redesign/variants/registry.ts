@@ -80,6 +80,41 @@ export const VARIANTS: VariantEntry[] = [
     subtitle: "Docs say 'ask James.' James left.",
     hook: "Redeploy a 2022 service. The README says ask James. James left in 2023.",
   },
+  {
+    slug: "a11",
+    formula: "A",
+    title: "The Formatted Disk",
+    subtitle: "A clean install, a lost .env",
+    hook: "You reinstalled the OS. The secrets reinstalled themselves as nothing.",
+  },
+  {
+    slug: "a12",
+    formula: "A",
+    title: "The Deleted Project",
+    subtitle: "rm -rf ~/Projects/old-stuff",
+    hook: "The side-project folder had the only copy. It's in Trash, and Trash is empty.",
+  },
+  {
+    slug: "a13",
+    formula: "A",
+    title: "The Hint That Didn't Help",
+    subtitle: "'the usual, but with the thing'",
+    hook: "Your passphrase hint was for you six months ago. Present-you is stumped.",
+  },
+  {
+    slug: "a14",
+    formula: "A",
+    title: "The Dead SSD",
+    subtitle: "Good hardware, one day at a time",
+    hook: "The drive with your .env is reading zero bytes today. SMART warned you last week.",
+  },
+  {
+    slug: "a15",
+    formula: "A",
+    title: "The Fresh Laptop",
+    subtitle: "New machine, old problem",
+    hook: "New laptop day. The dotfiles came over. The secrets did not.",
+  },
 
   /* ─────────────────────────── B · QUIET / MANIFESTO ─────────────────────────── */
   {
@@ -151,6 +186,41 @@ export const VARIANTS: VariantEntry[] = [
     title: "A Short Read",
     subtitle: "Chapters, unhurried",
     hook: "Five chapters. Eight minutes. One architecture.",
+  },
+  {
+    slug: "b11",
+    formula: "B",
+    title: "A Page of Quotes",
+    subtitle: "Two testimonials, treated as the main event",
+    hook: "Two cofounders, describing the part they didn't expect.",
+  },
+  {
+    slug: "b12",
+    formula: "B",
+    title: "The Site",
+    subtitle: "Quiet nav at top · features, plainly",
+    hook: "A small site, for a small vault. Three features, plainly.",
+  },
+  {
+    slug: "b13",
+    formula: "B",
+    title: "A Page of Numbers",
+    subtitle: "Stats, paced like a poem",
+    hook: "Four numbers, kept honest. All four small, and that's the point.",
+  },
+  {
+    slug: "b14",
+    formula: "B",
+    title: "A Visit",
+    subtitle: "A walk through the product, with a nav",
+    hook: "Three panes, in the order you'd meet them.",
+  },
+  {
+    slug: "b15",
+    formula: "B",
+    title: "Small and Used",
+    subtitle: "Manifesto voice, threaded with names and numbers",
+    hook: "Seventy-seven people. Eighty-nine projects. Thirty stars. One steady voice.",
   },
 
   /* ─────────────────────────── C · THE LEGAL CORNER ─────────────────────────── */
@@ -224,6 +294,41 @@ export const VARIANTS: VariantEntry[] = [
     subtitle: "Imagining the worst-case request",
     hook: "Suppose the worst letter a vendor could receive. This is what we'd send back.",
   },
+  {
+    slug: "c11",
+    formula: "C",
+    title: "The Depositions",
+    subtitle: "Sworn statements from the people on the vault",
+    hook: "Two statements, given voluntarily. Both describe the same architecture.",
+  },
+  {
+    slug: "c12",
+    formula: "C",
+    title: "In the Matter Of",
+    subtitle: "A case caption, then findings of fact",
+    hook: "In the matter of a secret, and the reach of those who hold it.",
+  },
+  {
+    slug: "c13",
+    formula: "C",
+    title: "Stipulated",
+    subtitle: "Two columns — what each party concedes",
+    hook: "What both sides are willing to agree on. Short column, either way.",
+  },
+  {
+    slug: "c14",
+    formula: "C",
+    title: "Chain of Custody",
+    subtitle: "One secret, traced end to end",
+    hook: "Exhibit A: a DATABASE_URL. Note the stretch in the middle where we are.",
+  },
+  {
+    slug: "c15",
+    formula: "C",
+    title: "Exhibits",
+    subtitle: "Five exhibits, submitted in support",
+    hook: "Five exhibits in support of one claim: we cannot read your secrets.",
+  },
 
   /* ─────────────────────────── D · HONEST TRANSFORMATION ─────────────────────────── */
   {
@@ -295,6 +400,41 @@ export const VARIANTS: VariantEntry[] = [
     title: "The Honest Arc",
     subtitle: "The four-stage arc, modest version",
     hook: "A small tool, a small arc, told straight.",
+  },
+  {
+    slug: "d11",
+    formula: "D",
+    title: "A Team of Four",
+    subtitle: "Four dossiers, one per company",
+    hook: "Four of seventy-seven teams, laid out quietly.",
+  },
+  {
+    slug: "d12",
+    formula: "D",
+    title: "The Daily Count",
+    subtitle: "Dashboard-style, with working nav",
+    hook: "The numbers we watch: 77, 89, 1,086, 30. Small today, slightly less small tomorrow.",
+  },
+  {
+    slug: "d13",
+    formula: "D",
+    title: "A Month of Quiet",
+    subtitle: "One team, four weeks, threaded with a cofounder's voice",
+    hook: "signosh came on in february. This is what happened next.",
+  },
+  {
+    slug: "d14",
+    formula: "D",
+    title: "Arrivals",
+    subtitle: "Four months, four named teams",
+    hook: "A log of who came, and when. Seventy-three others came quietly.",
+  },
+  {
+    slug: "d15",
+    formula: "D",
+    title: "A Note, From Us",
+    subtitle: "A first-person letter, threaded with numbers and voices",
+    hook: "A short letter, in place of a landing page. We think it's the better form.",
   },
 ];
 
