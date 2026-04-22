@@ -38,7 +38,7 @@ const D1E_FEATURES = [
   {
     n: "i",
     t: "Write and save secrets.",
-    b: "In the browser. Paste the value, hit save; the browser encrypts before the request leaves the tab. The server stores ciphertext and nothing else.",
+    b: "In the browser. Paste the value, hit save; the browser encrypts it with a key derived — locally — from a passphrase only you know. The passphrase never reaches us. The server stores ciphertext and nothing else.",
   },
   {
     n: "ii",
