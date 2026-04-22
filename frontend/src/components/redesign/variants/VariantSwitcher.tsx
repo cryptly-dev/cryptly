@@ -8,44 +8,12 @@ import {
   LayoutGrid,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import {
-  VARIANTS,
-  formulaDescription,
-  type VariantEntry,
-  type VariantFormula,
-} from "./registry";
-
-const FORMULA_TINT: Record<
-  VariantFormula,
-  { pill: string; badge: string; active: string }
-> = {
-  A: {
-    pill: "bg-sky-500/15 text-sky-300 border-sky-500/30",
-    badge: "bg-sky-500/10 text-sky-300 border-sky-500/30",
-    active: "bg-sky-500/20 text-sky-200 border-sky-500/40",
-  },
-  B: {
-    pill: "bg-neutral-500/15 text-neutral-200 border-neutral-500/30",
-    badge: "bg-neutral-500/10 text-neutral-200 border-neutral-500/30",
-    active: "bg-neutral-500/20 text-neutral-100 border-neutral-500/40",
-  },
-  C: {
-    pill: "bg-amber-500/15 text-amber-200 border-amber-500/30",
-    badge: "bg-amber-500/10 text-amber-200 border-amber-500/30",
-    active: "bg-amber-500/20 text-amber-100 border-amber-500/40",
-  },
-  D: {
-    pill: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-    badge: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
-    active: "bg-emerald-500/20 text-emerald-200 border-emerald-500/40",
-  },
-};
+import { useEffect, useState } from "react";
+import { VARIANTS, type VariantEntry } from "./registry";
 
 export function VariantSwitcher({ current }: { current: VariantEntry }) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [tab, setTab] = useState<VariantFormula>(current.formula);
 
   const currentIdx = VARIANTS.findIndex((v) => v.slug === current.slug);
   const prev = VARIANTS[(currentIdx - 1 + VARIANTS.length) % VARIANTS.length];
@@ -71,23 +39,6 @@ export function VariantSwitcher({ current }: { current: VariantEntry }) {
     return () => window.removeEventListener("keydown", handle);
   }, [prev.slug, next.slug]);
 
-  useEffect(() => {
-    if (open) setTab(current.formula);
-  }, [open, current.formula]);
-
-  const grouped = useMemo(() => {
-    const map: Record<VariantFormula, VariantEntry[]> = {
-      A: [],
-      B: [],
-      C: [],
-      D: [],
-    };
-    for (const v of VARIANTS) map[v.formula].push(v);
-    return map;
-  }, []);
-
-  const tint = FORMULA_TINT[current.formula];
-
   return (
     <>
       <AnimatePresence>
@@ -111,7 +62,7 @@ export function VariantSwitcher({ current }: { current: VariantEntry }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.18, ease: [0.22, 0.61, 0.36, 1] }}
-            className="fixed left-1/2 top-[6vh] z-[100] -translate-x-1/2 w-[min(760px,94vw)] max-h-[88vh] overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950/95 backdrop-blur-xl shadow-2xl flex flex-col"
+            className="fixed left-1/2 top-[6vh] z-[100] -translate-x-1/2 w-[min(640px,94vw)] max-h-[88vh] overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950/95 backdrop-blur-xl shadow-2xl flex flex-col"
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-900">
               <div>
@@ -119,7 +70,7 @@ export function VariantSwitcher({ current }: { current: VariantEntry }) {
                   Landing variants
                 </div>
                 <div className="mt-0.5 text-lg font-medium text-neutral-100">
-                  Fifteen candidates. Four angles.
+                  Two candidates.
                 </div>
               </div>
               <button
@@ -130,49 +81,10 @@ export function VariantSwitcher({ current }: { current: VariantEntry }) {
               </button>
             </div>
 
-            <div className="flex items-center gap-1 px-4 pt-4 border-b border-neutral-900">
-              {(Object.keys(grouped) as VariantFormula[]).map((f) => {
-                const items = grouped[f];
-                const isActive = tab === f;
-                return (
-                  <button
-                    key={f}
-                    onClick={() => setTab(f)}
-                    className={cn(
-                      "relative px-4 py-2.5 text-sm transition-colors",
-                      isActive ? "text-neutral-100" : "text-neutral-500 hover:text-neutral-300"
-                    )}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-sm text-[10px] font-mono font-semibold border",
-                          FORMULA_TINT[f].badge
-                        )}
-                      >
-                        {f}
-                      </span>
-                      <span>{formulaDescription(f)}</span>
-                      <span className="text-[10px] text-neutral-600 tabular-nums">
-                        {items.length}
-                      </span>
-                    </span>
-                    {isActive && (
-                      <motion.div
-                        layoutId="tab-underline"
-                        className="absolute -bottom-px left-2 right-2 h-px bg-neutral-100"
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
             <div className="overflow-y-auto p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {grouped[tab].map((v) => {
+                {VARIANTS.map((v) => {
                   const active = v.slug === current.slug;
-                  const vTint = FORMULA_TINT[v.formula];
                   return (
                     <Link
                       key={v.slug}
@@ -187,12 +99,7 @@ export function VariantSwitcher({ current }: { current: VariantEntry }) {
                       )}
                     >
                       <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded text-[10px] font-mono font-semibold border",
-                            vTint.badge
-                          )}
-                        >
+                        <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded text-[10px] font-mono font-semibold border bg-neutral-500/10 text-neutral-200 border-neutral-500/30">
                           {v.slug.toUpperCase()}
                         </span>
                         <span className="text-sm font-medium text-neutral-100">
@@ -260,12 +167,7 @@ export function VariantSwitcher({ current }: { current: VariantEntry }) {
             onClick={() => setExpanded((v) => !v)}
             className="px-3 py-2 flex items-center gap-2 min-w-0 max-w-[min(60vw,460px)] hover:bg-neutral-900/70 transition-colors"
           >
-            <span
-              className={cn(
-                "inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-bold tracking-wider border",
-                tint.pill
-              )}
-            >
+            <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[10px] font-bold tracking-wider border bg-neutral-500/15 text-neutral-200 border-neutral-500/30">
               {current.slug.toUpperCase()}
             </span>
             <span className="text-sm font-medium text-neutral-100 truncate">

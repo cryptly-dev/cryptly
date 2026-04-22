@@ -5,11 +5,11 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B12 — "The Site"
- * Formula B · Quiet nav at top · features described, plainly.
+ * VARIANT A — "The Site"
+ * Small site · features described, plainly.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B12Hero() {
+function AHero() {
   return (
     <section className="relative min-h-[90vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
@@ -53,7 +53,7 @@ function B12Hero() {
   );
 }
 
-const B12_FEATURES = [
+const A_FEATURES = [
   {
     n: "i",
     t: "Write and save secrets.",
@@ -71,11 +71,11 @@ const B12_FEATURES = [
   },
 ];
 
-function B12Features() {
+function AFeatures() {
   return (
     <SectionShell className="scroll-mt-14">
       <div id="features" className="max-w-3xl space-y-20">
-        {B12_FEATURES.map((f, i) => (
+        {A_FEATURES.map((f, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 10 }}
@@ -101,7 +101,7 @@ function B12Features() {
   );
 }
 
-function B12Testimonials() {
+function ATestimonials() {
   return (
     <SectionShell>
       <div className="max-w-3xl grid md:grid-cols-2 gap-16">
@@ -129,7 +129,7 @@ function B12Testimonials() {
   );
 }
 
-function B12Trusted() {
+function ATrusted() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -150,7 +150,7 @@ function B12Trusted() {
   );
 }
 
-function B12Stats() {
+function AStats() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -179,7 +179,7 @@ function B12Stats() {
   );
 }
 
-function B12CTA() {
+function ACTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -201,15 +201,15 @@ function B12CTA() {
   );
 }
 
-export function VariantB12() {
+export function VariantA() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B12Hero />
-      <B12Features />
-      <B12Testimonials />
-      <B12Trusted />
-      <B12Stats />
-      <B12CTA />
+      <AHero />
+      <AFeatures />
+      <ATestimonials />
+      <ATrusted />
+      <AStats />
+      <ACTA />
     </div>
   );
 }
