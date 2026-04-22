@@ -5,101 +5,81 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B3 — "The Dictionary"
- * Formula B · Definitions, one word at a time.
+ * VARIANT C7 — "The Warrant Canary"
+ * Formula C · Quiet, dated, honest.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B3Hero() {
+function C7Hero() {
   return (
     <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
-        <motion.h1
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
-        >
-          A short dictionary.
-        </motion.h1>
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
+          transition={{ duration: 0.8 }}
+          className="text-xs font-mono uppercase tracking-[0.3em] text-neutral-500 mb-10"
         >
-          Six words, written down precisely, because precision is the whole
-          product.
-        </motion.p>
+          Canary · q2 2026
+        </motion.div>
+        <motion.h1
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="text-5xl md:text-7xl font-semibold text-neutral-100 leading-[1] tracking-tight"
+        >
+          As of today,
+        </motion.h1>
+        <motion.h2
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.9 }}
+          className="mt-6 text-3xl md:text-5xl text-neutral-500 leading-tight tracking-tight max-w-2xl"
+        >
+          Cryptly has received zero requests for customer data.
+        </motion.h2>
       </div>
     </section>
   );
 }
 
-const B3_ENTRIES = [
+const C7_FACTS = [
   {
-    w: "secret",
-    p: "noun",
-    d: "A string of bytes you would not paste in public. A DB password, an API key, a webhook signer.",
-    e: "\"The secret lived in a Notion page until it didn't.\"",
+    t: "Subpoenas received this quarter",
+    v: "0",
   },
   {
-    w: "plaintext",
-    p: "noun",
-    d: "The secret before it's encrypted. The form we never receive.",
-    e: "\"Plaintext exists only in the browser of someone on your team.\"",
+    t: "National security letters received",
+    v: "0",
   },
   {
-    w: "ciphertext",
-    p: "noun",
-    d: "What we store. Unreadable without a key we don't have.",
-    e: "\"Subpoena the ciphertext and you get ciphertext back.\"",
+    t: "Gag orders in effect",
+    v: "0",
   },
   {
-    w: "passphrase",
-    p: "noun",
-    d: "The thing only you know. Derives the key that unwraps your copy.",
-    e: "\"Your passphrase never leaves your machine.\"",
-  },
-  {
-    w: "wrapped",
-    p: "adjective",
-    d: "Encrypted once per teammate, so each person has their own door.",
-    e: "\"The data key is wrapped for every member of the project.\"",
-  },
-  {
-    w: "zero-knowledge",
-    p: "adjective",
-    d: "A property: the server can help, but cannot read.",
-    e: "\"Cryptly is zero-knowledge by construction, not by promise.\"",
+    t: "Requests we could honor if received",
+    v: "0",
   },
 ];
 
-function B3Entries() {
+function C7Counts() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B3_ENTRIES.map((e, i) => (
+      <div className="max-w-3xl space-y-14">
+        {C7_FACTS.map((f, i) => (
           <motion.div
-            key={e.w}
-            initial={{ opacity: 0, y: 10 }}
+            key={i}
+            initial={{ opacity: 0, y: 6 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: i * 0.05 }}
+            className="flex items-baseline justify-between border-b border-neutral-900 pb-6"
           >
-            <div className="flex items-baseline gap-4">
-              <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight">
-                {e.w}
-              </h2>
-              <span className="text-sm italic text-neutral-500 font-serif">
-                {e.p}.
-              </span>
+            <div className="text-lg md:text-xl text-neutral-400 max-w-md leading-relaxed">
+              {f.t}
             </div>
-            <p className="mt-5 text-lg md:text-xl text-neutral-300 leading-relaxed max-w-2xl">
-              {e.d}
-            </p>
-            <p className="mt-4 text-base text-neutral-500 italic leading-relaxed max-w-2xl">
-              {e.e}
-            </p>
+            <div className="text-4xl md:text-6xl font-semibold text-neutral-100 tracking-tight">
+              {f.v}
+            </div>
           </motion.div>
         ))}
       </div>
@@ -107,12 +87,35 @@ function B3Entries() {
   );
 }
 
-function B3Numbers() {
+function C7Honest() {
+  return (
+    <SectionShell>
+      <div className="max-w-3xl">
+        <motion.h2
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.9 }}
+          className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
+        >
+          The last row is the important one. The first three will
+          eventually change. The last one will not.
+        </motion.h2>
+        <p className="mt-10 text-lg text-neutral-400 leading-relaxed max-w-xl">
+          A request we cannot honor is not a refusal. It is the absence
+          of a thing to hand over.
+        </p>
+      </div>
+    </SectionShell>
+  );
+}
+
+function C7Numbers() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <div className="text-xs font-mono uppercase tracking-[0.3em] text-neutral-500 mb-8">
-          The dictionary in use
+          What we do hold
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
@@ -140,19 +143,32 @@ function B3Numbers() {
           <span className="text-neutral-700">·</span>
           <span>jobref</span>
         </div>
+        <p className="mt-8 text-neutral-500 text-lg leading-relaxed max-w-xl">
+          The counter at the top stays at zero. These four climb as the
+          list of teams using us grows — more on the{" "}
+          <a
+            href="/blog"
+            className={cn(
+              "underline underline-offset-[6px] decoration-neutral-700 hover:decoration-neutral-400"
+            )}
+          >
+            blog
+          </a>
+          .
+        </p>
       </div>
     </SectionShell>
   );
 }
 
-function B3Voices() {
+function C7Voices() {
   return (
     <SectionShell>
       <div className="max-w-3xl grid md:grid-cols-2 gap-14">
         <div>
           <blockquote className="text-lg md:text-xl text-neutral-200 leading-[1.6] font-serif italic">
-            "The words on the page are the same ones in the code. That
-            is surprisingly rare."
+            "A canary that cannot lie, because the thing it would
+            announce cannot happen."
           </blockquote>
           <div className="mt-6 text-xs font-mono uppercase tracking-[0.25em] text-neutral-500">
             — Jerzy Wiśniewski · cofounder, signosh
@@ -160,8 +176,8 @@ function B3Voices() {
         </div>
         <div>
           <blockquote className="text-lg md:text-xl text-neutral-200 leading-[1.6] font-serif italic">
-            "I read the definitions before the pitch. That's the order I
-            wanted them in."
+            "I keep this page open in a pinned tab. It reads the same
+            way every quarter, which is exactly the point."
           </blockquote>
           <div className="mt-6 text-xs font-mono uppercase tracking-[0.25em] text-neutral-500">
             — Dominik Mackiewicz · cofounder, bluemenu
@@ -172,49 +188,21 @@ function B3Voices() {
   );
 }
 
-function B3Closing() {
-  return (
-    <SectionShell>
-      <div className="max-w-3xl">
-        <motion.h2
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.9 }}
-          className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.1]"
-        >
-          If the six definitions hold, the product follows. The longer
-          entries for each word live on the{" "}
-          <a
-            href="/blog"
-            className={cn(
-              "underline underline-offset-[6px] decoration-neutral-700 hover:decoration-neutral-400"
-            )}
-          >
-            blog
-          </a>
-          .
-        </motion.h2>
-      </div>
-    </SectionShell>
-  );
-}
-
-function B3CTA() {
+function C7CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          Use the words as a spec.
+          A number that stays at zero, by design.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
-            <span>Try it</span>
+            <span>Begin</span>
             <ArrowRight className="h-4 w-4" />
           </PrimaryCTA>
           <GhostCTA href="https://github.com/cryptly-dev/cryptly">
             <GitHubIcon className="h-4 w-4" />
-            <span>Read the implementation</span>
+            <span>Read the source</span>
           </GhostCTA>
         </div>
       </div>
@@ -222,15 +210,15 @@ function B3CTA() {
   );
 }
 
-export function VariantB3() {
+export function VariantC7() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B3Hero />
-      <B3Entries />
-      <B3Numbers />
-      <B3Voices />
-      <B3Closing />
-      <B3CTA />
+      <C7Hero />
+      <C7Counts />
+      <C7Honest />
+      <C7Numbers />
+      <C7Voices />
+      <C7CTA />
     </div>
   );
 }

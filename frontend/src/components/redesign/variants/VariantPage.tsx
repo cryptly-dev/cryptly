@@ -2,28 +2,38 @@ import { Link, useParams } from "@tanstack/react-router";
 import type { ComponentType } from "react";
 import { DEFAULT_VARIANT, findVariant, VARIANTS } from "./registry";
 import { VariantSwitcher } from "./VariantSwitcher";
-import { VariantA1 } from "./A1";
-import { VariantA2 } from "./A2";
-import { VariantA3 } from "./A3";
-import { VariantA4 } from "./A4";
-import { VariantA5 } from "./A5";
-import { VariantB1 } from "./B1";
-import { VariantB2 } from "./B2";
+import { VariantA11 } from "./A11";
+import { VariantA12 } from "./A12";
 import { VariantB3 } from "./B3";
-import { VariantB4 } from "./B4";
 import { VariantB5 } from "./B5";
+import { VariantB12 } from "./B12";
+import { VariantB15 } from "./B15";
+import { VariantB15Explanation } from "./B15-explanation";
+import { VariantC7 } from "./C7";
+import { VariantC7Explanation } from "./C7-explanation";
+import { VariantD1 } from "./D1";
+import { VariantD1Explanation } from "./D1-explanation";
+import { VariantD4 } from "./D4";
+import { VariantD4Explanation } from "./D4-explanation";
+import { VariantD5 } from "./D5";
+import { VariantD8 } from "./D8";
 
 const COMPONENTS: Record<string, ComponentType> = {
-  a1: VariantA1,
-  a2: VariantA2,
-  a3: VariantA3,
-  a4: VariantA4,
-  a5: VariantA5,
-  b1: VariantB1,
-  b2: VariantB2,
+  a11: VariantA11,
+  a12: VariantA12,
   b3: VariantB3,
-  b4: VariantB4,
   b5: VariantB5,
+  b12: VariantB12,
+  b15: VariantB15,
+  "b15-explanation": VariantB15Explanation,
+  c7: VariantC7,
+  "c7-explanation": VariantC7Explanation,
+  d1: VariantD1,
+  "d1-explanation": VariantD1Explanation,
+  d4: VariantD4,
+  "d4-explanation": VariantD4Explanation,
+  d5: VariantD5,
+  d8: VariantD8,
 };
 
 export function VariantPage() {
