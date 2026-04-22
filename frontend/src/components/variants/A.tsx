@@ -2,12 +2,70 @@ import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
-import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * VARIANT A — "The Site"
  * Small site · features described, plainly.
+ * Self-contained: all common helpers inlined.
  * ──────────────────────────────────────────────────────────────────────────── */
+
+function SectionShell({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("mx-auto max-w-6xl px-6 py-24", className)}>
+      {children}
+    </div>
+  );
+}
+
+function PrimaryCTA({
+  children,
+  href = "/app/login",
+  className,
+}: {
+  children: React.ReactNode;
+  href?: string;
+  className?: string;
+}) {
+  return (
+    <a
+      href={href}
+      className={cn(
+        "group inline-flex items-center gap-2 rounded-full bg-white text-black px-5 py-2.5 text-sm font-medium transition-all hover:scale-[1.02]",
+        className
+      )}
+    >
+      {children}
+    </a>
+  );
+}
+
+function GhostCTA({
+  children,
+  href,
+  className,
+}: {
+  children: React.ReactNode;
+  href?: string;
+  className?: string;
+}) {
+  return (
+    <a
+      href={href ?? "#"}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-900/40 px-5 py-2.5 text-sm text-neutral-300 hover:border-neutral-700 hover:text-white transition-colors",
+        className
+      )}
+    >
+      {children}
+    </a>
+  );
+}
 
 function AHero() {
   return (
