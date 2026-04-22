@@ -4,77 +4,81 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT C7 — "The Warrant Canary"
+ * Formula C · Quiet, dated, honest.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function C7Hero() {
   return (
-    <section className="relative min-h-[100vh] flex items-center bg-black">
+    <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="text-xs font-mono uppercase tracking-[0.3em] text-neutral-500 mb-10"
+        >
+          Canary · q2 2026
+        </motion.div>
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1 }}
-          className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
+          className="text-5xl md:text-7xl font-semibold text-neutral-100 leading-[1] tracking-tight"
         >
-          Described by absence.
+          As of today,
         </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
+        <motion.h2
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.9 }}
+          className="mt-6 text-3xl md:text-5xl text-neutral-500 leading-tight tracking-tight max-w-2xl"
         >
-          The things we have carefully arranged not to have are the
-          product.
-        </motion.p>
+          Cryptly has received zero requests for customer data.
+        </motion.h2>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const C7_FACTS = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    t: "Subpoenas received this quarter",
+    v: "0",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    t: "National security letters received",
+    v: "0",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
+    t: "Gag orders in effect",
+    v: "0",
   },
   {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
-  },
-  {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    t: "Requests we could honor if received",
+    v: "0",
   },
 ];
 
-function B5Absences() {
+function C7Counts() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+      <div className="max-w-3xl space-y-14">
+        {C7_FACTS.map((f, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: i * 0.05 }}
+            className="flex items-baseline justify-between border-b border-neutral-900 pb-6"
           >
-            <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
-            </h2>
-            <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
-            </p>
+            <div className="text-lg md:text-xl text-neutral-400 max-w-md leading-relaxed">
+              {f.t}
+            </div>
+            <div className="text-4xl md:text-6xl font-semibold text-neutral-100 tracking-tight">
+              {f.v}
+            </div>
           </motion.div>
         ))}
       </div>
@@ -82,7 +86,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function C7Honest() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -93,21 +97,24 @@ function B5Inverse() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          The last row is the important one. The first three will
+          eventually change. The last one will not.
         </motion.h2>
+        <p className="mt-10 text-lg text-neutral-400 leading-relaxed max-w-xl">
+          A request we cannot honor is not a refusal. It is the absence
+          of a thing to hand over.
+        </p>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function C7CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          A number that stays at zero, by design.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
@@ -124,13 +131,13 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantC7() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <C7Hero />
+      <C7Counts />
+      <C7Honest />
+      <C7CTA />
     </div>
   );
 }

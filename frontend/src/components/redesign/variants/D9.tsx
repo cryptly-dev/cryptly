@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT D9 — "Portraits"
+ * Formula D · A few of the 77, in their own words.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function D9Hero() {
   return (
-    <section className="relative min-h-[100vh] flex items-center bg-black">
+    <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
@@ -18,7 +18,7 @@ function B5Hero() {
           transition={{ duration: 1 }}
           className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
         >
-          Described by absence.
+          A few of the seventy-seven.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -26,55 +26,54 @@ function B5Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
         >
-          The things we have carefully arranged not to have are the
-          product.
+          In their own words, describing an afternoon.
         </motion.p>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const D9_PORTRAITS = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    quote:
+      "I ran a staging migration on a Tuesday afternoon. I'd have paid for something that worked this well, and I didn't have to.",
+    who: "backend engineer · 4-person team",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    quote:
+      "The thing I liked was that my passphrase never went to the server. I didn't have to take the marketing copy's word for it; I could read the code in the same tab.",
+    who: "security engineer · solo project",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
+    quote:
+      "We switched off a shared 1Password for our service's credentials. The onboarding ran about fifteen minutes per person.",
+    who: "staff engineer · growing startup",
   },
   {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
-  },
-  {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    quote:
+      "I'm building a small side tool. I wanted a place for my API keys that wasn't my .env, which was not quite my .env, which was in my .gitignore but not really.",
+    who: "weekend hacker · one project",
   },
 ];
 
-function B5Absences() {
+function D9Portraits() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+      <div className="max-w-2xl space-y-24">
+        {D9_PORTRAITS.map((p, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: i * 0.05 }}
+            transition={{ duration: 0.8, delay: 0.05 }}
           >
-            <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
-            </h2>
-            <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
+            <p className="text-2xl md:text-3xl text-neutral-200 leading-[1.5] font-serif italic">
+              "{p.quote}"
             </p>
+            <div className="mt-8 text-sm font-mono uppercase tracking-[0.25em] text-neutral-500">
+              — {p.who}
+            </div>
           </motion.div>
         ))}
       </div>
@@ -82,7 +81,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function D9Note() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -93,21 +92,20 @@ function B5Inverse() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          Four of the seventy-seven. The other seventy-three are still
+          at work, and will tell you about it themselves if you ask.
         </motion.h2>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function D9CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          Have your afternoon.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
@@ -124,13 +122,13 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantD9() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <D9Hero />
+      <D9Portraits />
+      <D9Note />
+      <D9CTA />
     </div>
   );
 }

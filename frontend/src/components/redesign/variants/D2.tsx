@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT D2 — "Ten Days In"
+ * Formula D · A short arc, plainly told.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function D2Hero() {
   return (
-    <section className="relative min-h-[100vh] flex items-center bg-black">
+    <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
@@ -18,7 +18,7 @@ function B5Hero() {
           transition={{ duration: 1 }}
           className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
         >
-          Described by absence.
+          Day 0 to day 10.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -26,54 +26,63 @@ function B5Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
         >
-          The things we have carefully arranged not to have are the
-          product.
+          With no flourishes, no transformations. Just what tends to
+          happen.
         </motion.p>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const D2_DAYS = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    d: "day 0",
+    t: "You sign up. You pick a passphrase. You create one project.",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    d: "day 1",
+    t: "You migrate a few secrets in from wherever they were before. Usually .env files or a shared 1Password.",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
+    d: "day 2",
+    t: "You invite one teammate. They accept. The vault is now open to both of you.",
   },
   {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
+    d: "day 3",
+    t: "You close the old place. The .env goes to .gitignore; the shared password gets rotated.",
   },
   {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    d: "day 4",
+    t: "Someone uses a secret in a deploy. It works. You notice nothing, which is what you wanted.",
+  },
+  {
+    d: "day 7",
+    t: "A third teammate joins the project. You invite them. Fifteen seconds, start to finish.",
+  },
+  {
+    d: "day 10",
+    t: "You realise you haven't thought about the vault in three days. That's how you'll know it worked.",
   },
 ];
 
-function B5Absences() {
+function D2Days() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+      <div className="max-w-3xl space-y-10">
+        {D2_DAYS.map((day, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: i * 0.05 }}
+            transition={{ duration: 0.6, delay: i * 0.04 }}
+            className="grid grid-cols-[80px_1fr] gap-6 items-start"
           >
-            <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
-            </h2>
-            <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
+            <div className="text-sm font-mono uppercase tracking-[0.2em] text-neutral-500 pt-1.5">
+              {day.d}
+            </div>
+            <p className="text-lg md:text-2xl text-neutral-200 leading-snug font-serif">
+              {day.t}
             </p>
           </motion.div>
         ))}
@@ -82,7 +91,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function D2Numbers() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -93,25 +102,24 @@ function B5Inverse() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          Across our 77 users, the arc above has repeated 77 times in
+          some variation. Eighty-nine projects, by the last count.
         </motion.h2>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function D2CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          Day 0 takes about three minutes.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
-            <span>Begin</span>
+            <span>Start day 0</span>
             <ArrowRight className="h-4 w-4" />
           </PrimaryCTA>
           <GhostCTA href="https://github.com/cryptly-dev/cryptly">
@@ -124,13 +132,13 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantD2() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <D2Hero />
+      <D2Days />
+      <D2Numbers />
+      <D2CTA />
     </div>
   );
 }

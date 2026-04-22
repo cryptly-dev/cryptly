@@ -4,76 +4,75 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT B6 — "The Koan"
+ * Formula B · Small questions, careful answers.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function B6Hero() {
   return (
     <section className="relative min-h-[100vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
         <motion.h1
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 1.1, ease: [0.22, 0.61, 0.36, 1] }}
           className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
         >
-          Described by absence.
+          What cannot be stolen?
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
+          transition={{ delay: 0.6, duration: 0.8 }}
+          className="mt-12 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed italic"
         >
-          The things we have carefully arranged not to have are the
-          product.
+          A small series of questions. Each answer shorter than the last.
         </motion.p>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const B6_KOANS = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    q: "What cannot be stolen from a server?",
+    a: "A thing that is not on the server.",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    q: "Then where should the secret be?",
+    a: "In the browser that typed it. On the way in and the way out.",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
+    q: "But the server holds something.",
+    a: "Yes. Ciphertext. We encourage you to steal it.",
   },
   {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
+    q: "Who holds the key?",
+    a: "The teammates. One copy each, wrapped for them alone.",
   },
   {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    q: "And you?",
+    a: "We hold nothing that opens.",
   },
 ];
 
-function B5Absences() {
+function B6Koans() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+      <div className="max-w-3xl space-y-28">
+        {B6_KOANS.map((k, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: i * 0.05 }}
+            transition={{ duration: 0.9, delay: i * 0.05 }}
           >
-            <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
+            <h2 className="text-2xl md:text-4xl font-semibold text-neutral-100 tracking-tight leading-snug">
+              {k.q}
             </h2>
-            <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
+            <p className="mt-8 text-xl md:text-3xl text-neutral-500 leading-relaxed italic font-serif">
+              — {k.a}
             </p>
           </motion.div>
         ))}
@@ -82,7 +81,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function B6Closing() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -91,23 +90,22 @@ function B5Inverse() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.9 }}
-          className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
+          className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.1]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          Cryptly is the tool made of these answers. Small, open, and
+          unable to betray you.
         </motion.h2>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function B6CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          Sit with it.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
@@ -124,13 +122,13 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantB6() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <B6Hero />
+      <B6Koans />
+      <B6Closing />
+      <B6CTA />
     </div>
   );
 }

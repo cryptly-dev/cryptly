@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT D1 — "The Seventy-Seven"
+ * Formula D · A short, honest tour for a small group.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function D1Hero() {
   return (
-    <section className="relative min-h-[100vh] flex items-center bg-black">
+    <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
@@ -18,7 +18,7 @@ function B5Hero() {
           transition={{ duration: 1 }}
           className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
         >
-          Described by absence.
+          Seventy-seven people use this.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -26,54 +26,64 @@ function B5Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
         >
-          The things we have carefully arranged not to have are the
-          product.
+          Here's what happens, step by step, when you become the
+          seventy-eighth.
         </motion.p>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const D1_STEPS = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    n: "1",
+    t: "You land on /login.",
+    b: "No credit card, no setup call. You authenticate with GitHub or your email. That is the entire signup.",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    n: "2",
+    t: "You pick a passphrase.",
+    b: "It's used locally to derive your user key. The passphrase does not leave your device. We do not see it, now or ever.",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
+    n: "3",
+    t: "You create a project.",
+    b: "A project is a folder of secrets. One of our 77 users currently has 12 of them; the median user has 1.",
   },
   {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
+    n: "4",
+    t: "You add a secret.",
+    b: "You paste a value. Your browser encrypts it before it leaves the tab. Our server stores the ciphertext and nothing else.",
   },
   {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    n: "5",
+    t: "You invite a teammate.",
+    b: "They accept with their own passphrase. The data key gets wrapped for them too. Now either of you can decrypt, independently.",
   },
 ];
 
-function B5Absences() {
+function D1Steps() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+      <div className="max-w-3xl space-y-16">
+        {D1_STEPS.map((s, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: i * 0.05 }}
           >
-            <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
-            </h2>
-            <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
+            <div className="flex items-baseline gap-5">
+              <span className="font-mono text-neutral-600 text-sm pt-2">
+                {s.n}
+              </span>
+              <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
+                {s.t}
+              </h2>
+            </div>
+            <p className="mt-5 text-lg text-neutral-400 leading-relaxed max-w-xl ml-7">
+              {s.b}
             </p>
           </motion.div>
         ))}
@@ -82,7 +92,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function D1Stats() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -93,30 +103,31 @@ function B5Inverse() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          Our numbers are small. Seventy-seven users, eighty-nine
+          projects, one thousand and eighty-six secret versions, thirty
+          stars on GitHub. We think you should know that before you
+          sign up.
         </motion.h2>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function D1CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          Be number seventy-eight, if you'd like.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
-            <span>Begin</span>
+            <span>Sign up</span>
             <ArrowRight className="h-4 w-4" />
           </PrimaryCTA>
           <GhostCTA href="https://github.com/cryptly-dev/cryptly">
             <GitHubIcon className="h-4 w-4" />
-            <span>Read the source</span>
+            <span>Be the 31st star</span>
           </GhostCTA>
         </div>
       </div>
@@ -124,13 +135,13 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantD1() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <D1Hero />
+      <D1Steps />
+      <D1Stats />
+      <D1CTA />
     </div>
   );
 }

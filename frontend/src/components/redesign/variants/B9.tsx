@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT B9 — "The Architecture"
+ * Formula B · Three boundaries, described.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function B9Hero() {
   return (
-    <section className="relative min-h-[100vh] flex items-center bg-black">
+    <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
@@ -18,7 +18,7 @@ function B5Hero() {
           transition={{ duration: 1 }}
           className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
         >
-          Described by absence.
+          Three boundaries.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -26,54 +26,51 @@ function B5Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
         >
-          The things we have carefully arranged not to have are the
-          product.
+          The passphrase does not cross any of them.
         </motion.p>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const B9_BOUNDARIES = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    n: "first",
+    t: "Between your fingers and your browser.",
+    b: "You type the secret. The browser holds it, briefly, in memory. This is the only place plaintext lives.",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    n: "second",
+    t: "Between your browser and the network.",
+    b: "What crosses is ciphertext, sealed with a key derived on your device. The passphrase never goes over the wire.",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
-  },
-  {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
-  },
-  {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    n: "third",
+    t: "Between the network and our servers.",
+    b: "What we receive is ciphertext, and what we return is ciphertext. We store it, replicate it, back it up. We cannot read it.",
   },
 ];
 
-function B5Absences() {
+function B9Boundaries() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+      <div className="max-w-3xl space-y-24">
+        {B9_BOUNDARIES.map((b, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: i * 0.05 }}
+            transition={{ duration: 0.8, delay: i * 0.05 }}
           >
+            <div className="text-xs font-mono uppercase tracking-[0.3em] text-neutral-600 mb-4">
+              the {b.n}
+            </div>
             <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
+              {b.t}
             </h2>
             <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
+              {b.b}
             </p>
           </motion.div>
         ))}
@@ -82,7 +79,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function B9Crossing() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -93,21 +90,43 @@ function B5Inverse() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          A secret crosses one boundary. Your passphrase crosses none.
+          Everything else — everything we see — is already sealed.
         </motion.h2>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function B9Implementation() {
+  return (
+    <SectionShell>
+      <div className="max-w-3xl">
+        <motion.h2
+          initial={{ opacity: 0, y: 8 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight"
+        >
+          Cryptly is the implementation.
+        </motion.h2>
+        <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
+          A small, free, open-source vault that preserves the three
+          boundaries above. The code is in the open; the architecture is
+          what you are looking at.
+        </p>
+      </div>
+    </SectionShell>
+  );
+}
+
+function B9CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          Three boundaries, preserved.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
@@ -124,13 +143,14 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantB9() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <B9Hero />
+      <B9Boundaries />
+      <B9Crossing />
+      <B9Implementation />
+      <B9CTA />
     </div>
   );
 }

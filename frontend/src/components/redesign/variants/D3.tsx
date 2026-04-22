@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT D3 — "One Afternoon"
+ * Formula D · From signup to first decrypt, quietly.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function D3Hero() {
   return (
-    <section className="relative min-h-[100vh] flex items-center bg-black">
+    <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
@@ -18,7 +18,7 @@ function B5Hero() {
           transition={{ duration: 1 }}
           className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
         >
-          Described by absence.
+          An afternoon.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -26,54 +26,63 @@ function B5Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
         >
-          The things we have carefully arranged not to have are the
-          product.
+          Not a quarter. Not a migration project. Just the hours between
+          lunch and leaving the desk.
         </motion.p>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const D3_CLOCK = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    t: "13:00",
+    s: "Sign up, pick a passphrase, land on an empty dashboard.",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    t: "13:08",
+    s: "Create a project. Paste the first secret. The browser encrypts it; the server stores ciphertext.",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
+    t: "13:30",
+    s: "Migrate the remaining values from the old place. Twenty secrets, maybe. One coffee.",
   },
   {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
+    t: "14:00",
+    s: "Invite two teammates. They accept, each with their own passphrase.",
   },
   {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    t: "14:20",
+    s: "Wire up the SDK in one service. Redeploy. Decrypt succeeds on the first try.",
+  },
+  {
+    t: "15:00",
+    s: "Delete the old shared vault. Close the tab.",
+  },
+  {
+    t: "15:10",
+    s: "Done. The rest of the afternoon is yours.",
   },
 ];
 
-function B5Absences() {
+function D3Clock() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+      <div className="max-w-3xl space-y-10">
+        {D3_CLOCK.map((c, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: i * 0.05 }}
+            transition={{ duration: 0.6, delay: i * 0.04 }}
+            className="grid grid-cols-[80px_1fr] gap-6 items-start"
           >
-            <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
-            </h2>
-            <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
+            <div className="text-sm font-mono text-neutral-500 pt-1.5">
+              {c.t}
+            </div>
+            <p className="text-lg md:text-2xl text-neutral-200 leading-snug font-serif">
+              {c.s}
             </p>
           </motion.div>
         ))}
@@ -82,7 +91,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function D3Context() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -93,21 +102,21 @@ function B5Inverse() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          The afternoon above is what a typical Cryptly onboarding looks
+          like. Across 77 users, 89 projects, 1,086 secret versions —
+          this is the shape of it.
         </motion.h2>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function D3CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          Start before lunch. Finish before the meeting at three.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
@@ -124,13 +133,13 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantD3() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <D3Hero />
+      <D3Clock />
+      <D3Context />
+      <D3CTA />
     </div>
   );
 }

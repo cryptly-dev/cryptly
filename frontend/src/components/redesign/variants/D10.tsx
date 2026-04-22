@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT D10 — "The Honest Arc"
+ * Formula D · The four-stage arc, modest version.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function D10Hero() {
   return (
-    <section className="relative min-h-[100vh] flex items-center bg-black">
+    <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
@@ -18,7 +18,7 @@ function B5Hero() {
           transition={{ duration: 1 }}
           className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
         >
-          Described by absence.
+          A small tool, a small arc.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -26,54 +26,58 @@ function B5Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
         >
-          The things we have carefully arranged not to have are the
-          product.
+          Told straight, with the actual numbers.
         </motion.p>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const D10_STAGES = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    n: "i",
+    h: "Before.",
+    b: "You had secrets in a .env, a Notion page, or a shared password manager whose master password nobody was sure about. The plan was always to fix this, and the plan was always to fix this next week.",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    n: "ii",
+    h: "Signup.",
+    b: "Three minutes. You pick a passphrase, create a project. No credit card, no sales call. You become one of the 77 users we currently have.",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
+    n: "iii",
+    h: "Migration.",
+    b: "Between an hour and an afternoon, depending on how many secrets there are. Each one encrypts in your browser before it leaves the tab. You add to the 1,086 versions we store.",
   },
   {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
-  },
-  {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    n: "iv",
+    h: "After.",
+    b: "The vault runs itself. Your teammates can each decrypt independently. We hold ciphertext and nothing else. The pattern has repeated 89 times across our projects — that's the whole arc.",
   },
 ];
 
-function B5Absences() {
+function D10Stages() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+      <div className="max-w-3xl space-y-24">
+        {D10_STAGES.map((s, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: i * 0.05 }}
+            transition={{ duration: 0.8, delay: i * 0.05 }}
           >
-            <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
-            </h2>
-            <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
+            <div className="flex items-baseline gap-5">
+              <span className="font-serif italic text-neutral-600 text-lg">
+                {s.n}.
+              </span>
+              <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
+                {s.h}
+              </h2>
+            </div>
+            <p className="mt-6 text-lg text-neutral-400 leading-[1.75] max-w-xl ml-8 font-serif">
+              {s.b}
             </p>
           </motion.div>
         ))}
@@ -82,7 +86,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function D10Honest() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -93,21 +97,21 @@ function B5Inverse() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          Thirty stars. Seventy-seven users. Eighty-nine projects. One
+          thousand and eighty-six versions. That is where we are. You
+          are welcome to join.
         </motion.h2>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function D10CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          A quiet arc, told straight.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
@@ -124,13 +128,13 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantD10() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <D10Hero />
+      <D10Stages />
+      <D10Honest />
+      <D10CTA />
     </div>
   );
 }

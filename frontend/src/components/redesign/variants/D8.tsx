@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT D8 — "The Version Log"
+ * Formula D · Seen through the 1,086 versions we've written.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function D8Hero() {
   return (
-    <section className="relative min-h-[100vh] flex items-center bg-black">
+    <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
@@ -18,7 +18,7 @@ function B5Hero() {
           transition={{ duration: 1 }}
           className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
         >
-          Described by absence.
+          One thousand and eighty-six versions.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -26,54 +26,49 @@ function B5Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
         >
-          The things we have carefully arranged not to have are the
-          product.
+          Every update we have ever stored, each one still wrapped.
         </motion.p>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const D8_NOTES = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    t: "We keep history.",
+    b: "When you change a secret, we don't overwrite the old one. We keep the old wrapped copy, so you can roll back without losing the trail.",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    t: "History is ciphertext, too.",
+    b: "Every one of the 1,086 versions is encrypted with the project key. We couldn't show you the history even if we wanted to.",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
+    t: "Your teammates can read the history.",
+    b: "Because they are on the project's member list, their browsers can unwrap past versions. The log is readable, but only from the right browser.",
   },
   {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
-  },
-  {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    t: "A version isn't a backup.",
+    b: "It's a point-in-time snapshot of what the secret was. If you lose access to the project, the history is as inaccessible as the current value.",
   },
 ];
 
-function B5Absences() {
+function D8Notes() {
   return (
     <SectionShell>
       <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+        {D8_NOTES.map((n, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: i * 0.05 }}
           >
             <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
+              {n.t}
             </h2>
             <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
+              {n.b}
             </p>
           </motion.div>
         ))}
@@ -82,7 +77,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function D8Scale() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -93,21 +88,20 @@ function B5Inverse() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          Across 77 users and 89 projects, we've written 1,086 envelopes.
+          Each one sealed, each one ours only to store.
         </motion.h2>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function D8CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          Write the 1,087th.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
@@ -124,13 +118,13 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantD8() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <D8Hero />
+      <D8Notes />
+      <D8Scale />
+      <D8CTA />
     </div>
   );
 }

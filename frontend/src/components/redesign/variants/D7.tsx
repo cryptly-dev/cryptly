@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT D7 — "Eighty-Nine Projects"
+ * Formula D · Project-level view of the tool's life.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function D7Hero() {
   return (
-    <section className="relative min-h-[100vh] flex items-center bg-black">
+    <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
@@ -18,7 +18,7 @@ function B5Hero() {
           transition={{ duration: 1 }}
           className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
         >
-          Described by absence.
+          Eighty-nine projects.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -26,55 +26,66 @@ function B5Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
         >
-          The things we have carefully arranged not to have are the
-          product.
+          A brief tour of what lives in them, told roughly and without
+          names.
         </motion.p>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const D7_KINDS = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    count: "42",
+    t: "Weekend projects and side tools.",
+    b: "A single developer, two or three secrets, one deploy. Most of the 89 are these. They are the reason the tool is free.",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    count: "24",
+    t: "Small teams, two to four members.",
+    b: "A shared vault for a real product. Usually one project per service, ten or so secrets per project.",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
+    count: "15",
+    t: "Service-per-project setups.",
+    b: "Teams that split by service rather than by team. Lots of small projects, tidy namespacing, fewer teammates per project.",
   },
   {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
+    count: "5",
+    t: "Self-hosted installations.",
+    b: "Projects we do not see and do not count — but the operators told us about them, and we trust them.",
   },
   {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    count: "3",
+    t: "Experimental.",
+    b: "People kicking the tires, reading the source, filing issues. We love the experimental projects; they have produced most of the better ideas.",
   },
 ];
 
-function B5Absences() {
+function D7Kinds() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+      <div className="max-w-3xl space-y-16">
+        {D7_KINDS.map((k, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: i * 0.05 }}
+            className="grid md:grid-cols-[120px_1fr] gap-6 md:gap-10 items-baseline"
           >
-            <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
-            </h2>
-            <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
-            </p>
+            <div className="text-5xl md:text-7xl font-semibold text-neutral-100 tracking-tight tabular-nums">
+              {k.count}
+            </div>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-semibold text-neutral-100 tracking-tight leading-snug">
+                {k.t}
+              </h2>
+              <p className="mt-4 text-lg text-neutral-400 leading-relaxed max-w-xl">
+                {k.b}
+              </p>
+            </div>
           </motion.div>
         ))}
       </div>
@@ -82,7 +93,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function D7Totals() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -93,25 +104,24 @@ function B5Inverse() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          Across all of them: 77 users, 1,086 secret versions, zero
+          plaintext ever in our possession.
         </motion.h2>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function D7CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          Make it ninety.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
-            <span>Begin</span>
+            <span>Create a project</span>
             <ArrowRight className="h-4 w-4" />
           </PrimaryCTA>
           <GhostCTA href="https://github.com/cryptly-dev/cryptly">
@@ -124,13 +134,13 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantD7() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <D7Hero />
+      <D7Kinds />
+      <D7Totals />
+      <D7CTA />
     </div>
   );
 }

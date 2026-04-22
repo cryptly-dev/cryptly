@@ -4,13 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B5 — "Negative Space"
- * Formula B · The product defined by what it isn't, doesn't, can't.
+ * VARIANT D6 — "A Slow Morning"
+ * Formula D · A single morning's migration.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B5Hero() {
+function D6Hero() {
   return (
-    <section className="relative min-h-[100vh] flex items-center bg-black">
+    <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
@@ -18,62 +18,70 @@ function B5Hero() {
           transition={{ duration: 1 }}
           className="text-5xl md:text-7xl lg:text-8xl font-semibold text-neutral-100 leading-[0.98] tracking-tight"
         >
-          Described by absence.
+          Between coffee and lunch,
         </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
+        <motion.h2
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.9 }}
+          className="mt-6 text-3xl md:text-5xl text-neutral-500 leading-tight tracking-tight"
         >
-          The things we have carefully arranged not to have are the
-          product.
-        </motion.p>
+          the vault is yours.
+        </motion.h2>
       </div>
     </section>
   );
 }
 
-const B5_ABSENCES = [
+const D6_MORNING = [
   {
-    t: "No plaintext on our servers.",
-    b: "The encryption happens in the browser that typed the secret. What reaches us is ciphertext or nothing.",
+    t: "08:50",
+    s: "You open the laptop. Coffee's warm. The old vault is a shared 1Password, which nobody really shares, and a Notion page titled 'keys (temp).'",
   },
   {
-    t: "No passphrase on our servers.",
-    b: "It is derived on your device and stays there. We do not receive it, store it, or forward it.",
+    t: "09:05",
+    s: "You sign up to Cryptly. You pick a passphrase. You create one project for the service you're responsible for.",
   },
   {
-    t: "No user-key on our servers.",
-    b: "Your private key lives in your keychain. We hold only the public half, to address envelopes.",
+    t: "09:20",
+    s: "You copy four secrets out of the old place, paste them into the new one. The values encrypt as you hit save.",
   },
   {
-    t: "No backdoor in the binary.",
-    b: "There is no binary. The client is the source, inspectable in the tab you already have open.",
+    t: "09:45",
+    s: "You invite the other engineer on your service. They're in a meeting, but they'll accept during their next coffee.",
   },
   {
-    t: "No recovery flow we secretly control.",
-    b: "When a teammate re-invites you, that teammate rewraps the key. We don't know your new passphrase either.",
+    t: "10:10",
+    s: "You wire the SDK into one deploy. First run, it fetches. First run, it decrypts. You redeploy staging.",
+  },
+  {
+    t: "10:40",
+    s: "The other engineer accepts. Their browser unwraps the data key. The vault now opens for either of you, independently.",
+  },
+  {
+    t: "11:15",
+    s: "You rotate the old Notion page to .archive and close the tab. The morning is not over; the migration is.",
   },
 ];
 
-function B5Absences() {
+function D6Morning() {
   return (
     <SectionShell>
-      <div className="max-w-3xl space-y-20">
-        {B5_ABSENCES.map((a, i) => (
+      <div className="max-w-3xl space-y-10">
+        {D6_MORNING.map((m, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: i * 0.05 }}
+            transition={{ duration: 0.6, delay: i * 0.04 }}
+            className="grid grid-cols-[80px_1fr] gap-6 items-start"
           >
-            <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
-              {a.t}
-            </h2>
-            <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl">
-              {a.b}
+            <div className="text-sm font-mono text-neutral-500 pt-1.5">
+              {m.t}
+            </div>
+            <p className="text-lg md:text-2xl text-neutral-200 leading-snug font-serif">
+              {m.s}
             </p>
           </motion.div>
         ))}
@@ -82,7 +90,7 @@ function B5Absences() {
   );
 }
 
-function B5Inverse() {
+function D6Reflection() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -93,25 +101,24 @@ function B5Inverse() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          What remains, after the subtraction: a small, free, open-source
-          vault that stores encrypted bytes on your team's behalf, and
-          can't do anything else with them.
+          Our 77 users have all had a morning that looks roughly like
+          this one. Nothing dramatic happens; that's the whole point.
         </motion.h2>
       </div>
     </SectionShell>
   );
 }
 
-function B5CTA() {
+function D6CTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          A product measured by what it refuses.
+          Pour the coffee. Open a tab. See you at lunch.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
-            <span>Begin</span>
+            <span>Start the morning</span>
             <ArrowRight className="h-4 w-4" />
           </PrimaryCTA>
           <GhostCTA href="https://github.com/cryptly-dev/cryptly">
@@ -124,13 +131,13 @@ function B5CTA() {
   );
 }
 
-export function VariantB5() {
+export function VariantD6() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B5Hero />
-      <B5Absences />
-      <B5Inverse />
-      <B5CTA />
+      <D6Hero />
+      <D6Morning />
+      <D6Reflection />
+      <D6CTA />
     </div>
   );
 }
