@@ -1,7 +1,7 @@
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
-import { ArrowRight, HardDrive } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -13,16 +13,6 @@ function A11Hero() {
   return (
     <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="relative z-10 mx-auto max-w-4xl w-full px-6">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          className="flex items-center gap-3 text-xs text-neutral-500 mb-8 font-mono uppercase tracking-[0.25em]"
-        >
-          <HardDrive className="h-3.5 w-3.5" />
-          <span>disk utility · erase · apfs</span>
-        </motion.div>
-
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -223,6 +213,46 @@ function A11Trusted() {
   );
 }
 
+function A11Numbers() {
+  return (
+    <SectionShell>
+      <div className="max-w-3xl">
+        <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
+          Where we are.
+        </h2>
+        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+          {[
+            { n: "30", l: "stars" },
+            { n: "77", l: "users" },
+            { n: "89", l: "projects" },
+            { n: "1,086", l: "versions" },
+          ].map((s) => (
+            <div key={s.l}>
+              <div className="text-4xl md:text-5xl font-semibold text-neutral-100 tabular-nums">
+                {s.n}
+              </div>
+              <div className="mt-2 text-sm text-neutral-500 uppercase tracking-[0.15em]">
+                {s.l}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-10 text-lg text-neutral-400 leading-relaxed max-w-xl">
+          None of them rode out a drive wipe on someone's machine. More on
+          how that's arranged on the{" "}
+          <a
+            href="/blog"
+            className={cn("underline underline-offset-4 hover:text-neutral-300")}
+          >
+            blog
+          </a>
+          .
+        </p>
+      </div>
+    </SectionShell>
+  );
+}
+
 function A11CTA() {
   return (
     <SectionShell>
@@ -264,6 +294,7 @@ export function VariantA11() {
       <A11NewWorld />
       <A11Testimonial />
       <A11Trusted />
+      <A11Numbers />
       <A11CTA />
     </div>
   );

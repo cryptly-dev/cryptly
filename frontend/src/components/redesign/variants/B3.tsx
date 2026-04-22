@@ -1,4 +1,5 @@
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
+import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
@@ -106,6 +107,71 @@ function B3Entries() {
   );
 }
 
+function B3Numbers() {
+  return (
+    <SectionShell>
+      <div className="max-w-3xl">
+        <div className="text-xs font-mono uppercase tracking-[0.3em] text-neutral-500 mb-8">
+          The dictionary in use
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {[
+            { n: "30", l: "stars" },
+            { n: "77", l: "users" },
+            { n: "89", l: "projects" },
+            { n: "1,086", l: "versions" },
+          ].map((s) => (
+            <div key={s.l}>
+              <div className="text-4xl md:text-5xl font-semibold text-neutral-100 tabular-nums">
+                {s.n}
+              </div>
+              <div className="mt-2 text-sm text-neutral-500 uppercase tracking-[0.15em]">
+                {s.l}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-10 flex flex-wrap gap-x-10 gap-y-4 text-neutral-300 text-xl md:text-2xl font-semibold tracking-tight">
+          <span>logdash</span>
+          <span className="text-neutral-700">·</span>
+          <span>signosh</span>
+          <span className="text-neutral-700">·</span>
+          <span>bluemenu</span>
+          <span className="text-neutral-700">·</span>
+          <span>jobref</span>
+        </div>
+      </div>
+    </SectionShell>
+  );
+}
+
+function B3Voices() {
+  return (
+    <SectionShell>
+      <div className="max-w-3xl grid md:grid-cols-2 gap-14">
+        <div>
+          <blockquote className="text-lg md:text-xl text-neutral-200 leading-[1.6] font-serif italic">
+            "The words on the page are the same ones in the code. That
+            is surprisingly rare."
+          </blockquote>
+          <div className="mt-6 text-xs font-mono uppercase tracking-[0.25em] text-neutral-500">
+            — Jerzy Wiśniewski · cofounder, signosh
+          </div>
+        </div>
+        <div>
+          <blockquote className="text-lg md:text-xl text-neutral-200 leading-[1.6] font-serif italic">
+            "I read the definitions before the pitch. That's the order I
+            wanted them in."
+          </blockquote>
+          <div className="mt-6 text-xs font-mono uppercase tracking-[0.25em] text-neutral-500">
+            — Dominik Mackiewicz · cofounder, bluemenu
+          </div>
+        </div>
+      </div>
+    </SectionShell>
+  );
+}
+
 function B3Closing() {
   return (
     <SectionShell>
@@ -117,9 +183,17 @@ function B3Closing() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.1]"
         >
-          If the six definitions hold, the product follows. Cryptly is a
-          small, free, open-source tool that takes those six words
-          seriously.
+          If the six definitions hold, the product follows. The longer
+          entries for each word live on the{" "}
+          <a
+            href="/blog"
+            className={cn(
+              "underline underline-offset-[6px] decoration-neutral-700 hover:decoration-neutral-400"
+            )}
+          >
+            blog
+          </a>
+          .
         </motion.h2>
       </div>
     </SectionShell>
@@ -153,6 +227,8 @@ export function VariantB3() {
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
       <B3Hero />
       <B3Entries />
+      <B3Numbers />
+      <B3Voices />
       <B3Closing />
       <B3CTA />
     </div>

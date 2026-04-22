@@ -134,12 +134,59 @@ function A12NewWorld() {
             b: "A project URL, not a folder path. Delete the folder, clone it fresh — your secrets are still where they were.",
           },
           {
-            t: "The browser is the recipient.",
-            b: "Your device decrypts on read. No .env file needs to sit on the disk between uses.",
+            t: "End-to-end encrypted, zero-knowledge.",
+            b: "We do store your secrets — we just never see them in plaintext. Your browser wraps them before they reach us, and only your passphrase unwraps them again.",
           },
           {
             t: "Mistakes stay small.",
             b: "A deleted project folder is now a five-minute re-clone, not a catastrophe.",
+          },
+        ].map((p, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.08 }}
+            className="pb-6 border-b border-neutral-900 last:border-b-0"
+          >
+            <div className="text-lg md:text-xl text-neutral-100 leading-snug">
+              {p.t}
+            </div>
+            <p className="mt-1.5 text-neutral-400 leading-relaxed">{p.b}</p>
+          </motion.div>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+function A12Invite() {
+  return (
+    <SectionShell>
+      <div className="max-w-3xl">
+        <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
+          Invite teammates. Multiply the recovery paths.
+        </h2>
+        <p className="mt-8 text-lg text-neutral-400 leading-relaxed max-w-2xl">
+          One person holding the only passphrase is how you end up re-typing
+          a production URL at 2am. Invite the rest of your team and the
+          vault has more than one way back in.
+        </p>
+      </div>
+      <div className="mt-12 max-w-3xl space-y-6">
+        {[
+          {
+            t: "Each member carries their own wrapped copy.",
+            b: "When you invite someone, the project key is rewrapped locally against their passphrase. Their copy lives on their device, never in plaintext on ours.",
+          },
+          {
+            t: "Any member can decrypt, independently.",
+            b: "If your laptop is gone, any teammate can read the secrets from their own browser. There's no single point of failure, and no recovery flow we secretly control.",
+          },
+          {
+            t: "Invite by link, by suggestion, or (soon) by team.",
+            b: "Send an invite link, pick from suggested teammates, or assign a whole team when that's ready. Revoking access re-wraps the key without the departing member.",
           },
         ].map((p, i) => (
           <motion.div
@@ -230,6 +277,7 @@ export function VariantA12() {
       <A12StatusQuo />
       <A12Tension />
       <A12NewWorld />
+      <A12Invite />
       <A12Numbers />
       <A12CTA />
     </div>

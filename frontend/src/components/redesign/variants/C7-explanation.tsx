@@ -5,11 +5,11 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT C7 — "The Warrant Canary"
- * Formula C · Quiet, dated, honest.
+ * VARIANT C7-explanation — "The Warrant Canary, Explained"
+ * Formula C · Canary report + a short primer on what the product does.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function C7Hero() {
+function C7EHero() {
   return (
     <section className="relative min-h-[95vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
@@ -42,30 +42,18 @@ function C7Hero() {
   );
 }
 
-const C7_FACTS = [
-  {
-    t: "Subpoenas received this quarter",
-    v: "0",
-  },
-  {
-    t: "National security letters received",
-    v: "0",
-  },
-  {
-    t: "Gag orders in effect",
-    v: "0",
-  },
-  {
-    t: "Requests we could honor if received",
-    v: "0",
-  },
+const C7E_FACTS = [
+  { t: "Subpoenas received this quarter", v: "0" },
+  { t: "National security letters received", v: "0" },
+  { t: "Gag orders in effect", v: "0" },
+  { t: "Requests we could honor if received", v: "0" },
 ];
 
-function C7Counts() {
+function C7ECounts() {
   return (
     <SectionShell>
       <div className="max-w-3xl space-y-14">
-        {C7_FACTS.map((f, i) => (
+        {C7E_FACTS.map((f, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 6 }}
@@ -87,7 +75,7 @@ function C7Counts() {
   );
 }
 
-function C7Honest() {
+function C7EHonest() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -110,7 +98,60 @@ function C7Honest() {
   );
 }
 
-function C7Numbers() {
+const C7E_FEATURES = [
+  {
+    n: "i",
+    t: "Write and save secrets.",
+    b: "In the browser. Paste the value, hit save; the browser encrypts before the request leaves the tab. The server stores ciphertext and nothing else.",
+  },
+  {
+    n: "ii",
+    t: "Invite people.",
+    b: "By invite link, from a list of suggested teammates, or (soon) by team. Each invitation rewraps the project key for the new member locally — no plaintext crosses our side.",
+  },
+  {
+    n: "iii",
+    t: "See history, from any seat.",
+    b: "Every update is a new wrapped copy. Teammates on the project can browse the history from their own browser. We can't — the versions are ciphertext on our side.",
+  },
+];
+
+function C7EFeatures() {
+  return (
+    <SectionShell>
+      <div className="max-w-3xl">
+        <div className="text-xs font-mono uppercase tracking-[0.3em] text-neutral-500 mb-10">
+          Why the last row will not change
+        </div>
+        <div className="space-y-20">
+          {C7E_FEATURES.map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: i * 0.05 }}
+            >
+              <div className="flex items-baseline gap-5">
+                <span className="font-serif italic text-neutral-600 text-lg">
+                  {f.n}.
+                </span>
+                <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
+                  {f.t}
+                </h2>
+              </div>
+              <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl ml-8">
+                {f.b}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </SectionShell>
+  );
+}
+
+function C7ENumbers() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -145,7 +186,7 @@ function C7Numbers() {
         </div>
         <p className="mt-8 text-neutral-500 text-lg leading-relaxed max-w-xl">
           The counter at the top stays at zero. These four climb as the
-          list of teams using us grows — more on the{" "}
+          list grows — more on the{" "}
           <a
             href="/blog"
             className={cn(
@@ -161,7 +202,7 @@ function C7Numbers() {
   );
 }
 
-function C7Voices() {
+function C7EVoices() {
   return (
     <SectionShell>
       <div className="max-w-3xl grid md:grid-cols-2 gap-14">
@@ -188,7 +229,7 @@ function C7Voices() {
   );
 }
 
-function C7CTA() {
+function C7ECTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -210,15 +251,16 @@ function C7CTA() {
   );
 }
 
-export function VariantC7() {
+export function VariantC7Explanation() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <C7Hero />
-      <C7Counts />
-      <C7Honest />
-      <C7Numbers />
-      <C7Voices />
-      <C7CTA />
+      <C7EHero />
+      <C7ECounts />
+      <C7EHonest />
+      <C7EFeatures />
+      <C7ENumbers />
+      <C7EVoices />
+      <C7ECTA />
     </div>
   );
 }

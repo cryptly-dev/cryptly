@@ -5,11 +5,11 @@ import { ArrowRight } from "lucide-react";
 import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
 
 /* ────────────────────────────────────────────────────────────────────────────
- * VARIANT B15 — "Small and Used"
- * Formula B · Manifesto voice, threaded with names and numbers.
+ * VARIANT B15-explanation — "Small and Used, Explained"
+ * Formula B · Manifesto voice + a three-entry primer on what the product does.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B15Hero() {
+function B15EHero() {
   return (
     <section className="relative min-h-[100vh] flex items-center bg-black">
       <div className="mx-auto max-w-3xl w-full px-6">
@@ -27,7 +27,8 @@ function B15Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="mt-10 text-lg md:text-xl text-neutral-400 max-w-xl leading-relaxed"
         >
-          A few facts, told with a steady voice.
+          A few facts, told with a steady voice — and a short primer on
+          what this thing actually is.
         </motion.p>
         <motion.div
           initial={{ opacity: 0 }}
@@ -52,7 +53,60 @@ function B15Hero() {
   );
 }
 
-const B15_STATEMENTS = [
+const B15E_FEATURES = [
+  {
+    n: "i",
+    t: "Write and save secrets.",
+    b: "In the browser. Paste the value, hit save; the browser encrypts before the request leaves the tab. The server stores ciphertext and nothing else.",
+  },
+  {
+    n: "ii",
+    t: "Invite people.",
+    b: "By invite link, from a list of suggested teammates, or (soon) by team. Each invitation rewraps the project key for the new member locally — no plaintext crosses our side.",
+  },
+  {
+    n: "iii",
+    t: "See history, from any seat.",
+    b: "Every update is a new wrapped copy. Teammates on the project can browse the history from their own browser. We can't — the versions are ciphertext on our side.",
+  },
+];
+
+function B15EFeatures() {
+  return (
+    <SectionShell>
+      <div className="max-w-3xl">
+        <div className="text-xs font-mono uppercase tracking-[0.3em] text-neutral-500 mb-10">
+          What it does, in three entries
+        </div>
+        <div className="space-y-20">
+          {B15E_FEATURES.map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: i * 0.05 }}
+            >
+              <div className="flex items-baseline gap-5">
+                <span className="font-serif italic text-neutral-600 text-lg">
+                  {f.n}.
+                </span>
+                <h2 className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-tight">
+                  {f.t}
+                </h2>
+              </div>
+              <p className="mt-6 text-lg text-neutral-400 leading-relaxed max-w-xl ml-8">
+                {f.b}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </SectionShell>
+  );
+}
+
+const B15E_STATEMENTS = [
   {
     t: "Seventy-seven people use this.",
     b: "Including the teams at logdash, signosh, bluemenu, and jobref. The list will grow, but slowly.",
@@ -71,11 +125,11 @@ const B15_STATEMENTS = [
   },
 ];
 
-function B15Statements() {
+function B15EStatements() {
   return (
     <SectionShell>
       <div className="max-w-3xl space-y-24">
-        {B15_STATEMENTS.map((s, i) => (
+        {B15E_STATEMENTS.map((s, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 10 }}
@@ -96,7 +150,7 @@ function B15Statements() {
   );
 }
 
-function B15Voices() {
+function B15EVoices() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -118,7 +172,7 @@ function B15Voices() {
   );
 }
 
-function B15Closing() {
+function B15EClosing() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -145,7 +199,7 @@ function B15Closing() {
   );
 }
 
-function B15CTA() {
+function B15ECTA() {
   return (
     <SectionShell>
       <div className="max-w-3xl">
@@ -167,14 +221,15 @@ function B15CTA() {
   );
 }
 
-export function VariantB15() {
+export function VariantB15Explanation() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B15Hero />
-      <B15Statements />
-      <B15Voices />
-      <B15Closing />
-      <B15CTA />
+      <B15EHero />
+      <B15EFeatures />
+      <B15EStatements />
+      <B15EVoices />
+      <B15EClosing />
+      <B15ECTA />
     </div>
   );
 }

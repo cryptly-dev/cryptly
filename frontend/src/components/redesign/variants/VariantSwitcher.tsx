@@ -119,7 +119,7 @@ export function VariantSwitcher({ current }: { current: VariantEntry }) {
                   Landing variants
                 </div>
                 <div className="mt-0.5 text-lg font-medium text-neutral-100">
-                  Forty candidates. Four angles.
+                  Fifteen candidates. Four angles.
                 </div>
               </div>
               <button

@@ -35,20 +35,20 @@ function D8Hero() {
 
 const D8_NOTES = [
   {
-    t: "We keep history.",
-    b: "When you change a secret, we don't overwrite the old one. We keep the old wrapped copy, so you can roll back without losing the trail.",
+    t: "It's a vault, first.",
+    b: "Cryptly is a place to put your team's secrets — API keys, DB URLs, signing keys. Each one is encrypted in the browser that types it, and reaches our servers as ciphertext. The vault is what the 1,086 versions live inside.",
   },
   {
-    t: "History is ciphertext, too.",
-    b: "Every one of the 1,086 versions is encrypted with the project key. We couldn't show you the history even if we wanted to.",
+    t: "Ciphertext on our side, always.",
+    b: "Every one of those 1,086 versions is sealed against the project's key — a key we never hold. We couldn't show you the contents even if we wanted to.",
   },
   {
-    t: "Your teammates can read the history.",
-    b: "Because they are on the project's member list, their browsers can unwrap past versions. The log is readable, but only from the right browser.",
+    t: "Your teammates can read them.",
+    b: "Because they are on the project's member list, their browsers can unwrap past values. The vault is readable, but only from a browser with the right passphrase.",
   },
   {
     t: "A version isn't a backup.",
-    b: "It's a point-in-time snapshot of what the secret was. If you lose access to the project, the history is as inaccessible as the current value.",
+    b: "It's a point-in-time snapshot. If nobody on the project holds the passphrase anymore, the vault closes for good — which is the trade-off we signed up for.",
   },
 ];
 
@@ -88,8 +88,9 @@ function D8Scale() {
           transition={{ duration: 0.9 }}
           className="text-3xl md:text-5xl font-semibold text-neutral-100 tracking-tight leading-[1.15]"
         >
-          Across 77 users and 89 projects, we've written 1,086 envelopes.
-          Each one sealed, each one ours only to store.
+          Across 77 users and 89 projects, the vault holds 1,086
+          envelopes. Each one sealed in a browser, each one ours only
+          to store.
         </motion.h2>
       </div>
     </SectionShell>

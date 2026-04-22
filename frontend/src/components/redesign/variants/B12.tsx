@@ -9,35 +9,6 @@ import { GhostCTA, PrimaryCTA, SectionShell } from "../common";
  * Formula B · Quiet nav at top · features described, plainly.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function B12Nav() {
-  return (
-    <nav className="sticky top-0 z-40 border-b border-neutral-950/80 bg-black/80 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between">
-        <a href="/" className="text-sm font-semibold tracking-tight text-neutral-100">
-          Cryptly
-        </a>
-        <div className="flex items-center gap-7 text-sm text-neutral-400">
-          <a href="/" className="text-neutral-100">
-            home
-          </a>
-          <a href="#features" className="hover:text-neutral-100 transition-colors">
-            features
-          </a>
-          <a href="/blog" className="hover:text-neutral-100 transition-colors">
-            blog
-          </a>
-          <a
-            href="https://github.com/cryptly-dev/cryptly"
-            className="hover:text-neutral-100 transition-colors"
-          >
-            github
-          </a>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
 function B12Hero() {
   return (
     <section className="relative min-h-[90vh] flex items-center bg-black">
@@ -59,6 +30,24 @@ function B12Hero() {
           What the product does, in three short entries. The rest is
           either on the blog or in the source.
         </motion.p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.8 }}
+          className="mt-12 flex flex-wrap items-center gap-3"
+        >
+          <PrimaryCTA href="/app/login">
+            <span>Open your vault</span>
+            <ArrowRight className="h-4 w-4" />
+          </PrimaryCTA>
+          <GhostCTA href="https://github.com/cryptly-dev/cryptly">
+            <GitHubIcon className="h-4 w-4" />
+            <span>Read the source</span>
+          </GhostCTA>
+          <GhostCTA href="/blog">
+            <span>Read the blog</span>
+          </GhostCTA>
+        </motion.div>
       </div>
     </section>
   );
@@ -174,7 +163,7 @@ function B12Stats() {
         >
           Thirty stars. Seventy-seven users. Eighty-nine projects. One
           thousand and eighty-six versions. All four numbers are real,
-          and all four are small. The{" "}
+          and all four are, for now, small. The{" "}
           <a
             href="/blog"
             className={cn(
@@ -183,7 +172,7 @@ function B12Stats() {
           >
             blog
           </a>{" "}
-          is where we tell you why we like it that way.
+          follows them as they move.
         </motion.h2>
       </div>
     </SectionShell>
@@ -195,7 +184,7 @@ function B12CTA() {
     <SectionShell>
       <div className="max-w-3xl">
         <h2 className="text-4xl md:text-6xl font-semibold text-neutral-100 leading-[1.05] tracking-tight">
-          Look around.
+          Make it seventy-eight.
         </h2>
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <PrimaryCTA href="/app/login">
@@ -215,7 +204,6 @@ function B12CTA() {
 export function VariantB12() {
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24 overflow-x-hidden">
-      <B12Nav />
       <B12Hero />
       <B12Features />
       <B12Testimonials />
