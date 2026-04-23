@@ -60,7 +60,6 @@ export function BlogListPage() {
           </div>
         )}
 
-        {posts === null && !error && <BlogListSkeleton />}
 
         {posts && posts.length === 0 && (
           <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-16 text-center">
@@ -145,23 +144,3 @@ function BlogPostCard({ post }: { post: BlogPost }) {
   );
 }
 
-function BlogListSkeleton() {
-  return (
-    <div className="divide-y divide-neutral-900">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="py-8 animate-pulse">
-          <div className="flex flex-col md:flex-row md:items-start md:gap-10">
-            <div className="md:w-40 flex-shrink-0 mb-3 md:mb-0">
-              <div className="h-4 w-32 rounded bg-neutral-900" />
-            </div>
-            <div className="flex-1 space-y-3">
-              <div className="h-7 w-3/4 rounded bg-neutral-900" />
-              <div className="h-4 w-full rounded bg-neutral-900" />
-              <div className="h-4 w-2/3 rounded bg-neutral-900" />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}

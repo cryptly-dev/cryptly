@@ -35,7 +35,14 @@ import {
   X,
 } from "lucide-react";
 import { motion, Reorder, useDragControls } from "motion/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
 import posthog from "posthog-js";
 import { authLogic } from "@/lib/logics/authLogic";
@@ -84,6 +91,52 @@ export function DesktopProjectsList() {
   const newProjectInputRef = useRef<HTMLInputElement>(null);
 
   const { activeProject, pendingProjectId } = useProjects();
+
+  // Sliding indicator (bg + left line) measured from the active row's DOM rect.
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const rowRefs = useRef(new Map<string, HTMLElement>());
+  const [indicator, setIndicator] = useState<{
+    top: number;
+    height: number;
+  } | null>(null);
+
+  const registerRowRef = useCallback(
+    (id: string, el: HTMLElement | null) => {
+      if (el) rowRefs.current.set(id, el);
+      else rowRefs.current.delete(id);
+    },
+    []
+  );
+
+  const indicatorProjectId = activeProject?.id ?? null;
+
+  useLayoutEffect(() => {
+    if (!indicatorProjectId) {
+      setIndicator(null);
+      return;
+    }
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+
+    const measure = () => {
+      const row = rowRefs.current.get(indicatorProjectId);
+      if (!row || !scrollRef.current) return;
+      const rowRect = row.getBoundingClientRect();
+      const containerRect = scrollRef.current.getBoundingClientRect();
+      setIndicator({
+        top:
+          rowRect.top - containerRect.top + scrollRef.current.scrollTop,
+        height: rowRect.height,
+      });
+    };
+
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(scroller);
+    rowRefs.current.forEach((el) => ro.observe(el));
+    return () => ro.disconnect();
+  }, [indicatorProjectId, localProjects, isAddingProject]);
 
   useEffect(() => {
     if (userData?.displayName) {
@@ -218,14 +271,73 @@ export function DesktopProjectsList() {
       {/* Projects Section */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {/* Projects List */}
-        <div className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar px-2 pt-2">
+        <div
+          ref={scrollRef}
+          className="relative flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-2"
+        >
+          {indicator && (
+            <>
+              <motion.div
+                aria-hidden
+                className="absolute left-0 right-0 bg-neutral-900 pointer-events-none"
+                style={{ top: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: 1,
+                  y: indicator.top,
+                  height: indicator.height,
+                }}
+                transition={{
+                  y: {
+                    type: "spring",
+                    stiffness: 360,
+                    damping: 36,
+                    mass: 0.9,
+                  },
+                  height: {
+                    type: "spring",
+                    stiffness: 360,
+                    damping: 36,
+                    mass: 0.9,
+                  },
+                  opacity: { duration: 0.18 },
+                }}
+              />
+              <motion.div
+                aria-hidden
+                className="absolute left-0 w-[2px] pointer-events-none"
+                style={{ top: 0, backgroundColor: "#c9b287" }}
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: 1,
+                  y: indicator.top,
+                  height: indicator.height,
+                }}
+                transition={{
+                  y: {
+                    type: "spring",
+                    stiffness: 360,
+                    damping: 36,
+                    mass: 0.9,
+                  },
+                  height: {
+                    type: "spring",
+                    stiffness: 360,
+                    damping: 36,
+                    mass: 0.9,
+                  },
+                  opacity: { duration: 0.18 },
+                }}
+              />
+            </>
+          )}
           {/* Inline Add Project Input */}
           {isAddingProject && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-0.5"
+              className="mb-0.5 px-2"
             >
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm border border-primary/30 bg-primary/5">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -283,7 +395,6 @@ export function DesktopProjectsList() {
               onReorder={(newOrder) => {
                 setLocalProjects(newOrder);
               }}
-              className="space-y-0.5"
               as="nav"
               variants={listVariants}
               initial="hidden"
@@ -300,6 +411,7 @@ export function DesktopProjectsList() {
                     isActive={isActive}
                     isLoading={isLoading}
                     itemVariants={itemVariants}
+                    registerRef={registerRowRef}
                     onDragEnd={() => {
                       finalizeProjectsOrder(localProjects);
                     }}
@@ -484,17 +596,20 @@ function ProjectListItem({
   isLoading,
   itemVariants,
   onDragEnd,
+  registerRef,
 }: {
   project: Project;
   isActive: boolean;
   isLoading: boolean;
   itemVariants: any;
   onDragEnd: () => void;
+  registerRef: (id: string, el: HTMLElement | null) => void;
 }) {
   const dragControls = useDragControls();
 
   return (
     <Reorder.Item
+      ref={(el: HTMLElement | null) => registerRef(project.id, el)}
       value={project}
       className="list-none"
       variants={itemVariants}
