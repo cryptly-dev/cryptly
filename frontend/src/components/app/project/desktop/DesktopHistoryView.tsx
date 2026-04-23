@@ -745,14 +745,70 @@ export function DesktopHistoryView() {
       </div>
 
       {/* Diff */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col">
         {selectedPatch ? (
-          <DiffEditor value={selectedPatch.content} />
+          <>
+            <DiffSummary patch={selectedPatch} isMine={selectedPatch.author.id === userData?.id} />
+            <div className="flex-1 min-h-0">
+              <DiffEditor value={selectedPatch.content} />
+            </div>
+          </>
         ) : (
           <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
             Pick an entry to view its changes
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function DiffSummary({
+  patch,
+  isMine,
+}: {
+  patch: import("@/lib/logics/projectLogic").Patch;
+  isMine: boolean;
+}) {
+  const stats = getPatchStats(patch.content);
+  const relative = getCompactRelativeTime(patch.createdAt);
+  const full = formatFullDate(patch.createdAt);
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 bg-neutral-950/60">
+      <img
+        src={patch.author.avatarUrl || DEFAULT_AVATAR}
+        alt=""
+        className="size-7 rounded-full object-cover flex-shrink-0"
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 text-sm">
+          <span className="font-medium text-foreground truncate">
+            {patch.author.displayName}
+          </span>
+          {isMine && (
+            <span className="text-primary/70 text-[11px]">· you</span>
+          )}
+          <span className="text-muted-foreground/60 text-[12px]">edited</span>
+          <span
+            className="text-muted-foreground text-[12px] tabular-nums"
+            title={full}
+          >
+            {relative}
+          </span>
+        </div>
+        <div className="text-[11px] text-muted-foreground/70 mt-0.5">
+          {full}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-mono tabular-nums">
+          <Plus className="size-3" />
+          {stats.additions}
+        </span>
+        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[11px] font-mono tabular-nums">
+          <Minus className="size-3" />
+          {stats.deletions}
+        </span>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { BlogApi, type BlogPost } from "@/lib/api/blog.api";
+import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Newspaper } from "lucide-react";
+import { ArrowRight, Newspaper, Plus } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 
@@ -15,6 +16,7 @@ function formatDate(iso: string): string {
 export function BlogListPage() {
   const [posts, setPosts] = useState<BlogPost[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isAdmin = useIsAdmin();
 
   useEffect(() => {
     let cancelled = false;
@@ -41,18 +43,38 @@ export function BlogListPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0, 0.55, 0.45, 1] }}
-          className="mb-16"
+          className="mb-16 flex items-end justify-between gap-6"
         >
-          <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">
-            Writing on secrets,
-            <br />
-            <span className="text-neutral-400">security, and shipping.</span>
-          </h1>
-          <p className="mt-6 text-lg text-neutral-400 max-w-2xl">
-            Notes from the Cryptly team. Engineering deep dives, product
-            thinking, and UX insights.
-          </p>
+          <div>
+            <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">
+              Writing on secrets,
+              <br />
+              <span className="text-neutral-400">security, and shipping.</span>
+            </h1>
+            <p className="mt-6 text-lg text-neutral-400 max-w-2xl">
+              Notes from the Cryptly team. Engineering deep dives, product
+              thinking, and UX insights.
+            </p>
+          </div>
+          {isAdmin && (
+            <Link
+              to="/blog/new"
+              className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-950 text-foreground px-4 py-2 text-sm font-medium shrink-0 transition-colors hover:bg-neutral-900 hover:border-neutral-700"
+            >
+              <Plus className="w-4 h-4" />
+              New post
+            </Link>
+          )}
         </motion.div>
+        {isAdmin && (
+          <Link
+            to="/blog/new"
+            className="md:hidden mb-8 inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-950 text-foreground px-4 py-2 text-sm font-medium transition-colors hover:bg-neutral-900 hover:border-neutral-700"
+          >
+            <Plus className="w-4 h-4" />
+            New post
+          </Link>
+        )}
 
         {error && (
           <div className="rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
@@ -60,6 +82,13 @@ export function BlogListPage() {
           </div>
         )}
 
+        {!posts && !error && (
+          <div className="divide-y divide-neutral-900">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <BlogPostCardSkeleton key={i} />
+            ))}
+          </div>
+        )}
 
         {posts && posts.length === 0 && (
           <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-16 text-center">
@@ -96,6 +125,29 @@ export function BlogListPage() {
           </Link>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function BlogPostCardSkeleton() {
+  return (
+    <div className="py-8 animate-pulse">
+      <div className="flex flex-col md:flex-row md:items-start md:gap-10">
+        <div className="md:w-40 flex-shrink-0 mb-3 md:mb-0 md:pt-1">
+          <div className="h-4 w-28 rounded bg-neutral-900" />
+        </div>
+        <div className="flex-1 min-w-0 space-y-3">
+          <div className="h-7 md:h-8 w-3/4 rounded bg-neutral-900" />
+          <div className="space-y-2 pt-1">
+            <div className="h-4 w-full rounded bg-neutral-900/80" />
+            <div className="h-4 w-5/6 rounded bg-neutral-900/80" />
+          </div>
+          <div className="pt-3 flex items-center gap-3">
+            <div className="w-5 h-5 rounded-full bg-neutral-900" />
+            <div className="h-3.5 w-24 rounded bg-neutral-900" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

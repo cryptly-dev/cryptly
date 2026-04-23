@@ -919,7 +919,7 @@ export function BaseFileEditor({
       const decorations = rangesToFlash.map((entry) => ({
         range: entry.range,
         options: {
-          inlineClassName: "secret-masked secret-copied",
+          inlineClassName: "secret-copied",
         },
       }));
 
@@ -1232,6 +1232,145 @@ export function BaseFileEditor({
           const id = newIds[i];
           trackingDecorationIdsRef.current.add(id);
           decorationToRealRef.current.set(id, ingestPlan[i].original);
+        }
+      });
+    }
+
+    // Step 1.5: resize existing decorations whose range no longer matches
+    // the parsed range (user typed adjacent chars, extending the value past
+    // the tracked edge). Only extensions — shrinking is left to Monaco's
+    // own range tracking + prune.
+    interface ResizePlan {
+      oldId: string;
+      oldRange: {
+        startLineNumber: number;
+        startColumn: number;
+        endLineNumber: number;
+        endColumn: number;
+      };
+      newRange: ValueRange;
+      wasExpanded: boolean;
+    }
+    const resizePlans: ResizePlan[] = [];
+    for (const pr of parsed) {
+      const existingId = findOverlappingTrackingDecoration(model, pr);
+      if (!existingId) continue;
+      const oldRange = model.getDecorationRange(existingId);
+      if (!oldRange) continue;
+      const matches =
+        oldRange.startLineNumber === pr.startLine &&
+        oldRange.startColumn === pr.startCol &&
+        oldRange.endLineNumber === pr.endLine &&
+        oldRange.endColumn === pr.endCol;
+      if (matches) continue;
+      const extendsBefore =
+        pr.startLine < oldRange.startLineNumber ||
+        (pr.startLine === oldRange.startLineNumber &&
+          pr.startCol < oldRange.startColumn);
+      const extendsAfter =
+        pr.endLine > oldRange.endLineNumber ||
+        (pr.endLine === oldRange.endLineNumber &&
+          pr.endCol > oldRange.endColumn);
+      if (!extendsBefore && !extendsAfter) continue;
+      resizePlans.push({
+        oldId: existingId,
+        oldRange: {
+          startLineNumber: oldRange.startLineNumber,
+          startColumn: oldRange.startColumn,
+          endLineNumber: oldRange.endLineNumber,
+          endColumn: oldRange.endColumn,
+        },
+        newRange: pr,
+        wasExpanded: expanded.has(existingId),
+      });
+    }
+
+    for (const plan of resizePlans) {
+      const existingReal =
+        decorationToRealRef.current.get(plan.oldId) ?? "";
+      const newMonacoRange = new monacoInstance.Range(
+        plan.newRange.startLine,
+        plan.newRange.startCol,
+        plan.newRange.endLine,
+        plan.newRange.endCol
+      );
+
+      let newReal: string;
+      const modelEdits: Array<{ range: any; text: string }> = [];
+
+      if (plan.wasExpanded) {
+        // Model has real text across the whole new range — adopt it.
+        newReal = model.getValueInRange(newMonacoRange);
+      } else {
+        const prefixEmpty =
+          plan.newRange.startLine === plan.oldRange.startLineNumber &&
+          plan.newRange.startCol === plan.oldRange.startColumn;
+        const suffixEmpty =
+          plan.oldRange.endLineNumber === plan.newRange.endLine &&
+          plan.oldRange.endColumn === plan.newRange.endCol;
+        const prefixRange = new monacoInstance.Range(
+          plan.newRange.startLine,
+          plan.newRange.startCol,
+          plan.oldRange.startLineNumber,
+          plan.oldRange.startColumn
+        );
+        const suffixRange = new monacoInstance.Range(
+          plan.oldRange.endLineNumber,
+          plan.oldRange.endColumn,
+          plan.newRange.endLine,
+          plan.newRange.endCol
+        );
+        const prefix = prefixEmpty ? "" : model.getValueInRange(prefixRange);
+        const suffix = suffixEmpty ? "" : model.getValueInRange(suffixRange);
+        newReal = prefix + existingReal + suffix;
+        if (prefix.length > 0) {
+          modelEdits.push({
+            range: prefixRange,
+            text: bulletsForSubstring(prefix),
+          });
+        }
+        if (suffix.length > 0) {
+          modelEdits.push({
+            range: suffixRange,
+            text: bulletsForSubstring(suffix),
+          });
+        }
+      }
+
+      withInternalEdit(() => {
+        if (modelEdits.length > 0) {
+          editor.executeEdits("mask-resize", modelEdits);
+        }
+        editor.deltaDecorations([plan.oldId], []);
+        trackingDecorationIdsRef.current.delete(plan.oldId);
+        decorationToRealRef.current.delete(plan.oldId);
+        const newIds = editor.deltaDecorations(
+          [],
+          [
+            {
+              range: new monacoInstance.Range(
+                plan.newRange.startLine,
+                plan.newRange.startCol,
+                plan.newRange.endLine,
+                plan.newRange.endCol
+              ),
+              options: {
+                stickiness:
+                  monacoInstance.editor.TrackedRangeStickiness
+                    ?.NeverGrowsWhenTypingAtEdges ?? 1,
+              },
+            },
+          ]
+        );
+        const newId = newIds[0];
+        trackingDecorationIdsRef.current.add(newId);
+        decorationToRealRef.current.set(newId, newReal);
+        if (caretRevealedDecIdsRef.current.has(plan.oldId)) {
+          caretRevealedDecIdsRef.current.delete(plan.oldId);
+          caretRevealedDecIdsRef.current.add(newId);
+        }
+        if (hoverRevealedDecIdRef.current === plan.oldId) {
+          hoverRevealedDecIdRef.current = newId;
         }
       });
     }

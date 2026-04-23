@@ -29,30 +29,27 @@ import { suggestedUsersLogic } from "@/lib/logics/suggestedUsersLogic";
 import { cn, getRelativeTime } from "@/lib/utils";
 import {
   IconArrowLeft,
-  IconArrowRight,
   IconCheck,
   IconChevronRight,
   IconCopy,
   IconCrown,
   IconEye,
-  IconEyeOff,
   IconLink,
   IconPencil,
-  IconRefresh,
   IconTrash,
   IconUsers,
   IconUserPlus,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
 import posthog from "posthog-js";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { WizardStepper } from "@/components/ui/wizard-stepper";
 
 // ────────────────────────────────────────────────────────────
 // Helpers
 // ────────────────────────────────────────────────────────────
 
-function generateInviteCode(length = 32): string {
+function generateInviteCode(length = 16): string {
   // Exclude ambiguous characters: i, l, 0, o (and uppercase I, L, O)
   const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ123456789";
   const array = new Uint8Array(length);
@@ -499,7 +496,6 @@ function ActiveInvitesSection() {
 
 type WizardStep =
   | "type"
-  | "invite-link-code"
   | "suggested-user"
   | "team"
   | "role"
@@ -507,18 +503,24 @@ type WizardStep =
 
 type InviteType = "invite-link" | "suggested-user" | "team";
 
-const STEP_NUMBER: Record<WizardStep, number> = {
-  type: 1,
-  "invite-link-code": 2,
-  "suggested-user": 2,
-  team: 2,
-  role: 3,
-  done: 3,
-};
+function getStepNumber(
+  step: WizardStep,
+  inviteType: InviteType | null
+): number {
+  if (step === "type") return 1;
+  if (step === "suggested-user" || step === "team") return 2;
+  if (step === "role" || step === "done") {
+    return inviteType === "suggested-user" ? 3 : 2;
+  }
+  return 1;
+}
+
+function getTotalSteps(inviteType: InviteType | null): number {
+  return inviteType === "suggested-user" ? 3 : 2;
+}
 
 const STEP_TITLE: Record<WizardStep, string> = {
   type: "Add people",
-  "invite-link-code": "Invitation code",
   "suggested-user": "Choose a person",
   team: "Team",
   role: "Choose a role",
@@ -547,8 +549,6 @@ function AddPeopleWizard({
   const [selectedUser, setSelectedUser] = useState<SuggestedUser | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [showCode, setShowCode] = useState(false);
-  const passphraseInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) loadSuggestedUsers();
@@ -564,24 +564,22 @@ function AddPeopleWizard({
         setSelectedUser(null);
         setIsSubmitting(false);
         setCopiedField(null);
-        setShowCode(false);
       }, 200);
       return () => clearTimeout(timeout);
     }
   }, [open]);
 
   const goBack = () => {
-    if (
-      step === "invite-link-code" ||
-      step === "suggested-user" ||
-      step === "team"
-    ) {
-      if (step === "invite-link-code") setPassphrase("");
+    if (step === "suggested-user" || step === "team") {
       setStep("type");
-    } else if (step === "role")
-      setStep(
-        inviteType === "invite-link" ? "invite-link-code" : "suggested-user"
-      );
+    } else if (step === "role") {
+      if (inviteType === "invite-link") {
+        setPassphrase("");
+        setStep("type");
+      } else {
+        setStep("suggested-user");
+      }
+    }
   };
 
   const showBack = step !== "type" && step !== "done";
@@ -640,11 +638,12 @@ function AddPeopleWizard({
               {STEP_TITLE[step]}
             </DialogTitle>
             <WizardStepper
-              currentStep={STEP_NUMBER[step]}
-              totalSteps={3}
+              currentStep={getStepNumber(step, inviteType)}
+              totalSteps={getTotalSteps(inviteType)}
             />
             <DialogDescription className="sr-only">
-              Step {STEP_NUMBER[step]} of 3
+              Step {getStepNumber(step, inviteType)} of{" "}
+              {getTotalSteps(inviteType)}
             </DialogDescription>
           </div>
         )}
@@ -659,7 +658,8 @@ function AddPeopleWizard({
                     type="button"
                     onClick={() => {
                       setInviteType("invite-link");
-                      setStep("invite-link-code");
+                      setPassphrase(generateInviteCode());
+                      setStep("role");
                     }}
                     className="flex flex-col items-center gap-2 p-5 rounded-lg border border-border/50 bg-neutral-800/50 hover:bg-neutral-800 hover:border-primary/30 transition-all cursor-pointer text-center"
                   >
@@ -715,53 +715,6 @@ function AddPeopleWizard({
                   Invite an entire team at once
                 </TooltipContent>
               </Tooltip>
-            </div>
-          </TooltipProvider>
-        )}
-
-        {/* ── Step 2a: Invite-link code ── */}
-        {step === "invite-link-code" && (
-          <TooltipProvider skipDelayDuration={300}>
-            <div className="space-y-3 pt-2">
-              <InputWithActions
-                ref={passphraseInputRef}
-                type="text"
-                value={passphrase}
-                onChange={(e) => setPassphrase(e.target.value)}
-                className="font-mono"
-                placeholder="Enter or generate a code"
-                autoFocus
-                actions={
-                  <>
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <InputAction
-                          onClick={() => {
-                            setPassphrase(generateInviteCode());
-                            requestAnimationFrame(() => {
-                              passphraseInputRef.current?.focus();
-                              passphraseInputRef.current?.select();
-                            });
-                          }}
-                        >
-                          <IconRefresh className="size-4" />
-                        </InputAction>
-                      </TooltipTrigger>
-                      <TooltipContent>Generate random code</TooltipContent>
-                    </Tooltip>
-                    <InputAction
-                      onClick={() => setStep("role")}
-                      disabled={!passphrase.trim()}
-                      className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    >
-                      <IconArrowRight className="size-4" />
-                    </InputAction>
-                  </>
-                }
-              />
-              <p className="text-xs text-muted-foreground text-center leading-relaxed">
-                The code protects the link. Share it separately — only someone who knows both can join.
-              </p>
             </div>
           </TooltipProvider>
         )}
@@ -902,28 +855,19 @@ function AddPeopleWizard({
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">Invitation code</label>
                   <InputWithActions
-                    type={showCode ? "text" : "password"}
+                    type="text"
                     value={passphrase}
                     readOnly
                     className="font-mono truncate"
                     focusRing={false}
                     actions={
-                      <>
-                        <InputAction onClick={() => setShowCode(!showCode)}>
-                          {showCode ? (
-                            <IconEyeOff className="size-4" />
-                          ) : (
-                            <IconEye className="size-4" />
-                          )}
-                        </InputAction>
-                        <InputAction onClick={() => handleCopy("code", passphrase)}>
-                          {copiedField === "code" ? (
-                            <IconCheck className="size-4 text-green-500" />
-                          ) : (
-                            <IconCopy className="size-4" />
-                          )}
-                        </InputAction>
-                      </>
+                      <InputAction onClick={() => handleCopy("code", passphrase)}>
+                        {copiedField === "code" ? (
+                          <IconCheck className="size-4 text-green-500" />
+                        ) : (
+                          <IconCopy className="size-4" />
+                        )}
+                      </InputAction>
                     }
                   />
                 </div>
