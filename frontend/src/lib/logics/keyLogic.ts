@@ -73,6 +73,16 @@ export const keyLogic = kea<keyLogicType>([
         Boolean(userData) &&
         (!userData!.publicKey || !userData!.privateKeyEncrypted),
     ],
+    // True only when we *know* the account has keys. Distinct from
+    // `!shouldSetUpPassphrase`, which is also false while userData is still
+    // loading — that ambiguity was causing UnlockBrowserDialog to flash.
+    keysAreSetUp: [
+      (state) => [state.userData],
+      (userData: User | null) =>
+        Boolean(userData) &&
+        Boolean(userData!.publicKey) &&
+        Boolean(userData!.privateKeyEncrypted),
+    ],
     browserIsUnlocked: [
       (state) => [state.privateKeyDecrypted],
       (privateKeyDecrypted: string | null) => Boolean(privateKeyDecrypted),
@@ -94,6 +104,12 @@ export const keyLogic = kea<keyLogicType>([
       );
 
       actions.setPassphrase(passphrase);
+      // We already hold the plaintext private key here, so set it directly.
+      // Otherwise the userData subscription has to re-derive and decrypt
+      // after loadUserData, leaving a window where `keysAreSetUp` is true
+      // but `browserIsUnlocked` is still false — which briefly satisfies
+      // UnlockBrowserDialog's gate and causes a flash.
+      actions.setPrivateKeyDecrypted(keyPair.privateKey);
 
       await UserApi.updateMe(values.jwtToken!, {
         publicKey: keyPair.publicKey,

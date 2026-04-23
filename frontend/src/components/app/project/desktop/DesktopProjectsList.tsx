@@ -419,7 +419,9 @@ export function DesktopProjectsList() {
                 );
               })}
             </Reorder.Group>
-          ) : !projectsLoading && !isAddingProject ? (
+          ) : localProjects !== undefined &&
+            !projectsLoading &&
+            !isAddingProject ? (
             <div className="px-2 py-4 text-sm text-muted-foreground">
               No projects yet
             </div>
