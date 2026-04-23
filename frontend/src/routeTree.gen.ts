@@ -11,13 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as VariantsIndexRouteImport } from './routes/variants/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
-import { Route as VariantsERouteImport } from './routes/variants/e'
-import { Route as VariantsDRouteImport } from './routes/variants/d'
-import { Route as VariantsCRouteImport } from './routes/variants/c'
-import { Route as VariantsBRouteImport } from './routes/variants/b'
-import { Route as VariantsARouteImport } from './routes/variants/a'
 import { Route as InviteInviteIdRouteImport } from './routes/invite/$inviteId'
 import { Route as BlogNewRouteImport } from './routes/blog/new'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
@@ -40,39 +34,9 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VariantsIndexRoute = VariantsIndexRouteImport.update({
-  id: '/variants/',
-  path: '/variants/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VariantsERoute = VariantsERouteImport.update({
-  id: '/variants/e',
-  path: '/variants/e',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VariantsDRoute = VariantsDRouteImport.update({
-  id: '/variants/d',
-  path: '/variants/d',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VariantsCRoute = VariantsCRouteImport.update({
-  id: '/variants/c',
-  path: '/variants/c',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VariantsBRoute = VariantsBRouteImport.update({
-  id: '/variants/b',
-  path: '/variants/b',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VariantsARoute = VariantsARouteImport.update({
-  id: '/variants/a',
-  path: '/variants/a',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteInviteIdRoute = InviteInviteIdRouteImport.update({
@@ -140,13 +104,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
-  '/variants/a': typeof VariantsARoute
-  '/variants/b': typeof VariantsBRoute
-  '/variants/c': typeof VariantsCRoute
-  '/variants/d': typeof VariantsDRoute
-  '/variants/e': typeof VariantsERoute
   '/blog': typeof BlogIndexRoute
-  '/variants': typeof VariantsIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project': typeof AppProjectIndexRoute
@@ -162,13 +120,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
-  '/variants/a': typeof VariantsARoute
-  '/variants/b': typeof VariantsBRoute
-  '/variants/c': typeof VariantsCRoute
-  '/variants/d': typeof VariantsDRoute
-  '/variants/e': typeof VariantsERoute
   '/blog': typeof BlogIndexRoute
-  '/variants': typeof VariantsIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project': typeof AppProjectIndexRoute
@@ -185,13 +137,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
-  '/variants/a': typeof VariantsARoute
-  '/variants/b': typeof VariantsBRoute
-  '/variants/c': typeof VariantsCRoute
-  '/variants/d': typeof VariantsDRoute
-  '/variants/e': typeof VariantsERoute
   '/blog/': typeof BlogIndexRoute
-  '/variants/': typeof VariantsIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/blog/edit/$slug': typeof BlogEditSlugRoute
   '/app/project/': typeof AppProjectIndexRoute
@@ -209,13 +155,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/new'
     | '/invite/$inviteId'
-    | '/variants/a'
-    | '/variants/b'
-    | '/variants/c'
-    | '/variants/d'
-    | '/variants/e'
     | '/blog'
-    | '/variants'
     | '/app/project/$projectId'
     | '/blog/edit/$slug'
     | '/app/project'
@@ -231,13 +171,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/new'
     | '/invite/$inviteId'
-    | '/variants/a'
-    | '/variants/b'
-    | '/variants/c'
-    | '/variants/d'
-    | '/variants/e'
     | '/blog'
-    | '/variants'
     | '/app/project/$projectId'
     | '/blog/edit/$slug'
     | '/app/project'
@@ -253,13 +187,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/new'
     | '/invite/$inviteId'
-    | '/variants/a'
-    | '/variants/b'
-    | '/variants/c'
-    | '/variants/d'
-    | '/variants/e'
     | '/blog/'
-    | '/variants/'
     | '/app/project/$projectId'
     | '/blog/edit/$slug'
     | '/app/project/'
@@ -274,13 +202,7 @@ export interface RootRouteChildren {
   BlogSlugRoute: typeof BlogSlugRoute
   BlogNewRoute: typeof BlogNewRoute
   InviteInviteIdRoute: typeof InviteInviteIdRoute
-  VariantsARoute: typeof VariantsARoute
-  VariantsBRoute: typeof VariantsBRoute
-  VariantsCRoute: typeof VariantsCRoute
-  VariantsDRoute: typeof VariantsDRoute
-  VariantsERoute: typeof VariantsERoute
   BlogIndexRoute: typeof BlogIndexRoute
-  VariantsIndexRoute: typeof VariantsIndexRoute
   BlogEditSlugRoute: typeof BlogEditSlugRoute
 }
 
@@ -300,53 +222,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/variants/': {
-      id: '/variants/'
-      path: '/variants'
-      fullPath: '/variants'
-      preLoaderRoute: typeof VariantsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/blog/': {
       id: '/blog/'
       path: '/blog'
       fullPath: '/blog'
       preLoaderRoute: typeof BlogIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/variants/e': {
-      id: '/variants/e'
-      path: '/variants/e'
-      fullPath: '/variants/e'
-      preLoaderRoute: typeof VariantsERouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/variants/d': {
-      id: '/variants/d'
-      path: '/variants/d'
-      fullPath: '/variants/d'
-      preLoaderRoute: typeof VariantsDRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/variants/c': {
-      id: '/variants/c'
-      path: '/variants/c'
-      fullPath: '/variants/c'
-      preLoaderRoute: typeof VariantsCRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/variants/b': {
-      id: '/variants/b'
-      path: '/variants/b'
-      fullPath: '/variants/b'
-      preLoaderRoute: typeof VariantsBRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/variants/a': {
-      id: '/variants/a'
-      path: '/variants/a'
-      fullPath: '/variants/a'
-      preLoaderRoute: typeof VariantsARouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$inviteId': {
@@ -457,13 +337,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogSlugRoute: BlogSlugRoute,
   BlogNewRoute: BlogNewRoute,
   InviteInviteIdRoute: InviteInviteIdRoute,
-  VariantsARoute: VariantsARoute,
-  VariantsBRoute: VariantsBRoute,
-  VariantsCRoute: VariantsCRoute,
-  VariantsDRoute: VariantsDRoute,
-  VariantsERoute: VariantsERoute,
   BlogIndexRoute: BlogIndexRoute,
-  VariantsIndexRoute: VariantsIndexRoute,
   BlogEditSlugRoute: BlogEditSlugRoute,
 }
 export const routeTree = rootRouteImport
