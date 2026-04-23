@@ -1,5 +1,6 @@
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { CryptlyLogo } from "@/components/ui/CryptlyLogo";
+import { StatsApi, type Stats } from "@/lib/api/stats.api";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
@@ -36,7 +37,7 @@ function Pin() {
   return (
     <span
       aria-hidden
-      className="inline-block h-1.5 w-1.5 rounded-full align-middle"
+      className="inline-block h-1 w-1 rounded-full align-middle"
       style={{ backgroundColor: ACCENT }}
     />
   );
@@ -214,17 +215,13 @@ function Hero() {
                 ease: HERO_EASE,
                 delay: 0.36,
               }}
-              className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-muted-foreground"
+              className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-muted-foreground"
             >
-              <span className="inline-flex items-center gap-2">
-                <Pin /> Free forever
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Pin /> E2E encrypted
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Pin /> Open source
-              </span>
+              <span>Free forever</span>
+              <Pin />
+              <span>E2E encrypted</span>
+              <Pin />
+              <span>Open source</span>
             </motion.div>
           </div>
 
@@ -1198,7 +1195,55 @@ function CustomersMovement() {
 
 // ── Numbers ────────────────────────────────────────────────────────────────
 
-function Numbers() {
+function formatStat(value: number): string {
+  return value.toLocaleString("en-US");
+}
+
+type StatsState =
+  | { status: "loading" }
+  | { status: "ready"; data: Stats }
+  | { status: "error" };
+
+const STATS_REFRESH_INTERVAL_MS = 5_000;
+
+function useStatsLoop(): StatsState {
+  const [state, setState] = useState<StatsState>({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    let timeoutId: number | null = null;
+
+    const run = async () => {
+      try {
+        const data = await StatsApi.get();
+        if (!cancelled) setState({ status: "ready", data });
+      } catch {
+        if (!cancelled) setState({ status: "error" });
+      }
+      if (cancelled) return;
+      timeoutId = window.setTimeout(run, STATS_REFRESH_INTERVAL_MS);
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  return state;
+}
+
+function formatOrdinal(n: number): string {
+  const suffixes = ["th", "st", "nd", "rd"];
+  const mod100 = n % 100;
+  const mod10 = n % 10;
+  const suffix =
+    mod100 >= 11 && mod100 <= 13 ? "th" : (suffixes[mod10] ?? "th");
+  return `${n.toLocaleString("en-US")}${suffix}`;
+}
+
+function Numbers({ state }: { state: StatsState }) {
   return (
     <section>
       <Shell>
@@ -1222,12 +1267,28 @@ function Numbers() {
               left={<span>the house · today</span>}
               right={<LiveIndicator />}
             />
-            <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border/50">
-              <StatCell k="users">77</StatCell>
-              <StatCell k="projects">89</StatCell>
-              <StatCell k="diffs">1,086</StatCell>
-              <StatCell k="stars">30</StatCell>
-            </div>
+            {state.status === "error" ? (
+              <div className="px-6 py-12 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Couldn't load the latest numbers right now. Please try again in a moment.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border/50">
+                <StatCell k="users">
+                  {state.status === "ready" ? formatStat(state.data.users) : "—"}
+                </StatCell>
+                <StatCell k="projects">
+                  {state.status === "ready" ? formatStat(state.data.projects) : "—"}
+                </StatCell>
+                <StatCell k="diffs">
+                  {state.status === "ready" ? formatStat(state.data.diffs) : "—"}
+                </StatCell>
+                <StatCell k="stars">
+                  {state.status === "ready" ? formatStat(state.data.stars) : "—"}
+                </StatCell>
+              </div>
+            )}
           </Card>
           <Caption>Fig. 06 — the house, by the numbers</Caption>
         </div>
@@ -1257,12 +1318,16 @@ function StatCell({
 
 // ── Coda ─────────────────────────────────────────────────────────────────
 
-function Coda() {
+function Coda({ state }: { state: StatsState }) {
+  const heading =
+    state.status === "ready"
+      ? `Ready to be the ${formatOrdinal(state.data.users + 1)}?`
+      : "Ready to join them?";
   return (
     <section className="py-24">
       <Shell>
         <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.05] tracking-tight max-w-3xl">
-          Ready to be the 78th?
+          {heading}
         </h2>
         <p className="mt-6 text-lg text-muted-foreground leading-[1.7] max-w-xl">
           Sign in, mint a passphrase in the browser, paste your first
@@ -1375,6 +1440,7 @@ function Footer() {
 }
 
 export function IndexPage() {
+  const statsState = useStatsLoop();
   return (
     <div className="dark min-h-screen bg-background text-foreground overflow-x-clip relative">
       {/* Soft ambient background */}
@@ -1398,8 +1464,8 @@ export function IndexPage() {
       <SoftDivider />
       <CustomersMovement />
       <SoftDivider />
-      <Numbers />
-      <Coda />
+      <Numbers state={statsState} />
+      <Coda state={statsState} />
       <Footer />
     </div>
   );
