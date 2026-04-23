@@ -1,6 +1,5 @@
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { CryptlyLogo } from "@/components/ui/CryptlyLogo";
-import { BlogHeader } from "@/components/blog/BlogHeader";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
@@ -10,6 +9,7 @@ import {
   Users,
   Plus,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -17,6 +17,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
  * ──────────────────────────────────────────────────────────────────────────── */
 
 const ACCENT = "#c9b287";
+const HERO_EASE = [0, 0.55, 0.45, 1] as const;
+const HERO_DURATION = 0.6;
 
 function Shell({
   children,
@@ -157,20 +159,43 @@ function Hero() {
       <Shell className="w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-7">
-            <h1 className="text-5xl md:text-7xl lg:text-[80px] font-semibold text-foreground leading-[0.98] tracking-tight">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: HERO_DURATION, ease: HERO_EASE }}
+              className="text-5xl md:text-7xl lg:text-[80px] font-semibold text-foreground leading-[0.98] tracking-tight"
+            >
               Your secrets
               <br />
               are none of
               <br />
               <span className="text-muted-foreground">our business.</span>
-            </h1>
-            <p className="mt-8 text-lg text-muted-foreground max-w-xl leading-[1.75]">
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: HERO_DURATION,
+                ease: HERO_EASE,
+                delay: 0.12,
+              }}
+              className="mt-8 text-lg text-muted-foreground max-w-xl leading-[1.75]"
+            >
               Cryptly is a small, open source secrets manager. Every value
               is encrypted before it leaves your browser — so even we
               can't read it. Free, forever.
-            </p>
+            </motion.p>
 
-            <div className="mt-10 flex flex-wrap items-center gap-3">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: HERO_DURATION,
+                ease: HERO_EASE,
+                delay: 0.24,
+              }}
+              className="mt-10 flex flex-wrap items-center gap-3"
+            >
               <PrimaryCTA>
                 Open the dashboard
                 <ArrowRight className="h-4 w-4" />
@@ -179,9 +204,18 @@ function Hero() {
                 <GitHubIcon className="h-4 w-4" />
                 Read the source
               </GhostCTA>
-            </div>
+            </motion.div>
 
-            <div className="mt-8 flex flex-nowrap items-center gap-x-4 text-[10px] font-mono uppercase tracking-[0.1em] text-muted-foreground whitespace-nowrap">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: HERO_DURATION,
+                ease: HERO_EASE,
+                delay: 0.36,
+              }}
+              className="mt-8 flex flex-nowrap items-center gap-x-4 text-[10px] font-mono uppercase tracking-[0.1em] text-muted-foreground whitespace-nowrap"
+            >
               <span className="inline-flex items-center gap-1.5">
                 <Pin /> Free forever
               </span>
@@ -191,13 +225,22 @@ function Hero() {
               <span className="inline-flex items-center gap-1.5">
                 <Pin /> MIT licensed
               </span>
-            </div>
+            </motion.div>
           </div>
 
-          <div className="lg:col-span-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: HERO_DURATION + 0.1,
+              ease: HERO_EASE,
+              delay: 0.18,
+            }}
+            className="lg:col-span-5"
+          >
             <HeroMock />
             <Caption>Fig. 01 — the editor, in repose</Caption>
-          </div>
+          </motion.div>
         </div>
       </Shell>
     </section>
@@ -1017,6 +1060,103 @@ function HistoryMovement() {
   );
 }
 
+// ── Movement V — In good hands (customers + testimonials) ────────────────
+
+const COMPANIES = ["bluemenu", "signosh", "jobref", "logdash"];
+
+const TESTIMONIALS = [
+  {
+    quote:
+      "Signosh ships on a tight calendar. Cryptly quietly removed one of our least-favorite weekly rituals — the Slack-DM secret handoff.",
+    name: "Jerzy Wiśniewski",
+    role: "Co-founder, Signosh",
+    initials: "JW",
+  },
+  {
+    quote:
+      "We wanted end-to-end encryption without reading a whitepaper first. This was it. Onboarding a new engineer is a single link now.",
+    name: "Dominik Mackiewicz",
+    role: "Co-founder, Bluemenu",
+    initials: "DM",
+  },
+];
+
+function CustomersMovement() {
+  return (
+    <section>
+      <Shell>
+        <div className="max-w-2xl">
+          <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+            <span className="text-foreground">In good hands.</span>{" "}
+            <span className="text-muted-foreground">
+              A few of the teams on the vault today — and two of them
+              who agreed to say why.
+            </span>
+          </h2>
+        </div>
+
+        <div className="mt-10">
+          <Card>
+            <CardChrome
+              left={<span>in use today</span>}
+              right={<span style={{ color: ACCENT }}>selected</span>}
+            />
+
+            {/* Wordmarks strip */}
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border/50">
+              {COMPANIES.map((name) => (
+                <div
+                  key={name}
+                  className="px-6 py-8 flex items-center justify-center"
+                >
+                  <span className="text-2xl md:text-[28px] font-semibold tracking-tight text-foreground/80 lowercase">
+                    {name}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Testimonials */}
+            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border/50 border-t border-border/50 bg-neutral-900/20">
+              {TESTIMONIALS.map((t) => (
+                <figure
+                  key={t.name}
+                  className="px-6 md:px-8 py-8 md:py-10 flex flex-col"
+                >
+                  <div
+                    aria-hidden
+                    className="font-serif text-4xl leading-none mb-2"
+                    style={{ color: ACCENT }}
+                  >
+                    &ldquo;
+                  </div>
+                  <blockquote className="text-[15px] text-foreground/90 leading-[1.7] flex-1">
+                    {t.quote}
+                  </blockquote>
+                  <figcaption className="mt-6 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full border border-border/50 bg-neutral-800 flex items-center justify-center text-[11px] font-mono tracking-wider text-foreground/80">
+                      {t.initials}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-medium text-foreground truncate">
+                        {t.name}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {t.role}
+                      </div>
+                    </div>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </Card>
+          <Caption>Fig. 05 — a selection, two of them on the record</Caption>
+        </div>
+      </Shell>
+    </section>
+  );
+}
+
 // ── Numbers ────────────────────────────────────────────────────────────────
 
 function Numbers() {
@@ -1046,11 +1186,11 @@ function Numbers() {
             <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border/50">
               <StatCell k="users">77</StatCell>
               <StatCell k="projects">89</StatCell>
-              <StatCell k="versions">1,086</StatCell>
+              <StatCell k="diffs">1,086</StatCell>
               <StatCell k="stars">30</StatCell>
             </div>
           </Card>
-          <Caption>Fig. 05 — the house, by the numbers</Caption>
+          <Caption>Fig. 06 — the house, by the numbers</Caption>
         </div>
       </Shell>
     </section>
@@ -1207,7 +1347,6 @@ export function IndexPage() {
             "radial-gradient(60rem 40rem at 20% -10%, rgba(201,178,135,0.06), transparent 60%), radial-gradient(40rem 30rem at 90% 20%, rgba(255,255,255,0.03), transparent 60%)",
         }}
       />
-      <BlogHeader />
       <Hero />
       <SoftDivider />
       <VaultMovement />
@@ -1217,6 +1356,8 @@ export function IndexPage() {
       <WireMovement />
       <SoftDivider />
       <HistoryMovement />
+      <SoftDivider />
+      <CustomersMovement />
       <SoftDivider />
       <Numbers />
       <Coda />

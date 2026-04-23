@@ -2,6 +2,7 @@ import { SetUpPassphraseDialog } from "@/components/dialogs/SetUpPassphraseDialo
 import { UnlockBrowserDialog } from "@/components/dialogs/UnlockBrowserDialog";
 import { DeviceFlowApproverDialog } from "@/components/dialogs/DeviceFlowApproverDialog";
 import { AppNavigation } from "@/components/navigation/app-navigation";
+import { BlogHeader } from "@/components/blog/BlogHeader";
 import { Toaster } from "@/components/ui/sonner";
 import { authLogic } from "@/lib/logics/authLogic";
 import { keyLogic } from "@/lib/logics/keyLogic";
@@ -17,6 +18,7 @@ const RootLayout = () => (
       <BindLogic logic={projectsLogic} props={{}}>
         <BindLogic logic={myPersonalInvitationsLogic} props={{}}>
           <BindLogic logic={deviceFlowApproverLogic} props={{}}>
+            <BlogHeader />
             <Outlet />
             <SetUpPassphraseDialog />
             <UnlockBrowserDialog />
