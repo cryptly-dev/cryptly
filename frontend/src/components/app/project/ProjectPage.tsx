@@ -103,10 +103,15 @@ interface PendingProjectLoaderProps {
 
 /**
  * Mounts projectLogic for the pending projectId so it starts loading in the
- * background. Notifies the parent as soon as data is available (or the load
+ * background. Notifies the parent once data is available (or the load
  * settles), so the UI can swap from the previous project to the new one
  * without a skeleton flash.
+ *
+ * Enforces a minimum visible-switch duration so the loading state gets at
+ * least one clear frame of presence on fast caches.
  */
+const MIN_SWITCH_MS = 500;
+
 function PendingProjectLoader({
   projectId,
   onReady,
@@ -116,6 +121,23 @@ function PendingProjectLoader({
   );
   const startedRef = useRef(false);
   const notifiedRef = useRef(false);
+  const mountTimeRef = useRef<number>(Date.now());
+  const timerRef = useRef<number | null>(null);
+  const onReadyRef = useRef(onReady);
+  // Always hold the latest onReady without re-running the ready-effect when
+  // the parent re-renders with a fresh callback identity. Without this, the
+  // effect's cleanup cleared our pending timer before MIN_SWITCH_MS elapsed.
+  onReadyRef.current = onReady;
+
+  useEffect(() => {
+    mountTimeRef.current = Date.now();
+    startedRef.current = false;
+    notifiedRef.current = false;
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [projectId]);
 
   useEffect(() => {
     if (notifiedRef.current) return;
@@ -125,17 +147,32 @@ function PendingProjectLoader({
       return;
     }
 
-    if (projectData && projectData.id === projectId) {
-      notifiedRef.current = true;
-      onReady();
+    const dataReady = !!(projectData && projectData.id === projectId);
+    const settled = startedRef.current;
+    if (!dataReady && !settled) return;
+
+    notifiedRef.current = true;
+    const elapsed = Date.now() - mountTimeRef.current;
+    const remaining = Math.max(0, MIN_SWITCH_MS - elapsed);
+
+    if (remaining === 0) {
+      onReadyRef.current();
       return;
     }
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      onReadyRef.current();
+    }, remaining);
+  }, [projectData, projectDataLoading, projectId]);
 
-    if (startedRef.current) {
-      notifiedRef.current = true;
-      onReady();
-    }
-  }, [projectData, projectDataLoading, projectId, onReady]);
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
 
   return null;
 }

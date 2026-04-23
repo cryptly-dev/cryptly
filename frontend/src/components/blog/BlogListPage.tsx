@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Newspaper } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { BlogHeader } from "./BlogHeader";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -37,8 +36,6 @@ export function BlogListPage() {
 
   return (
     <div className="min-h-screen bg-black text-foreground">
-      <BlogHeader />
-
       <main className="mx-auto max-w-5xl px-6 py-16 md:py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
