@@ -1,4 +1,3 @@
-import { CryptlyLogo } from "@/components/ui/CryptlyLogo";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
@@ -34,9 +33,8 @@ export function BlogHeader() {
         <div className="flex items-center justify-between h-14 rounded-full border border-border/50 bg-card/60 backdrop-blur-md px-5 shadow-xl shadow-black/30">
           <Link
             to="/"
-            className="inline-flex items-center gap-2.5 text-foreground hover:opacity-80 transition-opacity"
+            className="inline-flex items-center text-foreground hover:opacity-80 transition-opacity"
           >
-            <CryptlyLogo size={22} />
             <span className="font-semibold tracking-tight">Cryptly</span>
           </Link>
 

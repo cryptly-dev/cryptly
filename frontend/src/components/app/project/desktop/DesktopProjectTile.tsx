@@ -434,7 +434,7 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
   return (
     <div className="flex h-14 items-center justify-between px-3 border-b border-border/50 bg-card/20 backdrop-blur-sm flex-shrink-0 overflow-visible">
       {/* Tabs */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-stretch gap-0 h-full">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -449,21 +449,27 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
                 posthog.capture(`${tab.id}_tab_clicked`);
               }}
               className={cn(
-                "relative flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
+                "relative flex items-center gap-2 px-3 h-full text-sm font-medium transition-colors cursor-pointer",
                 isActive
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-800/50"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
+              <Icon className="size-4" />
+              <span>{tab.label}</span>
               {isActive && (
                 <motion.div
                   layoutId="active-tab-desktop"
-                  className="absolute inset-0 bg-neutral-800 rounded-md"
-                  transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+                  className="absolute left-2 right-2 -bottom-px h-[2px] rounded-full"
+                  style={{ backgroundColor: "#c9b287" }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 380,
+                    damping: 28,
+                    mass: 0.6,
+                  }}
                 />
               )}
-              <Icon className="relative z-10 size-4" />
-              <span className="relative z-10">{tab.label}</span>
             </button>
           );
 
@@ -572,7 +578,7 @@ function ProjectHeaderSkeleton({ activeTab, onTabChange }: ProjectHeaderProps) {
   return (
     <div className="flex h-14 items-center justify-between px-3 border-b border-border/50 bg-card/20 backdrop-blur-sm flex-shrink-0">
       {/* Tabs */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-stretch gap-0 h-full">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -583,14 +589,21 @@ function ProjectHeaderSkeleton({ activeTab, onTabChange }: ProjectHeaderProps) {
               type="button"
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
+                "relative flex items-center gap-2 px-3 h-full text-sm font-medium transition-colors cursor-pointer",
                 isActive
-                  ? "bg-neutral-800 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-neutral-800/50"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Icon className="size-4" />
               <span>{tab.label}</span>
+              {isActive && (
+                <span
+                  aria-hidden
+                  className="absolute left-2 right-2 -bottom-px h-[2px] rounded-full"
+                  style={{ backgroundColor: "#c9b287" }}
+                />
+              )}
             </button>
           );
         })}
