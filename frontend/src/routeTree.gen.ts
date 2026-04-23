@@ -13,10 +13,6 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VariantsIndexRouteImport } from './routes/variants/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
-import { Route as VariantsIRouteImport } from './routes/variants/i'
-import { Route as VariantsHRouteImport } from './routes/variants/h'
-import { Route as VariantsGRouteImport } from './routes/variants/g'
-import { Route as VariantsFRouteImport } from './routes/variants/f'
 import { Route as VariantsERouteImport } from './routes/variants/e'
 import { Route as VariantsDRouteImport } from './routes/variants/d'
 import { Route as VariantsCRouteImport } from './routes/variants/c'
@@ -52,26 +48,6 @@ const VariantsIndexRoute = VariantsIndexRouteImport.update({
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VariantsIRoute = VariantsIRouteImport.update({
-  id: '/variants/i',
-  path: '/variants/i',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VariantsHRoute = VariantsHRouteImport.update({
-  id: '/variants/h',
-  path: '/variants/h',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VariantsGRoute = VariantsGRouteImport.update({
-  id: '/variants/g',
-  path: '/variants/g',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VariantsFRoute = VariantsFRouteImport.update({
-  id: '/variants/f',
-  path: '/variants/f',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VariantsERoute = VariantsERouteImport.update({
@@ -169,10 +145,6 @@ export interface FileRoutesByFullPath {
   '/variants/c': typeof VariantsCRoute
   '/variants/d': typeof VariantsDRoute
   '/variants/e': typeof VariantsERoute
-  '/variants/f': typeof VariantsFRoute
-  '/variants/g': typeof VariantsGRoute
-  '/variants/h': typeof VariantsHRoute
-  '/variants/i': typeof VariantsIRoute
   '/blog': typeof BlogIndexRoute
   '/variants': typeof VariantsIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
@@ -195,10 +167,6 @@ export interface FileRoutesByTo {
   '/variants/c': typeof VariantsCRoute
   '/variants/d': typeof VariantsDRoute
   '/variants/e': typeof VariantsERoute
-  '/variants/f': typeof VariantsFRoute
-  '/variants/g': typeof VariantsGRoute
-  '/variants/h': typeof VariantsHRoute
-  '/variants/i': typeof VariantsIRoute
   '/blog': typeof BlogIndexRoute
   '/variants': typeof VariantsIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
@@ -222,10 +190,6 @@ export interface FileRoutesById {
   '/variants/c': typeof VariantsCRoute
   '/variants/d': typeof VariantsDRoute
   '/variants/e': typeof VariantsERoute
-  '/variants/f': typeof VariantsFRoute
-  '/variants/g': typeof VariantsGRoute
-  '/variants/h': typeof VariantsHRoute
-  '/variants/i': typeof VariantsIRoute
   '/blog/': typeof BlogIndexRoute
   '/variants/': typeof VariantsIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
@@ -250,10 +214,6 @@ export interface FileRouteTypes {
     | '/variants/c'
     | '/variants/d'
     | '/variants/e'
-    | '/variants/f'
-    | '/variants/g'
-    | '/variants/h'
-    | '/variants/i'
     | '/blog'
     | '/variants'
     | '/app/project/$projectId'
@@ -276,10 +236,6 @@ export interface FileRouteTypes {
     | '/variants/c'
     | '/variants/d'
     | '/variants/e'
-    | '/variants/f'
-    | '/variants/g'
-    | '/variants/h'
-    | '/variants/i'
     | '/blog'
     | '/variants'
     | '/app/project/$projectId'
@@ -302,10 +258,6 @@ export interface FileRouteTypes {
     | '/variants/c'
     | '/variants/d'
     | '/variants/e'
-    | '/variants/f'
-    | '/variants/g'
-    | '/variants/h'
-    | '/variants/i'
     | '/blog/'
     | '/variants/'
     | '/app/project/$projectId'
@@ -327,10 +279,6 @@ export interface RootRouteChildren {
   VariantsCRoute: typeof VariantsCRoute
   VariantsDRoute: typeof VariantsDRoute
   VariantsERoute: typeof VariantsERoute
-  VariantsFRoute: typeof VariantsFRoute
-  VariantsGRoute: typeof VariantsGRoute
-  VariantsHRoute: typeof VariantsHRoute
-  VariantsIRoute: typeof VariantsIRoute
   BlogIndexRoute: typeof BlogIndexRoute
   VariantsIndexRoute: typeof VariantsIndexRoute
   BlogEditSlugRoute: typeof BlogEditSlugRoute
@@ -364,34 +312,6 @@ declare module '@tanstack/react-router' {
       path: '/blog'
       fullPath: '/blog'
       preLoaderRoute: typeof BlogIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/variants/i': {
-      id: '/variants/i'
-      path: '/variants/i'
-      fullPath: '/variants/i'
-      preLoaderRoute: typeof VariantsIRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/variants/h': {
-      id: '/variants/h'
-      path: '/variants/h'
-      fullPath: '/variants/h'
-      preLoaderRoute: typeof VariantsHRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/variants/g': {
-      id: '/variants/g'
-      path: '/variants/g'
-      fullPath: '/variants/g'
-      preLoaderRoute: typeof VariantsGRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/variants/f': {
-      id: '/variants/f'
-      path: '/variants/f'
-      fullPath: '/variants/f'
-      preLoaderRoute: typeof VariantsFRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/variants/e': {
@@ -542,10 +462,6 @@ const rootRouteChildren: RootRouteChildren = {
   VariantsCRoute: VariantsCRoute,
   VariantsDRoute: VariantsDRoute,
   VariantsERoute: VariantsERoute,
-  VariantsFRoute: VariantsFRoute,
-  VariantsGRoute: VariantsGRoute,
-  VariantsHRoute: VariantsHRoute,
-  VariantsIRoute: VariantsIRoute,
   BlogIndexRoute: BlogIndexRoute,
   VariantsIndexRoute: VariantsIndexRoute,
   BlogEditSlugRoute: BlogEditSlugRoute,
