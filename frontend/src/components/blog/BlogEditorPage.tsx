@@ -8,7 +8,6 @@ import { useValues } from "kea";
 import { ArrowLeft, ImageUp, Save, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { BlogHeader } from "./BlogHeader";
 import { BlogMarkdown } from "./BlogMarkdown";
 
 interface BlogEditorPageProps {
@@ -251,7 +250,6 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-black text-foreground">
-        <BlogHeader />
         <div className="mx-auto max-w-3xl px-6 py-24 text-center">
           <h1 className="text-3xl font-semibold">Admin access required</h1>
           <p className="mt-3 text-neutral-400">
@@ -271,7 +269,6 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
   if (loadingPost) {
     return (
       <div className="min-h-screen bg-black text-foreground">
-        <BlogHeader />
         <div className="mx-auto max-w-3xl px-6 py-24 flex items-center justify-center">
           <Spinner className="w-6 h-6" />
         </div>
@@ -281,7 +278,6 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
 
   return (
     <div className="min-h-screen bg-black text-foreground flex flex-col">
-      <BlogHeader />
 
       {/* Meta bar */}
       <div className="border-b border-neutral-900/80 bg-black/60 backdrop-blur-xl">

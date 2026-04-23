@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { CryptlyLogo } from "@/components/ui/CryptlyLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +24,6 @@ import { suggestedProjectsLogic } from "@/lib/logics/suggestedProjectsLogic";
 import { useActions, useAsyncActions, useValues } from "kea";
 import {
   ChevronRight,
-  FolderOpen,
   Info,
   LogOut,
   Pencil,
@@ -171,25 +169,20 @@ export function DesktopProjectsList() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* App Logo / Brand */}
-      <div className="px-4 py-4">
+      {/* Top row: brand + search + add */}
+      <div className="flex items-center gap-2 px-3 py-3 border-b border-border/50">
         <Link
           to="/"
-          className="flex items-center gap-2.5 text-foreground hover:opacity-80 transition-opacity"
+          className="text-foreground hover:opacity-80 transition-opacity flex-shrink-0"
         >
-          <CryptlyLogo size={28} />
           <span className="font-semibold text-lg tracking-tight">Cryptly</span>
         </Link>
-      </div>
-
-      {/* Search */}
-      <div className="px-3 pb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
           <input
             type="search"
             name="project-search"
-            placeholder="Search projects..."
+            placeholder="Search…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             autoComplete="off"
@@ -199,50 +192,33 @@ export function DesktopProjectsList() {
             data-1p-ignore
             data-lpignore="true"
             data-form-type="other"
-            className="w-full h-9 pl-9 pr-3 rounded-md bg-muted/50 border-[0.5px] border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+            className="w-full h-8 pl-8 pr-2 rounded-md bg-muted/50 border-[0.5px] border-border/50 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
           />
         </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <motion.button
+                type="button"
+                aria-label="Add project"
+                className="text-muted-foreground hover:text-foreground hover:bg-neutral-800 cursor-pointer rounded-md w-7 h-7 flex items-center justify-center transition-colors flex-shrink-0"
+                onClick={handleStartAddProject}
+                disabled={isAddingProject}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Plus className="w-4 h-4" />
+              </motion.button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Add project</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Projects Section */}
       <div className="flex-1 overflow-hidden flex flex-col">
-        {/* Section Header */}
-        <div className="px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
-            <FolderOpen className="w-4 h-4" />
-            <span>Projects</span>
-            {projectsLoading ? (
-              <Spinner className="w-3.5 h-3.5 text-muted-foreground" />
-            ) : (
-              localProjects && (
-                <span className="text-muted-foreground">
-                  ({localProjects.length})
-                </span>
-              )
-            )}
-          </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.button
-                  type="button"
-                  aria-label="Add project"
-                  className="text-muted-foreground hover:text-foreground hover:bg-neutral-800 cursor-pointer rounded-md w-6 h-6 flex items-center justify-center transition-colors"
-                  onClick={handleStartAddProject}
-                  disabled={isAddingProject}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Plus className="w-4 h-4" />
-                </motion.button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Add project</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-
         {/* Projects List */}
-        <div className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar px-2">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar px-2 pt-2">
           {/* Inline Add Project Input */}
           {isAddingProject && (
             <motion.div

@@ -4,7 +4,6 @@ import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { BlogHeader } from "./BlogHeader";
 import { BlogMarkdown } from "./BlogMarkdown";
 
 function formatDate(iso: string): string {
@@ -43,7 +42,6 @@ export function BlogPostPage() {
 
   return (
     <div className="min-h-screen bg-black text-foreground">
-      <BlogHeader />
 
       <main className="mx-auto max-w-3xl px-6 py-12 md:py-16">
         <Link
