@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Check,
   Copy,
-  FolderOpen,
   Search,
   Users,
   Plus,
@@ -15,10 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * VARIANT E — "The Salon"
- * The atelier, rounded. Same editorial restraint as D, but every frame
- * is soft: translucent card surfaces, backdrop blur, rounded corners,
- * sliding tab pills — the visual language of the in-app /app route
- * translated back to a landing page.
+ * The atelier, rounded. Soft layered card surfaces; app-grade primitives.
  * ──────────────────────────────────────────────────────────────────────────── */
 
 const ACCENT = "#c9b287";
@@ -49,62 +45,42 @@ function Header() {
   return (
     <header className="sticky top-4 z-30 px-4">
       <Shell>
-        <div className="flex items-center justify-between h-14 rounded-full border border-border/50 bg-card/40 backdrop-blur-md px-5">
+        <div className="flex items-center justify-between h-14 rounded-full border border-border/50 bg-card/60 backdrop-blur-md px-5 shadow-xl shadow-black/30">
           <a
             href="/"
             className="inline-flex items-center gap-2.5 text-foreground hover:opacity-80 transition-opacity"
           >
             <CryptlyLogo size={22} />
             <span className="font-semibold tracking-tight">Cryptly</span>
-            <span
-              className="ml-2 text-[10px] font-mono uppercase tracking-[0.25em]"
-              style={{ color: ACCENT }}
-            >
-              salon
-            </span>
           </a>
           <nav className="hidden md:flex items-center gap-1 text-sm text-muted-foreground">
             <a
-              href="#vault"
+              href="/"
               className="rounded-md px-3 py-1.5 hover:text-foreground hover:bg-neutral-800/50 transition-colors"
             >
-              The vault
+              Home
             </a>
             <a
-              href="#invitation"
+              href="/blog"
               className="rounded-md px-3 py-1.5 hover:text-foreground hover:bg-neutral-800/50 transition-colors"
             >
-              Invitation
+              Blog
             </a>
-            <a
-              href="#wire"
-              className="rounded-md px-3 py-1.5 hover:text-foreground hover:bg-neutral-800/50 transition-colors"
-            >
-              The wire
-            </a>
-            <a
-              href="#ledger"
-              className="rounded-md px-3 py-1.5 hover:text-foreground hover:bg-neutral-800/50 transition-colors"
-            >
-              Ledger
-            </a>
-          </nav>
-          <div className="flex items-center gap-2">
             <a
               href="https://github.com/cryptly-dev/cryptly"
-              className="hidden sm:inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-neutral-800/50 transition-colors"
-              aria-label="Source"
+              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 hover:text-foreground hover:bg-neutral-800/50 transition-colors"
             >
-              <GitHubIcon className="h-4 w-4" />
+              <GitHubIcon className="h-3.5 w-3.5" />
+              Source
             </a>
-            <a
-              href="/app/login"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white text-black px-3.5 py-1.5 text-sm font-medium hover:bg-neutral-100 transition-colors"
-            >
-              Open app
-              <ArrowRight className="h-3.5 w-3.5" />
-            </a>
-          </div>
+          </nav>
+          <a
+            href="/app/login"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white text-black px-3.5 py-1.5 text-sm font-medium hover:bg-neutral-100 transition-colors"
+          >
+            Open app
+            <ArrowRight className="h-3.5 w-3.5" />
+          </a>
         </div>
       </Shell>
     </header>
@@ -149,26 +125,6 @@ function SoftDivider() {
   return (
     <div className="mx-auto max-w-6xl px-6 my-20">
       <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
-    </div>
-  );
-}
-
-function SectionLabel({
-  n,
-  children,
-}: {
-  n: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="inline-flex items-center gap-2.5 rounded-full border border-border/50 bg-card/40 backdrop-blur-sm px-3 py-1 text-[11px] font-mono uppercase tracking-[0.25em] text-muted-foreground">
-      <span
-        className="font-serif italic normal-case tracking-normal"
-        style={{ color: ACCENT }}
-      >
-        {n}.
-      </span>
-      <span>{children}</span>
     </div>
   );
 }
@@ -225,26 +181,17 @@ function Hero() {
       <Shell>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-end">
           <div className="lg:col-span-7">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.9 }}
-            >
-              <SectionLabel n="—">
-                A small atelier · a smaller threat surface
-              </SectionLabel>
-            </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.1, delay: 0.1 }}
-              className="mt-6 text-5xl md:text-7xl lg:text-[84px] font-semibold text-foreground leading-[0.98] tracking-tight"
+              transition={{ duration: 1.1 }}
+              className="text-5xl md:text-7xl lg:text-[80px] font-semibold text-foreground leading-[0.98] tracking-tight"
             >
-              Made by hand.
+              Your secrets
               <br />
-              Held by you.
+              are none of
               <br />
-              <span className="text-muted-foreground">Not by us.</span>
+              <span className="text-muted-foreground">our business.</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0 }}
@@ -252,10 +199,9 @@ function Hero() {
               transition={{ duration: 0.9, delay: 0.4 }}
               className="mt-8 text-lg text-muted-foreground max-w-xl leading-[1.75]"
             >
-              Cryptly is a small secrets manager. AES-256-GCM in your
-              browser, then ciphertext on our wire — a vault we made
-              ourselves and could not open if asked. Free, open source,
-              and quietly maintained.
+              Cryptly is a small, open source secrets manager. Every value
+              is encrypted in your browser before it leaves — so even we
+              can't read it. Free, forever.
             </motion.p>
 
             <motion.div
@@ -272,22 +218,21 @@ function Hero() {
                 <GitHubIcon className="h-4 w-4" />
                 Read the source
               </GhostCTA>
-              <GhostCTA href="/blog">The blog</GhostCTA>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.9, delay: 0.9 }}
-              className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] font-mono uppercase tracking-[0.25em] text-muted-foreground"
+              className="mt-8 flex flex-nowrap items-center gap-x-4 text-[10px] font-mono uppercase tracking-[0.1em] text-muted-foreground whitespace-nowrap"
             >
-              <span className="inline-flex items-center gap-2">
-                <Pin /> Free, in every plan
+              <span className="inline-flex items-center gap-1.5">
+                <Pin /> Free forever
               </span>
-              <span className="inline-flex items-center gap-2">
-                <Pin /> Zero-knowledge by construction
+              <span className="inline-flex items-center gap-1.5">
+                <Pin /> Zero-knowledge
               </span>
-              <span className="inline-flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5">
                 <Pin /> MIT licensed
               </span>
             </motion.div>
@@ -309,56 +254,68 @@ function Hero() {
 }
 
 const HERO_ROWS = [
-  { k: "DATABASE_URL", v: "postgres://u:p@db.internal:5432/app" },
-  { k: "STRIPE_SECRET_KEY", v: "sk_live_72Mky8qRt9tWnOpC" },
-  { k: "JWT_SIGNING_KEY", v: "kJ9f2LmN8aQq3PzVxT4wYrUi" },
-  { k: "OPENAI_API_KEY", v: "sk-proj-AbcDef123xyz456" },
-  { k: "SENTRY_DSN", v: "https://abc@o42.ingest.sentry.io/99" },
+  { k: "DATABASE_URL", dots: 28 },
+  { k: "STRIPE_SECRET_KEY", dots: 22 },
+  { k: "OPENAI_API_KEY", dots: 18 },
 ];
 
 function HeroMock() {
   return (
     <Card>
       <CardChrome
-        left={<span>cryptly · production · .env</span>}
-        right={<span style={{ color: ACCENT }}>locally encrypted</span>}
+        left={<span>production · .env</span>}
+        right={<span style={{ color: ACCENT }}>encrypted</span>}
       />
-      <div className="font-mono text-[12px] leading-[1.95] py-2">
+      <div className="font-mono text-[12px] leading-[1.95] py-3">
         {HERO_ROWS.map((r, i) => (
           <div
             key={i}
-            className="group mx-2 grid grid-cols-[28px_160px_1fr] items-baseline gap-3 px-2 py-0.5 rounded-md hover:bg-neutral-800/40 transition-colors"
+            className="group mx-2 grid grid-cols-[28px_160px_1fr] items-baseline gap-3 px-2 py-1 rounded-md hover:bg-neutral-800/40 transition-colors"
           >
             <span className="text-right text-muted-foreground/50 tabular-nums">
               {String(i + 1).padStart(2, "0")}
             </span>
             <span className="text-foreground/90 truncate">{r.k}</span>
             <span className="text-muted-foreground/70 truncate">
-              {"•".repeat(Math.min(r.v.length, 28))}
+              {"•".repeat(r.dots)}
             </span>
           </div>
         ))}
-      </div>
-      <div className="px-4 h-9 flex items-center justify-between border-t border-border/50 bg-neutral-900/40 text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
-        <span>5 of 12</span>
-        <span className="font-mono normal-case tracking-normal text-muted-foreground/70">
-          ciphertext, on every save
-        </span>
       </div>
     </Card>
   );
 }
 
-// ── Movement I — The vault ─────────────────────────────────────────────────
+// ── Movement I — The vault (Excel-style table) ────────────────────────────
+
+const VAULT_ROWS = [
+  {
+    id: "sec_7mFq2aN9bK",
+    project: "prj_k2L7p",
+    created: "2026-04-22",
+    blob: "u2l9aFZbk3Pj+Q7WkS9Q…",
+  },
+  {
+    id: "sec_b3Hc9xT1Lm",
+    project: "prj_k2L7p",
+    created: "2026-04-19",
+    blob: "fWn4pQ0R8sUvZ2Ah6YgK…",
+  },
+  {
+    id: "sec_qW8e4JrTyC",
+    project: "prj_8v2Xa",
+    created: "2026-04-14",
+    blob: "cXpLm7nBd+TrKq9aEf1R…",
+  },
+];
 
 function VaultMovement() {
   return (
-    <section id="vault">
+    <section>
       <Shell>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
           <div className="lg:col-span-5">
-            <SectionLabel n="I">The vault</SectionLabel>
-            <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+            <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
               <span className="text-foreground">
                 One column for the blob.
               </span>{" "}
@@ -367,50 +324,79 @@ function VaultMovement() {
               </span>
             </h2>
             <p className="mt-7 text-[16px] text-muted-foreground leading-[1.75] max-w-md">
-              Below, a single row from our database. The field marked{" "}
+              Here is our entire secrets table. The{" "}
               <code className="text-foreground rounded bg-neutral-800/60 px-1 py-0.5 text-[13px]">
                 blob
               </code>{" "}
-              is the entire secret, wrapped in your browser before it left
-              the tab. There is no second column where the plaintext lives,
-              and no function to produce it on demand.
+              column is the whole secret, already wrapped in your browser.
+              There is no second column where the plaintext lives, and no
+              function to produce it on demand.
             </p>
             <SmallList
               items={[
-                "AES-256-GCM, in the browser",
-                "PBKDF2-SHA256, 210,000 iterations",
-                "RSA-OAEP, when keys are re-wrapped",
+                "Encrypted in the browser, before the network",
+                "Keys derived from your passphrase, never shared",
+                "Re-wrapped for each collaborator, never copied",
               ]}
             />
           </div>
           <div className="lg:col-span-7">
             <Card>
               <CardChrome
-                left={<span>secrets · row 1 of 1,086</span>}
+                left={<span>secrets · 3 of 1,086 rows</span>}
                 right={<span style={{ color: ACCENT }}>schema</span>}
               />
-              <div className="px-5 py-5 font-mono text-[12px] text-muted-foreground leading-[1.9]">
-                <div className="text-muted-foreground/60">— column · value</div>
-                <div className="mt-3 grid grid-cols-[110px_1fr] gap-x-6 gap-y-1.5">
-                  <span className="text-muted-foreground/60">id</span>
-                  <span className="text-foreground/90">sec_7mFq2aN9bK</span>
-                  <span className="text-muted-foreground/60">project</span>
-                  <span className="text-foreground/90">prj_k2L7p</span>
-                  <span className="text-muted-foreground/60">created</span>
-                  <span className="text-foreground/90">
-                    2026-04-22T12:03:18Z
-                  </span>
-                  <span className="text-muted-foreground/60">blob</span>
-                  <span className="text-foreground/90 break-all">
-                    u2l9aFZbk3Pj+Q7WkS9QfwDfMnLvSsC6XgYh1xZ8pQrT+88k/4Lr2Nh==
-                  </span>
-                </div>
-                <div className="mt-5 rounded-lg border border-border/50 bg-neutral-900/40 px-4 py-3 text-foreground/70 italic font-serif text-[13px]">
-                  No further columns. The schema is short on purpose.
-                </div>
+              <div className="overflow-hidden">
+                <table className="w-full font-mono text-[12px] text-left">
+                  <thead>
+                    <tr className="bg-neutral-900/60 border-b border-border/50 text-muted-foreground/80 text-[10px] uppercase tracking-[0.2em]">
+                      <th className="px-4 py-2.5 font-medium w-[34%]">id</th>
+                      <th className="px-4 py-2.5 font-medium w-[20%]">
+                        project
+                      </th>
+                      <th className="px-4 py-2.5 font-medium w-[20%]">
+                        created
+                      </th>
+                      <th className="px-4 py-2.5 font-medium">blob</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {VAULT_ROWS.map((r, i) => (
+                      <tr
+                        key={r.id}
+                        className={cn(
+                          "border-b border-border/40 last:border-b-0 hover:bg-neutral-800/30 transition-colors",
+                          i % 2 === 1 && "bg-neutral-900/30"
+                        )}
+                      >
+                        <td className="px-4 py-2.5 text-foreground/90 truncate">
+                          {r.id}
+                        </td>
+                        <td className="px-4 py-2.5 text-foreground/70 truncate">
+                          {r.project}
+                        </td>
+                        <td className="px-4 py-2.5 text-foreground/70 truncate">
+                          {r.created}
+                        </td>
+                        <td className="px-4 py-2.5 text-foreground/90 truncate">
+                          <span className="inline-flex items-center gap-1.5 rounded bg-neutral-800/60 px-1.5 py-0.5 text-[11px]">
+                            <span
+                              className="h-1 w-1 rounded-full"
+                              style={{ backgroundColor: ACCENT }}
+                            />
+                            {r.blob}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-2 border-t border-border/50 bg-neutral-900/40 text-[11px] font-mono text-muted-foreground/80 italic">
+                The schema is short on purpose.
               </div>
             </Card>
-            <Caption>Fig. 02 — secrets · row 1 of 1,086</Caption>
+            <Caption>Fig. 02 — secrets · the whole table</Caption>
           </div>
         </div>
       </Shell>
@@ -433,7 +419,7 @@ function SmallList({ items }: { items: string[] }) {
   );
 }
 
-// ── Movement II — Inviting (three methods, app-style tabs) ────────────────
+// ── Movement II — Inviting (app-style sliding tabs) ───────────────────────
 
 function InviteMovement() {
   const [tab, setTab] = useState<"link" | "user" | "team">("link");
@@ -447,11 +433,10 @@ function InviteMovement() {
   ];
 
   return (
-    <section id="invitation">
+    <section>
       <Shell>
         <div className="max-w-2xl">
-          <SectionLabel n="II">The invitation</SectionLabel>
-          <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+          <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
             <span className="text-foreground">Three ways to bring</span>{" "}
             <span className="text-muted-foreground">
               one teammate, or sixty.
@@ -734,6 +719,8 @@ const GH_LIST = [
   "SENTRY_DSN",
 ];
 
+const WIRE_PANEL_HEIGHT = 280;
+
 function WireMovement() {
   const [done, setDone] = useState<number[]>([]);
   const [running, setRunning] = useState(false);
@@ -762,21 +749,20 @@ function WireMovement() {
   );
 
   return (
-    <section id="wire">
+    <section>
       <Shell>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
           <div className="lg:col-span-5">
-            <SectionLabel n="III">The wire</SectionLabel>
-            <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+            <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
               <span className="text-foreground">One click</span>
               <br />
               <span className="text-muted-foreground">to GitHub Actions.</span>
             </h2>
             <p className="mt-6 text-[16px] text-muted-foreground leading-[1.75] max-w-md">
               The browser re-encrypts each value against the target
-              repository's libsodium sealed-box public key — the same
-              primitive GitHub's own CLI uses — and forwards the
-              ciphertext. We are the courier; GitHub is the recipient.
+              repository's public key — the same primitive GitHub's own
+              CLI uses — and forwards the ciphertext. We are the courier;
+              GitHub is the recipient.
             </p>
             <button
               type="button"
@@ -811,12 +797,15 @@ function WireMovement() {
           <div className="lg:col-span-7">
             <Card>
               <div className="grid grid-cols-1 md:grid-cols-2">
-                <div className="border-b md:border-b-0 md:border-r border-border/50">
+                <div className="border-b md:border-b-0 md:border-r border-border/50 flex flex-col">
                   <CardChrome
                     left={<span>cryptly vault</span>}
                     right={<span style={{ color: ACCENT }}>source</span>}
                   />
-                  <div className="p-2 font-mono text-[12px] leading-[1.95]">
+                  <div
+                    className="p-2 font-mono text-[12px] leading-[1.95] overflow-hidden"
+                    style={{ height: WIRE_PANEL_HEIGHT }}
+                  >
                     {GH_LIST.map((k, i) => (
                       <div
                         key={k}
@@ -835,7 +824,7 @@ function WireMovement() {
                     ))}
                   </div>
                 </div>
-                <div>
+                <div className="flex flex-col">
                   <CardChrome
                     left={
                       <span className="inline-flex items-center gap-1.5">
@@ -844,31 +833,33 @@ function WireMovement() {
                     }
                     right={<span style={{ color: ACCENT }}>recipient</span>}
                   />
-                  <div className="p-2 min-h-[240px]">
-                    {done.length === 0 ? (
-                      <div className="grid place-items-center h-[240px] text-[12px] font-mono text-muted-foreground/70">
+                  <div
+                    className="p-2 relative overflow-hidden"
+                    style={{ height: WIRE_PANEL_HEIGHT }}
+                  >
+                    {done.length === 0 && (
+                      <div className="absolute inset-0 grid place-items-center text-[12px] font-mono text-muted-foreground/70">
                         none yet · press the button
                       </div>
-                    ) : (
-                      <AnimatePresence initial={false}>
-                        {done.map((i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="mx-1 px-2 py-1 rounded-md grid grid-cols-[1fr_auto] items-baseline gap-2 font-mono text-[12px] bg-neutral-800/30"
-                          >
-                            <span className="text-foreground truncate">
-                              {GH_LIST[i]}
-                            </span>
-                            <span className="text-muted-foreground/70 text-[10px] uppercase tracking-[0.25em]">
-                              just now
-                            </span>
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
                     )}
+                    <AnimatePresence initial={false}>
+                      {done.map((i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="mx-1 px-2 py-1 rounded-md grid grid-cols-[1fr_auto] items-baseline gap-2 font-mono text-[12px] bg-neutral-800/30 leading-[1.95]"
+                        >
+                          <span className="text-foreground truncate">
+                            {GH_LIST[i]}
+                          </span>
+                          <span className="text-muted-foreground/70 text-[10px] uppercase tracking-[0.25em]">
+                            just now
+                          </span>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
               </div>
@@ -881,9 +872,10 @@ function WireMovement() {
   );
 }
 
-// ── Movement IV — The ledger ──────────────────────────────────────────────
+// ── Movement IV — History (mirrors the real /app history list) ────────────
 
 type Patch = {
+  id: string;
   who: string;
   avatar: string;
   when: string;
@@ -894,6 +886,7 @@ type Patch = {
 
 const PATCHES: Patch[] = [
   {
+    id: "p1",
     who: "Alex Chen",
     avatar: "/avatars/alex-chen.svg",
     when: "2m",
@@ -902,6 +895,7 @@ const PATCHES: Patch[] = [
     msg: "rotate STRIPE_SECRET_KEY",
   },
   {
+    id: "p2",
     who: "Marcus Rodriguez",
     avatar: "/avatars/marcus-rodriguez.svg",
     when: "14m",
@@ -910,6 +904,7 @@ const PATCHES: Patch[] = [
     msg: "add observability keys",
   },
   {
+    id: "p3",
     who: "Priya Patel",
     avatar: "/avatars/priya-patel.svg",
     when: "1h",
@@ -918,6 +913,7 @@ const PATCHES: Patch[] = [
     msg: "migrate DATABASE_URL",
   },
   {
+    id: "p4",
     who: "Nina Gupta",
     avatar: "/avatars/nina-gupta.svg",
     when: "1d",
@@ -926,6 +922,7 @@ const PATCHES: Patch[] = [
     msg: "Q2 feature flags",
   },
   {
+    id: "p5",
     who: "Alex Chen",
     avatar: "/avatars/alex-chen.svg",
     when: "3d",
@@ -933,10 +930,29 @@ const PATCHES: Patch[] = [
     del: 0,
     msg: "cloudflare api token",
   },
+  {
+    id: "p6",
+    who: "Marcus Rodriguez",
+    avatar: "/avatars/marcus-rodriguez.svg",
+    when: "5d",
+    add: 0,
+    del: 2,
+    msg: "drop deprecated keys",
+  },
 ];
 
-function LedgerMovement() {
+const TIME_CHIPS = [
+  { key: "all", label: "All time" },
+  { key: "30", label: "30d" },
+  { key: "7", label: "7d" },
+  { key: "24", label: "24h" },
+];
+
+function HistoryMovement() {
   const [q, setQ] = useState("");
+  const [range, setRange] = useState("all");
+  const [selectedId, setSelectedId] = useState<string>("p1");
+
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return PATCHES;
@@ -946,13 +962,18 @@ function LedgerMovement() {
     );
   }, [q]);
 
+  const maxVolume = useMemo(() => {
+    let m = 0;
+    for (const p of filtered) m = Math.max(m, p.add + p.del);
+    return m || 1;
+  }, [filtered]);
+
   return (
-    <section id="ledger">
+    <section>
       <Shell>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
           <div className="lg:col-span-5">
-            <SectionLabel n="IV">The ledger</SectionLabel>
-            <h2 className="mt-5 text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+            <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
               <span className="text-foreground">Every save signed.</span>{" "}
               <span className="text-muted-foreground">
                 Every change recallable.
@@ -966,7 +987,7 @@ function LedgerMovement() {
             <SmallList
               items={[
                 "Search by author or substring",
-                "Filter by added or removed lines",
+                "Filter by time range or contributor",
                 "Decrypted in your tab, never on ours",
               ]}
             />
@@ -974,59 +995,107 @@ function LedgerMovement() {
 
           <div className="lg:col-span-7">
             <Card>
-              <div className="px-3 h-11 flex items-center gap-2 border-b border-border/50 bg-neutral-900/40">
-                <div className="flex items-center gap-2 flex-1 rounded-md bg-neutral-800/50 px-2.5 h-8 border border-border/40">
-                  <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                  <input
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    placeholder="Search author or word…"
-                    className="flex-1 bg-transparent outline-none text-[13px] text-foreground placeholder:text-muted-foreground/70"
-                  />
-                </div>
-                <span className="text-[11px] font-mono text-muted-foreground tabular-nums rounded-md bg-neutral-800/40 px-2 py-1">
+              {/* Search row */}
+              <div className="relative flex items-center h-10 border-b border-border/50 bg-neutral-900/60">
+                <Search className="ml-3 size-3.5 text-muted-foreground pointer-events-none flex-shrink-0" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search edits — author, message…"
+                  className="flex-1 h-full bg-transparent border-0 pl-2.5 pr-3 text-sm font-mono placeholder:text-muted-foreground/60 focus:outline-none min-w-0"
+                />
+                <span className="mr-3 text-[11px] font-mono text-muted-foreground/80 tabular-nums">
                   {filtered.length}/{PATCHES.length}
                 </span>
               </div>
-              <div className="p-2 min-h-[240px]">
+
+              {/* Chip filters */}
+              <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/50">
+                {TIME_CHIPS.map((r) => (
+                  <button
+                    key={r.key}
+                    type="button"
+                    onClick={() => setRange(r.key)}
+                    className={cn(
+                      "px-2.5 py-0.5 text-[11px] rounded-full border cursor-pointer whitespace-nowrap transition-colors",
+                      range === r.key
+                        ? "bg-primary/15 border-primary/40 text-primary"
+                        : "bg-neutral-900 border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
+                    )}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* List */}
+              <div className="max-h-[360px] overflow-y-auto">
                 {filtered.length === 0 ? (
-                  <div className="grid place-items-center py-12 font-mono text-[12px] text-muted-foreground/70">
-                    no entries
+                  <div className="px-4 py-12 text-center text-sm text-muted-foreground">
+                    No results
                   </div>
                 ) : (
-                  <div className="space-y-0.5">
-                    {filtered.map((p, i) => (
-                      <div
-                        key={i}
-                        className="mx-1 px-3 py-2.5 rounded-md grid grid-cols-[28px_1fr_auto] items-center gap-3 hover:bg-neutral-800/40 transition-colors cursor-pointer"
+                  filtered.map((p) => {
+                    const isSelected = p.id === selectedId;
+                    const volume = p.add + p.del;
+                    const addRatio = volume ? p.add / volume : 0;
+                    const barWidth = (volume / maxVolume) * 100;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSelectedId(p.id)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2 border-l-2 cursor-pointer transition-colors text-left focus:outline-none",
+                          isSelected
+                            ? "bg-neutral-800/60 border-primary"
+                            : "border-transparent hover:bg-neutral-900/60"
+                        )}
                       >
                         <img
                           src={p.avatar}
                           alt=""
-                          className="h-7 w-7 rounded-full grayscale opacity-90"
+                          className="size-5 rounded-full object-cover flex-shrink-0 grayscale opacity-90"
                         />
-                        <div className="min-w-0">
-                          <div className="text-[13px] text-foreground truncate font-medium">
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className={cn(
+                              "text-sm truncate",
+                              isSelected
+                                ? "text-foreground font-medium"
+                                : "text-muted-foreground"
+                            )}
+                          >
                             {p.who}
                           </div>
-                          <div className="text-[11px] text-muted-foreground font-mono truncate">
+                          <div className="text-[11px] font-mono text-muted-foreground/70 truncate">
                             {p.msg}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-mono text-[12px] tabular-nums">
-                            <span className="text-foreground/90">+{p.add}</span>{" "}
-                            <span className="text-muted-foreground">
-                              −{p.del}
-                            </span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-[11px] font-mono tabular-nums">
+                            <span className="text-emerald-400">+{p.add}</span>{" "}
+                            <span className="text-rose-400">-{p.del}</span>
+                          </span>
+                          <div className="w-[80px] h-1 bg-neutral-800/60 flex overflow-hidden rounded-full">
+                            <div
+                              className="h-full bg-emerald-500/80"
+                              style={{ width: `${barWidth * addRatio}%` }}
+                            />
+                            <div
+                              className="h-full bg-rose-500/80"
+                              style={{
+                                width: `${barWidth * (1 - addRatio)}%`,
+                              }}
+                            />
                           </div>
-                          <div className="text-[10px] font-mono text-muted-foreground/70 uppercase tracking-[0.25em]">
-                            {p.when} ago
-                          </div>
+                          <span className="text-[11px] text-muted-foreground tabular-nums w-10 text-right">
+                            {p.when}
+                          </span>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      </button>
+                    );
+                  })
                 )}
               </div>
             </Card>
@@ -1044,18 +1113,7 @@ function Numbers() {
   return (
     <section>
       <Shell>
-        <motion.h2
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.9 }}
-          className="font-serif italic text-2xl md:text-[28px] text-foreground leading-[1.45] tracking-tight max-w-3xl"
-        >
-          &ldquo;Seventy-seven users, eighty-nine projects, one thousand
-          and eighty-six versions, thirty stars on GitHub. We think you
-          should know that before you sign up.&rdquo;
-        </motion.h2>
-        <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl">
           <NumberCard k="users">77</NumberCard>
           <NumberCard k="projects">89</NumberCard>
           <NumberCard k="versions">1,086</NumberCard>
@@ -1074,12 +1132,11 @@ function NumberCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm px-4 py-3.5">
-      <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground">
-        <FolderOpen className="h-3 w-3 opacity-60" />
+    <div className="rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm px-6 py-7 shadow-xl shadow-black/30">
+      <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-muted-foreground">
         {k}
       </div>
-      <div className="mt-1.5 text-3xl font-semibold text-foreground tabular-nums">
+      <div className="mt-3 text-6xl md:text-7xl font-semibold text-foreground tabular-nums leading-none">
         {children}
       </div>
     </div>
@@ -1107,11 +1164,11 @@ function Coda() {
             transition={{ duration: 0.9 }}
             className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.05] tracking-tight max-w-3xl"
           >
-            The salon closes here. The vault opens at the next click.
+            Ready to be the 78th?
           </motion.h2>
           <p className="mt-6 text-lg text-muted-foreground leading-[1.7] max-w-xl">
-            Sign in with GitHub, mint a passphrase in the browser, paste your
-            first value. Three minutes, one vault, no charge.
+            Sign in, mint a passphrase in the browser, paste your first
+            value. Three minutes, one vault, no charge.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-3">
             <PrimaryCTA>
@@ -1122,7 +1179,6 @@ function Coda() {
               <GitHubIcon className="h-4 w-4" />
               Read the source
             </GhostCTA>
-            <GhostCTA href="/blog">The blog</GhostCTA>
           </div>
         </div>
       </Shell>
@@ -1130,16 +1186,90 @@ function Coda() {
   );
 }
 
-function Colophon() {
+// ── Footer ───────────────────────────────────────────────────────────────
+
+function Footer() {
   return (
-    <footer className="pb-16">
+    <footer className="border-t border-border/50 pt-14 pb-10">
       <Shell>
-        <div className="rounded-full border border-border/50 bg-card/30 backdrop-blur-sm px-5 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-[11px] font-mono uppercase tracking-[0.25em] text-muted-foreground/80">
-          <span className="inline-flex items-center gap-2.5">
-            <Pin /> Cryptly · salon · MIT
-          </span>
-          <span className="normal-case tracking-normal text-muted-foreground italic font-serif">
-            Rounded by hand, in measured quantities.
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2 md:col-span-1">
+            <a href="/" className="inline-flex items-center gap-2.5">
+              <CryptlyLogo size={22} />
+              <span className="font-semibold tracking-tight">Cryptly</span>
+            </a>
+            <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xs">
+              A small, open source secrets manager. Encrypted in your
+              browser, never readable by us.
+            </p>
+          </div>
+
+          <div>
+            <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-muted-foreground/80">
+              Product
+            </div>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              <li>
+                <a
+                  href="/app/login"
+                  className="text-foreground/90 hover:text-foreground transition-colors"
+                >
+                  Open app
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/blog"
+                  className="text-foreground/90 hover:text-foreground transition-colors"
+                >
+                  Blog
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-muted-foreground/80">
+              Resources
+            </div>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              <li>
+                <a
+                  href="https://github.com/cryptly-dev/cryptly"
+                  className="inline-flex items-center gap-1.5 text-foreground/90 hover:text-foreground transition-colors"
+                >
+                  <GitHubIcon className="h-3.5 w-3.5" />
+                  Source code
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/cryptly-dev/cryptly/issues"
+                  className="text-foreground/90 hover:text-foreground transition-colors"
+                >
+                  Report an issue
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-muted-foreground/80">
+              Legal
+            </div>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              <li>
+                <span className="text-foreground/90">MIT License</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-12 pt-6 border-t border-border/50 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-sm text-muted-foreground">
+          <span>© 2026 Cryptly. Built quietly.</span>
+          <span className="inline-flex items-center gap-2">
+            <Pin />
+            Zero-knowledge by construction
           </span>
         </div>
       </Shell>
@@ -1149,7 +1279,7 @@ function Colophon() {
 
 export function VariantE() {
   return (
-    <div className="dark min-h-screen bg-background text-foreground overflow-x-hidden relative">
+    <div className="dark min-h-screen bg-background text-foreground overflow-x-clip relative">
       {/* Soft ambient background */}
       <div
         aria-hidden
@@ -1168,11 +1298,11 @@ export function VariantE() {
       <SoftDivider />
       <WireMovement />
       <SoftDivider />
-      <LedgerMovement />
+      <HistoryMovement />
       <SoftDivider />
       <Numbers />
       <Coda />
-      <Colophon />
+      <Footer />
     </div>
   );
 }
