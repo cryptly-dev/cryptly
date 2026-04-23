@@ -50,9 +50,15 @@ function PrimaryCTA({
   return (
     <a
       href={href}
-      className="inline-flex items-center gap-2 rounded-full bg-white text-black px-5 py-2.5 text-sm font-semibold shadow-lg shadow-black/40 hover:bg-neutral-100 transition-colors"
+      className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-white text-black px-5 py-2.5 text-sm font-semibold shadow-lg shadow-black/40 transition-all duration-300 hover:shadow-xl hover:bg-neutral-100 [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:translate-x-0.5"
     >
-      {children}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+      />
+      <span className="relative z-10 inline-flex items-center gap-2">
+        {children}
+      </span>
     </a>
   );
 }
@@ -123,6 +129,23 @@ function Caption({ children }: { children: React.ReactNode }) {
     <div className="mt-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/80">
       {children}
     </div>
+  );
+}
+
+function LiveIndicator() {
+  return (
+    <span className="inline-flex flex-col items-end gap-1 leading-none">
+      <span style={{ color: ACCENT }}>live</span>
+      <span className="relative block w-10 h-[2px] overflow-hidden rounded-full bg-border/40">
+        <span
+          className="absolute inset-y-0 left-0 w-1/2 rounded-full"
+          style={{
+            backgroundColor: ACCENT,
+            animation: "live-scan 1.6s ease-in-out infinite",
+          }}
+        />
+      </span>
+    </span>
   );
 }
 
@@ -1010,8 +1033,7 @@ function Numbers() {
             </span>
           </h2>
           <p className="mt-6 text-[16px] text-muted-foreground leading-[1.75] max-w-xl">
-            Every count on the right is live — read from the same database
-            your secrets would live in, if you joined tonight.
+            Four numbers, honestly counted. No rounding, no asterisks.
           </p>
         </div>
 
@@ -1019,7 +1041,7 @@ function Numbers() {
           <Card>
             <CardChrome
               left={<span>the house · today</span>}
-              right={<span style={{ color: ACCENT }}>live</span>}
+              right={<LiveIndicator />}
             />
             <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border/50">
               <StatCell k="users">77</StatCell>

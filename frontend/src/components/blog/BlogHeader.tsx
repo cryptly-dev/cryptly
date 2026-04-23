@@ -4,16 +4,18 @@ import { cn } from "@/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
+const ACCENT = "#c9b287";
+
 /**
- * Shared site header used across landing variants and the blog. Shows
- * the currently selected top-level page (Home / Blog) via background pill.
+ * Shared site header used across landing and the blog. Shows the
+ * currently selected top-level page (Home / Blog) via a gold underline.
  */
 export function BlogHeader() {
   const location = useLocation();
   const pathname = location.pathname;
 
   const isBlog = pathname === "/blog" || pathname.startsWith("/blog/");
-  const isHome = !isBlog; // landing + variants + anything else → "Home"
+  const isHome = !isBlog;
 
   return (
     <header className="fixed top-4 left-0 right-0 z-30 px-4">
@@ -38,7 +40,7 @@ export function BlogHeader() {
               href="https://github.com/cryptly-dev/cryptly"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground hover:text-foreground hover:bg-neutral-800/50 transition-colors"
+              className="relative inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground hover:text-foreground transition-colors"
             >
               <GitHubIcon className="h-3.5 w-3.5" />
               Source
@@ -47,10 +49,16 @@ export function BlogHeader() {
 
           <Link
             to="/app/login"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white text-black px-3.5 py-1.5 text-sm font-medium hover:bg-neutral-100 transition-colors"
+            className="group relative inline-flex items-center gap-1.5 overflow-hidden rounded-full bg-white text-black px-3.5 py-1.5 text-sm font-medium shadow-md shadow-black/30 transition-all duration-300 hover:shadow-lg hover:bg-neutral-100 [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:translate-x-0.5"
           >
-            Open app
-            <ArrowRight className="h-3.5 w-3.5" />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+            />
+            <span className="relative z-10 inline-flex items-center gap-1.5">
+              Open app
+              <ArrowRight className="h-3.5 w-3.5" />
+            </span>
           </Link>
         </div>
       </div>
@@ -71,13 +79,20 @@ function NavLink({
     <Link
       to={to}
       className={cn(
-        "rounded-md px-3 py-1.5 transition-colors",
+        "relative rounded-md px-3 py-1.5 transition-colors",
         active
-          ? "text-foreground bg-neutral-800/60"
-          : "text-muted-foreground hover:text-foreground hover:bg-neutral-800/50"
+          ? "text-foreground"
+          : "text-muted-foreground hover:text-foreground"
       )}
     >
       {children}
+      {active && (
+        <span
+          aria-hidden
+          className="absolute left-3 right-3 -bottom-0.5 h-[2px] rounded-full"
+          style={{ backgroundColor: ACCENT }}
+        />
+      )}
     </Link>
   );
 }
