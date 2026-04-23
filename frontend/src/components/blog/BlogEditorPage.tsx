@@ -277,7 +277,7 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-black text-foreground flex flex-col">
+    <div className="min-h-screen bg-black text-foreground flex flex-col pt-20 md:pt-24">
 
       {/* Meta bar */}
       <div className="border-b border-neutral-900/80 bg-black/60 backdrop-blur-xl">

@@ -24,10 +24,10 @@ const FALLBACK_WEEKS = 26;
 
 function getIntensity(count: number): string {
   if (count === 0) return "rgba(255,255,255,0.04)";
-  if (count === 1) return "rgba(96,165,250,0.35)";
-  if (count < 4) return "rgba(96,165,250,0.55)";
-  if (count < 8) return "rgba(96,165,250,0.8)";
-  return "rgb(96,165,250)";
+  if (count === 1) return "rgba(201,178,135,0.35)";
+  if (count < 4) return "rgba(201,178,135,0.55)";
+  if (count < 8) return "rgba(201,178,135,0.85)";
+  return "rgb(201,178,135)";
 }
 
 function formatTooltip(date: Date, count: number): string {

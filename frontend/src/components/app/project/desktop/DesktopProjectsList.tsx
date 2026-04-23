@@ -110,6 +110,25 @@ export function DesktopProjectsList() {
 
   const indicatorProjectId = activeProject?.id ?? null;
 
+  const measureIndicator = useCallback(() => {
+    if (!indicatorProjectId) return;
+    const row = rowRefs.current.get(indicatorProjectId);
+    if (!row || !scrollRef.current) return;
+    const rowRect = row.getBoundingClientRect();
+    const containerRect = scrollRef.current.getBoundingClientRect();
+    setIndicator((prev) => {
+      const next = {
+        top:
+          rowRect.top - containerRect.top + scrollRef.current!.scrollTop,
+        height: rowRect.height,
+      };
+      if (prev && prev.top === next.top && prev.height === next.height) {
+        return prev;
+      }
+      return next;
+    });
+  }, [indicatorProjectId]);
+
   useLayoutEffect(() => {
     if (!indicatorProjectId) {
       setIndicator(null);
@@ -118,25 +137,13 @@ export function DesktopProjectsList() {
     const scroller = scrollRef.current;
     if (!scroller) return;
 
-    const measure = () => {
-      const row = rowRefs.current.get(indicatorProjectId);
-      if (!row || !scrollRef.current) return;
-      const rowRect = row.getBoundingClientRect();
-      const containerRect = scrollRef.current.getBoundingClientRect();
-      setIndicator({
-        top:
-          rowRect.top - containerRect.top + scrollRef.current.scrollTop,
-        height: rowRect.height,
-      });
-    };
+    measureIndicator();
 
-    measure();
-
-    const ro = new ResizeObserver(measure);
+    const ro = new ResizeObserver(measureIndicator);
     ro.observe(scroller);
     rowRefs.current.forEach((el) => ro.observe(el));
     return () => ro.disconnect();
-  }, [indicatorProjectId, localProjects, isAddingProject]);
+  }, [indicatorProjectId, localProjects, isAddingProject, measureIndicator]);
 
   useEffect(() => {
     if (userData?.displayName) {
@@ -337,6 +344,8 @@ export function DesktopProjectsList() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
+              onUpdate={measureIndicator}
+              onAnimationComplete={measureIndicator}
               className="mb-0.5 px-2"
             >
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm border border-primary/30 bg-primary/5">

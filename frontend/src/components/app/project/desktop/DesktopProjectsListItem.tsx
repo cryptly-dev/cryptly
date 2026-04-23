@@ -24,7 +24,7 @@ const GRIP_PERIMETER = [
 ];
 
 function GripLoader({ color }: { color: string }) {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => Math.floor(Math.random() * 6));
   useEffect(() => {
     const id = window.setInterval(() => setStep((s) => (s + 1) % 6), 130);
     return () => window.clearInterval(id);

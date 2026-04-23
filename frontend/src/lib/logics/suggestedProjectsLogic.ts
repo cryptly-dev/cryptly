@@ -176,7 +176,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
       try {
         // 1. Create project
         const projectKey = await SymmetricCrypto.generateProjectKey();
-        const content = `# this is comment\nKEY="value"`;
+        const content = `# we've connected this cryptly project to a github repository\n# (https://github.com/${repo.owner}/${repo.name}) because you clicked on a suggestion\nTHIS_IS_A_SECRET=super secret value`;
         const contentEncrypted = await SymmetricCrypto.encrypt(
           content,
           projectKey
