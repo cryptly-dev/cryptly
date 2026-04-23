@@ -1,5 +1,4 @@
 import { type Project } from "@/lib/api/projects.api";
-import { Spinner } from "@/components/ui/spinner";
 import { cn, getCompactRelativeTime } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { GripVertical } from "lucide-react";
@@ -12,6 +11,51 @@ interface DesktopProjectsListItemProps {
   /** Row is the project we're switching to; show same bg as hover. */
   isLoading?: boolean;
   dragControls: DragControls;
+}
+
+// GripVertical's six dots in clockwise perimeter order (matches lucide's geometry).
+const GRIP_PERIMETER = [
+  { cx: 9, cy: 5 },
+  { cx: 15, cy: 5 },
+  { cx: 15, cy: 12 },
+  { cx: 15, cy: 19 },
+  { cx: 9, cy: 19 },
+  { cx: 9, cy: 12 },
+];
+
+function GripLoader({ color }: { color: string }) {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setStep((s) => (s + 1) % 6), 130);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="w-3.5 h-3.5"
+      role="status"
+      aria-label="Loading"
+    >
+      {GRIP_PERIMETER.map((pos, i) => {
+        const distance = (i - step + 6) % 6;
+        const opacity = distance < 3 ? 1 : 0.12;
+        return (
+          <circle
+            key={i}
+            cx={pos.cx}
+            cy={pos.cy}
+            r={2}
+            fill={color}
+            style={{
+              opacity,
+              transition: "opacity 130ms linear",
+            }}
+          />
+        );
+      })}
+    </svg>
+  );
 }
 
 export function DesktopProjectsListItem({
@@ -59,32 +103,34 @@ export function DesktopProjectsListItem({
         </span>
       </div>
       <div className="relative z-[2] flex items-center gap-1.5 flex-shrink-0 pointer-events-none">
-        {isLoading ? (
-          <Spinner className="h-3 w-3" style={{ color: "#c9b287" }} />
-        ) : (
-          <span
-            className={cn(
-              "text-[12px] tabular-nums transition-opacity group-hover:opacity-0",
-              isActive ? "text-foreground/60" : "text-muted-foreground/40",
-            )}
-            title={new Date(project.updatedAt).toLocaleString()}
-          >
-            {timeAgo}
-          </span>
-        )}
+        <span
+          className={cn(
+            "text-[12px] tabular-nums transition-opacity",
+            isLoading ? "opacity-0" : "group-hover:opacity-0",
+            isActive ? "text-foreground/60" : "text-muted-foreground/40",
+          )}
+          title={new Date(project.updatedAt).toLocaleString()}
+        >
+          {timeAgo}
+        </span>
       </div>
       <div
         onPointerDown={(e) => {
+          if (isLoading) return;
           dragControls.start(e);
         }}
         className={cn(
-          "absolute right-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing touch-none flex items-center z-[3] pointer-events-auto transition-opacity",
+          "absolute right-2 top-1/2 -translate-y-1/2 touch-none flex items-center z-[3] transition-opacity",
           isLoading
-            ? "opacity-0"
-            : "opacity-0 group-hover:opacity-100",
+            ? "opacity-100 pointer-events-none"
+            : "opacity-0 group-hover:opacity-100 pointer-events-auto cursor-grab active:cursor-grabbing",
         )}
       >
-        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/60" />
+        {isLoading ? (
+          <GripLoader color="#c9b287" />
+        ) : (
+          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/60" />
+        )}
       </div>
     </div>
   );
