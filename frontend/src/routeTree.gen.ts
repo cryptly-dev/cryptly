@@ -15,6 +15,7 @@ import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as InviteInviteIdRouteImport } from './routes/invite/$inviteId'
 import { Route as BlogNewRouteImport } from './routes/blog/new'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
+import { Route as AppSetPassphraseRouteImport } from './routes/app/set-passphrase'
 import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppDeveloperRouteImport } from './routes/app/developer'
 import { Route as AppProjectIndexRouteImport } from './routes/app/project/index'
@@ -53,6 +54,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/blog/$slug',
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSetPassphraseRoute = AppSetPassphraseRouteImport.update({
+  id: '/set-passphrase',
+  path: '/set-passphrase',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppLoginRoute = AppLoginRouteImport.update({
   id: '/login',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/app/set-passphrase': typeof AppSetPassphraseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/app/set-passphrase': typeof AppSetPassphraseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/app/set-passphrase': typeof AppSetPassphraseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/developer'
     | '/app/login'
+    | '/app/set-passphrase'
     | '/blog/$slug'
     | '/blog/new'
     | '/invite/$inviteId'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/developer'
     | '/app/login'
+    | '/app/set-passphrase'
     | '/blog/$slug'
     | '/blog/new'
     | '/invite/$inviteId'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/developer'
     | '/app/login'
+    | '/app/set-passphrase'
     | '/blog/$slug'
     | '/blog/new'
     | '/invite/$inviteId'
@@ -250,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/set-passphrase': {
+      id: '/app/set-passphrase'
+      path: '/set-passphrase'
+      fullPath: '/app/set-passphrase'
+      preLoaderRoute: typeof AppSetPassphraseRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/login': {
       id: '/app/login'
       path: '/login'
@@ -312,6 +331,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppDeveloperRoute: typeof AppDeveloperRoute
   AppLoginRoute: typeof AppLoginRoute
+  AppSetPassphraseRoute: typeof AppSetPassphraseRoute
   AppProjectProjectIdRoute: typeof AppProjectProjectIdRoute
   AppProjectIndexRoute: typeof AppProjectIndexRoute
   AppCallbacksIntegrationsGithubRoute: typeof AppCallbacksIntegrationsGithubRoute
@@ -322,6 +342,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppDeveloperRoute: AppDeveloperRoute,
   AppLoginRoute: AppLoginRoute,
+  AppSetPassphraseRoute: AppSetPassphraseRoute,
   AppProjectProjectIdRoute: AppProjectProjectIdRoute,
   AppProjectIndexRoute: AppProjectIndexRoute,
   AppCallbacksIntegrationsGithubRoute: AppCallbacksIntegrationsGithubRoute,
