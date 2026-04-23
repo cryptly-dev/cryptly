@@ -43,7 +43,7 @@ export function BlogPostPage() {
   return (
     <div className="min-h-screen bg-black text-foreground">
 
-      <main className="mx-auto max-w-3xl px-6 py-12 md:py-16">
+      <main className="mx-auto max-w-3xl px-6 pt-28 md:pt-32 pb-12 md:pb-16">
         <Link
           to="/blog"
           className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-300 transition-colors mb-10"
