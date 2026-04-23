@@ -57,7 +57,7 @@ export function BlogHeader() {
           </nav>
 
           <Link
-            to="/app/login"
+            to="/app"
             className="group relative inline-flex items-center gap-1.5 overflow-hidden rounded-full bg-white text-black px-3.5 py-1.5 text-sm font-medium shadow-md shadow-black/30 transition-all duration-300 hover:shadow-lg hover:bg-neutral-100 [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:translate-x-0.5"
           >
             <span

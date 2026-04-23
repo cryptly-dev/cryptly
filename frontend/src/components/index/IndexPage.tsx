@@ -44,7 +44,7 @@ function Pin() {
 
 function PrimaryCTA({
   children,
-  href = "/app/login",
+  href = "/app",
 }: {
   children: React.ReactNode;
   href?: string;
@@ -1269,7 +1269,7 @@ function Footer() {
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
                 <a
-                  href="/app/login"
+                  href="/app"
                   className="text-foreground/90 hover:text-foreground transition-colors"
                 >
                   Open app
