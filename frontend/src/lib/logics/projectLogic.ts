@@ -18,6 +18,7 @@ import { subscriptions } from "kea-subscriptions";
 import { IntegrationsApi, type Integration } from "../api/integrations.api";
 import {
   ProjectsApi,
+  ProjectMemberRole,
   type DecryptedVersion,
   type ProjectMember,
 } from "../api/projects.api";
@@ -66,6 +67,9 @@ export interface Patch {
   updatedAt: string;
   content: string;
 }
+
+const SYSTEM_AUTHOR_AVATAR =
+  "https://api.dicebear.com/9.x/bottts-neutral/svg?scale=80&backgroundColor=546e7a,757575,6d4c41&seed=Avery";
 
 /** Monaco / OS paste can change CRLF; avoids false "dirty" after save. */
 function normalizeEditorText(text: string) {
@@ -323,7 +327,7 @@ export const projectLogic = kea<projectLogicType>([
             } else {
               actions.handleSecretsUpdate(secretsUpdatedEvent);
             }
-          } catch (e) {}
+          } catch (e) { }
         });
 
         eventSource.onError(() => {
@@ -407,13 +411,34 @@ export const projectLogic = kea<projectLogicType>([
       }
     },
     computePatches: ({ versions }) => {
-      if (versions.length < 2) {
+      if (versions.length === 0) {
         actions.setPatches([]);
         return;
       }
 
       const chronologicalVersions = [...versions].reverse();
       const patches: Patch[] = [];
+
+      // Synthetic "system" entry for the very first version — it has no
+      // predecessor, so render its full content as additions authored by
+      // a synthetic System user.
+      const firstVersion = chronologicalVersions[0];
+      const initialContent = firstVersion.content
+        .split("\n")
+        .map((line) => `+${line}`)
+        .join("\n");
+      patches.push({
+        id: `initial_${firstVersion.id}`,
+        author: {
+          id: "system",
+          avatarUrl: SYSTEM_AUTHOR_AVATAR,
+          displayName: "System",
+          role: ProjectMemberRole.Read,
+        },
+        createdAt: firstVersion.createdAt,
+        updatedAt: firstVersion.updatedAt,
+        content: initialContent,
+      });
 
       for (let i = 0; i < chronologicalVersions.length - 1; i++) {
         const oldVersion = chronologicalVersions[i];

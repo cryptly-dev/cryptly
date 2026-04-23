@@ -73,4 +73,8 @@ export class ProjectSecretsVersionReadService {
 
     return ProjectSecretsVersionSerializer.serializeMany(versions, authorsPartial);
   }
+
+  public async countAll(): Promise<number> {
+    return this.projectSecretsVersionModel.countDocuments().exec();
+  }
 }

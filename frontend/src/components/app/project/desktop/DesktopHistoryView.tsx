@@ -149,6 +149,15 @@ export function DesktopHistoryView() {
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    if (patches.length === 0) return;
+    const currentExists = patches.some((p) => p.id === selectedHistoryChangeId);
+    if (!currentExists) {
+      const latest = patches[0];
+      selectHistoryChange(latest.id, latest.content);
+    }
+  }, [patches, selectedHistoryChangeId, selectHistoryChange]);
+
   const authors = useMemo(() => getAuthorStats(patches), [patches]);
 
   const { visibleAuthors, overflowAuthors } = useMemo(() => {

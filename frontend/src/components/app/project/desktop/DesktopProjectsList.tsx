@@ -230,7 +230,7 @@ export function DesktopProjectsList() {
   return (
     <div className="h-full flex flex-col">
       {/* Top row: brand + search + add */}
-      <div className="flex items-center gap-2 px-3 py-3 border-b border-border/50">
+      <div className="flex h-14 items-center gap-2 px-3 border-b border-border/50 flex-shrink-0">
         <Link
           to="/"
           className="text-foreground hover:opacity-80 transition-opacity flex-shrink-0"

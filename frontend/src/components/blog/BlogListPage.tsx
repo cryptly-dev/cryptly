@@ -83,11 +83,7 @@ export function BlogListPage() {
         )}
 
         {!posts && !error && (
-          <div className="divide-y divide-neutral-900">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <BlogPostCardSkeleton key={i} />
-            ))}
-          </div>
+          <div aria-hidden className="h-[70vh]" />
         )}
 
         {posts && posts.length === 0 && (
@@ -125,29 +121,6 @@ export function BlogListPage() {
           </Link>
         </div>
       </footer>
-    </div>
-  );
-}
-
-function BlogPostCardSkeleton() {
-  return (
-    <div className="py-8 animate-pulse">
-      <div className="flex flex-col md:flex-row md:items-start md:gap-10">
-        <div className="md:w-40 flex-shrink-0 mb-3 md:mb-0 md:pt-1">
-          <div className="h-4 w-28 rounded bg-neutral-900" />
-        </div>
-        <div className="flex-1 min-w-0 space-y-3">
-          <div className="h-7 md:h-8 w-3/4 rounded bg-neutral-900" />
-          <div className="space-y-2 pt-1">
-            <div className="h-4 w-full rounded bg-neutral-900/80" />
-            <div className="h-4 w-5/6 rounded bg-neutral-900/80" />
-          </div>
-          <div className="pt-3 flex items-center gap-3">
-            <div className="w-5 h-5 rounded-full bg-neutral-900" />
-            <div className="h-3.5 w-24 rounded bg-neutral-900" />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
