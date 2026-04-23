@@ -1,5 +1,6 @@
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { CryptlyLogo } from "@/components/ui/CryptlyLogo";
+import { BlogHeader } from "@/components/blog/BlogHeader";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -38,52 +39,6 @@ function Pin() {
       className="inline-block h-1.5 w-1.5 rounded-full align-middle"
       style={{ backgroundColor: ACCENT }}
     />
-  );
-}
-
-function Header() {
-  return (
-    <header className="sticky top-4 z-30 px-4">
-      <Shell>
-        <div className="flex items-center justify-between h-14 rounded-full border border-border/50 bg-card/60 backdrop-blur-md px-5 shadow-xl shadow-black/30">
-          <a
-            href="/"
-            className="inline-flex items-center gap-2.5 text-foreground hover:opacity-80 transition-opacity"
-          >
-            <CryptlyLogo size={22} />
-            <span className="font-semibold tracking-tight">Cryptly</span>
-          </a>
-          <nav className="hidden md:flex items-center gap-1 text-sm text-muted-foreground">
-            <a
-              href="/"
-              className="rounded-md px-3 py-1.5 hover:text-foreground hover:bg-neutral-800/50 transition-colors"
-            >
-              Home
-            </a>
-            <a
-              href="/blog"
-              className="rounded-md px-3 py-1.5 hover:text-foreground hover:bg-neutral-800/50 transition-colors"
-            >
-              Blog
-            </a>
-            <a
-              href="https://github.com/cryptly-dev/cryptly"
-              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 hover:text-foreground hover:bg-neutral-800/50 transition-colors"
-            >
-              <GitHubIcon className="h-3.5 w-3.5" />
-              Source
-            </a>
-          </nav>
-          <a
-            href="/app/login"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white text-black px-3.5 py-1.5 text-sm font-medium hover:bg-neutral-100 transition-colors"
-          >
-            Open app
-            <ArrowRight className="h-3.5 w-3.5" />
-          </a>
-        </div>
-      </Shell>
-    </header>
   );
 }
 
@@ -177,9 +132,9 @@ function Caption({ children }: { children: React.ReactNode }) {
 
 function Hero() {
   return (
-    <section className="pt-16 md:pt-24 pb-12">
-      <Shell>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-end">
+    <section className="min-h-screen flex items-center pt-28 pb-12">
+      <Shell className="w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div className="lg:col-span-7">
             <motion.h1
               initial={{ opacity: 0, y: 8 }}
@@ -254,29 +209,28 @@ function Hero() {
 }
 
 const HERO_ROWS = [
-  { k: "DATABASE_URL", dots: 28 },
-  { k: "STRIPE_SECRET_KEY", dots: 22 },
+  { k: "DATABASE_URL", dots: 22 },
+  { k: "STRIPE_SECRET_KEY", dots: 16 },
   { k: "OPENAI_API_KEY", dots: 18 },
 ];
 
 function HeroMock() {
   return (
     <Card>
-      <CardChrome
-        left={<span>production · .env</span>}
-        right={<span style={{ color: ACCENT }}>encrypted</span>}
-      />
-      <div className="font-mono text-[12px] leading-[1.95] py-3">
+      <div className="font-mono text-[13px] leading-[2] py-5 px-4">
         {HERO_ROWS.map((r, i) => (
           <div
             key={i}
-            className="group mx-2 grid grid-cols-[28px_160px_1fr] items-baseline gap-3 px-2 py-1 rounded-md hover:bg-neutral-800/40 transition-colors"
+            className="flex items-baseline gap-3 px-2 py-1 whitespace-nowrap"
           >
-            <span className="text-right text-muted-foreground/50 tabular-nums">
+            <span className="w-6 text-right text-muted-foreground/50 tabular-nums flex-shrink-0">
               {String(i + 1).padStart(2, "0")}
             </span>
-            <span className="text-foreground/90 truncate">{r.k}</span>
-            <span className="text-muted-foreground/70 truncate">
+            <span className="font-medium" style={{ color: ACCENT }}>
+              {r.k}
+            </span>
+            <span className="text-muted-foreground/50">=</span>
+            <span className="text-muted-foreground/70">
               {"•".repeat(r.dots)}
             </span>
           </div>
@@ -290,22 +244,19 @@ function HeroMock() {
 
 const VAULT_ROWS = [
   {
-    id: "sec_7mFq2aN9bK",
-    project: "prj_k2L7p",
-    created: "2026-04-22",
-    blob: "u2l9aFZbk3Pj+Q7WkS9Q…",
+    id: "68d1...",
+    project: "68cf...",
+    blob: "u2l9aFZbk3Pj+Q7WkS9QfwDfMnLvSsC6XgYh1xZ8pQrT+88k/4Lr2Nh==",
   },
   {
-    id: "sec_b3Hc9xT1Lm",
-    project: "prj_k2L7p",
-    created: "2026-04-19",
-    blob: "fWn4pQ0R8sUvZ2Ah6YgK…",
+    id: "68d2...",
+    project: "68cf...",
+    blob: "fWn4pQ0R8sUvZ2Ah6YgKm9XcTdL4PrBv0WsEq1iNy+Oa7uKp3JxCh2==",
   },
   {
-    id: "sec_qW8e4JrTyC",
-    project: "prj_8v2Xa",
-    created: "2026-04-14",
-    blob: "cXpLm7nBd+TrKq9aEf1R…",
+    id: "68d3...",
+    project: "6a14...",
+    blob: "cXpLm7nBd+TrKq9aEf1RtYz5OvHgWuJi2SkNc8MxPqDbZ0Af6ExBn4==",
   },
 ];
 
@@ -347,15 +298,12 @@ function VaultMovement() {
                 right={<span style={{ color: ACCENT }}>schema</span>}
               />
               <div className="overflow-hidden">
-                <table className="w-full font-mono text-[12px] text-left">
+                <table className="w-full font-mono text-[12px] text-left table-fixed">
                   <thead>
                     <tr className="bg-neutral-900/60 border-b border-border/50 text-muted-foreground/80 text-[10px] uppercase tracking-[0.2em]">
-                      <th className="px-4 py-2.5 font-medium w-[34%]">id</th>
-                      <th className="px-4 py-2.5 font-medium w-[20%]">
+                      <th className="px-4 py-2.5 font-medium w-[88px]">id</th>
+                      <th className="px-4 py-2.5 font-medium w-[92px]">
                         project
-                      </th>
-                      <th className="px-4 py-2.5 font-medium w-[20%]">
-                        created
                       </th>
                       <th className="px-4 py-2.5 font-medium">blob</th>
                     </tr>
@@ -375,16 +323,13 @@ function VaultMovement() {
                         <td className="px-4 py-2.5 text-foreground/70 truncate">
                           {r.project}
                         </td>
-                        <td className="px-4 py-2.5 text-foreground/70 truncate">
-                          {r.created}
-                        </td>
                         <td className="px-4 py-2.5 text-foreground/90 truncate">
-                          <span className="inline-flex items-center gap-1.5 rounded bg-neutral-800/60 px-1.5 py-0.5 text-[11px]">
+                          <span className="inline-flex items-center gap-1.5 rounded bg-neutral-800/60 px-1.5 py-0.5 text-[11px] max-w-full">
                             <span
-                              className="h-1 w-1 rounded-full"
+                              className="h-1 w-1 rounded-full flex-shrink-0"
                               style={{ backgroundColor: ACCENT }}
                             />
-                            {r.blob}
+                            <span className="truncate">{r.blob}</span>
                           </span>
                         </td>
                       </tr>
@@ -1289,7 +1234,7 @@ export function VariantE() {
             "radial-gradient(60rem 40rem at 20% -10%, rgba(201,178,135,0.06), transparent 60%), radial-gradient(40rem 30rem at 90% 20%, rgba(255,255,255,0.03), transparent 60%)",
         }}
       />
-      <Header />
+      <BlogHeader />
       <Hero />
       <SoftDivider />
       <VaultMovement />
