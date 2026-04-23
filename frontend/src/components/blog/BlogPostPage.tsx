@@ -58,7 +58,6 @@ export function BlogPostPage() {
           </div>
         )}
 
-        {!post && !error && <BlogPostSkeleton />}
 
         {post && (
           <motion.article
@@ -135,18 +134,3 @@ export function BlogPostPage() {
   );
 }
 
-function BlogPostSkeleton() {
-  return (
-    <div className="animate-pulse space-y-6">
-      <div className="h-4 w-32 rounded bg-neutral-900" />
-      <div className="h-10 w-4/5 rounded bg-neutral-900" />
-      <div className="h-6 w-3/5 rounded bg-neutral-900" />
-      <div className="h-8 w-32 rounded bg-neutral-900 mt-8" />
-      <div className="space-y-3 mt-10">
-        <div className="h-4 w-full rounded bg-neutral-900" />
-        <div className="h-4 w-full rounded bg-neutral-900" />
-        <div className="h-4 w-3/4 rounded bg-neutral-900" />
-      </div>
-    </div>
-  );
-}

@@ -214,16 +214,16 @@ function Hero() {
                 ease: HERO_EASE,
                 delay: 0.36,
               }}
-              className="mt-8 flex flex-nowrap items-center gap-x-4 text-[10px] font-mono uppercase tracking-[0.1em] text-muted-foreground whitespace-nowrap"
+              className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-muted-foreground"
             >
-              <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-2">
                 <Pin /> Free forever
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Pin /> Zero-knowledge
+              <span className="inline-flex items-center gap-2">
+                <Pin /> E2E encrypted
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Pin /> MIT licensed
+              <span className="inline-flex items-center gap-2">
+                <Pin /> Open source
               </span>
             </motion.div>
           </div>
@@ -248,32 +248,47 @@ function Hero() {
 }
 
 const HERO_ROWS = [
-  { k: "DATABASE_URL", dots: 22 },
-  { k: "STRIPE_SECRET_KEY", dots: 16 },
-  { k: "OPENAI_API_KEY", dots: 18 },
+  { k: "DATABASE_URL", v: "postgres://app@db/main", dots: 22 },
+  { k: "STRIPE_SECRET_KEY", v: "sk_live_aB7Kx9ZqL", dots: 16 },
+  { k: "OPENAI_API_KEY", v: "sk-proj-9Tv3XmNp2R", dots: 18 },
+  { k: "GITHUB_TOKEN", v: "ghp_8Kx7pLmZqJyQwRtU", dots: 20 },
+  { k: "RESEND_API_KEY", v: "re_4nH2vKsp_PQrTaBc", dots: 19 },
 ];
 
 function HeroMock() {
+  const [hovered, setHovered] = useState<number | null>(null);
+
   return (
     <Card>
       <div className="font-mono text-[13px] leading-[2] py-5 px-4">
-        {HERO_ROWS.map((r, i) => (
-          <div
-            key={i}
-            className="flex items-baseline gap-3 px-2 py-1 whitespace-nowrap"
-          >
-            <span className="w-6 text-right text-muted-foreground/50 tabular-nums flex-shrink-0">
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <span className="font-medium" style={{ color: ACCENT }}>
-              {r.k}
-            </span>
-            <span className="text-muted-foreground/50">=</span>
-            <span className="text-muted-foreground/70">
-              {"•".repeat(r.dots)}
-            </span>
-          </div>
-        ))}
+        {HERO_ROWS.map((r, i) => {
+          const isHovered = hovered === i;
+          return (
+            <div
+              key={i}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+              className="flex items-baseline gap-3 px-2 py-1 whitespace-nowrap"
+            >
+              <span className="w-6 text-right text-muted-foreground/50 tabular-nums flex-shrink-0">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className="font-medium" style={{ color: ACCENT }}>
+                {r.k}
+              </span>
+              <span className="text-muted-foreground/50">=</span>
+              <span
+                className={cn(
+                  isHovered
+                    ? "text-foreground/90"
+                    : "text-muted-foreground/70"
+                )}
+              >
+                {isHovered ? r.v : "•".repeat(r.dots)}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </Card>
   );
@@ -817,7 +832,7 @@ function WireMovement() {
                 </div>
               </div>
             </Card>
-            <Caption>Fig. 03 — six values, six wires</Caption>
+            <Caption>Fig. 03 — each value, re-sealed for the recipient</Caption>
           </div>
         </div>
       </Shell>
@@ -832,6 +847,8 @@ type Patch = {
   who: string;
   avatar: string;
   when: string;
+  /** Age of the patch, in minutes, for filtering. */
+  ageMin: number;
   add: number;
   del: number;
   msg: string;
@@ -843,6 +860,7 @@ const PATCHES: Patch[] = [
     who: "Alex Chen",
     avatar: "/avatars/alex-chen.svg",
     when: "2m",
+    ageMin: 2,
     add: 1,
     del: 1,
     msg: "rotate STRIPE_SECRET_KEY",
@@ -852,6 +870,7 @@ const PATCHES: Patch[] = [
     who: "Marcus Rodriguez",
     avatar: "/avatars/marcus-rodriguez.svg",
     when: "14m",
+    ageMin: 14,
     add: 2,
     del: 0,
     msg: "add observability keys",
@@ -861,6 +880,7 @@ const PATCHES: Patch[] = [
     who: "Priya Patel",
     avatar: "/avatars/priya-patel.svg",
     when: "1h",
+    ageMin: 60,
     add: 1,
     del: 1,
     msg: "migrate DATABASE_URL",
@@ -869,7 +889,8 @@ const PATCHES: Patch[] = [
     id: "p4",
     who: "Nina Gupta",
     avatar: "/avatars/nina-gupta.svg",
-    when: "1d",
+    when: "2d",
+    ageMin: 60 * 24 * 2,
     add: 3,
     del: 0,
     msg: "Q2 feature flags",
@@ -878,7 +899,8 @@ const PATCHES: Patch[] = [
     id: "p5",
     who: "Alex Chen",
     avatar: "/avatars/alex-chen.svg",
-    when: "3d",
+    when: "4d",
+    ageMin: 60 * 24 * 4,
     add: 1,
     del: 0,
     msg: "cloudflare api token",
@@ -887,18 +909,24 @@ const PATCHES: Patch[] = [
     id: "p6",
     who: "Marcus Rodriguez",
     avatar: "/avatars/marcus-rodriguez.svg",
-    when: "5d",
+    when: "12d",
+    ageMin: 60 * 24 * 12,
     add: 0,
     del: 2,
     msg: "drop deprecated keys",
   },
 ];
 
-const TIME_CHIPS = [
-  { key: "all", label: "All time" },
-  { key: "30", label: "30d" },
-  { key: "7", label: "7d" },
-  { key: "24", label: "24h" },
+const TIME_CHIPS: {
+  key: string;
+  label: string;
+  /** Max age in minutes; null = no limit. */
+  maxAge: number | null;
+}[] = [
+  { key: "all", label: "All time", maxAge: null },
+  { key: "30", label: "30d", maxAge: 60 * 24 * 30 },
+  { key: "7", label: "7d", maxAge: 60 * 24 * 7 },
+  { key: "24", label: "24h", maxAge: 60 * 24 },
 ];
 
 function HistoryMovement() {
@@ -907,13 +935,24 @@ function HistoryMovement() {
   const [selectedId, setSelectedId] = useState<string>("p1");
 
   const filtered = useMemo(() => {
+    const maxAge = TIME_CHIPS.find((r) => r.key === range)?.maxAge ?? null;
     const s = q.trim().toLowerCase();
-    if (!s) return PATCHES;
-    return PATCHES.filter(
-      (p) =>
+    return PATCHES.filter((p) => {
+      if (maxAge !== null && p.ageMin > maxAge) return false;
+      if (!s) return true;
+      return (
         p.who.toLowerCase().includes(s) || p.msg.toLowerCase().includes(s)
-    );
-  }, [q]);
+      );
+    });
+  }, [q, range]);
+
+  // Keep a valid row selected if the current one falls out of the active range.
+  useEffect(() => {
+    if (filtered.length === 0) return;
+    if (!filtered.some((p) => p.id === selectedId)) {
+      setSelectedId(filtered[0].id);
+    }
+  }, [filtered, selectedId]);
 
   const maxVolume = useMemo(() => {
     let m = 0;
