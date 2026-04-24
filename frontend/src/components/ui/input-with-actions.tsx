@@ -21,7 +21,7 @@ const InputWithActions = React.forwardRef<
       <input
         ref={ref}
         className={cn(
-          "flex-1 min-w-0 px-3 py-2.5 bg-transparent text-sm outline-none placeholder:text-muted-foreground/50",
+          "flex-1 min-w-0 px-3 py-2.5 bg-transparent text-base md:text-sm outline-none placeholder:text-muted-foreground/50",
           className
         )}
         {...props}

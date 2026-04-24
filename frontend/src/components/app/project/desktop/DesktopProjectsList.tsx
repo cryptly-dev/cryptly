@@ -434,7 +434,7 @@ export function DesktopProjectsList() {
               })}
             </Reorder.Group>
           ) : hasLoadedOnce &&
-            localProjects !== undefined &&
+            localProjects != null &&
             localProjects.length === 0 &&
             !projectsLoading &&
             !isAddingProject ? (
