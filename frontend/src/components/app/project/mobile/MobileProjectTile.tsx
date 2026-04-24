@@ -1,5 +1,4 @@
 import AddProjectDialog from "@/components/dialogs/AddProjectDialog";
-import { CryptlyLogo } from "@/components/ui/CryptlyLogo";
 import { IntegrationsTabContent } from "@/components/dialogs/IntegrationsDialog";
 import { MembersTabContent } from "@/components/dialogs/ProjectAccessDialog";
 import { SettingsTabContent } from "@/components/dialogs/ProjectSettingsDialog";
@@ -49,10 +48,10 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import posthog from "posthog-js";
-import { useEffect, useMemo, useState } from "react";
-import { SavePushPill } from "../SavePushPill";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MobileFileEditor } from "./MobileFileEditor";
 import { MobileHistoryView } from "./MobileHistoryView";
+import { MobileSavePushButtons } from "./MobileSavePushButtons";
 
 type MobileTabType = "editor" | "history" | "members" | "integrations" | "settings";
 
@@ -218,16 +217,119 @@ export function MobileProjectTile() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-                {/* Save/Push pill — top right */}
-                <div className="absolute top-3 right-3 z-10">
-                  <SavePushPill
-                    onConnectIntegrations={() => setActiveTab("integrations")}
-                  />
-                </div>
               </div>
         )}
       </div>
 
+    </div>
+  );
+}
+
+function MobileTabsRow({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: MobileTabType;
+  onTabChange: (tab: MobileTabType) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = el;
+      // 1px tolerance for sub-pixel rounding
+      setCanScrollLeft(scrollLeft > 1);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
+    };
+
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    Array.from(el.children).forEach((child) => ro.observe(child));
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, []);
+
+  // Scroll the active tab into view so the underline is always visible.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const active = el.querySelector<HTMLElement>(`[data-tab-id="${activeTab}"]`);
+    if (!active) return;
+    active.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+  }, [activeTab]);
+
+  return (
+    <div className="relative">
+      <div
+        ref={scrollRef}
+        className="flex items-stretch overflow-x-auto overflow-y-hidden px-3 gap-0 hide-scrollbar"
+      >
+        {MOBILE_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              data-tab-id={tab.id}
+              onClick={() => {
+                onTabChange(tab.id);
+                posthog.capture(`${tab.id}_tab_clicked`);
+              }}
+              className={cn(
+                "relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors cursor-pointer whitespace-nowrap flex-shrink-0",
+                isActive
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              )}
+            >
+              <Icon className="size-4" />
+              <span>{tab.label}</span>
+              {isActive && (
+                <motion.div
+                  layoutId="active-tab-mobile"
+                  className="absolute left-2 right-2 bottom-0 h-[2px] rounded-full"
+                  style={{ backgroundColor: "#c9b287" }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 380,
+                    damping: 28,
+                    mass: 0.6,
+                  }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Left fade — appears once scrolled off the start */}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent transition-opacity duration-150",
+          canScrollLeft ? "opacity-100" : "opacity-0"
+        )}
+      />
+
+      {/* Right fade — appears when more tabs exist off the end */}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent transition-opacity duration-150",
+          canScrollRight ? "opacity-100" : "opacity-0"
+        )}
+      />
     </div>
   );
 }
@@ -294,8 +396,11 @@ function MobileProjectHeader({
     <div className="border-b border-border/50 bg-card/20 backdrop-blur-sm flex-shrink-0">
       {/* Top row - Project selector, Search icon, Avatar */}
       <div className="flex items-center gap-2 px-3 py-2">
-        <Link to="/" className="flex-shrink-0">
-          <CryptlyLogo size={24} />
+        <Link
+          to="/"
+          className="flex-shrink-0 text-foreground hover:opacity-80 transition-opacity"
+        >
+          <span className="font-semibold text-lg tracking-tight">Cryptly</span>
         </Link>
 
         <Select
@@ -434,39 +539,13 @@ function MobileProjectHeader({
         </DropdownMenu>
       </div>
 
-      {/* Horizontally scrollable tabs */}
-      <div className="flex items-center overflow-x-auto px-3 pb-2 gap-1 scrollbar-none">
-        {MOBILE_TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                onTabChange(tab.id);
-                posthog.capture(`${tab.id}_tab_clicked`);
-              }}
-              className={cn(
-                "relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap flex-shrink-0",
-                isActive
-                  ? "text-primary"
-                  : "text-muted-foreground"
-              )}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="active-tab-mobile"
-                  className="absolute inset-0 bg-neutral-800 rounded-md"
-                  transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
-                />
-              )}
-              <Icon className="relative z-10 size-4" />
-              <span className="relative z-10">{tab.label}</span>
-            </button>
-          );
-        })}
+      <div className="flex items-stretch">
+        <div className="flex-1 min-w-0">
+          <MobileTabsRow activeTab={activeTab} onTabChange={onTabChange} />
+        </div>
+        <div className="flex items-center pr-3">
+          <MobileSavePushButtons />
+        </div>
       </div>
 
       <AddProjectDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
@@ -512,7 +591,7 @@ function MobileSearchHeader({ query, resultCount, isLoading, onClose, onQueryCha
             data-1p-ignore
             data-lpignore="true"
             data-form-type="other"
-            className="w-full h-8 pl-8 pr-3 rounded-md bg-muted/50 border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20"
+            className="w-full h-9 pl-8 pr-3 rounded-md bg-muted/50 border border-border/50 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20"
           />
         </div>
         {!isLoading && (
