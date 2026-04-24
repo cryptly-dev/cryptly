@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/components/shared/SiteFooter";
 import { BlogApi, type BlogPost } from "@/lib/api/blog.api";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 import { Link } from "@tanstack/react-router";
@@ -113,14 +114,7 @@ export function BlogListPage() {
         )}
       </main>
 
-      <footer className="border-t border-neutral-900 py-10 px-6">
-        <div className="mx-auto max-w-5xl text-sm text-neutral-500 flex items-center justify-between">
-          <div>© 2025 Cryptly</div>
-          <Link to="/" className="hover:text-neutral-300 transition-colors">
-            Home
-          </Link>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

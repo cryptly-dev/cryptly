@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { createRandomString } from "./crypto/crypto.utils";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -7,10 +8,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export async function defaultLoader() {
   await new Promise((resolve) => setTimeout(resolve, 200));
-}
-
-export function randomId() {
-  return Math.random().toString(36).slice(2, 8);
 }
 
 export function getRelativeTime(dateString: string): string {
@@ -113,5 +110,5 @@ export function getDeviceName(): string {
 }
 
 function generateDeviceId(): string {
-  return `device-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+  return `device-${Date.now()}-${createRandomString(13)}`;
 }
