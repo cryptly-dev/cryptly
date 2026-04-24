@@ -97,7 +97,7 @@ export function SetUpPassphrasePage() {
               disabled={submitting}
               autoComplete="new-password"
               required
-              className="w-full h-12 bg-neutral-900/40 border border-border/60 rounded-lg pl-4 pr-12 text-[15px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/60 focus:bg-neutral-900/60 transition-colors disabled:opacity-60"
+              className="w-full h-12 bg-neutral-900/40 border border-border/60 rounded-lg pl-4 pr-12 text-base md:text-[15px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/60 focus:bg-neutral-900/60 transition-colors disabled:opacity-60"
             />
             <button
               type="button"
@@ -126,7 +126,7 @@ export function SetUpPassphrasePage() {
               disabled={submitting}
               autoComplete="new-password"
               required
-              className="w-full h-12 bg-neutral-900/40 border border-border/60 rounded-lg pl-4 pr-12 text-[15px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/60 focus:bg-neutral-900/60 transition-colors disabled:opacity-60"
+              className="w-full h-12 bg-neutral-900/40 border border-border/60 rounded-lg pl-4 pr-12 text-base md:text-[15px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/60 focus:bg-neutral-900/60 transition-colors disabled:opacity-60"
             />
             <button
               type="button"
@@ -179,7 +179,7 @@ export function SetUpPassphrasePage() {
               ) : (
                 <>
                   Set passphrase
-                  <CornerDownLeft className="h-4 w-4" />
+                  <CornerDownLeft className="h-4 w-4 hidden md:inline" />
                 </>
               )}
             </button>
