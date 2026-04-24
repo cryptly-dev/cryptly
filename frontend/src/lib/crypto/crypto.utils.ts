@@ -61,12 +61,83 @@ export function base64ToArrayBuffer(b64: string): ArrayBuffer {
   return base64ToU8(b64).buffer;
 }
 
+/**
+ * Cryptographically-secure random base62 string.
+ *
+ * Backed by `crypto.getRandomValues` (via `randomBytes`). Uses rejection
+ * sampling so every character is uniformly distributed over the 62-char
+ * alphabet — a naïve `byte % 62` would bias the first 8 characters
+ * (A–H) because 256 is not a multiple of 62.
+ *
+ * DO NOT replace with `Math.random()`. `Math.random()` is a non-cryptographic
+ * PRNG (V8 uses xorshift128+) whose internal state is recoverable from a
+ * handful of outputs. Any secret derived from it has effectively zero
+ * security margin.
+ */
 export function createRandomString(length: number): string {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  if (!Number.isInteger(length) || length < 0) {
+    throw new Error(
+      "createRandomString: length must be a non-negative integer"
+    );
+  }
+  if (length === 0) return "";
 
-  return Array.from(
-    { length },
-    () => chars[Math.floor(Math.random() * chars.length)]
-  ).join("");
+  const alphabet =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  // 256 - (256 % 62) = 248. Bytes >= 248 would introduce modulo bias, so
+  // we reject them. Acceptance rate is 248/256 ≈ 96.9%, so oversampling
+  // by 2× makes a refill essentially never necessary.
+  const maxUnbiased = 256 - (256 % alphabet.length);
+
+  const out = new Array<string>(length);
+  let written = 0;
+  while (written < length) {
+    const need = length - written;
+    const buf = randomBytes(Math.max(need * 2, 16));
+    for (let i = 0; i < buf.length && written < length; i++) {
+      const b = buf[i];
+      if (b < maxUnbiased) {
+        out[written++] = alphabet[b % alphabet.length];
+      }
+    }
+  }
+  return out.join("");
+}
+
+/**
+ * Cryptographically-secure uniform integer in `[minInclusive, maxExclusive)`.
+ *
+ * Uses rejection sampling over a 32-bit draw to eliminate modulo bias.
+ * `Math.floor(Math.random() * range)` is NOT a substitute — `Math.random()`
+ * is a predictable PRNG and `% range` biases the result unless `range`
+ * divides 2^32.
+ */
+export function randomIntInRange(
+  minInclusive: number,
+  maxExclusive: number
+): number {
+  if (
+    !Number.isInteger(minInclusive) ||
+    !Number.isInteger(maxExclusive)
+  ) {
+    throw new Error("randomIntInRange: bounds must be integers");
+  }
+  const range = maxExclusive - minInclusive;
+  if (range <= 0 || range > 0x1_0000_0000) {
+    throw new Error("randomIntInRange: range must be in (0, 2^32]");
+  }
+  // Largest multiple of `range` that is <= 2^32; samples above it would
+  // otherwise cluster the low end of the range (modulo bias).
+  const maxUnbiased = 0x1_0000_0000 - (0x1_0000_0000 % range);
+  for (;;) {
+    const buf = randomBytes(4);
+    const v = new DataView(
+      buf.buffer,
+      buf.byteOffset,
+      buf.byteLength
+    ).getUint32(0);
+    if (v < maxUnbiased) {
+      return minInclusive + (v % range);
+    }
+  }
 }
