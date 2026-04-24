@@ -78,6 +78,7 @@ export function DesktopProjectsList() {
   }, [projects]);
 
   const [localProjects, setLocalProjects] = useState(uniqueProjects);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(projects !== undefined);
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState(
     userData?.displayName || ""
@@ -207,6 +208,10 @@ export function DesktopProjectsList() {
   useEffect(() => {
     setLocalProjects(uniqueProjects);
   }, [uniqueProjects]);
+
+  useEffect(() => {
+    if (projects !== undefined) setHasLoadedOnce(true);
+  }, [projects]);
 
   const listVariants = {
     hidden: {},
@@ -428,7 +433,9 @@ export function DesktopProjectsList() {
                 );
               })}
             </Reorder.Group>
-          ) : localProjects !== undefined &&
+          ) : hasLoadedOnce &&
+            localProjects !== undefined &&
+            localProjects.length === 0 &&
             !projectsLoading &&
             !isAddingProject ? (
             <div className="px-2 py-4 text-sm text-muted-foreground">
