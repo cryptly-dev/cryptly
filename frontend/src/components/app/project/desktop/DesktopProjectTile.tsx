@@ -7,7 +7,6 @@ import { SettingsTabContent } from "@/components/dialogs/ProjectSettingsDialog";
 import { Button } from "@/components/ui/button";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 import { Kbd } from "@/components/ui/kbd";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipArrow,
@@ -152,17 +151,11 @@ export function DesktopProjectTile() {
   if (!projectData) {
     return (
       <div className="h-full flex flex-col">
-        <div className="h-full flex flex-col">
-          <ProjectHeaderSkeleton
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
-          <div className="flex-1 relative overflow-hidden">
-            <div className="h-full p-6">
-              <EditorSkeleton />
-            </div>
-          </div>
-        </div>
+        <ProjectHeaderSkeleton
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        <div className="flex-1" />
       </div>
     );
   }
@@ -610,23 +603,6 @@ function ProjectHeaderSkeleton({ activeTab, onTabChange }: ProjectHeaderProps) {
       </div>
 
       <div />
-    </div>
-  );
-}
-
-function EditorSkeleton() {
-  return (
-    <div className="space-y-3">
-      <Skeleton className="h-5 w-full" />
-      <Skeleton className="h-5 w-[85%]" />
-      <Skeleton className="h-5 w-[92%]" />
-      <Skeleton className="h-5 w-[78%]" />
-      <Skeleton className="h-5 w-full" />
-      <Skeleton className="h-5 w-[88%]" />
-      <Skeleton className="h-5 w-[95%]" />
-      <Skeleton className="h-5 w-[82%]" />
-      <Skeleton className="h-5 w-[90%]" />
-      <Skeleton className="h-5 w-[76%]" />
     </div>
   );
 }
