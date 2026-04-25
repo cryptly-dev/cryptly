@@ -25,12 +25,12 @@ Two commands are all you need. Run them **at the very end**, once you're done ed
 
 ```bash
 # From backend/
-npm run test           # full jest suite
-npm run build          # nest build (compile check)
+pnpm test              # full jest suite
+pnpm build             # nest build (compile check)
 ```
 
-- To narrow the test run, pass a filter flag, e.g. `npm run test -- invitations` or `npm run test -- --testPathPattern=device-flow`. Jest flags after `--` are forwarded.
-- `npm run test` already runs with `--runInBand --forceExit`; don't second-guess those.
+- To narrow the test run, pass a filter flag, e.g. `pnpm test invitations` or `pnpm test -- --testPathPattern=device-flow`. Jest flags after `--` are forwarded.
+- `pnpm test` already runs with `--runInBand --forceExit`; don't second-guess those.
 - If both `test` and `build` pass, the backend change is verified. There is no separate typecheck step.
 
 ### Frontend (`frontend/`)
@@ -45,9 +45,6 @@ pnpm build
 - `pnpm build` chains `tsc -b && vite build`, so it *is* the typecheck. Do not run `tsc` on its own.
 - There is no frontend test suite. Do not add one unless explicitly asked.
 
-### Package managers
+### Package manager
 
-- Backend uses **npm**.
-- Frontend uses **pnpm**.
-
-Don't swap them.
+Both backend and frontend use **pnpm**. Each package has its own `pnpm-lock.yaml`; there is no workspace.
