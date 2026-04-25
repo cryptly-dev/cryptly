@@ -297,7 +297,7 @@ const VAULT_ROWS = [
   {
     id: "68d1...",
     project: "68cf...",
-    blob: "u2l9aFZbk3Pj+Q7WkS9QfwDfMnLvSsC6XgYh1xZ8pQrT+88k/4Lr2Nh==",
+    blob: "u2l9aFZbk3Pj+Q7WkS9QfwDfMnLvSsC6XgY1xZ8pQrT+88k/4Lr2Nh==",
   },
   {
     id: "68d2...",
@@ -308,6 +308,21 @@ const VAULT_ROWS = [
     id: "68d3...",
     project: "6a14...",
     blob: "cXpLm7nBd+TrKq9aEf1RtYz5OvHgWuJi2SkNc8MxPqDbZ0Af6ExBn4==",
+  },
+  {
+    id: "68d4...",
+    project: "6a14...",
+    blob: "vQr3aZmHy8KfNb1XwLp5SgEdT7CuMi2OkRj0YxBh4VnPq+9SeAcJt6==",
+  },
+  {
+    id: "68d5...",
+    project: "68cf...",
+    blob: "hKt2bNmXc4QrLp8YdWf3OvAi7ZsEu1RkPj9sVy0SgBnTq+5MxCoHa6==",
+  },
+  {
+    id: "68d6...",
+    project: "6a14...",
+    blob: "t2bNmXc4QrLp8YdWf3OvwAi7ZsEu1RkPjqj9Vy0SgBnTq+5MxCoHa6==",
   },
 ];
 
@@ -345,7 +360,7 @@ function VaultMovement() {
           <div className="lg:col-span-7">
             <Card>
               <CardChrome
-                left={<span>secrets · 3 of 1,086 rows</span>}
+                left={<span>secrets · {VAULT_ROWS.length} rows</span>}
                 right={<span style={{ color: ACCENT }}>schema</span>}
               />
               <div className="overflow-hidden">
@@ -510,7 +525,7 @@ function InviteMovement() {
                       {
                         id: "alex",
                         name: "Alex Chen",
-                        hint: "co-owner of cryptly-dev/api",
+                        hint: "co-owner of cryptly-dev/cryptly",
                         a: "/avatars/alex-chen.svg",
                       },
                       {
@@ -1018,7 +1033,7 @@ function HistoryMovement() {
               </div>
 
               {/* List */}
-              <div className="max-h-[360px] overflow-y-auto">
+              <div className="h-[320px] overflow-y-auto">
                 {filtered.length === 0 ? (
                   <div className="px-4 py-12 text-center text-sm text-muted-foreground">
                     No results
@@ -1098,21 +1113,21 @@ function HistoryMovement() {
 
 // ── Movement V — In good hands (customers + testimonials) ────────────────
 
-const COMPANIES = ["bluemenu", "signosh", "jobref", "logdash"];
+const COMPANIES = ["BlueMenu", "SignOSH", "JobRef", "logdash"];
 
 const TESTIMONIALS = [
   {
     quote:
       "Signosh ships on a tight calendar. Cryptly quietly removed one of our least-favorite weekly rituals — the Slack-DM secret handoff.",
     name: "Jerzy Wiśniewski",
-    role: "Co-founder, Signosh",
+    role: "Co-founder, SignOSH",
     initials: "JW",
   },
   {
     quote:
       "We wanted end-to-end encryption without reading a whitepaper first. This was it. Onboarding a new engineer is a single link now.",
     name: "Dominik Mackiewicz",
-    role: "Co-founder, Bluemenu",
+    role: "Co-founder, BlueMenu",
     initials: "DM",
   },
 ];
@@ -1243,15 +1258,45 @@ function formatOrdinal(n: number): string {
   return `${n.toLocaleString("en-US")}${suffix}`;
 }
 
+const ONES = [
+  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+  "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
+  "seventeen", "eighteen", "nineteen",
+];
+const TENS = [
+  "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety",
+];
+
+function numberToWords(n: number): string {
+  if (n < 0 || n > 99 || !Number.isInteger(n)) {
+    return n.toLocaleString("en-US");
+  }
+  if (n < 20) return ONES[n];
+  const tens = Math.floor(n / 10);
+  const ones = n % 10;
+  return ones === 0 ? TENS[tens] : `${TENS[tens]}-${ONES[ones]}`;
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function trustHeadline(users: number): string {
+  if (users === 1) return "One person trusts us with their keys.";
+  return `${capitalize(numberToWords(users))} people trust us with their keys.`;
+}
+
 function Numbers({ state }: { state: StatsState }) {
+  const headline =
+    state.status === "ready"
+      ? trustHeadline(state.data.users)
+      : "People trust us with their keys.";
   return (
     <section>
       <Shell>
         <div className="max-w-2xl">
           <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
-            <span className="text-foreground">
-              Seventy-seven people trust us with their keys.
-            </span>{" "}
+            <span className="text-foreground">{headline}</span>{" "}
             <span className="text-muted-foreground">
               We thought you should know that before you did.
             </span>
