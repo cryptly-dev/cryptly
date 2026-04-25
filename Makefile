@@ -14,12 +14,12 @@ help:
 # Run backend development server
 backend:
 	@echo "Starting backend development server..."
-	cd backend && npm run start:dev
+	cd backend && pnpm run start:dev
 
-# Run frontend development server  
+# Run frontend development server
 frontend:
 	@echo "Starting frontend development server..."
-	cd frontend && npm run dev
+	cd frontend && pnpm run dev
 
 # Run both backend and frontend concurrently
 dev:
@@ -31,7 +31,7 @@ dev:
 # Install dependencies for both projects
 install:
 	@echo "Installing backend dependencies..."
-	cd backend && npm install
+	cd backend && pnpm install
 	@echo "Installing frontend dependencies..."
 	cd frontend && pnpm install
 
