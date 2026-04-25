@@ -73,4 +73,32 @@ export class AsymmetricCrypto {
     );
     return bytesToUtf8(new Uint8Array(plaintext));
   }
+
+  /** Imports a PKCS8 base64 private key as a non-extractable CryptoKey for storage/use. */
+  public static async importPrivateKeyNonExtractable(
+    pkcs8Base64: string
+  ): Promise<CryptoKey> {
+    const subtle = getSubtle();
+    return subtle.importKey(
+      "pkcs8",
+      base64ToArrayBuffer(pkcs8Base64),
+      { name: "RSA-OAEP", hash: "SHA-256" },
+      false,
+      ["decrypt"]
+    );
+  }
+
+  /** Decrypts using a CryptoKey handle (master key never leaves the keystore). */
+  public static async decryptWithKey(
+    data: string,
+    privateKey: CryptoKey
+  ): Promise<string> {
+    const subtle = getSubtle();
+    const plaintext = await subtle.decrypt(
+      { name: "RSA-OAEP" },
+      privateKey,
+      base64ToArrayBuffer(data)
+    );
+    return bytesToUtf8(new Uint8Array(plaintext));
+  }
 }

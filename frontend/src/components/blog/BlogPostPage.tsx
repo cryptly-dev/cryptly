@@ -3,7 +3,6 @@ import { BlogApi, type BlogPost } from "@/lib/api/blog.api";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { BlogMarkdown } from "./BlogMarkdown";
 
@@ -61,11 +60,7 @@ export function BlogPostPage() {
 
 
         {post && (
-          <motion.article
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0, 0.55, 0.45, 1] }}
-          >
+          <article>
             <header className="mb-10">
               <div className="text-sm text-neutral-500 mb-4">
                 {formatDate(post.createdAt)}
@@ -119,7 +114,7 @@ export function BlogPostPage() {
             )}
 
             <BlogMarkdown content={post.content} />
-          </motion.article>
+          </article>
         )}
       </main>
 

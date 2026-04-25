@@ -13,7 +13,7 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
 
   connect({
     values: [authLogic, ["jwtToken"]],
-    actions: [keyLogic, ["setPassphrase", "decryptPrivateKey"]],
+    actions: [keyLogic, ["unlock"]],
   }),
 
   actions({
@@ -180,8 +180,7 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
             values.unlockRequestPrivateKey
           );
 
-          actions.setPassphrase(decryptedPassphrase);
-          await actions.decryptPrivateKey();
+          await actions.unlock(decryptedPassphrase);
 
           actions.clearReceivedMessage();
         } catch (error) {

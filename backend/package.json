@@ -97,6 +97,7 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "setupFiles": [
+      "<rootDir>/test/setup-env.ts",
       "jest-date-mock"
     ],
     "moduleNameMapper": {

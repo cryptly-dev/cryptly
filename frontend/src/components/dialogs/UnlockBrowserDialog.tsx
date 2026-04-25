@@ -30,7 +30,7 @@ export function UnlockBrowserDialog() {
   const { browserIsUnlocked, keysAreSetUp } = useValues(keyLogic);
   const { isLoggedIn } = useValues(authLogic);
   const { logout } = useAuth();
-  const { setPassphrase, decryptPrivateKey } = useAsyncActions(keyLogic);
+  const { unlock } = useAsyncActions(keyLogic);
   const { startRequester, stopRequester } = useActions(
     deviceFlowRequesterLogic
   );
@@ -71,8 +71,7 @@ export function UnlockBrowserDialog() {
     if (!passphrase || submitting) return;
     setIsError(false);
     try {
-      setPassphrase(passphrase);
-      await decryptPrivateKey();
+      await unlock(passphrase);
     } catch (e) {
       setIsError(true);
       requestAnimationFrame(() => {
