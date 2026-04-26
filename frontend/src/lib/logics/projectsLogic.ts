@@ -18,7 +18,7 @@ export const projectsLogic = kea<projectsLogicType>([
 
   actions({
     addProject: (
-      project: { name: string },
+      project: { name: string; securityLevel: string },
       navigateCallback?: (projectId: string) => void
     ) => ({ project, navigateCallback }),
     readProjectById: (projectId: string) => ({ projectId }),
@@ -55,7 +55,7 @@ export const projectsLogic = kea<projectsLogicType>([
     addProject: async ({ project, navigateCallback }): Promise<void> => {
       const projectKey = await SymmetricCrypto.generateProjectKey();
 
-      const content = `# Secrets are masked by default - hover or click to reveal.\nKEY="value"\n\n# Prefix a key with _ for maximum security: the value will never be shown in the editor.\n# Click to copy is the only way to retrieve it.\n__TOP_SECRET__="change-me"`;
+      const content = `# Define your secrets below. Example:\nAPI_KEY="your-value-here"\nDATABASE_URL="postgres://..."`;
       const contentEncrypted = await SymmetricCrypto.encrypt(
         content,
         projectKey
@@ -72,6 +72,7 @@ export const projectsLogic = kea<projectsLogicType>([
         },
         encryptedSecrets: contentEncrypted,
         name: project.name,
+        securityLevel: project.securityLevel,
       });
 
       await asyncActions.loadProjects();

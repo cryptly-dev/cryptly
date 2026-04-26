@@ -135,6 +135,7 @@ export class ProjectCoreController {
         ...body,
         encryptedSecretsKeys: body.encryptedSecretsKeys,
         encryptedSecrets: body.encryptedSecrets,
+        securityLevel: body.securityLevel,
       },
       userId,
     );
@@ -307,7 +308,7 @@ export class ProjectCoreController {
       throw new ForbiddenException('Read role cannot update project');
     }
 
-    const isUpdatingOtherFields = body.name !== undefined;
+    const isUpdatingOtherFields = body.name !== undefined || body.securityLevel !== undefined;
 
     if (userRole === Role.Write && isUpdatingOtherFields) {
       throw new ForbiddenException('Write role can only update secrets');

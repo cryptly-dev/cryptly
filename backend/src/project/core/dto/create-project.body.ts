@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsObject, IsString, MaxLength } from 'class-validator';
+import { IsEnum, IsObject, IsString, MaxLength } from 'class-validator';
 import {
   ENCRYPTED_SECRETS_MAX_LENGTH,
   PROJECT_NAME_MAX_LENGTH,
 } from '../../../shared/constants/validation';
+import { SecurityLevel } from '../../../shared/types/security-level.enum';
 
 export class CreateProjectBody {
   @ApiProperty()
@@ -19,4 +20,8 @@ export class CreateProjectBody {
   @ApiProperty()
   @IsObject()
   public encryptedSecretsKeys: Record<string, string>;
+
+  @ApiProperty({ enum: SecurityLevel })
+  @IsEnum(SecurityLevel)
+  public securityLevel: SecurityLevel;
 }

@@ -1,5 +1,6 @@
 import * as request from 'supertest';
 import { Role } from '../../src/shared/types/role.enum';
+import { SecurityLevel } from '../../src/shared/types/security-level.enum';
 import { createTestApp } from '../utils/bootstrap';
 
 describe('InvitationCoreController (writes)', () => {
@@ -295,6 +296,7 @@ describe('InvitationCoreController (writes)', () => {
         encryptedSecrets: 'passphrase',
         encryptedSecretsKeys: { [admin.id]: 'admin-passphrase' },
         name: 'test-project',
+        securityLevel: SecurityLevel.Normal,
       });
       const invitation = await bootstrap.utils.invitationUtils.createInvitation(
         adminToken,

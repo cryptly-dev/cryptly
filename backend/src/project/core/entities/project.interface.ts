@@ -10,6 +10,7 @@ export class ProjectNormalized {
   public name: string;
   public members: Record<string, Role>;
   public encryptedSecretsKeys: Record<string, string>;
+  public securityLevel: string | null;
   public createdAt: Date;
   public updatedAt: Date;
 }
@@ -34,6 +35,9 @@ export class ProjectSerialized {
 
   @ApiProperty()
   public encryptedSecrets: string;
+
+  @ApiProperty({ nullable: true })
+  public securityLevel: string | null;
 
   @ApiProperty()
   public createdAt: string;

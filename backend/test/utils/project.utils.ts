@@ -6,6 +6,7 @@ import { CreateProjectBody } from '../../src/project/core/dto/create-project.bod
 import { ProjectEntity } from '../../src/project/core/entities/project.entity';
 import { ProjectSerialized } from '../../src/project/core/entities/project.interface';
 import { Role } from '../../src/shared/types/role.enum';
+import { SecurityLevel } from '../../src/shared/types/security-level.enum';
 import { UserUtils } from './user.utils';
 
 export class ProjectUtils {
@@ -24,6 +25,7 @@ export class ProjectUtils {
       name: 'test-project',
       encryptedSecretsKeys: {},
       encryptedSecrets: '',
+      securityLevel: SecurityLevel.Normal,
     },
   ): Promise<ProjectSerialized> {
     const response = await request(this.app.getHttpServer())

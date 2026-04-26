@@ -1,4 +1,5 @@
 import * as request from 'supertest';
+import { SecurityLevel } from '../../src/shared/types/security-level.enum';
 import { createTestApp, TestApp } from '../utils/bootstrap';
 
 describe('ProjectCoreController (reads)', () => {
@@ -39,6 +40,7 @@ describe('ProjectCoreController (reads)', () => {
         ],
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
+        securityLevel: 'normal',
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       });
@@ -80,6 +82,7 @@ describe('ProjectCoreController (reads)', () => {
         ],
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
+        securityLevel: 'normal',
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       });
@@ -122,11 +125,13 @@ describe('ProjectCoreController (reads)', () => {
         name: 'project-a',
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
+        securityLevel: SecurityLevel.Normal,
       });
       const projectB = await bootstrap.utils.projectUtils.createProject(token, {
         name: 'project-b',
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
+        securityLevel: SecurityLevel.Normal,
       });
 
       const { token: tokenB } = await bootstrap.utils.userUtils.createDefault({
@@ -136,6 +141,7 @@ describe('ProjectCoreController (reads)', () => {
         name: 'project-c',
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
+        securityLevel: SecurityLevel.Normal,
       });
 
       // when
@@ -161,6 +167,7 @@ describe('ProjectCoreController (reads)', () => {
             ],
             encryptedSecretsKeys: {},
             encryptedSecrets: '',
+            securityLevel: 'normal',
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
           },
@@ -177,6 +184,7 @@ describe('ProjectCoreController (reads)', () => {
             ],
             encryptedSecretsKeys: {},
             encryptedSecrets: '',
+            securityLevel: 'normal',
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
           },
@@ -218,11 +226,13 @@ describe('ProjectCoreController (reads)', () => {
         name: 'project-a',
         encryptedSecretsKeys: { user1: 'key1' },
         encryptedSecrets: 'encrypted-data-a',
+        securityLevel: SecurityLevel.Normal,
       });
       const projectB = await bootstrap.utils.projectUtils.createProject(token, {
         name: 'project-b',
         encryptedSecretsKeys: { user1: 'key2' },
         encryptedSecrets: 'encrypted-data-b',
+        securityLevel: SecurityLevel.Normal,
       });
 
       const { token: tokenB } = await bootstrap.utils.userUtils.createDefault({
@@ -232,6 +242,7 @@ describe('ProjectCoreController (reads)', () => {
         name: 'project-c',
         encryptedSecretsKeys: {},
         encryptedSecrets: 'encrypted-data-c',
+        securityLevel: SecurityLevel.Normal,
       });
 
       const response = await request(bootstrap.app.getHttpServer())
@@ -287,6 +298,7 @@ describe('ProjectCoreController (reads)', () => {
         name: 'test-project',
         encryptedSecretsKeys: { user1: 'key1' },
         encryptedSecrets: 'v1',
+        securityLevel: SecurityLevel.Normal,
       });
 
       await request(bootstrap.app.getHttpServer())
@@ -324,6 +336,7 @@ describe('ProjectCoreController (reads)', () => {
         name: 'test-project',
         encryptedSecretsKeys: {},
         encryptedSecrets: 'v1',
+        securityLevel: SecurityLevel.Normal,
       });
 
       await request(bootstrap.app.getHttpServer())

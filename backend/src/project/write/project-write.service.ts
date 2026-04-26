@@ -21,6 +21,7 @@ export class ProjectWriteService {
       name: dto.name,
       members: { [userId]: Role.Admin },
       encryptedSecretsKeys: dto.encryptedSecretsKeys,
+      securityLevel: dto.securityLevel,
     });
 
     await this.projectSecretsVersionWriteService.create({
@@ -130,6 +131,7 @@ export class ProjectWriteService {
     return {
       $set: {
         ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.securityLevel !== undefined && { securityLevel: dto.securityLevel }),
       },
     };
   }

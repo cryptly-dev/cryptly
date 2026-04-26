@@ -15,6 +15,9 @@ export class ProjectEntity {
   public encryptedSecretsKeys: Record<string, string>;
 
   @Prop()
+  public securityLevel: string;
+
+  @Prop()
   public createdAt: Date;
 
   @Prop()

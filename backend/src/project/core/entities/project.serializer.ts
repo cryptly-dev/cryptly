@@ -9,6 +9,7 @@ export class ProjectSerializer {
       name: entity.name,
       members: entity.members,
       encryptedSecretsKeys: entity.encryptedSecretsKeys,
+      securityLevel: entity.securityLevel ?? null,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };
@@ -34,6 +35,7 @@ export class ProjectSerializer {
       members: members,
       encryptedSecretsKeys: normalized.encryptedSecretsKeys,
       encryptedSecrets: latestSecrets,
+      securityLevel: normalized.securityLevel,
       createdAt: normalized.createdAt.toISOString(),
       updatedAt: normalized.updatedAt.toISOString(),
     };

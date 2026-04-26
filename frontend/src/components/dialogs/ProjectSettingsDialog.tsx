@@ -1,3 +1,7 @@
+import {
+  SecurityLevelPicker,
+  type SecurityLevel,
+} from "@/components/app/project/SecurityLevelPicker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,12 +22,41 @@ import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
 import {
   IconCheck,
   IconEdit,
+  IconEye,
+  IconEyeCode,
+  IconEyeOff,
+  IconShieldLock,
   IconTrash,
   IconUserMinus,
   IconX,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
 import { useEffect, useMemo, useState } from "react";
+
+const LEVEL_META: Record<
+  SecurityLevel,
+  { label: string; description: string; Icon: typeof IconEye }
+> = {
+  yolo: {
+    label: "Yolo",
+    description: "Values are always visible in the editor",
+    Icon: IconEye,
+  },
+  normal: {
+    label: "Normal",
+    description: "Values are masked, revealed on hover or click",
+    Icon: IconEyeCode,
+  },
+  tight: {
+    label: "Tight",
+    description: "Values are always masked, click to copy only",
+    Icon: IconEyeOff,
+  },
+};
+
+function isKnownSecurityLevel(value: string | null): value is SecurityLevel {
+  return value === "yolo" || value === "normal" || value === "tight";
+}
 
 interface ProjectSettingsDialogProps {
   open: boolean;
@@ -154,6 +187,133 @@ function RenameProjectSection() {
   );
 }
 
+function SecurityLevelSection() {
+  const { projectData, currentUserRole } = useValues(projectLogic);
+  const { updateProjectLoading } = useValues(projectSettingsLogic);
+  const { updateProject } = useAsyncActions(projectSettingsLogic);
+
+  const isAdmin = currentUserRole === ProjectMemberRole.Admin;
+
+  const currentLevel: SecurityLevel = isKnownSecurityLevel(
+    projectData?.securityLevel ?? null
+  )
+    ? (projectData!.securityLevel as SecurityLevel)
+    : "normal";
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftLevel, setDraftLevel] = useState<SecurityLevel>(currentLevel);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (isEditing) {
+      setDraftLevel(currentLevel);
+    }
+  }, [isEditing, currentLevel]);
+
+  const handleSave = async () => {
+    if (isSaving || draftLevel === currentLevel) {
+      setIsEditing(false);
+      return;
+    }
+    try {
+      setIsSaving(true);
+      await updateProject({ securityLevel: draftLevel });
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!isAdmin) {
+    return (
+      <div className="space-y-3 overflow-hidden">
+        <div className="flex items-center gap-2">
+          <IconShieldLock className="size-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium">Security level</h3>
+        </div>
+        <div className="rounded-lg border border-dashed border-border/50 bg-neutral-800/20 px-4 py-6 text-center">
+          <div className="text-sm text-muted-foreground">
+            Only <span className="font-medium underline">Admins</span> can
+            change the security level.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const meta = LEVEL_META[currentLevel];
+  const CurrentIcon = meta.Icon;
+
+  return (
+    <div className="space-y-3 overflow-hidden">
+      <div className="flex items-center gap-2">
+        <IconShieldLock className="size-4 text-muted-foreground" />
+        <h3 className="text-sm font-medium">Security level</h3>
+      </div>
+
+      {isEditing ? (
+        <div className="rounded-lg border border-border/50 bg-neutral-800/20 p-3 space-y-3">
+          <SecurityLevelPicker
+            value={draftLevel}
+            onChange={setDraftLevel}
+            disabled={isSaving || updateProjectLoading}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing(false)}
+              disabled={isSaving || updateProjectLoading}
+              className="cursor-pointer"
+            >
+              <IconX className="size-4 mr-1.5" />
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={
+                isSaving ||
+                updateProjectLoading ||
+                draftLevel === currentLevel
+              }
+              className="cursor-pointer"
+            >
+              {isSaving || updateProjectLoading ? (
+                <Spinner className="size-4 mr-1.5" />
+              ) : (
+                <IconCheck className="size-4 mr-1.5" />
+              )}
+              Save
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border/50 bg-neutral-800/20 overflow-hidden">
+          <div className="group flex items-center gap-3 px-4 py-2.5 hover:bg-neutral-800/40 transition-colors">
+            <CurrentIcon className="size-4 text-muted-foreground flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">{meta.label}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {meta.description}
+              </div>
+            </div>
+            <Button
+              onClick={() => setIsEditing(true)}
+              variant="ghost"
+              size="sm"
+              className="cursor-pointer h-8 px-2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <IconEdit className="size-4 mr-1.5" />
+              Edit
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DangerZoneSection() {
   const { deleteProjectLoading } = useValues(projectSettingsLogic);
 
@@ -271,6 +431,7 @@ export function SettingsTabContent() {
       </div>
 
       <RenameProjectSection />
+      <SecurityLevelSection />
       <DangerZoneSection />
     </div>
   );
@@ -300,6 +461,7 @@ export function ProjectSettingsDialog({
           </DialogHeader>
 
           <RenameProjectSection />
+          <SecurityLevelSection />
           <DangerZoneSection />
         </div>
       </DialogContent>

@@ -53,8 +53,9 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
     setLoading: (loading: boolean) => ({ loading }),
     acceptSuggestion: (
       repo: RepoWithInstallation,
+      securityLevel: string,
       navigateCallback?: (projectId: string) => void
-    ) => ({ repo, navigateCallback }),
+    ) => ({ repo, securityLevel, navigateCallback }),
     setAcceptingRepoId: (repoId: number | null) => ({ repoId }),
     dismissSuggestion: (repoId: number) => ({ repoId }),
   }),
@@ -170,13 +171,13 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
       }
     },
 
-    acceptSuggestion: async ({ repo, navigateCallback }) => {
+    acceptSuggestion: async ({ repo, securityLevel, navigateCallback }) => {
       actions.setAcceptingRepoId(repo.id);
 
       try {
         // 1. Create project
         const projectKey = await SymmetricCrypto.generateProjectKey();
-        const content = `# Secrets are masked by default - hover or click to reveal.\nKEY="value"\n\n# Prefix a key with _ for maximum security: the value will never be shown in the editor.\n# Click to copy is the only way to retrieve it.\n__TOP_SECRET__="change-me"`;
+        const content = `# Define your secrets below. Example:\nAPI_KEY="your-value-here"\nDATABASE_URL="postgres://..."`;
         const contentEncrypted = await SymmetricCrypto.encrypt(
           content,
           projectKey
@@ -192,6 +193,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
           },
           encryptedSecrets: contentEncrypted,
           name: repo.name,
+          securityLevel,
         });
 
         // 2. Create integration

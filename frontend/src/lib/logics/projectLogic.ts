@@ -41,6 +41,7 @@ export interface DecryptedProject {
   passphraseAsKey: string;
   members: ProjectMember[];
   updatedAt: string;
+  securityLevel: string | null;
   integrations: {
     githubInstallationId: number;
   };
@@ -220,6 +221,7 @@ export const projectLogic = kea<projectLogicType>([
             passphraseAsKey: projectKeyDecrypted,
             members: projectData?.members!,
             updatedAt: projectData?.updatedAt!,
+            securityLevel: projectData?.securityLevel ?? null,
             integrations: projectData?.integrations!,
           };
         },

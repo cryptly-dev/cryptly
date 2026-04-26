@@ -23,6 +23,7 @@ export interface Project {
   encryptedSecrets: string;
   members: ProjectMember[];
   updatedAt: string;
+  securityLevel: string | null;
   integrations: {
     githubInstallationId: number;
   };
@@ -47,6 +48,7 @@ export interface CreateProjectDto {
   name: string;
   encryptedSecrets: string;
   encryptedSecretsKeys: Record<string, string>;
+  securityLevel: string;
 }
 
 export interface UpdateProjectContentDto {
@@ -56,6 +58,7 @@ export interface UpdateProjectContentDto {
 export interface UpdateProjectDto {
   name?: string;
   githubInstallationId?: number | null;
+  securityLevel?: string;
 }
 
 export interface RemoveMemberDto {

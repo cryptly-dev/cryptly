@@ -1,5 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 import * as request from 'supertest';
+import { SecurityLevel } from '../../src/shared/types/security-level.enum';
 import { createTestApp } from '../utils/bootstrap';
 
 describe('User writes (e2e)', () => {
@@ -58,12 +59,14 @@ describe('User writes (e2e)', () => {
         name: 'project-1',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
+        securityLevel: SecurityLevel.Normal,
       });
 
       const project2 = await bootstrap.utils.projectUtils.createProject(token, {
         name: 'project-2',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
+        securityLevel: SecurityLevel.Normal,
       });
 
       // when

@@ -1,3 +1,7 @@
+import {
+  SecurityLevelPicker,
+  type SecurityLevel,
+} from "@/components/app/project/SecurityLevelPicker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,11 +28,13 @@ export function AddProjectDialog({
   const { addProject } = useActions(projectsLogic);
 
   const [name, setName] = useState("");
+  const [securityLevel, setSecurityLevel] = useState<SecurityLevel>("normal");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setName("");
+      setSecurityLevel("normal");
       setSubmitting(false);
     }
   }, [open]);
@@ -40,6 +46,7 @@ export function AddProjectDialog({
       await addProject(
         {
           name: name.trim(),
+          securityLevel,
         },
         (projectId) => navigate({ to: `/app/project/${projectId}` })
       );
@@ -62,7 +69,8 @@ export function AddProjectDialog({
         <DialogHeader>
           <DialogTitle>Add a new project</DialogTitle>
           <DialogDescription>
-            Name your project. You can change it later.
+            Name your project and pick a security level. You can change both
+            later.
           </DialogDescription>
         </DialogHeader>
 
@@ -76,9 +84,19 @@ export function AddProjectDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={handleKeyDown}
+            disabled={submitting}
             className="w-full rounded-md border px-3 py-2 bg-background text-base sm:text-sm"
             autoFocus
             required
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <span className="text-sm font-medium">Security level</span>
+          <SecurityLevelPicker
+            value={securityLevel}
+            onChange={setSecurityLevel}
+            disabled={submitting}
           />
         </div>
 
@@ -86,6 +104,7 @@ export function AddProjectDialog({
           <Button
             onClick={handleAddProject}
             disabled={!name.trim() || submitting}
+            isLoading={submitting}
             className="cursor-pointer"
           >
             {submitting ? "Creating…" : "Create project"}
