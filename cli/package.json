@@ -1,6 +1,6 @@
 {
   "name": "@cryptly/cli",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Command-line interface for Cryptly — pull and push end-to-end encrypted secrets from your terminal.",
   "license": "MIT",
   "type": "module",
