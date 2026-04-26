@@ -45,6 +45,17 @@ pnpm build
 - `pnpm build` chains `tsc -b && vite build`, so it *is* the typecheck. Do not run `tsc` on its own.
 - There is no frontend test suite. Do not add one unless explicitly asked.
 
+### CLI (`cli/`)
+
+```bash
+# From cli/
+pnpm test              # vitest run
+pnpm build             # tsc --noEmit && tsup
+```
+
+- `pnpm build` chains the typecheck into the bundle step. Do not run `tsc` on its own.
+- Both should pass at the end.
+
 ### Package manager
 
-Both backend and frontend use **pnpm**. Each package has its own `pnpm-lock.yaml`; there is no workspace.
+Backend, frontend, and the CLI all use **pnpm**. Each package has its own `pnpm-lock.yaml`; there is no workspace.

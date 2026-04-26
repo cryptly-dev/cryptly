@@ -1,0 +1,42 @@
+{
+  "name": "@cryptly/cli",
+  "version": "0.0.0",
+  "description": "Command-line interface for Cryptly — pull and push end-to-end encrypted secrets from your terminal.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "cryptly": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "cli-local": "pnpm build && CRYPTLY_API_URL=http://localhost:3000 CRYPTLY_APP_URL=http://localhost:5173 node ./dist/index.js"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.2.1",
+    "axios": "^1.12.2",
+    "commander": "^12.1.0",
+    "diff": "^7.0.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.11",
+    "@types/diff": "^7.0.0",
+    "@types/node": "^22.10.7",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "packageManager": "pnpm@10.17.0+sha512.fce8a3dd29a4ed2ec566fb53efbb04d8c44a0f05bc6f24a73046910fb9c3ce7afa35a0980500668fa3573345bd644644fa98338fa168235c80f4aa17aa17fbef"
+}

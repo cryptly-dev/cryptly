@@ -6,9 +6,17 @@ import { AuthEventModule } from '../events/auth-event.module';
 import { GithubAuthModule } from '../github/github-auth.module';
 import { GoogleAuthModule } from '../google/google-auth.module';
 import { DeviceFlowModule } from '../device-flow/device-flow.module';
+import { CliFlowModule } from '../cli-flow/cli-flow.module';
 
 @Module({
-  imports: [GithubAuthModule, GoogleAuthModule, CustomJwtModule, AuthEventModule, DeviceFlowModule],
+  imports: [
+    GithubAuthModule,
+    GoogleAuthModule,
+    CustomJwtModule,
+    AuthEventModule,
+    DeviceFlowModule,
+    CliFlowModule,
+  ],
   providers: [AuthGuard, { provide: APP_GUARD, useClass: AuthGuard }],
 })
 export class AuthCoreModule {}
