@@ -34,6 +34,10 @@ export interface CreateProjectDto {
   settings: ProjectSettings;
 }
 
+export interface UpdateProjectContentDto {
+  encryptedSecrets: string;
+}
+
 export class ProjectsApi {
   static async getProjects(jwtToken: string): Promise<Project[]> {
     const res = await fetch(`${baseUrl()}/users/me/projects`, {
@@ -43,6 +47,40 @@ export class ProjectsApi {
       throw new Error("Failed to load projects");
     }
     return res.json() as Promise<Project[]>;
+  }
+
+  static async getProject(
+    jwtToken: string,
+    projectId: string,
+  ): Promise<Project> {
+    const res = await fetch(`${baseUrl()}/projects/${projectId}`, {
+      headers: { ...authHeaders(jwtToken) },
+    });
+    if (res.status === 404) {
+      throw new Error("PROJECT_NOT_FOUND");
+    }
+    if (!res.ok) {
+      throw new Error("Failed to load project");
+    }
+    return res.json() as Promise<Project>;
+  }
+
+  static async updateProjectContent(
+    jwtToken: string,
+    projectId: string,
+    dto: UpdateProjectContentDto,
+  ): Promise<void> {
+    const res = await fetch(`${baseUrl()}/projects/${projectId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(jwtToken),
+      },
+      body: JSON.stringify({ encryptedSecrets: dto.encryptedSecrets }),
+    });
+    if (!res.ok) {
+      throw new Error("Failed to save project");
+    }
   }
 
   static async createProject(
