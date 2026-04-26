@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -8,6 +9,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -27,6 +29,7 @@ import { GithubInstallationWriteService } from '../write/github-installation-wri
 import { GithubIntegrationWriteService } from '../write/github-integration-write.service';
 import { CreateGithubInstallationBody } from './dto/create-github-installation.body';
 import { CreateGithubIntegrationBody } from './dto/create-github-integration.body';
+import { FindProjectsByRepoResponse } from './dto/find-projects-by-repo.response';
 import { GithubWebhookBody } from './dto/github-installation-deleted-webhook.body';
 import { GithubInstallationSerialized } from './entities/github-installation.interface';
 import { GithubInstallationSerializer } from './entities/github-installation.serializer';
@@ -142,6 +145,58 @@ export class GithubExternalConnectionCoreController {
         liveData: ghInstallations.find((ghInst) => ghInst.id === inst.githubInstallationId),
       }),
     );
+  }
+
+  @ApiResponse({ type: FindProjectsByRepoResponse, isArray: true })
+  @Get('users/me/external-connections/github/find-projects-by-repo')
+  public async findProjectsByRepo(
+    @CurrentUserId() currentUserId: string,
+    @Query('owner') owner: string,
+    @Query('name') name: string,
+  ): Promise<FindProjectsByRepoResponse[]> {
+    if (!owner || !name) {
+      throw new BadRequestException('owner and name query parameters are required');
+    }
+
+    const projects = await this.projectReadService.findUserProjects(currentUserId);
+    const matches: FindProjectsByRepoResponse[] = [];
+
+    for (const project of projects) {
+      const integrations = await this.integrationReadService.findByProjectId(project.id);
+      if (integrations.length === 0) {
+        continue;
+      }
+
+      const installations = await Promise.all(
+        integrations.map((integration) =>
+          this.installationReadService.findById(integration.installationEntityId),
+        ),
+      );
+
+      const installationByEntityId = new Map(installations.map((inst) => [inst.id, inst]));
+
+      const repoInfos = await Promise.all(
+        integrations.map(async (integration) => {
+          const installation = installationByEntityId.get(integration.installationEntityId)!;
+          return this.client.getRepositoryInfoByInstallationIdAndRepositoryId({
+            repositoryId: integration.githubRepositoryId,
+            githubInstallationId: installation.githubInstallationId,
+          });
+        }),
+      );
+
+      const matched = repoInfos.some((info) => info.owner === owner && info.name === name);
+
+      if (matched) {
+        matches.push({
+          projectId: project.id,
+          projectName: project.name,
+          integrationCount: integrations.length,
+        });
+      }
+    }
+
+    return matches;
   }
 
   @ApiResponse({ type: GithubIntegrationSerialized })

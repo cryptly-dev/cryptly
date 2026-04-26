@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.turbo/
+*.log
+.DS_Store
+
+# Created when running the CLI from inside cli/ for local testing.
+.cryptly
+.cryptly.lock

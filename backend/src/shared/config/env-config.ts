@@ -28,6 +28,8 @@ export interface EnvConfig {
   };
   /** Stub GitHub App/API; serve fixed demo installations and repos for local dev. */
   githubLocalMock: boolean;
+  /** Public URL of the web app, used to build CLI authorize links. */
+  webAppUrl: string;
   logdash: {
     apiKey: string;
   };
@@ -77,6 +79,7 @@ export const EnvConfigs: EnvConfigs = {
       allowLocalLogin: process.env.ALLOW_LOCAL_LOGIN === 'true',
     },
     githubLocalMock: process.env.GITHUB_LOCAL_MOCK === 'true',
+    webAppUrl: process.env.WEB_APP_URL || 'http://localhost:5173',
     logdash: {
       apiKey: process.env.LOGDASH_API_KEY!,
     },
@@ -119,6 +122,7 @@ export const EnvConfigs: EnvConfigs = {
       allowLocalLogin: process.env.ALLOW_LOCAL_LOGIN === 'true',
     },
     githubLocalMock: process.env.GITHUB_LOCAL_MOCK === 'true',
+    webAppUrl: process.env.WEB_APP_URL || 'http://localhost:5173',
     logdash: {
       apiKey: process.env.LOGDASH_API_KEY!,
     },

@@ -6,6 +6,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Model } from 'mongoose';
 import * as nock from 'nock';
+import { CliSessionEntity } from '../../src/auth/cli-flow/core/entities/cli-session.entity';
 import { AuthCoreModule } from '../../src/auth/core/auth-core.module';
 import { GithubAuthModule } from '../../src/auth/github/github-auth.module';
 import { GoogleAuthModule } from '../../src/auth/google/google-auth.module';
@@ -43,6 +44,7 @@ export interface TestApp {
     githubIntegrationModel: Model<GithubIntegrationEntity>;
     githubInstallationModel: Model<GithubInstallationEntity>;
     personalInvitationModel: Model<PersonalInvitationEntity>;
+    cliSessionModel: Model<CliSessionEntity>;
   };
   utils: {
     userUtils: UserUtils;
@@ -110,6 +112,9 @@ export async function createTestApp(): Promise<TestApp> {
   const personalInvitationModel: Model<PersonalInvitationEntity> = module.get(
     getModelToken(PersonalInvitationEntity.name),
   );
+  const cliSessionModel: Model<CliSessionEntity> = module.get(
+    getModelToken(CliSessionEntity.name),
+  );
 
   const clearDatabase = async () => {
     await Promise.all([
@@ -118,6 +123,7 @@ export async function createTestApp(): Promise<TestApp> {
       githubIntegrationModel.deleteMany({}),
       githubInstallationModel.deleteMany({}),
       personalInvitationModel.deleteMany({}),
+      cliSessionModel.deleteMany({}),
     ]);
   };
 
@@ -147,6 +153,7 @@ export async function createTestApp(): Promise<TestApp> {
       githubIntegrationModel,
       githubInstallationModel,
       personalInvitationModel,
+      cliSessionModel,
     },
     utils: {
       userUtils: userUtils,
