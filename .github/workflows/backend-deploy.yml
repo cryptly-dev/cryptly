@@ -100,6 +100,8 @@ jobs:
 
           posthog-api-key: ${{ secrets.POSTHOG_API_KEY }}
           posthog-host: ${{ secrets.POSTHOG_HOST }}
+
+          web-app-url: https://cryptly.dev
       - name: Prune
         uses: "./.github/templates/prune"
         with:
