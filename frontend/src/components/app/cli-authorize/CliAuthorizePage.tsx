@@ -10,7 +10,7 @@ import { keyLogic } from "@/lib/logics/keyLogic";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useValues } from "kea";
-import { AlertTriangle, Check, CornerDownLeft, Terminal } from "lucide-react";
+import { Check, CornerDownLeft, Terminal } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
