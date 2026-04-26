@@ -48,6 +48,15 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # changesets/action@v1's early state check looks at the workspace root
+      # for `.changeset/`, ignoring its own `cwd` input. We keep changesets in
+      # cli/.changeset/, so symlink it at the root just to satisfy that check.
+      # The symlink is gitignored (see /.gitignore) so the action's commit step
+      # won't pick it up.
+      - name: Symlink .changeset to root for changesets/action
+        working-directory: ${{ github.workspace }}
+        run: ln -s cli/.changeset .changeset
+
       - name: Create release PR or publish to npm
         uses: changesets/action@v1
         with:

@@ -1,2 +1,7 @@
 .cursor/
 .security-audit/
+
+# changesets/action's early state check ignores its own `cwd` input and looks
+# at the workspace root, so cli-release.yml symlinks .changeset → cli/.changeset
+# at the start of the run. This makes sure a slip-up never commits the symlink.
+/.changeset
