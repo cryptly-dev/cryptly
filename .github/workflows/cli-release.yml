@@ -48,23 +48,44 @@ jobs:
       - name: Build
         run: pnpm build
 
-      # changesets/action@v1's early state check looks at the workspace root
-      # for `.changeset/`, ignoring its own `cwd` input. We keep changesets in
-      # cli/.changeset/, so symlink it at the root just to satisfy that check.
-      # The symlink is gitignored (see /.gitignore) so the action's commit step
-      # won't pick it up.
-      - name: Symlink .changeset to root for changesets/action
-        working-directory: ${{ github.workspace }}
-        run: ln -s cli/.changeset .changeset
+      - name: Detect pending changesets
+        id: detect
+        run: |
+          pending=$(find .changeset -name "*.md" ! -name "README.md" 2>/dev/null | wc -l | tr -d ' ')
+          echo "pending=$pending" >> "$GITHUB_OUTPUT"
+          echo "Found $pending pending changeset(s)."
 
-      - name: Create release PR or publish to npm
-        uses: changesets/action@v1
-        with:
-          cwd: cli
-          publish: pnpm changeset publish
-          version: pnpm changeset version
-          commit: 'chore(cli): release'
-          title: 'chore(cli): release'
+      - name: Open or update release PR
+        if: steps.detect.outputs.pending != '0'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          BRANCH=changesets-release/main
+          git fetch origin
+          git checkout -B "$BRANCH" "origin/${GITHUB_REF_NAME}"
+
+          pnpm changeset version
+
+          git add -A
+          git commit -m "chore(cli): release"
+          git push -f origin "$BRANCH"
+
+          if ! gh pr view "$BRANCH" --repo "$GITHUB_REPOSITORY" --json number > /dev/null 2>&1; then
+            gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "chore(cli): release" \
+              --body "Automated release PR generated from pending changesets in \`cli/.changeset/\`. Merging this publishes \`@cryptly/cli\` to npm." \
+              --base "$GITHUB_REF_NAME" \
+              --head "$BRANCH"
+          fi
+
+      - name: Publish to npm
+        if: steps.detect.outputs.pending == '0'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm changeset publish
