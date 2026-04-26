@@ -1,7 +1,5 @@
-export function logoutCommand(): void {
-  if (typeof localStorage === 'undefined') {
-    return;
-  }
+import { logout } from '$lib/stores/auth.svelte';
 
-  localStorage.removeItem('cryptly.jwtToken');
+export function logoutCommand(): void {
+  void logout();
 }

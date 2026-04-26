@@ -15,7 +15,8 @@
     "test:parity": "playwright test",
     "lint": "prettier --check . && eslint .",
     "deploy:staging": "pnpm build && wrangler deploy --env staging",
-    "deploy:production": "pnpm build && wrangler deploy --env production"
+    "deploy:production": "pnpm build && wrangler deploy --env production",
+    "wrangler": "wrangler"
   },
   "dependencies": {
     "@fontsource-variable/funnel-display": "^5.2.8",

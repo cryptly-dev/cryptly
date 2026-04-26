@@ -1,4 +1,5 @@
 import { createBackendClient } from '@packages/backend-sdk';
+import { AUTH_JWT_STORAGE_KEY } from '$lib/auth/kea-storage-keys';
 import { publicEnv } from '$lib/shared/env/public-env';
 
 export const backendClient = createBackendClient({
@@ -21,5 +22,5 @@ function getStoredJwtToken(): string | null {
     return null;
   }
 
-  return localStorage.getItem('cryptly.jwtToken');
+  return localStorage.getItem(AUTH_JWT_STORAGE_KEY);
 }

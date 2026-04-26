@@ -1,5 +1,5 @@
 <script lang="ts">
-  import LandingPage from '$lib/app/ui/LandingPage.svelte';
+  import LandingPage from '$lib/components/index/LandingPage.svelte';
 </script>
 
 <LandingPage />
