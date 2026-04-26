@@ -17,7 +17,8 @@
   "scripts": {
     "build": "tsc --noEmit && tsup",
     "dev": "tsup --watch",
-    "test": "vitest run"
+    "test": "vitest run",
+    "cli-local": "pnpm build && CRYPTLY_API_URL=http://localhost:3000 CRYPTLY_APP_URL=http://localhost:5173 node ./dist/index.js"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.2.1",

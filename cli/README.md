@@ -45,3 +45,11 @@ project↔directory link lives in a committed `.cryptly` file, with a
 - `CRYPTLY_API_URL` — override the backend URL (defaults to
   `https://api.cryptly.dev`).
 - `CRYPTLY_APP_URL` — override the web app URL (used in messages).
+
+## Local development
+
+`pnpm cli-local <subcommand…>` rebuilds from source and runs the CLI with
+both env vars pointed at the dev stack started by `make local` (backend on
+`:3000`, frontend on `:5173`). Anything after `cli-local` is forwarded to
+the binary, so `pnpm cli-local login`, `pnpm cli-local pull -y`, etc. all
+work as you'd expect — every invocation picks up your latest source.
