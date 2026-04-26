@@ -16,6 +16,10 @@ import {
 import { ProjectsApi, type Project } from "../api/projects.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
+import {
+  normalizeProjectSettings,
+  type ProjectSettings,
+} from "../project-settings";
 import { authLogic } from "./authLogic";
 import { projectsLogic } from "./projectsLogic";
 
@@ -48,9 +52,9 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
     setLoading: (loading: boolean) => ({ loading }),
     acceptSuggestion: (
       repo: RepoWithInstallation,
-      securityLevel: string,
+      settings: ProjectSettings,
       navigateCallback?: (projectId: string) => void,
-    ) => ({ repo, securityLevel, navigateCallback }),
+    ) => ({ repo, settings, navigateCallback }),
     setAcceptingRepoId: (repoId: number | null) => ({ repoId }),
     dismissSuggestion: (repoId: number) => ({ repoId }),
   }),
@@ -172,7 +176,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
       }
     },
 
-    acceptSuggestion: async ({ repo, securityLevel, navigateCallback }) => {
+    acceptSuggestion: async ({ repo, settings, navigateCallback }) => {
       actions.setAcceptingRepoId(repo.id);
 
       try {
@@ -195,7 +199,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
           },
           encryptedSecrets: contentEncrypted,
           name: repo.name,
-          securityLevel,
+          settings: normalizeProjectSettings(settings),
         });
 
         // 2. Create integration

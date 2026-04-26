@@ -1,6 +1,4 @@
 import { SavePushPill } from "@/components/app/project/SavePushPill";
-import { SecurityLevelModal } from "@/components/app/project/SecurityLevelModal";
-import type { SecurityLevel } from "@/components/app/project/SecurityLevelPicker";
 import { DesktopHistoryView } from "@/components/app/project/desktop/DesktopHistoryView";
 import { FileEditor } from "@/components/app/project/FileEditor";
 import { IntegrationsTabContent } from "@/components/dialogs/IntegrationsDialog";
@@ -20,16 +18,16 @@ import { ProjectMemberRole } from "@/lib/api/projects.api";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { ftuxLogic } from "@/lib/logics/ftuxLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
-import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
 import type { SearchableProject } from "@/lib/logics/searchLogic";
 import { searchLogic } from "@/lib/logics/searchLogic";
+import { normalizeProjectSettings } from "@/lib/project-settings";
 import { cn } from "@/lib/utils";
 import { IconBrandGithub, IconUsers } from "@tabler/icons-react";
 import { BracketsIcon } from "@/components/ui/BracketsIcon";
 import { HistoryIcon } from "@/components/ui/HistoryIcon";
 import { SlidersIcon } from "@/components/ui/SlidersIcon";
 import { Link } from "@tanstack/react-router";
-import { useActions, useAsyncActions, useValues } from "kea";
+import { useActions, useValues } from "kea";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -66,17 +64,7 @@ export function DesktopProjectTile() {
     currentUserRole,
   } = useValues(projectLogic);
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
-  const { updateProject } = useAsyncActions(projectSettingsLogic);
   const isReadOnly = currentUserRole === ProjectMemberRole.Read;
-  const needsSecurityLevelMigration =
-    projectData != null && projectData.securityLevel == null;
-  const effectiveSecurityLevel: SecurityLevel =
-    (projectData?.securityLevel as SecurityLevel | null | undefined) ??
-    "normal";
-
-  const handleConfirmSecurityLevel = async (level: SecurityLevel) => {
-    await updateProject({ securityLevel: level });
-  };
   const { shouldShowEditorTooltip, shouldShowSaveTooltip, currentStepNumber } =
     useValues(ftuxLogic);
   const {
@@ -203,10 +191,6 @@ export function DesktopProjectTile() {
 
   return (
     <div className="h-full flex flex-col">
-      <SecurityLevelModal
-        open={needsSecurityLevelMigration}
-        onConfirm={handleConfirmSecurityLevel}
-      />
       <ProjectHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Tab Content */}
@@ -229,7 +213,7 @@ export function DesktopProjectTile() {
                         value={inputValue}
                         onChange={(v) => setInputValue(v)}
                         readOnly={isReadOnly || isSwitching}
-                        securityLevel={effectiveSecurityLevel}
+                        revealOn={normalizeProjectSettings(projectData.settings).revealOn}
                       />
                     </div>
                     {/* Pill */}
@@ -472,7 +456,7 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
                 <motion.div
                   layoutId="active-tab-desktop"
                   className="absolute left-2 right-2 -bottom-px h-[2px] rounded-full"
-                  style={{ backgroundColor: "#c9b287" }}
+                  style={{ backgroundColor: "#DDA15E" }}
                   transition={{
                     type: "spring",
                     stiffness: 380,
@@ -612,7 +596,7 @@ function ProjectHeaderSkeleton({ activeTab, onTabChange }: ProjectHeaderProps) {
                 <span
                   aria-hidden
                   className="absolute left-2 right-2 -bottom-px h-[2px] rounded-full"
-                  style={{ backgroundColor: "#c9b287" }}
+                  style={{ backgroundColor: "#DDA15E" }}
                 />
               )}
             </button>

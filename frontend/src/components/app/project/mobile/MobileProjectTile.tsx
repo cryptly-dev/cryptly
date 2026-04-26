@@ -1,5 +1,3 @@
-import { SecurityLevelModal } from "@/components/app/project/SecurityLevelModal";
-import type { SecurityLevel } from "@/components/app/project/SecurityLevelPicker";
 import AddProjectDialog from "@/components/dialogs/AddProjectDialog";
 import { IntegrationsTabContent } from "@/components/dialogs/IntegrationsDialog";
 import { MembersTabContent } from "@/components/dialogs/ProjectAccessDialog";
@@ -26,8 +24,8 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { useProjects } from "@/lib/hooks/useProjects";
 import { authLogic } from "@/lib/logics/authLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
-import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
+import { normalizeProjectSettings } from "@/lib/project-settings";
 import { searchLogic, type SearchableProject } from "@/lib/logics/searchLogic";
 import { cn, getRelativeTime } from "@/lib/utils";
 import {
@@ -79,21 +77,11 @@ export function MobileProjectTile() {
   const { projects } = useValues(projectsLogic);
   const { activeProject, isSwitching } = useProjects();
   const { updateProjectContent, setInputValue } = useActions(projectLogic);
-  const { updateProject } = useAsyncActions(projectSettingsLogic);
   const { isSearching, searchResults, searchQuery, searchableProjectsLoading } = useValues(searchLogic);
   const { setSearchQuery, clearSearch } = useActions(searchLogic);
   const navigate = useNavigate();
   const isReadOnly = currentUserRole === ProjectMemberRole.Read;
   const [activeTab, setActiveTab] = useState<MobileTabType>("editor");
-  const needsSecurityLevelMigration =
-    projectData != null && projectData.securityLevel == null;
-  const effectiveSecurityLevel: SecurityLevel =
-    (projectData?.securityLevel as SecurityLevel | null | undefined) ??
-    "normal";
-
-  const handleConfirmSecurityLevel = async (level: SecurityLevel) => {
-    await updateProject({ securityLevel: level });
-  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -165,10 +153,6 @@ export function MobileProjectTile() {
 
   return (
     <div className="h-full flex flex-col">
-      <SecurityLevelModal
-        open={needsSecurityLevelMigration}
-        onConfirm={handleConfirmSecurityLevel}
-      />
       <MobileProjectHeader
         projects={projects || []}
         activeProject={activeProject}
@@ -215,7 +199,7 @@ export function MobileProjectTile() {
                     value={inputValue}
                     onChange={(v) => setInputValue(v)}
                     readOnly={isReadOnly || isSwitching}
-                    securityLevel={effectiveSecurityLevel}
+                    revealOn={normalizeProjectSettings(projectData.settings).revealOn}
                   />
                 </div>
                 {/* Changed-by label — bottom */}
@@ -317,7 +301,7 @@ function MobileTabsRow({
                 <motion.div
                   layoutId="active-tab-mobile"
                   className="absolute left-2 right-2 bottom-0 h-[2px] rounded-full"
-                  style={{ backgroundColor: "#c9b287" }}
+                  style={{ backgroundColor: "#DDA15E" }}
                   transition={{
                     type: "spring",
                     stiffness: 380,

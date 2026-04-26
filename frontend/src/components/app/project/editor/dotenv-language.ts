@@ -27,7 +27,7 @@ export function registerDotenvLanguage(monaco: any): void {
     base: "vs-dark",
     inherit: true,
     rules: [
-      { token: "variable", foreground: "509DDA" },
+      { token: "variable", foreground: "DDA15E" },
       { token: "delimiter", foreground: "CCCCCC" },
       { token: "identifier", foreground: "CCCCCC" },
       { token: "string", foreground: "CCCCCC" },

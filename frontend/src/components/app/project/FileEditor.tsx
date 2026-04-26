@@ -1,22 +1,22 @@
 import { BaseFileEditor } from "./BaseFileEditor";
-import type { SecurityLevel } from "./editor/useSecretMasking";
+import type { ProjectRevealOn } from "@/lib/project-settings";
 
 export function FileEditor({
   value,
   onChange,
-  securityLevel,
+  revealOn,
   readOnly = false,
 }: {
   value: string;
   onChange: (value: string) => void;
-  securityLevel: SecurityLevel;
+  revealOn: ProjectRevealOn;
   readOnly?: boolean;
 }) {
   return (
     <BaseFileEditor
       value={value}
       onChange={onChange}
-      securityLevel={securityLevel}
+      revealOn={revealOn}
       height="100%"
       fontSize={14}
       padding={{ top: 16, bottom: 80 }}

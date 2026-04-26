@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import * as request from 'supertest';
 import { Role } from '../../src/shared/types/role.enum';
-import { SecurityLevel } from '../../src/shared/types/security-level.enum';
+import { ProjectRevealOn } from '../../src/shared/types/project-settings';
 import { createTestApp } from '../utils/bootstrap';
 
 describe('PersonalInvitationCoreController (writes)', () => {
@@ -453,7 +453,7 @@ describe('PersonalInvitationCoreController (writes)', () => {
           [otherMember.id]: 'other-key',
         },
         encryptedSecrets: '',
-        securityLevel: SecurityLevel.Normal,
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       await bootstrap.utils.projectUtils.addMemberToProject(project.id, otherMember.id, Role.Read);
@@ -591,7 +591,7 @@ describe('PersonalInvitationCoreController (writes)', () => {
           [otherMember.id]: 'other-key',
         },
         encryptedSecrets: '',
-        securityLevel: SecurityLevel.Normal,
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
       await bootstrap.utils.projectUtils.addMemberToProject(project.id, otherMember.id, Role.Read);
       const invitation = await bootstrap.utils.personalInvitationUtils.createPersonalInvitation(

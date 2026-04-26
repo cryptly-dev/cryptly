@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { ProjectSettings } from "../project-settings";
 
 export interface User {
   id: string;
@@ -8,6 +9,7 @@ export interface User {
   displayName: string;
   publicKey?: string;
   privateKeyEncrypted?: string;
+  projectCreationDefaults: ProjectSettings;
   isAdmin: boolean;
 }
 
@@ -24,6 +26,7 @@ export interface UpdateUserDto {
   publicKey?: string;
   privateKeyEncrypted?: string;
   projectsOrder?: string[];
+  projectCreationDefaults?: ProjectSettings;
 }
 
 export class UserApi {

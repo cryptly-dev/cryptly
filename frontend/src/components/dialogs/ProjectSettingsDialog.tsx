@@ -1,7 +1,6 @@
 import {
-  SecurityLevelPicker,
-  type SecurityLevel,
-} from "@/components/app/project/SecurityLevelPicker";
+  ProjectRevealOnPicker,
+} from "@/components/app/project/ProjectRevealOnPicker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,10 +14,17 @@ import {
   InputWithActions,
 } from "@/components/ui/input-with-actions";
 import { Spinner } from "@/components/ui/spinner";
-import { ProjectMemberRole } from "@/lib/api/projects.api";
+import {
+  ProjectMemberRole,
+  type ProjectMember,
+} from "@/lib/api/projects.api";
 import { authLogic } from "@/lib/logics/authLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
+import {
+  normalizeProjectSettings,
+  type ProjectRevealOn,
+} from "@/lib/project-settings";
 import {
   IconCheck,
   IconEdit,
@@ -33,30 +39,26 @@ import {
 import { useActions, useAsyncActions, useValues } from "kea";
 import { useEffect, useMemo, useState } from "react";
 
-const LEVEL_META: Record<
-  SecurityLevel,
+const REVEAL_ON_META: Record<
+  ProjectRevealOn,
   { label: string; description: string; Icon: typeof IconEye }
 > = {
-  yolo: {
-    label: "Yolo",
-    description: "Values are always visible in the editor",
+  always: {
+    label: "Always",
+    description: "Values stay visible in the editor",
     Icon: IconEye,
   },
-  normal: {
-    label: "Normal",
-    description: "Values are masked, revealed on hover or click",
+  hover: {
+    label: "Hover",
+    description: "Values stay masked until hover or click",
     Icon: IconEyeCode,
   },
-  tight: {
-    label: "Tight",
-    description: "Values are always masked, click to copy only",
+  never: {
+    label: "Never",
+    description: "Values stay masked and copy without revealing",
     Icon: IconEyeOff,
   },
 };
-
-function isKnownSecurityLevel(value: string | null): value is SecurityLevel {
-  return value === "yolo" || value === "normal" || value === "tight";
-}
 
 interface ProjectSettingsDialogProps {
   open: boolean;
@@ -187,37 +189,34 @@ function RenameProjectSection() {
   );
 }
 
-function SecurityLevelSection() {
+function RevealOnSection() {
   const { projectData, currentUserRole } = useValues(projectLogic);
   const { updateProjectLoading } = useValues(projectSettingsLogic);
   const { updateProject } = useAsyncActions(projectSettingsLogic);
 
   const isAdmin = currentUserRole === ProjectMemberRole.Admin;
 
-  const currentLevel: SecurityLevel = isKnownSecurityLevel(
-    projectData?.securityLevel ?? null
-  )
-    ? (projectData!.securityLevel as SecurityLevel)
-    : "normal";
+  const currentRevealOn = normalizeProjectSettings(projectData?.settings).revealOn;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [draftLevel, setDraftLevel] = useState<SecurityLevel>(currentLevel);
+  const [draftRevealOn, setDraftRevealOn] =
+    useState<ProjectRevealOn>(currentRevealOn);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (isEditing) {
-      setDraftLevel(currentLevel);
+      setDraftRevealOn(currentRevealOn);
     }
-  }, [isEditing, currentLevel]);
+  }, [isEditing, currentRevealOn]);
 
   const handleSave = async () => {
-    if (isSaving || draftLevel === currentLevel) {
+    if (isSaving || draftRevealOn === currentRevealOn) {
       setIsEditing(false);
       return;
     }
     try {
       setIsSaving(true);
-      await updateProject({ securityLevel: draftLevel });
+      await updateProject({ settings: { revealOn: draftRevealOn } });
       setIsEditing(false);
     } finally {
       setIsSaving(false);
@@ -229,33 +228,33 @@ function SecurityLevelSection() {
       <div className="space-y-3 overflow-hidden">
         <div className="flex items-center gap-2">
           <IconShieldLock className="size-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium">Security level</h3>
+          <h3 className="text-sm font-medium">Reveal on</h3>
         </div>
         <div className="rounded-lg border border-dashed border-border/50 bg-neutral-800/20 px-4 py-6 text-center">
           <div className="text-sm text-muted-foreground">
             Only <span className="font-medium underline">Admins</span> can
-            change the security level.
+            change project reveal settings.
           </div>
         </div>
       </div>
     );
   }
 
-  const meta = LEVEL_META[currentLevel];
+  const meta = REVEAL_ON_META[currentRevealOn];
   const CurrentIcon = meta.Icon;
 
   return (
     <div className="space-y-3 overflow-hidden">
       <div className="flex items-center gap-2">
         <IconShieldLock className="size-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Security level</h3>
+        <h3 className="text-sm font-medium">Reveal on</h3>
       </div>
 
       {isEditing ? (
         <div className="rounded-lg border border-border/50 bg-neutral-800/20 p-3 space-y-3">
-          <SecurityLevelPicker
-            value={draftLevel}
-            onChange={setDraftLevel}
+          <ProjectRevealOnPicker
+            value={draftRevealOn}
+            onChange={setDraftRevealOn}
             disabled={isSaving || updateProjectLoading}
           />
           <div className="flex justify-end gap-2">
@@ -275,7 +274,7 @@ function SecurityLevelSection() {
               disabled={
                 isSaving ||
                 updateProjectLoading ||
-                draftLevel === currentLevel
+                draftRevealOn === currentRevealOn
               }
               className="cursor-pointer"
             >
@@ -326,7 +325,7 @@ function DangerZoneSection() {
 
   const myRole = useMemo(
     () =>
-      projectData?.members.find((member) => member.id === userData?.id)?.role,
+      projectData?.members.find((member: ProjectMember) => member.id === userData?.id)?.role,
     [projectData?.members, userData?.id]
   );
 
@@ -431,7 +430,7 @@ export function SettingsTabContent() {
       </div>
 
       <RenameProjectSection />
-      <SecurityLevelSection />
+      <RevealOnSection />
       <DangerZoneSection />
     </div>
   );
@@ -461,7 +460,7 @@ export function ProjectSettingsDialog({
           </DialogHeader>
 
           <RenameProjectSection />
-          <SecurityLevelSection />
+          <RevealOnSection />
           <DangerZoneSection />
         </div>
       </DialogContent>

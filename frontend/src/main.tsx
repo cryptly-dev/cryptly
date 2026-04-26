@@ -17,6 +17,7 @@ import {
   handleAuthFailure,
   refreshAccessToken,
 } from "./lib/auth/tokenRefresh";
+import { authLogic } from "./lib/logics/authLogic";
 import { withTimeout } from "./lib/utils";
 import { routeTree } from "./routeTree.gen";
 

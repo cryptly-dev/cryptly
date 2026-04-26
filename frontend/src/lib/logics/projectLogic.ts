@@ -26,11 +26,16 @@ import { createAuthedFetch } from "../auth/tokenRefresh";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { keystore } from "../crypto/keystore";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
+import {
+  normalizeProjectSettings,
+  type ProjectSettings,
+} from "../project-settings";
 import { authLogic } from "./authLogic";
 import { EventSourceWrapper } from "./EventSourceWrapper";
 import { keyLogic } from "./keyLogic";
-import type { projectLogicType } from "./projectLogicType";
 import { projectsLogic } from "./projectsLogic";
+
+import type { projectLogicType } from "./projectLogicType";
 
 const isGithubLocalMock = import.meta.env.VITE_GITHUB_LOCAL_MOCK === "true";
 
@@ -45,7 +50,7 @@ export interface DecryptedProject {
   aesKey: CryptoKey;
   members: ProjectMember[];
   updatedAt: string;
-  securityLevel: string | null;
+  settings: ProjectSettings;
   integrations: {
     githubInstallationId: number;
   };
@@ -238,7 +243,7 @@ export const projectLogic = kea<projectLogicType>([
             aesKey,
             members: projectData?.members!,
             updatedAt: projectData?.updatedAt!,
-            securityLevel: projectData?.securityLevel ?? null,
+            settings: normalizeProjectSettings(projectData?.settings),
             integrations: projectData?.integrations!,
           };
         },

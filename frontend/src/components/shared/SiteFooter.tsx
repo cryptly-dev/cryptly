@@ -1,6 +1,6 @@
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
 
-const ACCENT = "#c9b287";
+const ACCENT = "#DDA15E";
 
 export function SiteFooter() {
   return (

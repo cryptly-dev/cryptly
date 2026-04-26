@@ -1,4 +1,5 @@
 import { UserPartialSerialized } from '../../../user/core/entities/user.interface';
+import { normalizeProjectSettings } from '../../../shared/types/project-settings';
 import { ProjectEntity } from './project.entity';
 import { ProjectMemberSerialized, ProjectNormalized, ProjectSerialized } from './project.interface';
 
@@ -9,7 +10,7 @@ export class ProjectSerializer {
       name: entity.name,
       members: entity.members,
       encryptedSecretsKeys: entity.encryptedSecretsKeys,
-      securityLevel: entity.securityLevel ?? null,
+      settings: normalizeProjectSettings(entity.settings),
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };
@@ -35,7 +36,7 @@ export class ProjectSerializer {
       members: members,
       encryptedSecretsKeys: normalized.encryptedSecretsKeys,
       encryptedSecrets: latestSecrets,
-      securityLevel: normalized.securityLevel,
+      settings: normalizeProjectSettings(normalized.settings),
       createdAt: normalized.createdAt.toISOString(),
       updatedAt: normalized.updatedAt.toISOString(),
     };

@@ -6,7 +6,9 @@ import { ProjectsApi, type Project } from "../api/projects.api";
 import { UserApi } from "../api/user.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
+import type { ProjectSettings } from "../project-settings";
 import { authLogic } from "./authLogic";
+
 import type { projectsLogicType } from "./projectsLogicType";
 
 export const projectsLogic = kea<projectsLogicType>([
@@ -14,11 +16,12 @@ export const projectsLogic = kea<projectsLogicType>([
 
   connect({
     values: [authLogic, ["jwtToken", "userData"]],
+    actions: [authLogic, ["loadUserData"]],
   }),
 
   actions({
     addProject: (
-      project: { name: string; securityLevel: string },
+      project: { name: string; settings: ProjectSettings },
       navigateCallback?: (projectId: string) => void,
     ) => ({ project, navigateCallback }),
     readProjectById: (projectId: string) => ({ projectId }),
@@ -51,7 +54,7 @@ export const projectsLogic = kea<projectsLogicType>([
     ],
   }),
 
-  listeners(({ values, asyncActions }) => ({
+  listeners(({ values, asyncActions, actions }) => ({
     addProject: async ({ project, navigateCallback }): Promise<void> => {
       const projectKey = await SymmetricCrypto.generateProjectKey();
 
@@ -73,10 +76,15 @@ export const projectsLogic = kea<projectsLogicType>([
         },
         encryptedSecrets: contentEncrypted,
         name: project.name,
-        securityLevel: project.securityLevel,
+        settings: project.settings,
+      });
+
+      await UserApi.updateMe(values.jwtToken!, {
+        projectCreationDefaults: project.settings,
       });
 
       await asyncActions.loadProjects();
+      await actions.loadUserData();
 
       if (navigateCallback) {
         navigateCallback(proj.id);

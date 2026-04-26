@@ -1,10 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsObject, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEnum, IsObject, IsString, MaxLength, ValidateNested } from 'class-validator';
 import {
   ENCRYPTED_SECRETS_MAX_LENGTH,
   PROJECT_NAME_MAX_LENGTH,
 } from '../../../shared/constants/validation';
-import { SecurityLevel } from '../../../shared/types/security-level.enum';
+import { ProjectRevealOn } from '../../../shared/types/project-settings';
+
+class ProjectSettingsBody {
+  @ApiProperty({ enum: ProjectRevealOn })
+  @IsEnum(ProjectRevealOn)
+  public revealOn: ProjectRevealOn;
+}
 
 export class CreateProjectBody {
   @ApiProperty()
@@ -21,7 +28,8 @@ export class CreateProjectBody {
   @IsObject()
   public encryptedSecretsKeys: Record<string, string>;
 
-  @ApiProperty({ enum: SecurityLevel })
-  @IsEnum(SecurityLevel)
-  public securityLevel: SecurityLevel;
+  @ApiProperty({ type: ProjectSettingsBody })
+  @ValidateNested()
+  @Type(() => ProjectSettingsBody)
+  public settings: ProjectSettingsBody;
 }

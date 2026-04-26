@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { DEFAULT_PROJECT_SETTINGS, ProjectSettings } from '../../../shared/types/project-settings';
 import { AuthMethod } from '../enum/auth-method.enum';
 
 @Schema({ collection: 'users', timestamps: true })
@@ -26,6 +27,9 @@ export class UserEntity {
 
   @Prop({ type: [String], default: [] })
   projectsOrder: string[];
+
+  @Prop({ type: Object, default: DEFAULT_PROJECT_SETTINGS })
+  projectCreationDefaults: ProjectSettings;
 
   @Prop({ default: false })
   isAdmin: boolean;

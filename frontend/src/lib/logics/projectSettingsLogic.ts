@@ -9,7 +9,6 @@ import {
   reducers,
 } from "kea";
 
-import type { projectSettingsLogicType } from "./projectSettingsLogicType";
 import {
   ProjectsApi,
   type UpdateProjectDto,
@@ -19,6 +18,8 @@ import {
 import { projectsLogic } from "./projectsLogic";
 import { projectLogic } from "./projectLogic";
 import { authLogic } from "./authLogic";
+
+import type { projectSettingsLogicType } from "./projectSettingsLogicType";
 
 export interface ProjectSettingsLogicProps {
   projectId: string;

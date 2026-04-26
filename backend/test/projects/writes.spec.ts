@@ -5,8 +5,8 @@ import { catchError, take, timeout, toArray } from 'rxjs/operators';
 import * as request from 'supertest';
 import { ProjectCoreController } from '../../src/project/core/project-core.controller';
 import { ENCRYPTED_SECRETS_MAX_LENGTH } from '../../src/shared/constants/validation';
+import { ProjectRevealOn } from '../../src/shared/types/project-settings';
 import { Role } from '../../src/shared/types/role.enum';
-import { SecurityLevel } from '../../src/shared/types/security-level.enum';
 import { createTestApp } from '../utils/bootstrap';
 
 describe('ProjectCoreController (writes)', () => {
@@ -39,7 +39,7 @@ describe('ProjectCoreController (writes)', () => {
           name: 'test-project',
           encryptedSecrets: '',
           encryptedSecretsKeys: {},
-          securityLevel: SecurityLevel.Normal,
+          settings: { revealOn: ProjectRevealOn.Hover },
         });
 
       // then
@@ -52,7 +52,7 @@ describe('ProjectCoreController (writes)', () => {
         ],
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
-        securityLevel: 'normal',
+        settings: { revealOn: 'hover' },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       });
@@ -83,7 +83,7 @@ describe('ProjectCoreController (writes)', () => {
           name: 'test-project',
           encryptedSecrets: longSecrets,
           encryptedSecretsKeys: {},
-          securityLevel: SecurityLevel.Normal,
+          settings: { revealOn: ProjectRevealOn.Hover },
         });
 
       // then
@@ -101,7 +101,7 @@ describe('ProjectCoreController (writes)', () => {
         name: 'old-name',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
-        securityLevel: SecurityLevel.Normal,
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       // when
@@ -134,7 +134,7 @@ describe('ProjectCoreController (writes)', () => {
         name: 'old-name',
         encryptedSecretsKeys: {},
         encryptedSecrets: '',
-        securityLevel: SecurityLevel.Normal,
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       await bootstrap.utils.projectUtils.addMemberToProject(project.id, readUser.id, Role.Read);
@@ -265,50 +265,50 @@ describe('ProjectCoreController (writes)', () => {
         ],
         encryptedSecretsKeys: {},
         encryptedSecrets: 'new-secrets',
-        securityLevel: 'normal',
+        settings: { revealOn: 'hover' },
         createdAt: expect.any(String),
         updatedAt: '2025-09-23T01:00:00.000Z',
       });
     });
 
-    it('admin can update securityLevel', async () => {
+    it('admin can update project settings', async () => {
       const { token, project } = await bootstrap.utils.projectUtils.setupAdmin();
 
       const response = await request(bootstrap.app.getHttpServer())
         .patch(`/projects/${project.id}`)
         .set('authorization', `Bearer ${token}`)
-        .send({ securityLevel: SecurityLevel.Tight });
+        .send({ settings: { revealOn: ProjectRevealOn.Never } });
 
       expect(response.status).toEqual(200);
       expect(response.body).toMatchObject({
         id: project.id,
-        securityLevel: 'tight',
+        settings: { revealOn: 'never' },
       });
     });
 
-    it('write role cannot update securityLevel', async () => {
+    it('write role cannot update project settings', async () => {
       const { token: writeToken, project } = await bootstrap.utils.projectUtils.setupWrite();
 
       const response = await request(bootstrap.app.getHttpServer())
         .patch(`/projects/${project.id}`)
         .set('authorization', `Bearer ${writeToken}`)
-        .send({ securityLevel: SecurityLevel.Tight });
+        .send({ settings: { revealOn: ProjectRevealOn.Never } });
 
       expect(response.status).toEqual(403);
     });
 
-    it('read role cannot update securityLevel', async () => {
+    it('read role cannot update project settings', async () => {
       const { token: readToken, project } = await bootstrap.utils.projectUtils.setupRead();
 
       const response = await request(bootstrap.app.getHttpServer())
         .patch(`/projects/${project.id}`)
         .set('authorization', `Bearer ${readToken}`)
-        .send({ securityLevel: SecurityLevel.Tight });
+        .send({ settings: { revealOn: ProjectRevealOn.Never } });
 
       expect(response.status).toEqual(403);
     });
 
-    it('cross-cluster user gets 403 when updating securityLevel', async () => {
+    it('cross-cluster user gets 403 when updating project settings', async () => {
       const { project } = await bootstrap.utils.projectUtils.setupAdmin();
       const { token: otherToken } = await bootstrap.utils.userUtils.createDefault({
         email: 'other@test.com',
@@ -317,7 +317,7 @@ describe('ProjectCoreController (writes)', () => {
       const response = await request(bootstrap.app.getHttpServer())
         .patch(`/projects/${project.id}`)
         .set('authorization', `Bearer ${otherToken}`)
-        .send({ securityLevel: SecurityLevel.Tight });
+        .send({ settings: { revealOn: ProjectRevealOn.Never } });
 
       expect(response.status).toEqual(403);
     });
@@ -871,14 +871,14 @@ describe('ProjectCoreController (writes)', () => {
         name: 'project-1',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
-        securityLevel: SecurityLevel.Normal,
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       const project2 = await bootstrap.utils.projectUtils.createProject(token, {
         name: 'project-2',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
-        securityLevel: SecurityLevel.Normal,
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       // then
@@ -896,21 +896,21 @@ describe('ProjectCoreController (writes)', () => {
         name: 'project-1',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
-        securityLevel: SecurityLevel.Normal,
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       const project2 = await bootstrap.utils.projectUtils.createProject(token, {
         name: 'project-2',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
-        securityLevel: SecurityLevel.Normal,
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       const project3 = await bootstrap.utils.projectUtils.createProject(token, {
         name: 'project-3',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
-        securityLevel: SecurityLevel.Normal,
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       // when
@@ -990,7 +990,7 @@ describe('ProjectCoreController (writes)', () => {
         name: 'project-1',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
-        securityLevel: SecurityLevel.Normal,
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       // when

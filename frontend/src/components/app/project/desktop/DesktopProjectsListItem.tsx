@@ -83,7 +83,7 @@ export function DesktopProjectsListItem({
         )}
       >
         {isLoading ? (
-          <GripLoader color="#c9b287" />
+          <GripLoader color="#DDA15E" />
         ) : (
           <GripVertical className="w-3.5 h-3.5 text-muted-foreground/60" />
         )}

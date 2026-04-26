@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '../../../shared/types/role.enum';
 import { Branded } from '../../../shared/types/branded';
+import { ProjectRevealOn, ProjectSettings } from '../../../shared/types/project-settings';
 import { UserPartialSerialized } from '../../../user/core/entities/user.interface';
 
 export type EnvName = Branded<string, 'EnvName'>;
@@ -10,9 +11,14 @@ export class ProjectNormalized {
   public name: string;
   public members: Record<string, Role>;
   public encryptedSecretsKeys: Record<string, string>;
-  public securityLevel: string | null;
+  public settings: ProjectSettings;
   public createdAt: Date;
   public updatedAt: Date;
+}
+
+export class ProjectSettingsSerialized {
+  @ApiProperty({ enum: ProjectRevealOn })
+  public revealOn: ProjectRevealOn;
 }
 
 export class ProjectMemberSerialized extends UserPartialSerialized {
@@ -36,8 +42,8 @@ export class ProjectSerialized {
   @ApiProperty()
   public encryptedSecrets: string;
 
-  @ApiProperty({ nullable: true })
-  public securityLevel: string | null;
+  @ApiProperty({ type: ProjectSettingsSerialized })
+  public settings: ProjectSettingsSerialized;
 
   @ApiProperty()
   public createdAt: string;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ProjectRevealOn } from "@/lib/project-settings";
 import { assembleRealText, sliceRealByMonacoRange } from "./assembler";
 import {
   assertParserParity,
@@ -17,12 +18,10 @@ import {
 
 const TOOLTIP_DEFAULT_TEXT = "Click to copy";
 
-export type SecurityLevel = "yolo" | "normal" | "tight";
-
 interface UseSecretMaskingArgs {
   value: string;
   onChange: (value: string) => void;
-  securityLevel: SecurityLevel;
+  revealOn: ProjectRevealOn;
 }
 
 interface UseSecretMaskingResult {
@@ -33,7 +32,7 @@ interface UseSecretMaskingResult {
 export function useSecretMasking({
   value,
   onChange,
-  securityLevel,
+  revealOn,
 }: UseSecretMaskingArgs): UseSecretMaskingResult {
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
@@ -73,13 +72,13 @@ export function useSecretMasking({
 
   const lastEmittedValueRef = useRef<string>(value);
 
-  const securityLevelRef = useRef<SecurityLevel>(securityLevel);
-  securityLevelRef.current = securityLevel;
+  const revealOnRef = useRef<ProjectRevealOn>(revealOn);
+  revealOnRef.current = revealOn;
 
   // Pre-mount masking: synchronously mask `value` BEFORE Monaco mounts,
   // so plaintext never enters the DOM, not even for one frame.
   const [maskedInitialValue] = useState(() => {
-    if (securityLevel === "yolo") {
+    if (revealOn === "always") {
       pendingInitialMaskRef.current = null;
       lastParentValueRef.current = value;
       return value;
@@ -509,7 +508,7 @@ export function useSecretMasking({
 
   const recomputeCaretReveals = useCallback(() => {
     // tight: never reveal via caret; yolo: hook not wired.
-    if (securityLevelRef.current !== "normal") return;
+    if (revealOnRef.current !== "hover") return;
     if (recomputeInFlightRef.current) return;
     const editor = editorRef.current;
     const model = editor?.getModel();
@@ -858,7 +857,7 @@ export function useSecretMasking({
   const revealDecoration = useCallback(
     (decId: string) => {
       // tight / yolo never hover-reveal.
-      if (securityLevelRef.current !== "normal") return;
+      if (revealOnRef.current !== "hover") return;
       if (hoverRevealedDecIdRef.current === decId) return;
       const prev = hoverRevealedDecIdRef.current;
       if (prev && !caretRevealedDecIdsRef.current.has(prev)) {
@@ -946,7 +945,7 @@ export function useSecretMasking({
       editorRef.current = editor;
       monacoRef.current = monaco;
 
-      if (securityLevel === "yolo") {
+      if (revealOn === "always") {
         // yolo: plain text editor. No masking, no decorations, no listeners
         // beyond forwarding content changes to the parent.
         editor.onDidChangeModelContent(() => {
@@ -1205,7 +1204,7 @@ export function useSecretMasking({
       recomputeCaretReveals,
       refreshMaskDecorations,
       revealDecoration,
-      securityLevel,
+      revealOn,
       showTooltipAtDecoration,
       snapshotDecorationOffsets,
       withInternalEdit,
@@ -1226,7 +1225,7 @@ export function useSecretMasking({
     const editor = editorRef.current;
     const monacoInstance = monacoRef.current;
 
-    if (securityLevel === "yolo") {
+    if (revealOn === "always") {
       if (!editor) return;
       const model = editor.getModel();
       if (!model) return;
@@ -1303,7 +1302,7 @@ export function useSecretMasking({
     applyGroupZones(groups);
   }, [
     value,
-    securityLevel,
+    revealOn,
     applyGroupZones,
     refreshMaskDecorations,
     withInternalEdit,

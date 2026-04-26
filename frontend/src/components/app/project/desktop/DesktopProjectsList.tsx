@@ -21,6 +21,7 @@ import type { Project } from "@/lib/api/projects.api";
 import { UserApi } from "@/lib/api/user.api";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { searchLogic } from "@/lib/logics/searchLogic";
+import { DEFAULT_PROJECT_SETTINGS } from "@/lib/project-settings";
 import { suggestedProjectsLogic } from "@/lib/logics/suggestedProjectsLogic";
 import { useActions, useAsyncActions, useValues } from "kea";
 import {
@@ -287,7 +288,7 @@ export function DesktopProjectsList() {
               <motion.div
                 aria-hidden
                 className="absolute left-0 w-[2px] pointer-events-none"
-                style={{ top: 0, backgroundColor: "#c9b287" }}
+                style={{ top: 0, backgroundColor: "#DDA15E" }}
                 initial={{ opacity: 0 }}
                 animate={{
                   opacity: 1,
@@ -387,7 +388,14 @@ export function DesktopProjectsList() {
                     disabled={acceptingRepoId !== null}
                     onClick={() => {
                       posthog.capture("suggested_project_accepted");
-                      acceptSuggestion(repo, "normal", (projectId) =>
+                      acceptSuggestion(
+                        repo,
+                        {
+                          revealOn:
+                            userData?.projectCreationDefaults.revealOn ??
+                            DEFAULT_PROJECT_SETTINGS.revealOn,
+                        },
+                        (projectId) =>
                         navigate({ to: `/app/project/${projectId}` }),
                       );
                     }}

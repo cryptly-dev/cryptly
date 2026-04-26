@@ -4,7 +4,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 
-const ACCENT = "#c9b287";
+const ACCENT = "#DDA15E";
 
 /**
  * Shared site header. Lives in the root layout so it persists across

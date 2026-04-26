@@ -1,4 +1,5 @@
 import { UserEntity } from './user.entity';
+import { normalizeProjectSettings } from '../../../shared/types/project-settings';
 import {
   UserNormalized,
   UserPartialNormalized,
@@ -21,6 +22,7 @@ export class UserSerializer {
       privateKeyEncrypted: entity.privateKeyEncrypted,
       publicKey: entity.publicKey,
       projectsOrder: entity.projectsOrder || [],
+      projectCreationDefaults: normalizeProjectSettings(entity.projectCreationDefaults),
       isAdmin: entity.isAdmin ?? false,
     };
   }
@@ -36,6 +38,7 @@ export class UserSerializer {
       displayName: normalized.displayName,
       privateKeyEncrypted: normalized.privateKeyEncrypted,
       publicKey: normalized.publicKey,
+      projectCreationDefaults: normalizeProjectSettings(normalized.projectCreationDefaults),
       isAdmin: normalized.isAdmin ?? false,
     };
 

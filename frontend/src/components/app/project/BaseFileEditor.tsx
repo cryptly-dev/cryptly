@@ -1,21 +1,19 @@
-// Security-level reactivity: `BaseFileEditor` itself is a stable outer
-// component that keys an internal stateful subtree on `securityLevel`.
-// When the level changes, the entire inner subtree (Monaco editor + the
+// Reveal-on reactivity: `BaseFileEditor` itself is a stable outer
+// component that keys an internal stateful subtree on `revealOn`.
+// When the setting changes, the entire inner subtree (Monaco editor + the
 // `useSecretMasking` hook state) unmounts and remounts, guaranteeing a
 // clean tear-down + re-initialization without any per-ref bookkeeping.
 import Editor, { loader } from "@monaco-editor/react";
 import { useEffect } from "react";
+import type { ProjectRevealOn } from "@/lib/project-settings";
 import { registerDotenvLanguage } from "./editor/dotenv-language";
 import { injectMaskingCSS } from "./editor/masking-css";
-import {
-  useSecretMasking,
-  type SecurityLevel,
-} from "./editor/useSecretMasking";
+import { useSecretMasking } from "./editor/useSecretMasking";
 
 interface BaseFileEditorProps {
   value: string;
   onChange: (value: string) => void;
-  securityLevel: SecurityLevel;
+  revealOn: ProjectRevealOn;
   height?: string;
   fontSize?: number;
   padding?: { top: number; bottom: number };
@@ -24,13 +22,13 @@ interface BaseFileEditorProps {
 }
 
 export function BaseFileEditor(props: BaseFileEditorProps) {
-  return <BaseFileEditorInner key={props.securityLevel} {...props} />;
+  return <BaseFileEditorInner key={props.revealOn} {...props} />;
 }
 
 function BaseFileEditorInner({
   value,
   onChange,
-  securityLevel,
+  revealOn,
   height = "55vh",
   fontSize = 14,
   padding = { top: 16, bottom: 80 },
@@ -46,7 +44,7 @@ function BaseFileEditorInner({
   const { maskedInitialValue, handleEditorMount } = useSecretMasking({
     value,
     onChange,
-    securityLevel,
+    revealOn,
   });
 
   const editorOptions = {

@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
  * Cryptly landing. Soft layered card surfaces; app-grade primitives.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-const ACCENT = "#c9b287";
+const ACCENT = "#DDA15E";
 const HERO_EASE = [0, 0.55, 0.45, 1] as const;
 const HERO_DURATION = 0.6;
 
