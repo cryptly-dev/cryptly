@@ -1,9 +1,48 @@
+import type { CSSProperties } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 interface BlogMarkdownProps {
   content: string;
   className?: string;
+}
+
+const NAMED_WIDTHS: Record<string, string> = {
+  small: "240px",
+  medium: "480px",
+  large: "720px",
+  full: "100%",
+};
+
+function parseImageSpec(alt: string | undefined): {
+  alt: string;
+  width?: string;
+  height?: string;
+  isFullWidth: boolean;
+} {
+  if (!alt) return { alt: "", isFullWidth: true };
+  const pipe = alt.lastIndexOf("|");
+  if (pipe === -1) return { alt, isFullWidth: true };
+  const spec = alt.slice(pipe + 1).trim().toLowerCase();
+  const cleanAlt = alt.slice(0, pipe).trim();
+  if (!spec) return { alt: cleanAlt, isFullWidth: true };
+
+  if (spec in NAMED_WIDTHS) {
+    const width = NAMED_WIDTHS[spec];
+    return { alt: cleanAlt, width, isFullWidth: spec === "full" };
+  }
+
+  const dims = spec.match(/^(\d+)(?:x(\d+))?$/);
+  if (dims) {
+    return {
+      alt: cleanAlt,
+      width: `${dims[1]}px`,
+      height: dims[2] ? `${dims[2]}px` : undefined,
+      isFullWidth: false,
+    };
+  }
+
+  return { alt, isFullWidth: true };
 }
 
 export function BlogMarkdown({ content, className }: BlogMarkdownProps) {
@@ -94,13 +133,23 @@ export function BlogMarkdown({ content, className }: BlogMarkdownProps) {
             </pre>
           ),
           hr: () => <hr className="my-10 border-neutral-800" />,
-          img: ({ src, alt }) => (
-            <img
-              src={src}
-              alt={alt}
-              className="my-8 w-full rounded-xl border border-neutral-800 shadow-xl"
-            />
-          ),
+          img: ({ src, alt }) => {
+            const parsed = parseImageSpec(alt);
+            const style: CSSProperties = {};
+            if (parsed.width) style.width = parsed.width;
+            if (parsed.height) style.height = parsed.height;
+            if (parsed.width && !parsed.isFullWidth) style.maxWidth = "100%";
+            return (
+              <img
+                src={src}
+                alt={parsed.alt}
+                style={style}
+                className={`my-8 rounded-xl border border-neutral-800 shadow-xl${
+                  parsed.isFullWidth ? " w-full" : ""
+                }`}
+              />
+            );
+          },
           table: ({ children }) => (
             <div className="my-6 overflow-x-auto rounded-lg border border-neutral-800">
               <table className="w-full text-sm border-collapse">{children}</table>

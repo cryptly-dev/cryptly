@@ -28,6 +28,9 @@ Write in markdown on the left. Preview renders live on the right.
 
 Paste an image from clipboard — it will be uploaded and a markdown link inserted automatically.
 
+Resize images by adding a size after a pipe in the alt text:
+\`![caption|small](url)\` — also \`medium\`, \`large\`, \`full\`, or pixel widths like \`![caption|400](url)\` and \`![caption|400x250](url)\`.
+
 ## Some ideas
 
 - Launches
@@ -229,11 +232,24 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
       if (mode === "create") {
         const created = await BlogApi.create(jwtToken, payload);
         toast.success("Post published");
-        navigate({ to: "/blog/$slug", params: { slug: created.slug } });
+        setPostId(created.id);
+        setSlugInput(created.slug);
+        navigate({
+          to: "/blog/edit/$slug",
+          params: { slug: created.slug },
+          replace: true,
+        });
       } else if (postId) {
         const updated = await BlogApi.update(jwtToken, postId, payload);
         toast.success("Post updated");
-        navigate({ to: "/blog/$slug", params: { slug: updated.slug } });
+        if (updated.slug !== slug) {
+          setSlugInput(updated.slug);
+          navigate({
+            to: "/blog/edit/$slug",
+            params: { slug: updated.slug },
+            replace: true,
+          });
+        }
       }
     } catch (err) {
       const message =
@@ -245,7 +261,7 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
     } finally {
       setSaving(false);
     }
-  }, [jwtToken, title, content, excerpt, coverImageUrl, slugInput, releaseDate, mode, postId, navigate]);
+  }, [jwtToken, title, content, excerpt, coverImageUrl, slugInput, releaseDate, mode, postId, slug, navigate]);
 
   const handleDelete = useCallback(async () => {
     if (!jwtToken || !postId) return;
@@ -266,6 +282,20 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
       setDeleting(false);
     }
   }, [jwtToken, postId, navigate]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!saving && !deleting) {
+          void handleSave();
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  }, [handleSave, saving, deleting]);
 
   const wordCount = useMemo(
     () => content.trim().split(/\s+/).filter(Boolean).length,
