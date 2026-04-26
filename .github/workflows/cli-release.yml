@@ -1,0 +1,61 @@
+name: Release CLI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cli/**'
+      - '.github/workflows/cli-release.yml'
+
+defaults:
+  run:
+    working-directory: ./cli
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: cli/package.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: cli/pnpm-lock.yaml
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Create release PR or publish to npm
+        uses: changesets/action@v1
+        with:
+          cwd: cli
+          publish: pnpm changeset publish
+          version: pnpm changeset version
+          commit: 'chore(cli): release'
+          title: 'chore(cli): release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
