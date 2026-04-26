@@ -1,5 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 import * as request from 'supertest';
+import { ProjectRevealOn } from '../../src/shared/types/project-settings';
 import { createTestApp } from '../utils/bootstrap';
 
 describe('User writes (e2e)', () => {
@@ -58,12 +59,14 @@ describe('User writes (e2e)', () => {
         name: 'project-1',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       const project2 = await bootstrap.utils.projectUtils.createProject(token, {
         name: 'project-2',
         encryptedSecrets: '',
         encryptedSecretsKeys: {},
+        settings: { revealOn: ProjectRevealOn.Hover },
       });
 
       // when
@@ -76,6 +79,22 @@ describe('User writes (e2e)', () => {
       expect(response.status).toEqual(HttpStatus.OK);
       const userFromDb = await bootstrap.models.userModel.findById(user.id).lean();
       expect(userFromDb?.projectsOrder).toEqual([project2.id, project1.id]);
+    });
+
+    it('updates projectCreationDefaults', async () => {
+      const { token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      const response = await request(bootstrap.app.getHttpServer())
+        .patch(`/users/me`)
+        .set('authorization', `Bearer ${token}`)
+        .send({ projectCreationDefaults: { revealOn: 'never' } });
+
+      expect(response.status).toEqual(HttpStatus.OK);
+      expect(response.body).toMatchObject({
+        projectCreationDefaults: { revealOn: 'never' },
+      });
     });
 
     it('updates displayName', async () => {

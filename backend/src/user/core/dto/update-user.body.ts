@@ -1,5 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
+import { ProjectRevealOn } from '../../../shared/types/project-settings';
+
+class ProjectCreationDefaultsBody {
+  @ApiProperty({ enum: ProjectRevealOn })
+  @IsEnum(ProjectRevealOn)
+  public revealOn: ProjectRevealOn;
+}
 
 export class UpdateUserBody {
   @IsOptional()
@@ -25,4 +40,10 @@ export class UpdateUserBody {
   @IsString({ each: true })
   @ApiProperty({ required: false, type: [String] })
   public projectsOrder?: string[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ProjectCreationDefaultsBody)
+  @ApiProperty({ required: false, type: ProjectCreationDefaultsBody })
+  public projectCreationDefaults?: ProjectCreationDefaultsBody;
 }

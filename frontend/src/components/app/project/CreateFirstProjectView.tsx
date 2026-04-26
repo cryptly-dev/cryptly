@@ -1,4 +1,5 @@
 import { GripLoader } from "@/components/ui/GripLoader";
+import { DEFAULT_PROJECT_SETTINGS } from "@/lib/project-settings";
 import { authLogic } from "@/lib/logics/authLogic";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
 import { useNavigate } from "@tanstack/react-router";
@@ -54,7 +55,7 @@ export function CreateFirstProjectView() {
   // Same markup for both so the transition is seamless.
   return (
     <div className="w-screen h-screen flex items-center justify-center">
-      <GripLoader color="#c9b287" className="w-12 h-12" />
+      <GripLoader color="#DDA15E" className="w-12 h-12" />
     </div>
   );
 }
@@ -62,6 +63,7 @@ export function CreateFirstProjectView() {
 function EmptyProjectsState() {
   const navigate = useNavigate();
   const { addProject } = useAsyncActions(projectsLogic);
+  const { userData } = useValues(authLogic);
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,12 +79,21 @@ function EmptyProjectsState() {
     setSubmitting(true);
     posthog.capture("add_project_button_clicked");
     try {
-      await addProject({ name: trimmed }, (projectId: string) =>
-        navigate({
-          to: "/app/project/$projectId",
-          params: { projectId },
-          replace: true,
-        })
+      await addProject(
+        {
+          name: trimmed,
+          settings: {
+            revealOn:
+              userData?.projectCreationDefaults.revealOn ??
+              DEFAULT_PROJECT_SETTINGS.revealOn,
+          },
+        },
+        (projectId: string) =>
+          navigate({
+            to: "/app/project/$projectId",
+            params: { projectId },
+            replace: true,
+          }),
       );
     } catch (err) {
       console.error(err);
@@ -107,8 +118,8 @@ function EmptyProjectsState() {
             <span className="text-muted-foreground">project.</span>
           </h1>
           <p className="mt-5 text-[15px] text-muted-foreground leading-[1.7]">
-            Secrets you store in it are encrypted in your browser —
-            before they leave your machine.
+            Secrets you store in it are encrypted in your browser — before they
+            leave your machine.
           </p>
         </div>
 

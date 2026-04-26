@@ -109,8 +109,13 @@ export const personalInvitationsLogic = kea<personalInvitationsLogicType>([
     },
   })),
 
-  events(({ asyncActions }) => ({
+  events(({ asyncActions, values }) => ({
     afterMount: () => {
+      // Endpoint requires Admin on the server; skip the call otherwise so
+      // non-admin project members don't rack up console-visible 403s. The
+      // ProjectAccessDialog guards its own render on `projectData`, so the
+      // role selector is populated by the time this logic mounts.
+      if (values.currentUserRole !== ProjectMemberRole.Admin) return;
       asyncActions.loadPersonalInvitations();
     },
   })),

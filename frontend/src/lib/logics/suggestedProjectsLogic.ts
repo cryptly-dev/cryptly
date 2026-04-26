@@ -16,6 +16,10 @@ import {
 import { ProjectsApi, type Project } from "../api/projects.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
+import {
+  normalizeProjectSettings,
+  type ProjectSettings,
+} from "../project-settings";
 import { authLogic } from "./authLogic";
 import { projectsLogic } from "./projectsLogic";
 
@@ -36,12 +40,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
   path(["src", "lib", "logics", "suggestedProjectsLogic"]),
 
   connect({
-    values: [
-      authLogic,
-      ["jwtToken", "userData"],
-      projectsLogic,
-      ["projects"],
-    ],
+    values: [authLogic, ["jwtToken", "userData"], projectsLogic, ["projects"]],
   }),
 
   actions({
@@ -53,8 +52,9 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
     setLoading: (loading: boolean) => ({ loading }),
     acceptSuggestion: (
       repo: RepoWithInstallation,
-      navigateCallback?: (projectId: string) => void
-    ) => ({ repo, navigateCallback }),
+      settings: ProjectSettings,
+      navigateCallback?: (projectId: string) => void,
+    ) => ({ repo, settings, navigateCallback }),
     setAcceptingRepoId: (repoId: number | null) => ({ repoId }),
     dismissSuggestion: (repoId: number) => ({ repoId }),
   }),
@@ -63,7 +63,10 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
     installations: [
       [] as Installation[],
       {
-        setInstallations: (_, { installations }: { installations: Installation[] }) => installations,
+        setInstallations: (
+          _,
+          { installations }: { installations: Installation[] },
+        ) => installations,
       },
     ],
     allRepositories: [
@@ -71,7 +74,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
       {
         setAllRepositories: (
           _: RepoWithInstallation[],
-          { allRepositories }: { allRepositories: RepoWithInstallation[] }
+          { allRepositories }: { allRepositories: RepoWithInstallation[] },
         ) => allRepositories,
       },
     ],
@@ -85,16 +88,19 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
     acceptingRepoId: [
       null as number | null,
       {
-        setAcceptingRepoId: (_: number | null, { repoId }: { repoId: number | null }) => repoId,
+        setAcceptingRepoId: (
+          _: number | null,
+          { repoId }: { repoId: number | null },
+        ) => repoId,
       },
     ],
     dismissedRepoIds: [
       [] as number[],
       {
-        dismissSuggestion: (state: number[], { repoId }: { repoId: number }) => [
-          ...state,
-          repoId,
-        ],
+        dismissSuggestion: (
+          state: number[],
+          { repoId }: { repoId: number },
+        ) => [...state, repoId],
       },
     ],
   }),
@@ -105,7 +111,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
       (
         allRepositories: RepoWithInstallation[],
         projects: Project[] | undefined,
-        dismissedRepoIds: number[]
+        dismissedRepoIds: number[],
       ): RepoWithInstallation[] => {
         if (allRepositories.length === 0) return [];
 
@@ -113,7 +119,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
 
         const normalize = (name: string) => tokenize(name).join(" ");
         const projectNormalized = new Set(
-          (projects || []).map((p) => normalize(p.name))
+          (projects || []).map((p) => normalize(p.name)),
         );
 
         return allRepositories
@@ -136,7 +142,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
       try {
         const installations =
           await IntegrationsApi.getInstallationAvailableForUser(
-            values.jwtToken!
+            values.jwtToken!,
           );
         actions.setInstallations(installations);
 
@@ -150,13 +156,13 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
           installations.map(async (installation) => {
             const repos = await IntegrationsApi.getRepositories(
               values.jwtToken!,
-              installation.id
+              installation.id,
             );
             return repos.map((repo) => ({
               ...repo,
               installationEntityId: installation.id,
             }));
-          })
+          }),
         );
         for (const repos of results) {
           allRepos.push(...repos);
@@ -170,20 +176,21 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
       }
     },
 
-    acceptSuggestion: async ({ repo, navigateCallback }) => {
+    acceptSuggestion: async ({ repo, settings, navigateCallback }) => {
       actions.setAcceptingRepoId(repo.id);
 
       try {
         // 1. Create project
         const projectKey = await SymmetricCrypto.generateProjectKey();
-        const content = `# we've connected this cryptly project to a github repository\n# (https://github.com/${repo.owner}/${repo.name}) because you clicked on a suggestion\nTHIS_IS_A_SECRET=super secret value`;
+        const content = `# Define your secrets below. Example:\nAPI_KEY="your-value-here"\nDATABASE_URL="postgres://..."`;
+
         const contentEncrypted = await SymmetricCrypto.encrypt(
           content,
-          projectKey
+          projectKey,
         );
         const projectKeyEncrypted = await AsymmetricCrypto.encrypt(
           projectKey,
-          values.userData!.publicKey!
+          values.userData!.publicKey!,
         );
 
         const proj = await ProjectsApi.createProject(values.jwtToken!, {
@@ -192,6 +199,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
           },
           encryptedSecrets: contentEncrypted,
           name: repo.name,
+          settings: normalizeProjectSettings(settings),
         });
 
         // 2. Create integration
