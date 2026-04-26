@@ -36,12 +36,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
   path(["src", "lib", "logics", "suggestedProjectsLogic"]),
 
   connect({
-    values: [
-      authLogic,
-      ["jwtToken", "userData"],
-      projectsLogic,
-      ["projects"],
-    ],
+    values: [authLogic, ["jwtToken", "userData"], projectsLogic, ["projects"]],
   }),
 
   actions({
@@ -54,7 +49,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
     acceptSuggestion: (
       repo: RepoWithInstallation,
       securityLevel: string,
-      navigateCallback?: (projectId: string) => void
+      navigateCallback?: (projectId: string) => void,
     ) => ({ repo, securityLevel, navigateCallback }),
     setAcceptingRepoId: (repoId: number | null) => ({ repoId }),
     dismissSuggestion: (repoId: number) => ({ repoId }),
@@ -64,7 +59,10 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
     installations: [
       [] as Installation[],
       {
-        setInstallations: (_, { installations }: { installations: Installation[] }) => installations,
+        setInstallations: (
+          _,
+          { installations }: { installations: Installation[] },
+        ) => installations,
       },
     ],
     allRepositories: [
@@ -72,7 +70,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
       {
         setAllRepositories: (
           _: RepoWithInstallation[],
-          { allRepositories }: { allRepositories: RepoWithInstallation[] }
+          { allRepositories }: { allRepositories: RepoWithInstallation[] },
         ) => allRepositories,
       },
     ],
@@ -86,16 +84,19 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
     acceptingRepoId: [
       null as number | null,
       {
-        setAcceptingRepoId: (_: number | null, { repoId }: { repoId: number | null }) => repoId,
+        setAcceptingRepoId: (
+          _: number | null,
+          { repoId }: { repoId: number | null },
+        ) => repoId,
       },
     ],
     dismissedRepoIds: [
       [] as number[],
       {
-        dismissSuggestion: (state: number[], { repoId }: { repoId: number }) => [
-          ...state,
-          repoId,
-        ],
+        dismissSuggestion: (
+          state: number[],
+          { repoId }: { repoId: number },
+        ) => [...state, repoId],
       },
     ],
   }),
@@ -106,7 +107,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
       (
         allRepositories: RepoWithInstallation[],
         projects: Project[] | undefined,
-        dismissedRepoIds: number[]
+        dismissedRepoIds: number[],
       ): RepoWithInstallation[] => {
         if (allRepositories.length === 0) return [];
 
@@ -114,7 +115,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
 
         const normalize = (name: string) => tokenize(name).join(" ");
         const projectNormalized = new Set(
-          (projects || []).map((p) => normalize(p.name))
+          (projects || []).map((p) => normalize(p.name)),
         );
 
         return allRepositories
@@ -137,7 +138,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
       try {
         const installations =
           await IntegrationsApi.getInstallationAvailableForUser(
-            values.jwtToken!
+            values.jwtToken!,
           );
         actions.setInstallations(installations);
 
@@ -151,13 +152,13 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
           installations.map(async (installation) => {
             const repos = await IntegrationsApi.getRepositories(
               values.jwtToken!,
-              installation.id
+              installation.id,
             );
             return repos.map((repo) => ({
               ...repo,
               installationEntityId: installation.id,
             }));
-          })
+          }),
         );
         for (const repos of results) {
           allRepos.push(...repos);
@@ -181,11 +182,11 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
 
         const contentEncrypted = await SymmetricCrypto.encrypt(
           content,
-          projectKey
+          projectKey,
         );
         const projectKeyEncrypted = await AsymmetricCrypto.encrypt(
           projectKey,
-          values.userData!.publicKey!
+          values.userData!.publicKey!,
         );
 
         const proj = await ProjectsApi.createProject(values.jwtToken!, {

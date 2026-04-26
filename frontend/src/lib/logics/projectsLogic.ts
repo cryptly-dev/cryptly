@@ -19,7 +19,7 @@ export const projectsLogic = kea<projectsLogicType>([
   actions({
     addProject: (
       project: { name: string; securityLevel: string },
-      navigateCallback?: (projectId: string) => void
+      navigateCallback?: (projectId: string) => void,
     ) => ({ project, navigateCallback }),
     readProjectById: (projectId: string) => ({ projectId }),
     loadProjects: true,
@@ -59,12 +59,12 @@ export const projectsLogic = kea<projectsLogicType>([
 
       const contentEncrypted = await SymmetricCrypto.encrypt(
         content,
-        projectKey
+        projectKey,
       );
 
       const projectKeyEncrypted = await AsymmetricCrypto.encrypt(
         projectKey,
-        values.userData!.publicKey!
+        values.userData!.publicKey!,
       );
 
       const proj = await ProjectsApi.createProject(values.jwtToken!, {

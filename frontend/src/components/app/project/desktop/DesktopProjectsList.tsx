@@ -64,7 +64,7 @@ export function DesktopProjectsList() {
     hasInstallations,
   } = useValues(suggestedProjectsLogic);
   const { acceptSuggestion, dismissSuggestion } = useActions(
-    suggestedProjectsLogic
+    suggestedProjectsLogic,
   );
   const navigate = useNavigate();
 
@@ -82,7 +82,7 @@ export function DesktopProjectsList() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(projects !== undefined);
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState(
-    userData?.displayName || ""
+    userData?.displayName || "",
   );
   const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
 
@@ -98,13 +98,10 @@ export function DesktopProjectsList() {
     height: number;
   } | null>(null);
 
-  const registerRowRef = useCallback(
-    (id: string, el: HTMLElement | null) => {
-      if (el) rowRefs.current.set(id, el);
-      else rowRefs.current.delete(id);
-    },
-    []
-  );
+  const registerRowRef = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) rowRefs.current.set(id, el);
+    else rowRefs.current.delete(id);
+  }, []);
 
   const indicatorProjectId = activeProject?.id ?? null;
 
@@ -116,8 +113,7 @@ export function DesktopProjectsList() {
     const containerRect = scrollRef.current.getBoundingClientRect();
     setIndicator((prev) => {
       const next = {
-        top:
-          rowRect.top - containerRect.top + scrollRef.current!.scrollTop,
+        top: rowRect.top - containerRect.top + scrollRef.current!.scrollTop,
         height: rowRect.height,
       };
       if (prev && prev.top === next.top && prev.height === next.height) {
@@ -182,7 +178,6 @@ export function DesktopProjectsList() {
   useEffect(() => {
     if (projects !== undefined) setHasLoadedOnce(true);
   }, [projects]);
-
 
   const listVariants = {
     hidden: {},
@@ -393,7 +388,7 @@ export function DesktopProjectsList() {
                     onClick={() => {
                       posthog.capture("suggested_project_accepted");
                       acceptSuggestion(repo, "normal", (projectId) =>
-                        navigate({ to: `/app/project/${projectId}` })
+                        navigate({ to: `/app/project/${projectId}` }),
                       );
                     }}
                     className="absolute inset-0 rounded-md cursor-pointer disabled:cursor-not-allowed"

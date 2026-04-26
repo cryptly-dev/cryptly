@@ -77,12 +77,14 @@ function EmptyProjectsState() {
     setSubmitting(true);
     posthog.capture("add_project_button_clicked");
     try {
-      await addProject({ name: trimmed, securityLevel: "normal" }, (projectId: string) =>
-        navigate({
-          to: "/app/project/$projectId",
-          params: { projectId },
-          replace: true,
-        })
+      await addProject(
+        { name: trimmed, securityLevel: "normal" },
+        (projectId: string) =>
+          navigate({
+            to: "/app/project/$projectId",
+            params: { projectId },
+            replace: true,
+          }),
       );
     } catch (err) {
       console.error(err);
@@ -107,8 +109,8 @@ function EmptyProjectsState() {
             <span className="text-muted-foreground">project.</span>
           </h1>
           <p className="mt-5 text-[15px] text-muted-foreground leading-[1.7]">
-            Secrets you store in it are encrypted in your browser —
-            before they leave your machine.
+            Secrets you store in it are encrypted in your browser — before they
+            leave your machine.
           </p>
         </div>
 

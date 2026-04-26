@@ -32,8 +32,7 @@ import { keyLogic } from "./keyLogic";
 import type { projectLogicType } from "./projectLogicType";
 import { projectsLogic } from "./projectsLogic";
 
-const isGithubLocalMock =
-  import.meta.env.VITE_GITHUB_LOCAL_MOCK === "true";
+const isGithubLocalMock = import.meta.env.VITE_GITHUB_LOCAL_MOCK === "true";
 
 export interface ProjectLogicProps {
   projectId: string;
@@ -209,7 +208,7 @@ export const projectLogic = kea<projectLogicType>([
         loadProjectData: async () => {
           const projectData = await ProjectsApi.getProject(
             values.jwtToken!,
-            props.projectId
+            props.projectId,
           );
 
           let aesKey = await keystore.getProjectKey(projectData.id);
@@ -220,7 +219,7 @@ export const projectLogic = kea<projectLogicType>([
             }
             const projectKeyBase64 = await AsymmetricCrypto.decryptWithKey(
               projectData.encryptedSecretsKeys![values.userData!.id]!,
-              masterKey
+              masterKey,
             );
             aesKey = await SymmetricCrypto.importAesKey(projectKeyBase64);
             await keystore.setProjectKey(projectData.id, aesKey);
@@ -228,7 +227,7 @@ export const projectLogic = kea<projectLogicType>([
 
           const contentDecrypted = await SymmetricCrypto.decryptWithKey(
             projectData.encryptedSecrets!,
-            aesKey
+            aesKey,
           );
           actions.setInputValue(contentDecrypted);
 
@@ -251,7 +250,7 @@ export const projectLogic = kea<projectLogicType>([
         loadProjectVersions: async () => {
           const versions = await ProjectsApi.getProjectVersions(
             values.jwtToken!,
-            props.projectId
+            props.projectId,
           );
 
           const myKey = values.projectData?.aesKey;
@@ -265,7 +264,7 @@ export const projectLogic = kea<projectLogicType>([
           for (const version of versions) {
             const contentDecrypted = await SymmetricCrypto.decryptWithKey(
               version.encryptedSecrets,
-              myKey
+              myKey,
             );
             decryptedVersions.push({ ...version, content: contentDecrypted });
           }
@@ -298,7 +297,7 @@ export const projectLogic = kea<projectLogicType>([
       (s) => [s.projectData],
       (projectData) =>
         projectData?.members?.find(
-          (member) => member.id === values.userData?.id
+          (member) => member.id === values.userData?.id,
         )?.role,
     ],
   })),
@@ -334,7 +333,7 @@ export const projectLogic = kea<projectLogicType>([
             } else {
               actions.handleSecretsUpdate(secretsUpdatedEvent);
             }
-          } catch (e) { }
+          } catch (e) {}
         });
 
         eventSource.onError(() => {
@@ -362,7 +361,7 @@ export const projectLogic = kea<projectLogicType>([
 
       const contentDecrypted = await SymmetricCrypto.decryptWithKey(
         newEncryptedSecrets,
-        aesKey
+        aesKey,
       );
 
       actions.setInputValue(contentDecrypted);
@@ -380,7 +379,7 @@ export const projectLogic = kea<projectLogicType>([
       try {
         const encryptedContent = await SymmetricCrypto.encryptWithKey(
           values.inputValue,
-          values.projectData!.aesKey
+          values.projectData!.aesKey,
         );
 
         await ProjectsApi.updateProjectContent(
@@ -388,7 +387,7 @@ export const projectLogic = kea<projectLogicType>([
           props.projectId,
           {
             encryptedSecrets: encryptedContent,
-          }
+          },
         );
         actions.setIsExternallyUpdated(false);
 
@@ -409,7 +408,7 @@ export const projectLogic = kea<projectLogicType>([
         await IntegrationsApi.pushSecrets(
           values.jwtToken!,
           values.integrations,
-          values.inputValue
+          values.inputValue,
         );
         if (isGithubLocalMock) {
           toast.success("Pushed to GitHub (local mock — no secrets sent)", {
@@ -457,7 +456,7 @@ export const projectLogic = kea<projectLogicType>([
         const patch = createPatch(
           `version_${i + 1}_to_${i + 2}`,
           oldVersion.content,
-          newVersion.content
+          newVersion.content,
         );
 
         const cleanPatch = patch
