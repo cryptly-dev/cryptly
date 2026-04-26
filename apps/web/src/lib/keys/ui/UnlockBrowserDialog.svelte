@@ -1,1 +1,1 @@
-<p class="text-sm text-base-content/70">Browser unlock flow placeholder.</p>
+<p class="text-sm text-muted-foreground">Browser unlock flow placeholder.</p>
