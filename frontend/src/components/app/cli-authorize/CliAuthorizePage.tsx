@@ -161,11 +161,7 @@ export function CliAuthorizePage() {
           <h1 className="text-[34px] md:text-[40px] font-semibold text-foreground tracking-tight leading-[1.05]">
             {load.kind === "ready" ? (
               <>
-                Authorize{" "}
-                <span className="text-muted-foreground">
-                  {load.session.deviceName}
-                </span>
-                ?
+                Authorize this device?
               </>
             ) : approveState === "done" ? (
               <>
@@ -189,11 +185,18 @@ export function CliAuthorizePage() {
             )}
           </h1>
           {load.kind === "ready" && approveState !== "done" && (
-            <p className="mt-5 text-[15px] text-muted-foreground leading-[1.7]">
-              The CLI on this device will get a long-lived access to your
-              account, and a copy of your private key so it can decrypt project
-              secrets locally.
-            </p>
+            <>
+              <div className="mt-5">
+                <code className="inline-block max-w-full break-all rounded-md border border-border/60 bg-neutral-900/40 px-2.5 py-1 font-mono text-[13px] text-foreground">
+                  {load.session.deviceName}
+                </code>
+              </div>
+              <p className="mt-4 text-[15px] text-muted-foreground leading-[1.7]">
+                The CLI on this device will get a long-lived access to your
+                account, and a copy of your private key so it can decrypt
+                project secrets locally.
+              </p>
+            </>
           )}
         </div>
 
@@ -242,13 +245,7 @@ export function CliAuthorizePage() {
                   <div className="text-xs text-destructive pl-1">{error}</div>
                 )}
 
-                <div className="flex items-start gap-2 text-[12px] text-amber-500/90 leading-relaxed pt-2 pl-1">
-                  <AlertTriangle className="size-3.5 flex-shrink-0 mt-0.5" />
-                  <span>
-                    Only authorize devices you trust. The CLI keeps a copy of
-                    your private key on disk.
-                  </span>
-                </div>
+
 
                 <div className="flex items-center justify-between gap-2 pt-5">
                   <button

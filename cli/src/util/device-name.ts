@@ -1,10 +1,10 @@
-import { hostname, platform, userInfo } from "node:os";
+import { hostname, userInfo } from "node:os";
 
 export function deviceName(): string {
   try {
     const host = hostname();
     const user = userInfo().username;
-    return `${user}@${host} · ${platform()}`;
+    return `${user}@${host}`;
   } catch {
     return "cryptly cli";
   }
