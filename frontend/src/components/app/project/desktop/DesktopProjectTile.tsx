@@ -20,6 +20,7 @@ import { ftuxLogic } from "@/lib/logics/ftuxLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import type { SearchableProject } from "@/lib/logics/searchLogic";
 import { searchLogic } from "@/lib/logics/searchLogic";
+import { normalizeProjectSettings } from "@/lib/project-settings";
 import { cn } from "@/lib/utils";
 import { IconBrandGithub, IconUsers } from "@tabler/icons-react";
 import { BracketsIcon } from "@/components/ui/BracketsIcon";
@@ -212,6 +213,7 @@ export function DesktopProjectTile() {
                         value={inputValue}
                         onChange={(v) => setInputValue(v)}
                         readOnly={isReadOnly || isSwitching}
+                        revealOn={normalizeProjectSettings(projectData.settings).revealOn}
                       />
                     </div>
                     {/* Pill */}
@@ -454,7 +456,7 @@ function ProjectHeader({ activeTab, onTabChange }: ProjectHeaderProps) {
                 <motion.div
                   layoutId="active-tab-desktop"
                   className="absolute left-2 right-2 -bottom-px h-[2px] rounded-full"
-                  style={{ backgroundColor: "#c9b287" }}
+                  style={{ backgroundColor: "#DDA15E" }}
                   transition={{
                     type: "spring",
                     stiffness: 380,
@@ -594,7 +596,7 @@ function ProjectHeaderSkeleton({ activeTab, onTabChange }: ProjectHeaderProps) {
                 <span
                   aria-hidden
                   className="absolute left-2 right-2 -bottom-px h-[2px] rounded-full"
-                  style={{ backgroundColor: "#c9b287" }}
+                  style={{ backgroundColor: "#DDA15E" }}
                 />
               )}
             </button>

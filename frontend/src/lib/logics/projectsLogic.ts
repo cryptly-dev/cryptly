@@ -6,7 +6,9 @@ import { ProjectsApi, type Project } from "../api/projects.api";
 import { UserApi } from "../api/user.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
+import type { ProjectSettings } from "../project-settings";
 import { authLogic } from "./authLogic";
+
 import type { projectsLogicType } from "./projectsLogicType";
 
 export const projectsLogic = kea<projectsLogicType>([
@@ -14,12 +16,13 @@ export const projectsLogic = kea<projectsLogicType>([
 
   connect({
     values: [authLogic, ["jwtToken", "userData"]],
+    actions: [authLogic, ["loadUserData"]],
   }),
 
   actions({
     addProject: (
-      project: { name: string },
-      navigateCallback?: (projectId: string) => void
+      project: { name: string; settings: ProjectSettings },
+      navigateCallback?: (projectId: string) => void,
     ) => ({ project, navigateCallback }),
     readProjectById: (projectId: string) => ({ projectId }),
     loadProjects: true,
@@ -51,19 +54,20 @@ export const projectsLogic = kea<projectsLogicType>([
     ],
   }),
 
-  listeners(({ values, asyncActions }) => ({
+  listeners(({ values, asyncActions, actions }) => ({
     addProject: async ({ project, navigateCallback }): Promise<void> => {
       const projectKey = await SymmetricCrypto.generateProjectKey();
 
-      const content = `# this is a comment\nTHIS_IS_A_SECRET=super secret value`;
+      const content = `# Define your secrets below. Example:\nAPI_KEY="your-value-here"\nDATABASE_URL="postgres://..."`;
+
       const contentEncrypted = await SymmetricCrypto.encrypt(
         content,
-        projectKey
+        projectKey,
       );
 
       const projectKeyEncrypted = await AsymmetricCrypto.encrypt(
         projectKey,
-        values.userData!.publicKey!
+        values.userData!.publicKey!,
       );
 
       const proj = await ProjectsApi.createProject(values.jwtToken!, {
@@ -72,9 +76,15 @@ export const projectsLogic = kea<projectsLogicType>([
         },
         encryptedSecrets: contentEncrypted,
         name: project.name,
+        settings: project.settings,
+      });
+
+      await UserApi.updateMe(values.jwtToken!, {
+        projectCreationDefaults: project.settings,
       });
 
       await asyncActions.loadProjects();
+      await actions.loadUserData();
 
       if (navigateCallback) {
         navigateCallback(proj.id);

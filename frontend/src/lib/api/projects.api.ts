@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { ProjectSettings } from "../project-settings";
 import type { SuggestedUser } from "./user.api";
 
 export enum ProjectMemberRole {
@@ -23,6 +24,7 @@ export interface Project {
   encryptedSecrets: string;
   members: ProjectMember[];
   updatedAt: string;
+  settings: ProjectSettings;
   integrations: {
     githubInstallationId: number;
   };
@@ -47,6 +49,7 @@ export interface CreateProjectDto {
   name: string;
   encryptedSecrets: string;
   encryptedSecretsKeys: Record<string, string>;
+  settings: ProjectSettings;
 }
 
 export interface UpdateProjectContentDto {
@@ -56,6 +59,7 @@ export interface UpdateProjectContentDto {
 export interface UpdateProjectDto {
   name?: string;
   githubInstallationId?: number | null;
+  settings?: ProjectSettings;
 }
 
 export interface RemoveMemberDto {

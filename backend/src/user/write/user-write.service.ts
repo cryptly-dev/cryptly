@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, UpdateQuery } from 'mongoose';
+import { normalizeProjectSettings } from '../../shared/types/project-settings';
 import { AuthMethod } from '../core/enum/auth-method.enum';
 import { UserEntity } from '../core/entities/user.entity';
 import { UserNormalized } from '../core/entities/user.interface';
@@ -82,6 +83,10 @@ export class UserWriteService {
 
     if (dto.projectsOrder) {
       updateQuery.projectsOrder = dto.projectsOrder;
+    }
+
+    if (dto.projectCreationDefaults !== undefined) {
+      updateQuery.projectCreationDefaults = normalizeProjectSettings(dto.projectCreationDefaults);
     }
 
     const user = await this.userModel.findOneAndUpdate(

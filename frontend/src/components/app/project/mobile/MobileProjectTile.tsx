@@ -25,6 +25,7 @@ import { useProjects } from "@/lib/hooks/useProjects";
 import { authLogic } from "@/lib/logics/authLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { projectsLogic } from "@/lib/logics/projectsLogic";
+import { normalizeProjectSettings } from "@/lib/project-settings";
 import { searchLogic, type SearchableProject } from "@/lib/logics/searchLogic";
 import { cn, getRelativeTime } from "@/lib/utils";
 import {
@@ -198,6 +199,7 @@ export function MobileProjectTile() {
                     value={inputValue}
                     onChange={(v) => setInputValue(v)}
                     readOnly={isReadOnly || isSwitching}
+                    revealOn={normalizeProjectSettings(projectData.settings).revealOn}
                   />
                 </div>
                 {/* Changed-by label — bottom */}
@@ -299,7 +301,7 @@ function MobileTabsRow({
                 <motion.div
                   layoutId="active-tab-mobile"
                   className="absolute left-2 right-2 bottom-0 h-[2px] rounded-full"
-                  style={{ backgroundColor: "#c9b287" }}
+                  style={{ backgroundColor: "#DDA15E" }}
                   transition={{
                     type: "spring",
                     stiffness: 380,

@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, UpdateQuery } from 'mongoose';
 import { ProjectSecretsVersionWriteService } from '../../project-secrets-version/write/project-secrets-version-write.service';
 import { Role } from '../../shared/types/role.enum';
+import { normalizeProjectSettings } from '../../shared/types/project-settings';
 import { ProjectEntity } from '../core/entities/project.entity';
 import { ProjectNormalized } from '../core/entities/project.interface';
 import { ProjectSerializer } from '../core/entities/project.serializer';
@@ -21,6 +22,7 @@ export class ProjectWriteService {
       name: dto.name,
       members: { [userId]: Role.Admin },
       encryptedSecretsKeys: dto.encryptedSecretsKeys,
+      settings: normalizeProjectSettings(dto.settings),
     });
 
     await this.projectSecretsVersionWriteService.create({
@@ -130,6 +132,7 @@ export class ProjectWriteService {
     return {
       $set: {
         ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.settings !== undefined && { settings: normalizeProjectSettings(dto.settings) }),
       },
     };
   }

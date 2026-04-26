@@ -1,3 +1,6 @@
+import {
+  ProjectRevealOnPicker,
+} from "@/components/app/project/ProjectRevealOnPicker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,19 +14,51 @@ import {
   InputWithActions,
 } from "@/components/ui/input-with-actions";
 import { Spinner } from "@/components/ui/spinner";
-import { ProjectMemberRole } from "@/lib/api/projects.api";
+import {
+  ProjectMemberRole,
+  type ProjectMember,
+} from "@/lib/api/projects.api";
 import { authLogic } from "@/lib/logics/authLogic";
 import { projectLogic } from "@/lib/logics/projectLogic";
 import { projectSettingsLogic } from "@/lib/logics/projectSettingsLogic";
 import {
+  normalizeProjectSettings,
+  type ProjectRevealOn,
+} from "@/lib/project-settings";
+import {
   IconCheck,
   IconEdit,
+  IconEye,
+  IconEyeCode,
+  IconEyeOff,
+  IconShieldLock,
   IconTrash,
   IconUserMinus,
   IconX,
 } from "@tabler/icons-react";
 import { useActions, useAsyncActions, useValues } from "kea";
 import { useEffect, useMemo, useState } from "react";
+
+const REVEAL_ON_META: Record<
+  ProjectRevealOn,
+  { label: string; description: string; Icon: typeof IconEye }
+> = {
+  always: {
+    label: "Always",
+    description: "Values stay visible in the editor",
+    Icon: IconEye,
+  },
+  hover: {
+    label: "Hover",
+    description: "Values stay masked until hover or click",
+    Icon: IconEyeCode,
+  },
+  never: {
+    label: "Never",
+    description: "Values stay masked and copy without revealing",
+    Icon: IconEyeOff,
+  },
+};
 
 interface ProjectSettingsDialogProps {
   open: boolean;
@@ -154,6 +189,130 @@ function RenameProjectSection() {
   );
 }
 
+function RevealOnSection() {
+  const { projectData, currentUserRole } = useValues(projectLogic);
+  const { updateProjectLoading } = useValues(projectSettingsLogic);
+  const { updateProject } = useAsyncActions(projectSettingsLogic);
+
+  const isAdmin = currentUserRole === ProjectMemberRole.Admin;
+
+  const currentRevealOn = normalizeProjectSettings(projectData?.settings).revealOn;
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftRevealOn, setDraftRevealOn] =
+    useState<ProjectRevealOn>(currentRevealOn);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (isEditing) {
+      setDraftRevealOn(currentRevealOn);
+    }
+  }, [isEditing, currentRevealOn]);
+
+  const handleSave = async () => {
+    if (isSaving || draftRevealOn === currentRevealOn) {
+      setIsEditing(false);
+      return;
+    }
+    try {
+      setIsSaving(true);
+      await updateProject({ settings: { revealOn: draftRevealOn } });
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!isAdmin) {
+    return (
+      <div className="space-y-3 overflow-hidden">
+        <div className="flex items-center gap-2">
+          <IconShieldLock className="size-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium">Reveal on</h3>
+        </div>
+        <div className="rounded-lg border border-dashed border-border/50 bg-neutral-800/20 px-4 py-6 text-center">
+          <div className="text-sm text-muted-foreground">
+            Only <span className="font-medium underline">Admins</span> can
+            change project reveal settings.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const meta = REVEAL_ON_META[currentRevealOn];
+  const CurrentIcon = meta.Icon;
+
+  return (
+    <div className="space-y-3 overflow-hidden">
+      <div className="flex items-center gap-2">
+        <IconShieldLock className="size-4 text-muted-foreground" />
+        <h3 className="text-sm font-medium">Reveal on</h3>
+      </div>
+
+      {isEditing ? (
+        <div className="rounded-lg border border-border/50 bg-neutral-800/20 p-3 space-y-3">
+          <ProjectRevealOnPicker
+            value={draftRevealOn}
+            onChange={setDraftRevealOn}
+            disabled={isSaving || updateProjectLoading}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing(false)}
+              disabled={isSaving || updateProjectLoading}
+              className="cursor-pointer"
+            >
+              <IconX className="size-4 mr-1.5" />
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={
+                isSaving ||
+                updateProjectLoading ||
+                draftRevealOn === currentRevealOn
+              }
+              className="cursor-pointer"
+            >
+              {isSaving || updateProjectLoading ? (
+                <Spinner className="size-4 mr-1.5" />
+              ) : (
+                <IconCheck className="size-4 mr-1.5" />
+              )}
+              Save
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border/50 bg-neutral-800/20 overflow-hidden">
+          <div className="group flex items-center gap-3 px-4 py-2.5 hover:bg-neutral-800/40 transition-colors">
+            <CurrentIcon className="size-4 text-muted-foreground flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">{meta.label}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {meta.description}
+              </div>
+            </div>
+            <Button
+              onClick={() => setIsEditing(true)}
+              variant="ghost"
+              size="sm"
+              className="cursor-pointer h-8 px-2 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <IconEdit className="size-4 mr-1.5" />
+              Edit
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DangerZoneSection() {
   const { deleteProjectLoading } = useValues(projectSettingsLogic);
 
@@ -166,7 +325,7 @@ function DangerZoneSection() {
 
   const myRole = useMemo(
     () =>
-      projectData?.members.find((member) => member.id === userData?.id)?.role,
+      projectData?.members.find((member: ProjectMember) => member.id === userData?.id)?.role,
     [projectData?.members, userData?.id]
   );
 
@@ -271,6 +430,7 @@ export function SettingsTabContent() {
       </div>
 
       <RenameProjectSection />
+      <RevealOnSection />
       <DangerZoneSection />
     </div>
   );
@@ -300,6 +460,7 @@ export function ProjectSettingsDialog({
           </DialogHeader>
 
           <RenameProjectSection />
+          <RevealOnSection />
           <DangerZoneSection />
         </div>
       </DialogContent>

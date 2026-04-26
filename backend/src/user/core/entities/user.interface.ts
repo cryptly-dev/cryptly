@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ProjectRevealOn, ProjectSettings } from '../../../shared/types/project-settings';
 import { AuthMethod } from '../enum/auth-method.enum';
 
 export class UserPartialNormalized {
@@ -13,7 +14,13 @@ export class UserNormalized extends UserPartialNormalized {
   public authMethod: AuthMethod;
   public privateKeyEncrypted?: string;
   public projectsOrder: string[];
+  public projectCreationDefaults: ProjectSettings;
   public isAdmin: boolean;
+}
+
+export class ProjectCreationDefaultsSerialized {
+  @ApiProperty({ enum: ProjectRevealOn })
+  public revealOn: ProjectRevealOn;
 }
 
 export class UserPartialSerialized {
@@ -39,6 +46,9 @@ export class UserSerialized extends UserPartialSerialized {
 
   @ApiPropertyOptional()
   public privateKeyEncrypted?: string;
+
+  @ApiProperty({ type: ProjectCreationDefaultsSerialized })
+  public projectCreationDefaults: ProjectCreationDefaultsSerialized;
 
   @ApiProperty()
   public isAdmin: boolean;

@@ -1,3 +1,4 @@
+import AddProjectDialog from "@/components/dialogs/AddProjectDialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ import type { Project } from "@/lib/api/projects.api";
 import { UserApi } from "@/lib/api/user.api";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { searchLogic } from "@/lib/logics/searchLogic";
+import { DEFAULT_PROJECT_SETTINGS } from "@/lib/project-settings";
 import { suggestedProjectsLogic } from "@/lib/logics/suggestedProjectsLogic";
 import { useActions, useAsyncActions, useValues } from "kea";
 import {
@@ -50,7 +52,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 
 export function DesktopProjectsList() {
   const { projects, projectsLoading } = useValues(projectsLogic);
-  const { finalizeProjectsOrder, addProject } = useActions(projectsLogic);
+  const { finalizeProjectsOrder } = useActions(projectsLogic);
   const { userData, jwtToken } = useValues(authLogic);
   const { loadUserData } = useAsyncActions(authLogic);
   const { logout } = useAuth();
@@ -63,7 +65,7 @@ export function DesktopProjectsList() {
     hasInstallations,
   } = useValues(suggestedProjectsLogic);
   const { acceptSuggestion, dismissSuggestion } = useActions(
-    suggestedProjectsLogic
+    suggestedProjectsLogic,
   );
   const navigate = useNavigate();
 
@@ -81,15 +83,11 @@ export function DesktopProjectsList() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(projects !== undefined);
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState(
-    userData?.displayName || ""
+    userData?.displayName || "",
   );
   const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
 
-  // Inline project creation state
-  const [isAddingProject, setIsAddingProject] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const [isCreatingProject, setIsCreatingProject] = useState(false);
-  const newProjectInputRef = useRef<HTMLInputElement>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const { activeProject, pendingProjectId } = useProjects();
 
@@ -101,13 +99,10 @@ export function DesktopProjectsList() {
     height: number;
   } | null>(null);
 
-  const registerRowRef = useCallback(
-    (id: string, el: HTMLElement | null) => {
-      if (el) rowRefs.current.set(id, el);
-      else rowRefs.current.delete(id);
-    },
-    []
-  );
+  const registerRowRef = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) rowRefs.current.set(id, el);
+    else rowRefs.current.delete(id);
+  }, []);
 
   const indicatorProjectId = activeProject?.id ?? null;
 
@@ -119,8 +114,7 @@ export function DesktopProjectsList() {
     const containerRect = scrollRef.current.getBoundingClientRect();
     setIndicator((prev) => {
       const next = {
-        top:
-          rowRect.top - containerRect.top + scrollRef.current!.scrollTop,
+        top: rowRect.top - containerRect.top + scrollRef.current!.scrollTop,
         height: rowRect.height,
       };
       if (prev && prev.top === next.top && prev.height === next.height) {
@@ -144,7 +138,7 @@ export function DesktopProjectsList() {
     ro.observe(scroller);
     rowRefs.current.forEach((el) => ro.observe(el));
     return () => ro.disconnect();
-  }, [indicatorProjectId, localProjects, isAddingProject, measureIndicator]);
+  }, [indicatorProjectId, localProjects, measureIndicator]);
 
   useEffect(() => {
     if (userData?.displayName) {
@@ -173,36 +167,9 @@ export function DesktopProjectsList() {
     setIsEditingDisplayName(false);
   };
 
-  // Inline project creation handlers
-  const handleStartAddProject = () => {
-    setIsAddingProject(true);
-    setNewProjectName("");
+  const handleOpenAddDialog = () => {
     posthog.capture("add_project_button_clicked");
-    // Focus the input after render
-    setTimeout(() => newProjectInputRef.current?.focus(), 0);
-  };
-
-  const handleCreateProject = async () => {
-    if (!newProjectName.trim() || isCreatingProject) return;
-
-    setIsCreatingProject(true);
-    try {
-      await addProject({ name: newProjectName.trim() }, (projectId) =>
-        navigate({ to: `/app/project/${projectId}` })
-      );
-      setIsAddingProject(false);
-      setNewProjectName("");
-    } catch (error) {
-      console.error("Failed to create project:", error);
-    } finally {
-      setIsCreatingProject(false);
-    }
-  };
-
-  const handleCancelAddProject = () => {
-    if (isCreatingProject) return;
-    setIsAddingProject(false);
-    setNewProjectName("");
+    setIsAddDialogOpen(true);
   };
 
   useEffect(() => {
@@ -234,6 +201,10 @@ export function DesktopProjectsList() {
 
   return (
     <div className="h-full flex flex-col">
+      <AddProjectDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+      />
       {/* Top row: brand + search + add */}
       <div className="flex h-14 items-center gap-2 px-3 border-b border-border/50 flex-shrink-0">
         <Link
@@ -267,8 +238,7 @@ export function DesktopProjectsList() {
                 type="button"
                 aria-label="Add project"
                 className="text-muted-foreground hover:text-foreground hover:bg-neutral-800 cursor-pointer rounded-md w-7 h-7 flex items-center justify-center transition-colors flex-shrink-0"
-                onClick={handleStartAddProject}
-                disabled={isAddingProject}
+                onClick={handleOpenAddDialog}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -318,7 +288,7 @@ export function DesktopProjectsList() {
               <motion.div
                 aria-hidden
                 className="absolute left-0 w-[2px] pointer-events-none"
-                style={{ top: 0, backgroundColor: "#c9b287" }}
+                style={{ top: 0, backgroundColor: "#DDA15E" }}
                 initial={{ opacity: 0 }}
                 animate={{
                   opacity: 1,
@@ -343,65 +313,6 @@ export function DesktopProjectsList() {
               />
             </>
           )}
-          {/* Inline Add Project Input */}
-          {isAddingProject && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              onUpdate={measureIndicator}
-              onAnimationComplete={measureIndicator}
-              className="mb-0.5 px-2"
-            >
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm border border-primary/30 bg-primary/5">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <input
-                  ref={newProjectInputRef}
-                  type="text"
-                  value={newProjectName}
-                  onChange={(e) => setNewProjectName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreateProject();
-                    if (e.key === "Escape") handleCancelAddProject();
-                  }}
-                  onBlur={() => {
-                    // Small delay to allow button clicks to register
-                    setTimeout(() => {
-                      if (!isCreatingProject && !newProjectName.trim()) {
-                        handleCancelAddProject();
-                      }
-                    }, 150);
-                  }}
-                  placeholder="Project name..."
-                  disabled={isCreatingProject}
-                  className="flex-1 bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none min-w-0"
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCreateProject}
-                  disabled={!newProjectName.trim() || isCreatingProject}
-                  className="h-6 w-6 p-0 cursor-pointer"
-                >
-                  {isCreatingProject ? (
-                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  ) : (
-                    <Check className="h-3.5 w-3.5" />
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCancelAddProject}
-                  disabled={isCreatingProject}
-                  className="h-6 w-6 p-0 cursor-pointer"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
           {localProjects && localProjects.length > 0 ? (
             <Reorder.Group
               axis="y"
@@ -436,8 +347,7 @@ export function DesktopProjectsList() {
           ) : hasLoadedOnce &&
             localProjects != null &&
             localProjects.length === 0 &&
-            !projectsLoading &&
-            !isAddingProject ? (
+            !projectsLoading ? (
             <div className="px-2 py-4 text-sm text-muted-foreground">
               No projects yet
             </div>
@@ -478,8 +388,15 @@ export function DesktopProjectsList() {
                     disabled={acceptingRepoId !== null}
                     onClick={() => {
                       posthog.capture("suggested_project_accepted");
-                      acceptSuggestion(repo, (projectId) =>
-                        navigate({ to: `/app/project/${projectId}` })
+                      acceptSuggestion(
+                        repo,
+                        {
+                          revealOn:
+                            userData?.projectCreationDefaults.revealOn ??
+                            DEFAULT_PROJECT_SETTINGS.revealOn,
+                        },
+                        (projectId) =>
+                        navigate({ to: `/app/project/${projectId}` }),
                       );
                     }}
                     className="absolute inset-0 rounded-md cursor-pointer disabled:cursor-not-allowed"

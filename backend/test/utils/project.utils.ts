@@ -5,6 +5,7 @@ import * as request from 'supertest';
 import { CreateProjectBody } from '../../src/project/core/dto/create-project.body';
 import { ProjectEntity } from '../../src/project/core/entities/project.entity';
 import { ProjectSerialized } from '../../src/project/core/entities/project.interface';
+import { ProjectRevealOn } from '../../src/shared/types/project-settings';
 import { Role } from '../../src/shared/types/role.enum';
 import { UserUtils } from './user.utils';
 
@@ -24,6 +25,7 @@ export class ProjectUtils {
       name: 'test-project',
       encryptedSecretsKeys: {},
       encryptedSecrets: '',
+      settings: { revealOn: ProjectRevealOn.Hover },
     },
   ): Promise<ProjectSerialized> {
     const response = await request(this.app.getHttpServer())
