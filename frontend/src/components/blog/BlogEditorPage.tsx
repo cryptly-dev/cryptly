@@ -146,6 +146,31 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
     [uploadPastedImage]
   );
 
+  const handleDragOver = useCallback(
+    (event: React.DragEvent<HTMLTextAreaElement>) => {
+      if (Array.from(event.dataTransfer.types).includes("Files")) {
+        event.preventDefault();
+      }
+    },
+    []
+  );
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLTextAreaElement>) => {
+      const files = event.dataTransfer?.files;
+      if (!files || files.length === 0) return;
+      const images = Array.from(files).filter((file) =>
+        file.type.startsWith("image/")
+      );
+      if (images.length === 0) return;
+      event.preventDefault();
+      for (const file of images) {
+        void uploadPastedImage(file);
+      }
+    },
+    [uploadPastedImage]
+  );
+
   const handleCoverImagePaste = useCallback(
     (event: React.ClipboardEvent<HTMLInputElement>) => {
       const items = event.clipboardData?.items;
@@ -376,7 +401,7 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
             <div className="flex items-center gap-4">
               <span className="inline-flex items-center gap-1.5">
                 <ImageUp className="w-3.5 h-3.5" />
-                Paste images directly
+                Paste or drop images
               </span>
               <span>{wordCount} words</span>
             </div>
@@ -386,6 +411,8 @@ export function BlogEditorPage({ mode, slug }: BlogEditorPageProps) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onPaste={handlePaste}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
             spellCheck={false}
             className="flex-1 w-full resize-none bg-black px-6 py-6 text-[15px] leading-7 font-mono text-neutral-200 placeholder:text-neutral-700 focus:outline-none"
             placeholder="# Start typing…"
