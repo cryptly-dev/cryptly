@@ -60,6 +60,9 @@ inputs:
   gh-webhooks-secret:
     required: true
 
+  web-app-url:
+    required: true
+
 runs:
   using: "composite"
   steps:
@@ -95,5 +98,6 @@ runs:
           -e GH_WEBHOOKS_SECRET="${{ inputs.gh-webhooks-secret }}" \
           -e POSTHOG_API_KEY=${{ inputs.posthog-api-key }} \
           -e POSTHOG_HOST=${{ inputs.posthog-host }} \
+          -e WEB_APP_URL=${{ inputs.web-app-url }} \
           -e PORT=${{ inputs.application-port }} \
           ${{ inputs.image-name }}
