@@ -3,7 +3,10 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ProjectsApi } from "../api/projects.js";
 import { createAuthedClient } from "../api/client.js";
-import { readProjectLock, writeProjectLock } from "../config/project-link.js";
+import {
+  readProjectSyncState,
+  writeProjectSyncState,
+} from "../config/project-link.js";
 import { classifyAndRender } from "../util/diff.js";
 import { sha256 } from "../util/hash.js";
 import {
@@ -34,10 +37,10 @@ export async function pushCommand(options: PushOptions = {}): Promise<void> {
   }
 
   const remotePlain = await decryptSecrets(ctx);
-  const lock = await readProjectLock(cwd);
+  const sync = await readProjectSyncState(ctx.link.projectId);
   const remoteHash = sha256(ctx.project.encryptedSecrets);
 
-  if (lock && lock.lastSyncedHash !== remoteHash && !options.yes) {
+  if (sync && sync.lastSyncedHash !== remoteHash && !options.yes) {
     process.stderr.write(
       `\n${warn("Remote has changed since your last sync.", "Someone else has pushed in the meantime.")}\n`,
     );
@@ -56,7 +59,7 @@ export async function pushCommand(options: PushOptions = {}): Promise<void> {
 
   if (diff.kind === "identical") {
     process.stderr.write(`${info(`Nothing to push — ${c.bold(ctx.project.name)} is up to date.`)}\n`);
-    await writeProjectLock(cwd, {
+    await writeProjectSyncState(ctx.link.projectId, {
       lastSyncedHash: remoteHash,
       lastSyncedAt: new Date().toISOString(),
     });
@@ -81,7 +84,7 @@ export async function pushCommand(options: PushOptions = {}): Promise<void> {
 
   const newCiphertext = await encryptSecrets(ctx, localPlain);
   await ProjectsApi.updateContent(client, ctx.link.projectId, newCiphertext);
-  await writeProjectLock(cwd, {
+  await writeProjectSyncState(ctx.link.projectId, {
     lastSyncedHash: sha256(newCiphertext),
     lastSyncedAt: new Date().toISOString(),
   });

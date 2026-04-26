@@ -2,7 +2,7 @@ import { confirm } from "@inquirer/prompts";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createAuthedClient } from "../api/client.js";
-import { writeProjectLock } from "../config/project-link.js";
+import { writeProjectSyncState } from "../config/project-link.js";
 import { classifyAndRender } from "../util/diff.js";
 import { sha256 } from "../util/hash.js";
 import {
@@ -32,7 +32,7 @@ export async function pullCommand(options: PullOptions = {}): Promise<void> {
 
   if (localPlain === null) {
     await writeFile(localPath, remotePlain);
-    await writeProjectLock(cwd, {
+    await writeProjectSyncState(ctx.link.projectId, {
       lastSyncedHash: sha256(ctx.project.encryptedSecrets),
       lastSyncedAt: new Date().toISOString(),
     });
@@ -46,7 +46,7 @@ export async function pullCommand(options: PullOptions = {}): Promise<void> {
 
   if (diff.kind === "identical") {
     process.stderr.write(`${info(`Up to date with ${c.bold(ctx.project.name)}.`)}\n`);
-    await writeProjectLock(cwd, {
+    await writeProjectSyncState(ctx.link.projectId, {
       lastSyncedHash: sha256(ctx.project.encryptedSecrets),
       lastSyncedAt: new Date().toISOString(),
     });
@@ -70,7 +70,7 @@ export async function pullCommand(options: PullOptions = {}): Promise<void> {
   }
 
   await writeFile(localPath, remotePlain);
-  await writeProjectLock(cwd, {
+  await writeProjectSyncState(ctx.link.projectId, {
     lastSyncedHash: sha256(ctx.project.encryptedSecrets),
     lastSyncedAt: new Date().toISOString(),
   });

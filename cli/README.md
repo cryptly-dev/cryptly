@@ -25,8 +25,9 @@ zero-knowledge model as the web app:
   your private key on disk, then encrypt/decrypt the secrets file locally.
 
 Auth state is stored in `~/.cryptly/auth.json` with mode `0600`. The
-project↔directory link lives in a committed `.cryptly` file, with a
-`.cryptly.lock` (gitignore it) for last-pulled bookkeeping.
+project↔directory link lives in a committed `.cryptly` file. Per-machine
+sync state (the cursor used to detect "did someone push since I last
+pulled?") lives in `~/.cryptly/sync/<projectId>.json`, also `0600`.
 
 ## Commands
 

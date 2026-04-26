@@ -1,6 +1,10 @@
-import { readFile, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { PROJECT_LINK_FILE, PROJECT_LOCK_FILE } from "./paths.js";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import {
+  PROJECT_LINK_FILE,
+  SYNC_STATE_DIR,
+  syncStatePathFor,
+} from "./paths.js";
 
 export interface ProjectLink {
   projectId: string;
@@ -8,7 +12,7 @@ export interface ProjectLink {
   file: string;
 }
 
-export interface ProjectLockState {
+export interface ProjectSyncState {
   /** SHA-256 of the last `encryptedSecrets` we successfully pulled or pushed. */
   lastSyncedHash: string;
   lastSyncedAt: string;
@@ -34,22 +38,25 @@ export async function writeProjectLink(cwd: string, link: ProjectLink): Promise<
   await writeFile(path, JSON.stringify(link, null, 2) + "\n");
 }
 
-export async function readProjectLock(cwd: string): Promise<ProjectLockState | null> {
-  const path = join(cwd, PROJECT_LOCK_FILE);
+export async function readProjectSyncState(
+  projectId: string,
+): Promise<ProjectSyncState | null> {
   try {
-    const raw = await readFile(path, "utf8");
-    return JSON.parse(raw) as ProjectLockState;
+    const raw = await readFile(syncStatePathFor(projectId), "utf8");
+    return JSON.parse(raw) as ProjectSyncState;
   } catch (e: any) {
     if (e?.code === "ENOENT") return null;
     throw e;
   }
 }
 
-export async function writeProjectLock(cwd: string, lock: ProjectLockState): Promise<void> {
-  const path = join(cwd, PROJECT_LOCK_FILE);
-  await writeFile(path, JSON.stringify(lock, null, 2) + "\n");
-}
-
-export async function clearProjectLock(cwd: string): Promise<void> {
-  await rm(join(cwd, PROJECT_LOCK_FILE), { force: true });
+export async function writeProjectSyncState(
+  projectId: string,
+  state: ProjectSyncState,
+): Promise<void> {
+  const path = syncStatePathFor(projectId);
+  await mkdir(SYNC_STATE_DIR, { recursive: true, mode: 0o700 });
+  await writeFile(path, JSON.stringify(state, null, 2) + "\n", { mode: 0o600 });
+  await chmod(dirname(path), 0o700).catch(() => {});
+  await chmod(path, 0o600).catch(() => {});
 }
