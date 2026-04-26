@@ -18,17 +18,22 @@ import { subscriptions } from "kea-subscriptions";
 import { IntegrationsApi, type Integration } from "../api/integrations.api";
 import {
   ProjectsApi,
+  ProjectMemberRole,
   type DecryptedVersion,
   type ProjectMember,
 } from "../api/projects.api";
 import { createAuthedFetch } from "../auth/tokenRefresh";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
+import { keystore } from "../crypto/keystore";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
 import { authLogic } from "./authLogic";
 import { EventSourceWrapper } from "./EventSourceWrapper";
 import { keyLogic } from "./keyLogic";
 import type { projectLogicType } from "./projectLogicType";
 import { projectsLogic } from "./projectsLogic";
+
+const isGithubLocalMock =
+  import.meta.env.VITE_GITHUB_LOCAL_MOCK === "true";
 
 export interface ProjectLogicProps {
   projectId: string;
@@ -38,7 +43,7 @@ export interface DecryptedProject {
   id: string;
   name: string;
   content: string;
-  passphraseAsKey: string;
+  aesKey: CryptoKey;
   members: ProjectMember[];
   updatedAt: string;
   securityLevel: string | null;
@@ -66,6 +71,9 @@ export interface Patch {
   content: string;
 }
 
+const SYSTEM_AUTHOR_AVATAR =
+  "https://api.dicebear.com/9.x/bottts-neutral/svg?scale=80&backgroundColor=546e7a,757575,6d4c41&seed=Avery";
+
 /** Monaco / OS paste can change CRLF; avoids false "dirty" after save. */
 function normalizeEditorText(text: string) {
   return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
@@ -81,7 +89,7 @@ export const projectLogic = kea<projectLogicType>([
   connect({
     values: [
       keyLogic,
-      ["privateKeyDecrypted"],
+      ["hasMasterKey"],
       authLogic,
       ["userData", "jwtToken"],
       projectsLogic,
@@ -204,21 +212,31 @@ export const projectLogic = kea<projectLogicType>([
             props.projectId
           );
 
-          const projectKeyDecrypted = await AsymmetricCrypto.decrypt(
-            projectData?.encryptedSecretsKeys![values.userData!.id]!,
-            values.privateKeyDecrypted!
-          );
-          const contentDecrypted = await SymmetricCrypto.decrypt(
-            projectData?.encryptedSecrets!,
-            projectKeyDecrypted
+          let aesKey = await keystore.getProjectKey(projectData.id);
+          if (!aesKey) {
+            const masterKey = await keystore.getMasterKey();
+            if (!masterKey) {
+              throw new Error("Browser is locked");
+            }
+            const projectKeyBase64 = await AsymmetricCrypto.decryptWithKey(
+              projectData.encryptedSecretsKeys![values.userData!.id]!,
+              masterKey
+            );
+            aesKey = await SymmetricCrypto.importAesKey(projectKeyBase64);
+            await keystore.setProjectKey(projectData.id, aesKey);
+          }
+
+          const contentDecrypted = await SymmetricCrypto.decryptWithKey(
+            projectData.encryptedSecrets!,
+            aesKey
           );
           actions.setInputValue(contentDecrypted);
 
           return {
-            id: projectData?.id!,
-            name: projectData?.name!,
+            id: projectData.id!,
+            name: projectData.name!,
             content: contentDecrypted,
-            passphraseAsKey: projectKeyDecrypted,
+            aesKey,
             members: projectData?.members!,
             updatedAt: projectData?.updatedAt!,
             securityLevel: projectData?.securityLevel ?? null,
@@ -236,7 +254,7 @@ export const projectLogic = kea<projectLogicType>([
             props.projectId
           );
 
-          const myKey = values.projectData?.passphraseAsKey;
+          const myKey = values.projectData?.aesKey;
 
           if (!myKey) {
             return [];
@@ -245,7 +263,7 @@ export const projectLogic = kea<projectLogicType>([
           const decryptedVersions: DecryptedVersion[] = [];
 
           for (const version of versions) {
-            const contentDecrypted = await SymmetricCrypto.decrypt(
+            const contentDecrypted = await SymmetricCrypto.decryptWithKey(
               version.encryptedSecrets,
               myKey
             );
@@ -316,7 +334,7 @@ export const projectLogic = kea<projectLogicType>([
             } else {
               actions.handleSecretsUpdate(secretsUpdatedEvent);
             }
-          } catch (e) {}
+          } catch (e) { }
         });
 
         eventSource.onError(() => {
@@ -339,12 +357,12 @@ export const projectLogic = kea<projectLogicType>([
     },
     handleSecretsUpdate: async ({ secretsUpdatedEvent }) => {
       const { newEncryptedSecrets, updatedAt } = secretsUpdatedEvent;
-      const projectKeyDecrypted = values.projectData?.passphraseAsKey;
-      if (!projectKeyDecrypted) return;
+      const aesKey = values.projectData?.aesKey;
+      if (!aesKey) return;
 
-      const contentDecrypted = await SymmetricCrypto.decrypt(
+      const contentDecrypted = await SymmetricCrypto.decryptWithKey(
         newEncryptedSecrets,
-        projectKeyDecrypted
+        aesKey
       );
 
       actions.setInputValue(contentDecrypted);
@@ -360,9 +378,9 @@ export const projectLogic = kea<projectLogicType>([
     updateProjectContent: async () => {
       actions.setIsSubmitting(true);
       try {
-        const encryptedContent = await SymmetricCrypto.encrypt(
+        const encryptedContent = await SymmetricCrypto.encryptWithKey(
           values.inputValue,
-          values.projectData?.passphraseAsKey!
+          values.projectData!.aesKey
         );
 
         await ProjectsApi.updateProjectContent(
@@ -393,18 +411,44 @@ export const projectLogic = kea<projectLogicType>([
           values.integrations,
           values.inputValue
         );
+        if (isGithubLocalMock) {
+          toast.success("Pushed to GitHub (local mock — no secrets sent)", {
+            richColors: true,
+          });
+        }
       } finally {
         actions.setIsPushing(false);
       }
     },
     computePatches: ({ versions }) => {
-      if (versions.length < 2) {
+      if (versions.length === 0) {
         actions.setPatches([]);
         return;
       }
 
       const chronologicalVersions = [...versions].reverse();
       const patches: Patch[] = [];
+
+      // Synthetic "system" entry for the very first version — it has no
+      // predecessor, so render its full content as additions authored by
+      // a synthetic System user.
+      const firstVersion = chronologicalVersions[0];
+      const initialContent = firstVersion.content
+        .split("\n")
+        .map((line) => `+${line}`)
+        .join("\n");
+      patches.push({
+        id: `initial_${firstVersion.id}`,
+        author: {
+          id: "system",
+          avatarUrl: SYSTEM_AUTHOR_AVATAR,
+          displayName: "System",
+          role: ProjectMemberRole.Read,
+        },
+        createdAt: firstVersion.createdAt,
+        updatedAt: firstVersion.updatedAt,
+        content: initialContent,
+      });
 
       for (let i = 0; i < chronologicalVersions.length - 1; i++) {
         const oldVersion = chronologicalVersions[i];
@@ -446,8 +490,8 @@ export const projectLogic = kea<projectLogicType>([
   })),
 
   subscriptions(({ actions }) => ({
-    privateKeyDecrypted: (privateKeyDecrypted) => {
-      if (privateKeyDecrypted) {
+    hasMasterKey: (hasMasterKey) => {
+      if (hasMasterKey) {
         actions.loadProjectData();
       }
     },

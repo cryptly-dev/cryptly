@@ -51,4 +51,8 @@ export class UserReadService {
 
     return users.map(UserSerializer.normalize);
   }
+
+  public async countAll(): Promise<number> {
+    return this.userModel.countDocuments().exec();
+  }
 }

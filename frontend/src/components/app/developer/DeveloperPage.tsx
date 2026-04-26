@@ -10,25 +10,19 @@ import {
 import { useActions, useValues } from "kea";
 import { keyLogic } from "@/lib/logics/keyLogic";
 import { authLogic } from "@/lib/logics/authLogic";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { UserApi } from "@/lib/api/user.api";
+import { keystore } from "@/lib/crypto/keystore";
 
 export function DeveloperPage() {
-  const { userData, privateKeyDecrypted, passphrase } = useValues(keyLogic);
-
-  const { setPassphrase, decryptPrivateKey } = useActions(keyLogic);
+  const { userData, browserIsUnlocked } = useValues(keyLogic);
+  const { setHasMasterKey, hydrateMasterKey } = useActions(keyLogic);
 
   const { loadUserData } = useActions(authLogic);
   const { jwtToken } = useValues(authLogic);
 
   const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
   const [hideNewAccountButton, setHideNewAccountButton] = useState(false);
-
-  useEffect(() => {
-    if (passphrase && userData?.privateKeyEncrypted) {
-      decryptPrivateKey();
-    }
-  }, [passphrase, userData?.privateKeyEncrypted]);
 
   const copyToClipboard = async (value?: string | null) => {
     if (!value) return;
@@ -41,20 +35,19 @@ export function DeveloperPage() {
     userData?.publicKey && userData?.privateKeyEncrypted
   );
 
-  const isBrowserUnlocked = Boolean(privateKeyDecrypted);
-
   const simulateNewAccount = async () => {
     if (!jwtToken) return;
     await UserApi.deleteKeys(jwtToken);
+    await keystore.wipeAll();
+    setHasMasterKey(false);
     await loadUserData();
-    await decryptPrivateKey();
     setShowNewAccountDialog(false);
     setHideNewAccountButton(true);
   };
 
   const simulateNewBrowser = async () => {
-    setPassphrase("");
-    await decryptPrivateKey();
+    await keystore.wipeAll();
+    await hydrateMasterKey();
   };
 
   return (
@@ -70,9 +63,9 @@ export function DeveloperPage() {
           </Row>
           <Row label="Is this browser unlocked?">
             <Value
-              onClick={() => copyToClipboard(isBrowserUnlocked ? "Yes" : "No")}
+              onClick={() => copyToClipboard(browserIsUnlocked ? "Yes" : "No")}
             >
-              {isBrowserUnlocked ? "Yes" : "No"}
+              {browserIsUnlocked ? "Yes" : "No"}
             </Value>
           </Row>
           <Row label="Public key">
@@ -91,12 +84,11 @@ export function DeveloperPage() {
               {userData?.privateKeyEncrypted || "—"}
             </Value>
           </Row>
-          <Row label="Decrypted private key">
-            <Value
-              title={privateKeyDecrypted || ""}
-              onClick={() => copyToClipboard(privateKeyDecrypted)}
-            >
-              {privateKeyDecrypted || "—"}
+          <Row label="Master key">
+            <Value>
+              {browserIsUnlocked
+                ? "Held as non-extractable CryptoKey in IndexedDB"
+                : "—"}
             </Value>
           </Row>
         </div>

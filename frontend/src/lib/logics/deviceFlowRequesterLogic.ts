@@ -1,6 +1,7 @@
 import { actions, connect, events, kea, listeners, path, reducers } from "kea";
 import { DeviceFlowApi, type Device } from "../api/device-flow.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
+import { randomIntInRange } from "../crypto/crypto.utils";
 import { getDeviceId, getDeviceName } from "../utils";
 import { authLogic } from "./authLogic";
 import type { deviceFlowRequesterLogicType } from "./deviceFlowRequesterLogicType";
@@ -12,7 +13,7 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
 
   connect({
     values: [authLogic, ["jwtToken"]],
-    actions: [keyLogic, ["setPassphrase", "decryptPrivateKey"]],
+    actions: [keyLogic, ["unlock"]],
   }),
 
   actions({
@@ -93,7 +94,7 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
       const keyPair = await AsymmetricCrypto.generateKeyPair();
       actions.setUnlockRequestPrivateKey(keyPair.privateKey);
 
-      const pin = Math.floor(100000 + Math.random() * 900000).toString();
+      const pin = randomIntInRange(100000, 1000000).toString();
       actions.setUnlockRequestPin(pin);
 
       const requesterDeviceId = getDeviceId();
@@ -179,8 +180,7 @@ export const deviceFlowRequesterLogic = kea<deviceFlowRequesterLogicType>([
             values.unlockRequestPrivateKey
           );
 
-          actions.setPassphrase(decryptedPassphrase);
-          await actions.decryptPrivateKey();
+          await actions.unlock(decryptedPassphrase);
 
           actions.clearReceivedMessage();
         } catch (error) {

@@ -83,4 +83,61 @@ export class SymmetricCrypto {
     );
     return bytesToUtf8(new Uint8Array(plaintext));
   }
+
+  /** Imports a base64-encoded 32-byte AES key into a CryptoKey (extractable so it can be re-shared via invitations). */
+  public static async importAesKey(base64Key: string): Promise<CryptoKey> {
+    const subtle = getSubtle();
+    const keyBytes = base64ToU8(base64Key);
+    if (keyBytes.length !== 32) {
+      throw new Error("Invalid key. Expected 32-byte key (base64-encoded)");
+    }
+    return subtle.importKey(
+      "raw",
+      keyBytes,
+      { name: "AES-GCM", length: 256 },
+      true,
+      ["encrypt", "decrypt"]
+    );
+  }
+
+  /** Re-exports an AES CryptoKey to its base64 form, for invitation/share flows. */
+  public static async exportAesKey(key: CryptoKey): Promise<string> {
+    const subtle = getSubtle();
+    const raw = await subtle.exportKey("raw", key);
+    return u8ToBase64(new Uint8Array(raw));
+  }
+
+  public static async encryptWithKey(
+    data: string,
+    key: CryptoKey
+  ): Promise<string> {
+    const subtle = getSubtle();
+    const iv = randomBytes(12);
+    const ciphertext = await subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      utf8ToBytes(data)
+    );
+    const out = concatBytes(iv, new Uint8Array(ciphertext));
+    return u8ToBase64(out);
+  }
+
+  public static async decryptWithKey(
+    data: string,
+    key: CryptoKey
+  ): Promise<string> {
+    const subtle = getSubtle();
+    const input = base64ToU8(data);
+    if (input.length < 12 + 16) {
+      throw new Error("Ciphertext too short");
+    }
+    const iv = input.subarray(0, 12);
+    const ciphertext = input.subarray(12);
+    const plaintext = await subtle.decrypt(
+      { name: "AES-GCM", iv },
+      key,
+      ciphertext
+    );
+    return bytesToUtf8(new Uint8Array(plaintext));
+  }
 }

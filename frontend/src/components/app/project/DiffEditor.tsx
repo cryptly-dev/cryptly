@@ -59,13 +59,32 @@ export function DiffEditor({ value }: DiffEditorProps) {
 
   return (
     <Editor
-      className="ph-no-capture"
+      className="ph-no-capture diff-editor-readonly"
       height="100%"
       language="diff"
       theme="diffTheme"
       value={value}
+      onMount={(editor) => {
+        const dom = editor.getDomNode();
+        if (dom) {
+          dom.style.userSelect = "none";
+          (dom.style as CSSStyleDeclaration & { webkitUserSelect?: string }).webkitUserSelect =
+            "none";
+        }
+        editor.onDidFocusEditorText(() => {
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+        });
+        editor.onDidFocusEditorWidget(() => {
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+        });
+      }}
       options={{
         readOnly: true,
+        domReadOnly: true,
         minimap: { enabled: false },
         wordWrap: "on",
         scrollBeyondLastLine: false,
@@ -78,6 +97,9 @@ export function DiffEditor({ value }: DiffEditorProps) {
         occurrencesHighlight: "off",
         selectionHighlight: false,
         renderLineHighlight: "none",
+        contextmenu: false,
+        cursorStyle: "line-thin",
+        cursorBlinking: "solid",
         padding: { top: 16, bottom: 8 },
       }}
     />

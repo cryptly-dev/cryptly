@@ -1,6 +1,5 @@
 import AddProjectDialog from "@/components/dialogs/AddProjectDialog";
 import { Button } from "@/components/ui/button";
-import { CryptlyLogo } from "@/components/ui/CryptlyLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +25,6 @@ import { suggestedProjectsLogic } from "@/lib/logics/suggestedProjectsLogic";
 import { useActions, useAsyncActions, useValues } from "kea";
 import {
   ChevronRight,
-  FolderOpen,
   Info,
   LogOut,
   Pencil,
@@ -38,7 +36,14 @@ import {
   X,
 } from "lucide-react";
 import { motion, Reorder, useDragControls } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import DesktopProjectsListItem from "./DesktopProjectsListItem";
 import posthog from "posthog-js";
 import { authLogic } from "@/lib/logics/authLogic";
@@ -74,6 +79,7 @@ export function DesktopProjectsList() {
   }, [projects]);
 
   const [localProjects, setLocalProjects] = useState(uniqueProjects);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(projects !== undefined);
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState(
     userData?.displayName || ""
@@ -83,6 +89,59 @@ export function DesktopProjectsList() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const { activeProject, pendingProjectId } = useProjects();
+
+  // Sliding indicator (bg + left line) measured from the active row's DOM rect.
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const rowRefs = useRef(new Map<string, HTMLElement>());
+  const [indicator, setIndicator] = useState<{
+    top: number;
+    height: number;
+  } | null>(null);
+
+  const registerRowRef = useCallback(
+    (id: string, el: HTMLElement | null) => {
+      if (el) rowRefs.current.set(id, el);
+      else rowRefs.current.delete(id);
+    },
+    []
+  );
+
+  const indicatorProjectId = activeProject?.id ?? null;
+
+  const measureIndicator = useCallback(() => {
+    if (!indicatorProjectId) return;
+    const row = rowRefs.current.get(indicatorProjectId);
+    if (!row || !scrollRef.current) return;
+    const rowRect = row.getBoundingClientRect();
+    const containerRect = scrollRef.current.getBoundingClientRect();
+    setIndicator((prev) => {
+      const next = {
+        top:
+          rowRect.top - containerRect.top + scrollRef.current!.scrollTop,
+        height: rowRect.height,
+      };
+      if (prev && prev.top === next.top && prev.height === next.height) {
+        return prev;
+      }
+      return next;
+    });
+  }, [indicatorProjectId]);
+
+  useLayoutEffect(() => {
+    if (!indicatorProjectId) {
+      setIndicator(null);
+      return;
+    }
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+
+    measureIndicator();
+
+    const ro = new ResizeObserver(measureIndicator);
+    ro.observe(scroller);
+    rowRefs.current.forEach((el) => ro.observe(el));
+    return () => ro.disconnect();
+  }, [indicatorProjectId, localProjects, measureIndicator]);
 
   useEffect(() => {
     if (userData?.displayName) {
@@ -120,6 +179,11 @@ export function DesktopProjectsList() {
     setLocalProjects(uniqueProjects);
   }, [uniqueProjects]);
 
+  useEffect(() => {
+    if (projects !== undefined) setHasLoadedOnce(true);
+  }, [projects]);
+
+
   const listVariants = {
     hidden: {},
     visible: {
@@ -145,25 +209,20 @@ export function DesktopProjectsList() {
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
       />
-      {/* App Logo / Brand */}
-      <div className="px-4 py-4">
+      {/* Top row: brand + search + add */}
+      <div className="flex h-14 items-center gap-2 px-3 border-b border-border/50 flex-shrink-0">
         <Link
           to="/"
-          className="flex items-center gap-2.5 text-foreground hover:opacity-80 transition-opacity"
+          className="text-foreground hover:opacity-80 transition-opacity flex-shrink-0"
         >
-          <CryptlyLogo size={28} />
           <span className="font-semibold text-lg tracking-tight">Cryptly</span>
         </Link>
-      </div>
-
-      {/* Search */}
-      <div className="px-3 pb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
           <input
             type="search"
             name="project-search"
-            placeholder="Search projects..."
+            placeholder="Search…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             autoComplete="off"
@@ -173,49 +232,91 @@ export function DesktopProjectsList() {
             data-1p-ignore
             data-lpignore="true"
             data-form-type="other"
-            className="w-full h-9 pl-9 pr-3 rounded-md bg-muted/50 border-[0.5px] border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+            className="w-full h-8 pl-8 pr-2 rounded-md bg-muted/50 border-[0.5px] border-border/50 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
           />
         </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <motion.button
+                type="button"
+                aria-label="Add project"
+                className="text-muted-foreground hover:text-foreground hover:bg-neutral-800 cursor-pointer rounded-md w-7 h-7 flex items-center justify-center transition-colors flex-shrink-0"
+                onClick={handleOpenAddDialog}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Plus className="w-4 h-4" />
+              </motion.button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Add project</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Projects Section */}
       <div className="flex-1 overflow-hidden flex flex-col">
-        {/* Section Header */}
-        <div className="px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
-            <FolderOpen className="w-4 h-4" />
-            <span>Projects</span>
-            {projectsLoading ? (
-              <Spinner className="w-3.5 h-3.5 text-muted-foreground" />
-            ) : (
-              localProjects && (
-                <span className="text-muted-foreground">
-                  ({localProjects.length})
-                </span>
-              )
-            )}
-          </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.button
-                  type="button"
-                  aria-label="Add project"
-                  className="text-muted-foreground hover:text-foreground hover:bg-neutral-800 cursor-pointer rounded-md w-6 h-6 flex items-center justify-center transition-colors"
-                  onClick={handleOpenAddDialog}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Plus className="w-4 h-4" />
-                </motion.button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Add project</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-
         {/* Projects List */}
-        <div className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar px-2">
+        <div
+          ref={scrollRef}
+          className="relative flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-2"
+        >
+          {indicator && (
+            <>
+              <motion.div
+                aria-hidden
+                className="absolute left-0 right-0 bg-neutral-900 pointer-events-none"
+                style={{ top: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: 1,
+                  y: indicator.top,
+                  height: indicator.height,
+                }}
+                transition={{
+                  y: {
+                    type: "spring",
+                    stiffness: 360,
+                    damping: 36,
+                    mass: 0.9,
+                  },
+                  height: {
+                    type: "spring",
+                    stiffness: 360,
+                    damping: 36,
+                    mass: 0.9,
+                  },
+                  opacity: { duration: 0.18 },
+                }}
+              />
+              <motion.div
+                aria-hidden
+                className="absolute left-0 w-[2px] pointer-events-none"
+                style={{ top: 0, backgroundColor: "#c9b287" }}
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: 1,
+                  y: indicator.top,
+                  height: indicator.height,
+                }}
+                transition={{
+                  y: {
+                    type: "spring",
+                    stiffness: 360,
+                    damping: 36,
+                    mass: 0.9,
+                  },
+                  height: {
+                    type: "spring",
+                    stiffness: 360,
+                    damping: 36,
+                    mass: 0.9,
+                  },
+                  opacity: { duration: 0.18 },
+                }}
+              />
+            </>
+          )}
           {localProjects && localProjects.length > 0 ? (
             <Reorder.Group
               axis="y"
@@ -223,7 +324,6 @@ export function DesktopProjectsList() {
               onReorder={(newOrder) => {
                 setLocalProjects(newOrder);
               }}
-              className="space-y-0.5"
               as="nav"
               variants={listVariants}
               initial="hidden"
@@ -240,6 +340,7 @@ export function DesktopProjectsList() {
                     isActive={isActive}
                     isLoading={isLoading}
                     itemVariants={itemVariants}
+                    registerRef={registerRowRef}
                     onDragEnd={() => {
                       finalizeProjectsOrder(localProjects);
                     }}
@@ -247,7 +348,10 @@ export function DesktopProjectsList() {
                 );
               })}
             </Reorder.Group>
-          ) : !projectsLoading ? (
+          ) : hasLoadedOnce &&
+            localProjects != null &&
+            localProjects.length === 0 &&
+            !projectsLoading ? (
             <div className="px-2 py-4 text-sm text-muted-foreground">
               No projects yet
             </div>
@@ -424,17 +528,20 @@ function ProjectListItem({
   isLoading,
   itemVariants,
   onDragEnd,
+  registerRef,
 }: {
   project: Project;
   isActive: boolean;
   isLoading: boolean;
   itemVariants: any;
   onDragEnd: () => void;
+  registerRef: (id: string, el: HTMLElement | null) => void;
 }) {
   const dragControls = useDragControls();
 
   return (
     <Reorder.Item
+      ref={(el: HTMLElement | null) => registerRef(project.id, el)}
       value={project}
       className="list-none"
       variants={itemVariants}

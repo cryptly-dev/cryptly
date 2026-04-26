@@ -77,6 +77,10 @@ axios.interceptors.response.use(
       handleAuthFailure();
     }
 
+    if (status === 404 && requestUrl === "/users/me") {
+      authLogic.findMounted()?.actions.logout();
+    }
+
     return Promise.reject(error);
   }
 );

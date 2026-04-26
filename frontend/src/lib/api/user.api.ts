@@ -8,6 +8,7 @@ export interface User {
   displayName: string;
   publicKey?: string;
   privateKeyEncrypted?: string;
+  isAdmin: boolean;
 }
 
 export interface SuggestedUser {

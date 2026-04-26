@@ -178,6 +178,7 @@ export const suggestedProjectsLogic = kea<suggestedProjectsLogicType>([
         // 1. Create project
         const projectKey = await SymmetricCrypto.generateProjectKey();
         const content = `# Define your secrets below. Example:\nAPI_KEY="your-value-here"\nDATABASE_URL="postgres://..."`;
+
         const contentEncrypted = await SymmetricCrypto.encrypt(
           content,
           projectKey

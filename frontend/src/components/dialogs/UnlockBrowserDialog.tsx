@@ -27,10 +27,10 @@ import { useActions, useAsyncActions, useValues } from "kea";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export function UnlockBrowserDialog() {
-  const { browserIsUnlocked, shouldSetUpPassphrase } = useValues(keyLogic);
+  const { browserIsUnlocked, keysAreSetUp } = useValues(keyLogic);
   const { isLoggedIn } = useValues(authLogic);
   const { logout } = useAuth();
-  const { setPassphrase, decryptPrivateKey } = useAsyncActions(keyLogic);
+  const { unlock } = useAsyncActions(keyLogic);
   const { startRequester, stopRequester } = useActions(
     deviceFlowRequesterLogic
   );
@@ -42,8 +42,8 @@ export function UnlockBrowserDialog() {
   const passphraseInputRef = useRef<HTMLInputElement>(null);
 
   const open = useMemo(() => {
-    return !browserIsUnlocked && isLoggedIn && !shouldSetUpPassphrase;
-  }, [browserIsUnlocked, isLoggedIn, shouldSetUpPassphrase]);
+    return !browserIsUnlocked && isLoggedIn && keysAreSetUp;
+  }, [browserIsUnlocked, isLoggedIn, keysAreSetUp]);
 
   useEffect(() => {
     if (browserIsUnlocked) {
@@ -71,8 +71,7 @@ export function UnlockBrowserDialog() {
     if (!passphrase || submitting) return;
     setIsError(false);
     try {
-      setPassphrase(passphrase);
-      await decryptPrivateKey();
+      await unlock(passphrase);
     } catch (e) {
       setIsError(true);
       requestAnimationFrame(() => {

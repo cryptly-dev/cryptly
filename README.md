@@ -89,7 +89,7 @@ make local
 
 This will:
 
-- Install all dependencies (npm + pnpm)
+- Install all dependencies (pnpm)
 - Set up environment files automatically
 - Start MongoDB in Docker (port 2137)
 - Launch backend on `http://localhost:3000`

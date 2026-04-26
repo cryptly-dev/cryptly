@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import type { SignOptions } from 'jsonwebtoken';
 import { CustomJwtService } from './custom-jwt.service';
 import { getEnvConfig } from '../../shared/config/env-config';
 
@@ -8,7 +9,10 @@ import { getEnvConfig } from '../../shared/config/env-config';
     JwtModule.register({
       global: true,
       secret: getEnvConfig().auth.jwtSecret,
-      signOptions: { expiresIn: getEnvConfig().auth.jwtExpiresIn },
+      signOptions: {
+        expiresIn: getEnvConfig().auth
+          .jwtExpiresIn as SignOptions['expiresIn'],
+      },
     }),
   ],
   providers: [CustomJwtService],

@@ -1,223 +1,1429 @@
-import Beams from "@/components/Beams";
 import { GitHubIcon } from "@/components/ui/GitHubIcon";
-import { authLogic } from "@/lib/logics/authLogic";
-import { useNavigate } from "@tanstack/react-router";
-import { useValues } from "kea";
-import { ArrowRight, Check } from "lucide-react";
+import { SiteFooter } from "@/components/shared/SiteFooter";
+import { StatsApi, type Stats } from "@/lib/api/stats.api";
+import { cn } from "@/lib/utils";
+import {
+  ArrowRight,
+  Check,
+  Copy,
+  Search,
+  Users,
+  Plus,
+} from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect } from "react";
-import { ComplianceSection } from "./ComplianceSection";
-import { HowItWorksSection } from "./HowItWorksSection";
-import { WhyCryptlySection } from "./WhyCryptlySection";
-import { IntegrationsSection } from "./IntegrationsSection";
-import { ReviewsSection } from "./ReviewsSection";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-export function IndexPage() {
-  const navigate = useNavigate();
-  const { isLoggedIn } = useValues(authLogic);
+/* ────────────────────────────────────────────────────────────────────────────
+ * Cryptly landing. Soft layered card surfaces; app-grade primitives.
+ * ──────────────────────────────────────────────────────────────────────────── */
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      navigate({ to: "/app/project", replace: true });
-    }
-  }, [isLoggedIn, navigate]);
+const ACCENT = "#c9b287";
+const HERO_EASE = [0, 0.55, 0.45, 1] as const;
+const HERO_DURATION = 0.6;
 
-  const handleDashboardClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (isLoggedIn) {
-      navigate({ to: "/app/project" });
-    } else {
-      navigate({ to: "/app/login" });
-    }
-  };
+function Shell({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("mx-auto max-w-6xl px-6", className)}>{children}</div>
+  );
+}
+
+function Pin() {
+  return (
+    <span
+      aria-hidden
+      className="inline-block h-1 w-1 rounded-full align-middle"
+      style={{ backgroundColor: ACCENT }}
+    />
+  );
+}
+
+function PrimaryCTA({
+  children,
+  href = "/app",
+}: {
+  children: React.ReactNode;
+  href?: string;
+}) {
+  return (
+    <a
+      href={href}
+      className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-white text-black px-5 py-2.5 text-sm font-semibold shadow-lg shadow-black/40 transition-all duration-300 hover:shadow-xl hover:bg-neutral-100 [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:translate-x-0.5"
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+      />
+      <span className="relative z-10 inline-flex items-center gap-2">
+        {children}
+      </span>
+    </a>
+  );
+}
+
+function GhostCTA({
+  children,
+  href,
+}: {
+  children: React.ReactNode;
+  href?: string;
+}) {
+  return (
+    <a
+      href={href ?? "#"}
+      className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-card/40 backdrop-blur-sm px-5 py-2.5 text-sm text-foreground hover:bg-neutral-800/60 hover:border-border transition-colors"
+    >
+      {children}
+    </a>
+  );
+}
+
+function SoftDivider() {
+  return (
+    <div className="mx-auto max-w-6xl px-6 my-20">
+      <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
+    </div>
+  );
+}
+
+function Card({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border border-border/50 bg-card/40 backdrop-blur-sm shadow-2xl shadow-black/40 overflow-hidden",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function CardChrome({
+  left,
+  right,
+}: {
+  left: React.ReactNode;
+  right?: React.ReactNode;
+}) {
+  return (
+    <div className="px-4 h-10 flex items-center justify-between border-b border-border/50 bg-neutral-900/40 text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+      <span className="inline-flex items-center gap-2 min-w-0 truncate">
+        {left}
+      </span>
+      {right && <span className="inline-flex items-center gap-2">{right}</span>}
+    </div>
+  );
+}
+
+function Caption({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/80">
+      {children}
+    </div>
+  );
+}
+
+function LiveIndicator() {
+  return (
+    <span className="inline-flex flex-col items-end gap-1 leading-none">
+      <span style={{ color: ACCENT }}>live</span>
+      <span className="relative block w-10 h-[2px] overflow-hidden rounded-full bg-border/40">
+        <span
+          className="absolute inset-y-0 left-0 w-1/2 rounded-full"
+          style={{
+            backgroundColor: ACCENT,
+            animation: "live-scan 1.6s ease-in-out infinite",
+          }}
+        />
+      </span>
+    </span>
+  );
+}
+
+// ── Hero ────────────────────────────────────────────────────────────────────
+
+function Hero() {
+  return (
+    <section className="min-h-screen flex items-center pt-28 pb-12">
+      <Shell className="w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="lg:col-span-7">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: HERO_DURATION, ease: HERO_EASE }}
+              className="text-5xl md:text-7xl lg:text-[80px] font-semibold text-foreground leading-[0.98] tracking-tight"
+            >
+              Your secrets
+              <br />
+              are none of
+              <br />
+              <span className="text-muted-foreground">our business.</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: HERO_DURATION,
+                ease: HERO_EASE,
+                delay: 0.12,
+              }}
+              className="mt-8 text-lg text-muted-foreground max-w-xl leading-[1.75]"
+            >
+              Cryptly is a small, open source secrets manager. Every value
+              is encrypted before it leaves your browser — so even we
+              can't read it. Free, forever.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: HERO_DURATION,
+                ease: HERO_EASE,
+                delay: 0.24,
+              }}
+              className="mt-10 flex flex-wrap items-center gap-3"
+            >
+              <PrimaryCTA>
+                Open the dashboard
+                <ArrowRight className="h-4 w-4" />
+              </PrimaryCTA>
+              <GhostCTA href="https://github.com/cryptly-dev/cryptly">
+                <GitHubIcon className="h-4 w-4" />
+                Read the source
+              </GhostCTA>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: HERO_DURATION,
+                ease: HERO_EASE,
+                delay: 0.36,
+              }}
+              className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-muted-foreground"
+            >
+              <span>Free forever</span>
+              <Pin />
+              <span>E2E encrypted</span>
+              <Pin />
+              <span>Open source</span>
+            </motion.div>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: HERO_DURATION + 0.1,
+              ease: HERO_EASE,
+              delay: 0.18,
+            }}
+            className="lg:col-span-5"
+          >
+            <HeroMock />
+            <Caption>Fig. 01 — the editor, in repose</Caption>
+          </motion.div>
+        </div>
+      </Shell>
+    </section>
+  );
+}
+
+const HERO_ROWS = [
+  { k: "DATABASE_URL", v: "postgres://app@db/main", dots: 22 },
+  { k: "STRIPE_SECRET_KEY", v: "sk_live_aB7Kx9ZqL", dots: 16 },
+  { k: "OPENAI_API_KEY", v: "sk-proj-9Tv3XmNp2R", dots: 18 },
+  { k: "GITHUB_TOKEN", v: "ghp_8Kx7pLmZqJyQwRtU", dots: 20 },
+  { k: "RESEND_API_KEY", v: "re_4nH2vKsp_PQrTaBc", dots: 19 },
+];
+
+function HeroMock() {
+  const [hovered, setHovered] = useState<number | null>(null);
 
   return (
-    <div className="min-h-screen bg-black tracking-wide">
-      {/* Hero Section with Beams */}
-      <section className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Beams
-            beamWidth={2}
-            beamHeight={30}
-            beamNumber={20}
-            lightColor="#ffffff"
-            speed={2}
-            noiseIntensity={1.75}
-            scale={0.2}
-            rotation={30}
-          />
-        </div>
-
-        <div className="absolute bottom-0 h-64 bg-gradient-to-t from-black to-transparent w-full z-0 pointer-events-none"></div>
-        <div className="absolute top-0 h-64 bg-gradient-to-b from-black to-transparent w-full z-0 pointer-events-none"></div>
-
-        <motion.div
-          className="relative z-10 mt-20 w-full max-w-6xl mx-auto px-6"
-          initial={{ opacity: 0, y: 100, scale: 0.5 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 2, ease: [0, 1, 0, 1] }}
-        >
-          <h1 className="text-center text-5xl font-semibold text-neutral-100 md:text-7xl lg:text-8xl">
-            <span className="">Cryptly</span>
-          </h1>
-
-          <motion.p
-            className="mx-auto mt-6  text-center text-xl text-neutral-300"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0, 0.55, 0.45, 1], delay: 0.2 }}
-          >
-            Share your environment secrets
-            <br />
-            without possibility of 3rd parties getting involved (even us)
-          </motion.p>
-
-          <motion.div
-            className="mt-10 flex items-center justify-center gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0, 0.55, 0.45, 1], delay: 0.4 }}
-          >
-            <button
-              onClick={handleDashboardClick}
-              className="cursor-pointer group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-white text-black px-8 py-3 font-semibold shadow-2xl transition-all hover:scale-105 hover:shadow-white/25"
+    <Card>
+      <div className="font-mono text-[13px] leading-[2] py-5 px-4">
+        {HERO_ROWS.map((r, i) => {
+          const isHovered = hovered === i;
+          return (
+            <div
+              key={i}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+              className="flex items-baseline gap-3 px-2 py-1 whitespace-nowrap"
             >
-              <span>Dashboard</span>
-              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </button>
-
-            <a
-              href="https://github.com/cryptly-dev/cryptly"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center justify-center gap-2 rounded-full border border-neutral-700 bg-neutral-900/70 px-8 py-3 font-semibold text-white transition-all hover:border-neutral-600 hover:bg-neutral-800/70"
-            >
-              <GitHubIcon className="h-5 w-5" />
-              <span>Source</span>
-            </a>
-          </motion.div>
-        </motion.div>
-        <motion.div
-          className="mt-8 flex items-center justify-center gap-2 sm:gap-8 text-xs sm:text-sm text-neutral-300 bg-black/20 rounded-full px-4 py-2 w-fit mx-auto backdrop-blur-xl border"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-        >
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Check className="h-4 w-4 text-green-600" />
-            <span>E2E Encrypted</span>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Check className="h-4 w-4 text-green-600" />
-            <span>Free Forever</span>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Check className="h-4 w-4 text-green-600" />
-            <span>Open Source</span>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="absolute bottom-10 text-neutral-600"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 2, delay: 1 }}
-        >
-          <p
-            className="text-sm cursor-pointer hover:text-neutral-400 transition-colors"
-            onClick={() => {
-              const featuresSection = document.querySelector(
-                "section:nth-of-type(2)"
-              );
-              featuresSection?.scrollIntoView({ behavior: "smooth" });
-            }}
-          >
-            Scroll to explore
-          </p>
-        </motion.div>
-      </section>
-
-      <ComplianceSection />
-
-      <IntegrationsSection />
-
-      <HowItWorksSection />
-
-      <WhyCryptlySection />
-
-      <ReviewsSection />
-
-      {/* CTA Section */}
-      <section className="relative py-32 px-6">
-        <div className="mx-auto max-w-4xl text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-4xl font-bold text-white md:text-5xl">
-              <span className="">Stop wrestling with .env files</span>
-            </h2>
-            <p className="mt-6 text-lg text-neutral-400">
-              Join developers who ship faster with proper secrets management. No
-              more Slack DMs, no more manual updates.
-            </p>
-
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <button
-                onClick={handleDashboardClick}
-                className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-white text-black px-8 py-3 font-semibold shadow-2xl transition-all hover:scale-105 hover:shadow-white/25"
+              <span className="w-6 text-right text-muted-foreground/50 tabular-nums flex-shrink-0">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className="font-medium" style={{ color: ACCENT }}>
+                {r.k}
+              </span>
+              <span className="text-muted-foreground/50">=</span>
+              <span
+                className={cn(
+                  isHovered
+                    ? "text-foreground/90"
+                    : "text-muted-foreground/70"
+                )}
               >
-                <span>Get started - it's free</span>
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </button>
+                {isHovered ? r.v : "•".repeat(r.dots)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+// ── Movement I — The vault (Excel-style table) ────────────────────────────
+
+const VAULT_ROWS = [
+  {
+    id: "68d1...",
+    project: "68cf...",
+    blob: "u2l9aFZbk3Pj+Q7WkS9QfwDfMnLvSsC6XgY1xZ8pQrT+88k/4Lr2Nh==",
+  },
+  {
+    id: "68d2...",
+    project: "68cf...",
+    blob: "fWn4pQ0R8sUvZ2Ah6YgKm9XcTdL4PrBv0WsEq1iNy+Oa7uKp3JxCh2==",
+  },
+  {
+    id: "68d3...",
+    project: "6a14...",
+    blob: "cXpLm7nBd+TrKq9aEf1RtYz5OvHgWuJi2SkNc8MxPqDbZ0Af6ExBn4==",
+  },
+  {
+    id: "68d4...",
+    project: "6a14...",
+    blob: "vQr3aZmHy8KfNb1XwLp5SgEdT7CuMi2OkRj0YxBh4VnPq+9SeAcJt6==",
+  },
+  {
+    id: "68d5...",
+    project: "68cf...",
+    blob: "hKt2bNmXc4QrLp8YdWf3OvAi7ZsEu1RkPj9sVy0SgBnTq+5MxCoHa6==",
+  },
+  {
+    id: "68d6...",
+    project: "6a14...",
+    blob: "t2bNmXc4QrLp8YdWf3OvwAi7ZsEu1RkPjqj9Vy0SgBnTq+5MxCoHa6==",
+  },
+];
+
+function VaultMovement() {
+  return (
+    <section>
+      <Shell>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+          <div className="lg:col-span-5">
+            <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+              <span className="text-foreground">
+                One column for the blob.
+              </span>{" "}
+              <span className="text-muted-foreground">
+                None for the value.
+              </span>
+            </h2>
+            <p className="mt-7 text-[16px] text-muted-foreground leading-[1.75] max-w-md">
+              Here is our entire secrets table. The{" "}
+              <code className="text-foreground rounded bg-neutral-800/60 px-1 py-0.5 text-[13px]">
+                blob
+              </code>{" "}
+              column is the whole secret, encrypted before it left your
+              browser. There is no second column where the plaintext
+              lives, and no function to produce it on demand.
+            </p>
+            <SmallList
+              items={[
+                "Encrypted before it leaves your browser",
+                "Keys derived from your passphrase, never shared",
+                "Re-wrapped for each collaborator, never copied",
+              ]}
+            />
+          </div>
+          <div className="lg:col-span-7">
+            <Card>
+              <CardChrome
+                left={<span>secrets · {VAULT_ROWS.length} rows</span>}
+                right={<span style={{ color: ACCENT }}>schema</span>}
+              />
+              <div className="overflow-hidden">
+                <table className="w-full font-mono text-[12px] text-left table-fixed">
+                  <thead>
+                    <tr className="bg-neutral-900/60 border-b border-border/50 text-muted-foreground/80 text-[10px] uppercase tracking-[0.2em]">
+                      <th className="px-4 py-2.5 font-medium w-[88px]">id</th>
+                      <th className="px-4 py-2.5 font-medium w-[92px]">
+                        project
+                      </th>
+                      <th className="px-4 py-2.5 font-medium">blob</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {VAULT_ROWS.map((r, i) => (
+                      <tr
+                        key={r.id}
+                        className={cn(
+                          "border-b border-border/40 last:border-b-0 hover:bg-neutral-800/30 transition-colors",
+                          i % 2 === 1 && "bg-neutral-900/30"
+                        )}
+                      >
+                        <td className="px-4 py-2.5 text-foreground/90 truncate">
+                          {r.id}
+                        </td>
+                        <td className="px-4 py-2.5 text-foreground/70 truncate">
+                          {r.project}
+                        </td>
+                        <td className="px-4 py-2.5 text-foreground/90 truncate">
+                          <span className="inline-flex items-center gap-1.5 rounded bg-neutral-800/60 px-1.5 py-0.5 text-[11px] max-w-full">
+                            <span
+                              className="h-1 w-1 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: ACCENT }}
+                            />
+                            <span className="truncate">{r.blob}</span>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-2 border-t border-border/50 bg-neutral-900/40 text-[11px] font-mono text-muted-foreground/80 italic">
+                The schema is short on purpose.
+              </div>
+            </Card>
+            <Caption>Fig. 02 — secrets · the whole table</Caption>
+          </div>
+        </div>
+      </Shell>
+    </section>
+  );
+}
+
+function SmallList({ items }: { items: string[] }) {
+  return (
+    <ul className="mt-6 space-y-2 font-mono text-[12px] text-foreground/80">
+      {items.map((it, i) => (
+        <li key={i} className="flex items-baseline gap-3">
+          <span style={{ color: ACCENT }} className="text-[10px]">
+            ◦
+          </span>
+          <span>{it}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ── Movement II — Inviting (app-style sliding tabs) ───────────────────────
+
+function InviteMovement() {
+  const [tab, setTab] = useState<"link" | "user" | "team">("link");
+  const [copied, setCopied] = useState(false);
+  const [picked, setPicked] = useState<Record<string, boolean>>({});
+
+  const TABS = [
+    { id: "link" as const, label: "By invite link" },
+    { id: "user" as const, label: "By teammate" },
+    { id: "team" as const, label: "By team", soon: true },
+  ];
+
+  return (
+    <section>
+      <Shell>
+        <div className="max-w-2xl">
+          <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+            <span className="text-foreground">Three ways to bring</span>{" "}
+            <span className="text-muted-foreground">
+              one teammate, or sixty of them.
+            </span>
+          </h2>
+          <p className="mt-6 text-[16px] text-muted-foreground leading-[1.75] max-w-xl">
+            Each method re-wraps the project key in the new member's
+            browser; our server moves wrapped bytes only. Pick the one
+            that matches your back-channels.
+          </p>
+        </div>
+
+        <div className="mt-10">
+          <Card>
+            <div className="flex items-center gap-1 px-3 py-2 border-b border-border/50 bg-neutral-900/40">
+              {TABS.map((t) => {
+                const a = tab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTab(t.id)}
+                    className={cn(
+                      "relative flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer",
+                      a
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-neutral-800/50"
+                    )}
+                  >
+                    {a && (
+                      <div className="absolute inset-0 rounded-md bg-neutral-800" />
+                    )}
+                    <span className="relative z-10">{t.label}</span>
+                    {t.soon && (
+                      <span
+                        className="relative z-10 ml-1 rounded-full px-1.5 py-px text-[9px] font-mono uppercase tracking-[0.2em] border border-border/60"
+                        style={{ color: ACCENT }}
+                      >
+                        soon
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="mt-12 flex items-center justify-center gap-2 sm:gap-8 text-xs sm:text-sm text-neutral-500">
-              <div className="flex items-center gap-1 sm:gap-2 ">
-                <Check className="h-4 w-4 text-green-600 " />
-                <span>Free Forever</span>
-              </div>
-              <div className="flex items-center gap-1 sm:gap-2 ">
-                <Check className="h-4 w-4 text-green-600" />
-                <span>Open Source</span>
-              </div>
-              <div className="flex items-center gap-1 sm:gap-2 ">
-                <Check className="h-4 w-4 text-green-600" />
-                <span>E2E Encrypted</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+            <div className="p-6 md:p-8 min-h-[240px]">
+              {tab === "link" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InviteField
+                      label="Channel A · the link"
+                      value="https://cryptly.dev/invite/a3f9-k2m-7bxQ"
+                      onCopy={() => {
+                        navigator.clipboard
+                          ?.writeText(
+                            "https://cryptly.dev/invite/a3f9-k2m-7bxQ"
+                          )
+                          .catch(() => {});
+                        setCopied(true);
+                        window.setTimeout(() => setCopied(false), 1200);
+                      }}
+                      copied={copied}
+                    />
+                    <InviteField
+                      label="Channel B · the passphrase"
+                      value="sunrise-otter-42"
+                      note="Send via a different medium than the link."
+                    />
+                </div>
+              )}
 
-      {/* Footer */}
-      <footer className="border-t border-neutral-800 py-8 px-6">
-        <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-neutral-500">
-            © 2025 Cryptly. Ship faster with proper secrets management.
+              {tab === "user" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {[
+                      {
+                        id: "alex",
+                        name: "Alex Chen",
+                        hint: "co-owner of cryptly-dev/cryptly",
+                        a: "/avatars/alex-chen.svg",
+                      },
+                      {
+                        id: "marcus",
+                        name: "Marcus Rodriguez",
+                        hint: "8 commits on the same repo",
+                        a: "/avatars/marcus-rodriguez.svg",
+                      },
+                      {
+                        id: "priya",
+                        name: "Priya Patel",
+                        hint: "maintains cryptly-dev/web",
+                        a: "/avatars/priya-patel.svg",
+                      },
+                    ].map((p) => {
+                      const on = !!picked[p.id];
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() =>
+                            setPicked((prev) => ({
+                              ...prev,
+                              [p.id]: !prev[p.id],
+                            }))
+                          }
+                          className={cn(
+                            "group text-left rounded-xl border p-4 transition-all cursor-pointer",
+                            on
+                              ? "border-border bg-neutral-800/50"
+                              : "border-border/50 bg-neutral-900/40 hover:border-border hover:bg-neutral-800/40"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={p.a}
+                              alt=""
+                              className="h-9 w-9 rounded-full grayscale opacity-90"
+                            />
+                            <div className="min-w-0">
+                              <div className="text-[14px] font-medium text-foreground truncate">
+                                {p.name}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground truncate">
+                                {p.hint}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between">
+                            <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/70">
+                              already collaborator
+                            </span>
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-mono transition-colors",
+                                on
+                                  ? "bg-neutral-700/60"
+                                  : "text-muted-foreground group-hover:text-foreground"
+                              )}
+                              style={on ? { color: ACCENT } : undefined}
+                            >
+                              {on ? (
+                                <>
+                                  <Check className="h-3 w-3" /> added
+                                </>
+                              ) : (
+                                <>
+                                  <Plus className="h-3 w-3" /> add
+                                </>
+                              )}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
+
+              {tab === "team" && (
+                <div>
+                    <p className="text-[15px] text-muted-foreground leading-[1.75] max-w-xl">
+                      Define a team once, grant project access to every
+                      member with one stroke. The browser fans out wrapped
+                      project keys; the server forwards them. Coming in Q3.
+                    </p>
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {[
+                        { name: "Core engineering", n: 8 },
+                        { name: "Infra & SRE", n: 4 },
+                        { name: "Frontend", n: 6 },
+                      ].map((t) => (
+                        <div
+                          key={t.name}
+                          className="rounded-xl border border-dashed border-border/60 bg-neutral-900/30 p-4"
+                        >
+                          <div className="flex items-center gap-2 text-[14px] text-foreground">
+                            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                            {t.name}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {t.n} members
+                          </div>
+                          <div
+                            className="mt-3 text-[10px] font-mono uppercase tracking-[0.25em]"
+                            style={{ color: ACCENT }}
+                          >
+                            on the waitlist
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+      </Shell>
+    </section>
+  );
+}
+
+function InviteField({
+  label,
+  value,
+  onCopy,
+  copied,
+  note,
+}: {
+  label: string;
+  value: string;
+  onCopy?: () => void;
+  copied?: boolean;
+  note?: string;
+}) {
+  return (
+    <div>
+      <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/80">
+        {label}
+      </div>
+      <div className="mt-2 flex items-center gap-2 rounded-lg border border-border/50 bg-neutral-900/50 px-3 py-2.5">
+        <span className="font-mono text-[13px] text-foreground truncate flex-1">
+          {value}
+        </span>
+        {onCopy && (
+          <button
+            type="button"
+            onClick={onCopy}
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-neutral-800 transition-colors cursor-pointer"
+          >
+            {copied ? (
+              <Check className="h-3 w-3" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+            {copied ? "copied" : "copy"}
+          </button>
+        )}
+      </div>
+      {note && (
+        <div className="mt-2 text-[11px] font-mono text-muted-foreground/80">
+          {note}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Movement III — The wire (GitHub) ──────────────────────────────────────
+
+const GH_LIST = [
+  "DATABASE_URL",
+  "REDIS_URL",
+  "JWT_SIGNING_KEY",
+  "STRIPE_SECRET_KEY",
+  "OPENAI_API_KEY",
+  "SENTRY_DSN",
+];
+
+const WIRE_PANEL_HEIGHT = 280;
+
+function WireMovement() {
+  const [done, setDone] = useState<number[]>([]);
+  const [running, setRunning] = useState(false);
+  const timers = useRef<number[]>([]);
+
+  const run = () => {
+    timers.current.forEach((t) => window.clearTimeout(t));
+    timers.current = [];
+    setDone([]);
+    setRunning(true);
+    GH_LIST.forEach((_, i) => {
+      timers.current.push(
+        window.setTimeout(
+          () => {
+            setDone((prev) => [...prev, i]);
+            if (i === GH_LIST.length - 1) setRunning(false);
+          },
+          220 + i * 220
+        )
+      );
+    });
+  };
+  useEffect(
+    () => () => timers.current.forEach((t) => window.clearTimeout(t)),
+    []
+  );
+
+  return (
+    <section>
+      <Shell>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+          <div className="lg:col-span-5">
+            <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+              <span className="text-foreground">One click</span>
+              <br />
+              <span className="text-muted-foreground">to GitHub Actions.</span>
+            </h2>
+            <p className="mt-6 text-[16px] text-muted-foreground leading-[1.75] max-w-md">
+              The browser re-encrypts each value against the target
+              repository's public key — the same primitive GitHub's own
+              CLI uses — and forwards the ciphertext. We are the courier;
+              GitHub is the recipient.
+            </p>
+            <button
+              type="button"
+              onClick={run}
+              disabled={running}
+              className={cn(
+                "mt-8 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium border transition-colors cursor-pointer",
+                running
+                  ? "border-border/50 bg-neutral-900/40 text-muted-foreground cursor-wait"
+                  : "border-border/50 bg-card/40 backdrop-blur-sm text-foreground hover:bg-neutral-800/60 hover:border-border"
+              )}
+            >
+              {running ? (
+                <>
+                  <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                  Pushing…
+                </>
+              ) : done.length === GH_LIST.length ? (
+                <>
+                  <Check className="h-3.5 w-3.5" style={{ color: ACCENT }} />
+                  Pushed · run again
+                </>
+              ) : (
+                <>
+                  Run the dispatch
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </>
+              )}
+            </button>
           </div>
-          <div className="flex items-center gap-6 text-sm text-neutral-500">
-            <a
-              href="https://github.com/cryptly-dev/cryptly"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-neutral-300 transition-colors"
-            >
-              GitHub
-            </a>
-            <a
-              href="https://github.com/cryptly-dev/cryptly"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-neutral-300 transition-colors"
-            >
-              Support
-            </a>
+
+          <div className="lg:col-span-7">
+            <Card>
+              <div className="grid grid-cols-1 md:grid-cols-2">
+                <div className="border-b md:border-b-0 md:border-r border-border/50 flex flex-col">
+                  <CardChrome
+                    left={<span>cryptly vault</span>}
+                    right={<span style={{ color: ACCENT }}>source</span>}
+                  />
+                  <div
+                    className="p-2 font-mono text-[12px] leading-[1.95] overflow-hidden"
+                    style={{ height: WIRE_PANEL_HEIGHT }}
+                  >
+                    {GH_LIST.map((k, i) => (
+                      <div
+                        key={k}
+                        className={cn(
+                          "mx-1 px-2 py-1 rounded-md grid grid-cols-[1fr_auto] items-baseline gap-2 transition-all",
+                          done.includes(i)
+                            ? "opacity-50 bg-neutral-900/40"
+                            : "hover:bg-neutral-800/40"
+                        )}
+                      >
+                        <span className="text-foreground/90 truncate">{k}</span>
+                        <span className="text-muted-foreground/70 text-[10px] uppercase tracking-[0.25em]">
+                          ciphertext
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <CardChrome
+                    left={
+                      <span className="inline-flex items-center gap-1.5">
+                        <GitHubIcon className="h-3 w-3" /> cryptly-dev/api
+                      </span>
+                    }
+                    right={<span style={{ color: ACCENT }}>recipient</span>}
+                  />
+                  <div
+                    className="p-2 relative overflow-hidden"
+                    style={{ height: WIRE_PANEL_HEIGHT }}
+                  >
+                    {done.length === 0 && (
+                      <div className="absolute inset-0 grid place-items-center text-[12px] font-mono text-muted-foreground/70">
+                        none yet · press the button
+                      </div>
+                    )}
+                    {done.map((i) => (
+                      <div
+                        key={i}
+                        className="mx-1 px-2 py-1 rounded-md grid grid-cols-[1fr_auto] items-baseline gap-2 font-mono text-[12px] bg-neutral-800/30 leading-[1.95]"
+                      >
+                        <span className="text-foreground truncate">
+                          {GH_LIST[i]}
+                        </span>
+                        <span className="text-muted-foreground/70 text-[10px] uppercase tracking-[0.25em]">
+                          just now
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+            <Caption>Fig. 03 — each value, re-sealed for the recipient</Caption>
           </div>
         </div>
-      </footer>
+      </Shell>
+    </section>
+  );
+}
+
+// ── Movement IV — History (mirrors the real /app history list) ────────────
+
+type Patch = {
+  id: string;
+  who: string;
+  avatar: string;
+  when: string;
+  /** Age of the patch, in minutes, for filtering. */
+  ageMin: number;
+  add: number;
+  del: number;
+  msg: string;
+};
+
+const PATCHES: Patch[] = [
+  {
+    id: "p1",
+    who: "Alex Chen",
+    avatar: "/avatars/alex-chen.svg",
+    when: "2m",
+    ageMin: 2,
+    add: 1,
+    del: 1,
+    msg: "rotate STRIPE_SECRET_KEY",
+  },
+  {
+    id: "p2",
+    who: "Marcus Rodriguez",
+    avatar: "/avatars/marcus-rodriguez.svg",
+    when: "14m",
+    ageMin: 14,
+    add: 2,
+    del: 0,
+    msg: "add observability keys",
+  },
+  {
+    id: "p3",
+    who: "Priya Patel",
+    avatar: "/avatars/priya-patel.svg",
+    when: "1h",
+    ageMin: 60,
+    add: 1,
+    del: 1,
+    msg: "migrate DATABASE_URL",
+  },
+  {
+    id: "p4",
+    who: "Nina Gupta",
+    avatar: "/avatars/nina-gupta.svg",
+    when: "2d",
+    ageMin: 60 * 24 * 2,
+    add: 3,
+    del: 0,
+    msg: "Q2 feature flags",
+  },
+  {
+    id: "p5",
+    who: "Alex Chen",
+    avatar: "/avatars/alex-chen.svg",
+    when: "4d",
+    ageMin: 60 * 24 * 4,
+    add: 1,
+    del: 0,
+    msg: "cloudflare api token",
+  },
+  {
+    id: "p6",
+    who: "Marcus Rodriguez",
+    avatar: "/avatars/marcus-rodriguez.svg",
+    when: "12d",
+    ageMin: 60 * 24 * 12,
+    add: 0,
+    del: 2,
+    msg: "drop deprecated keys",
+  },
+];
+
+const TIME_CHIPS: {
+  key: string;
+  label: string;
+  /** Max age in minutes; null = no limit. */
+  maxAge: number | null;
+}[] = [
+  { key: "all", label: "All time", maxAge: null },
+  { key: "30", label: "30d", maxAge: 60 * 24 * 30 },
+  { key: "7", label: "7d", maxAge: 60 * 24 * 7 },
+  { key: "24", label: "24h", maxAge: 60 * 24 },
+];
+
+function HistoryMovement() {
+  const [q, setQ] = useState("");
+  const [range, setRange] = useState("all");
+  const [selectedId, setSelectedId] = useState<string>("p1");
+
+  const filtered = useMemo(() => {
+    const maxAge = TIME_CHIPS.find((r) => r.key === range)?.maxAge ?? null;
+    const s = q.trim().toLowerCase();
+    return PATCHES.filter((p) => {
+      if (maxAge !== null && p.ageMin > maxAge) return false;
+      if (!s) return true;
+      return (
+        p.who.toLowerCase().includes(s) || p.msg.toLowerCase().includes(s)
+      );
+    });
+  }, [q, range]);
+
+  // Keep a valid row selected if the current one falls out of the active range.
+  useEffect(() => {
+    if (filtered.length === 0) return;
+    if (!filtered.some((p) => p.id === selectedId)) {
+      setSelectedId(filtered[0].id);
+    }
+  }, [filtered, selectedId]);
+
+  const maxVolume = useMemo(() => {
+    let m = 0;
+    for (const p of filtered) m = Math.max(m, p.add + p.del);
+    return m || 1;
+  }, [filtered]);
+
+  return (
+    <section>
+      <Shell>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+          <div className="lg:col-span-5">
+            <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+              <span className="text-foreground">Every save signed.</span>{" "}
+              <span className="text-muted-foreground">
+                Every change recallable.
+              </span>
+            </h2>
+            <p className="mt-6 text-[16px] text-muted-foreground leading-[1.75] max-w-md">
+              The server returns the matching ciphertexts; your browser
+              decrypts and renders them. The audit log is yours; the
+              answer is yours; we supplied only the shelving.
+            </p>
+            <SmallList
+              items={[
+                "Search by author or substring",
+                "Filter by time range or contributor",
+                "Decrypted in your tab, never on ours",
+              ]}
+            />
+          </div>
+
+          <div className="lg:col-span-7">
+            <Card>
+              {/* Search row */}
+              <div className="relative flex items-center h-10 border-b border-border/50 bg-neutral-900/60">
+                <Search className="ml-3 size-3.5 text-muted-foreground pointer-events-none flex-shrink-0" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search edits — author, message…"
+                  className="flex-1 h-full bg-transparent border-0 pl-2.5 pr-3 text-sm font-mono placeholder:text-muted-foreground/60 focus:outline-none min-w-0"
+                />
+                <span className="mr-3 text-[11px] font-mono text-muted-foreground/80 tabular-nums">
+                  {filtered.length}/{PATCHES.length}
+                </span>
+              </div>
+
+              {/* Chip filters */}
+              <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/50">
+                {TIME_CHIPS.map((r) => (
+                  <button
+                    key={r.key}
+                    type="button"
+                    onClick={() => setRange(r.key)}
+                    className={cn(
+                      "px-2.5 py-0.5 text-[11px] rounded-full border cursor-pointer whitespace-nowrap transition-colors",
+                      range === r.key
+                        ? "bg-primary/15 border-primary/40 text-primary"
+                        : "bg-neutral-900 border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
+                    )}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* List */}
+              <div className="h-[320px] overflow-y-auto">
+                {filtered.length === 0 ? (
+                  <div className="px-4 py-12 text-center text-sm text-muted-foreground">
+                    No results
+                  </div>
+                ) : (
+                  filtered.map((p) => {
+                    const isSelected = p.id === selectedId;
+                    const volume = p.add + p.del;
+                    const addRatio = volume ? p.add / volume : 0;
+                    const barWidth = (volume / maxVolume) * 100;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSelectedId(p.id)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2 border-l-2 cursor-pointer transition-colors text-left focus:outline-none",
+                          isSelected
+                            ? "bg-neutral-800/60 border-primary"
+                            : "border-transparent hover:bg-neutral-900/60"
+                        )}
+                      >
+                        <img
+                          src={p.avatar}
+                          alt=""
+                          className="size-5 rounded-full object-cover flex-shrink-0 grayscale opacity-90"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className={cn(
+                              "text-sm truncate",
+                              isSelected
+                                ? "text-foreground font-medium"
+                                : "text-muted-foreground"
+                            )}
+                          >
+                            {p.who}
+                          </div>
+                          <div className="text-[11px] font-mono text-muted-foreground/70 truncate">
+                            {p.msg}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-[11px] font-mono tabular-nums">
+                            <span className="text-emerald-400">+{p.add}</span>{" "}
+                            <span className="text-rose-400">-{p.del}</span>
+                          </span>
+                          <div className="w-[80px] h-1 bg-neutral-800/60 flex overflow-hidden rounded-full">
+                            <div
+                              className="h-full bg-emerald-500/80"
+                              style={{ width: `${barWidth * addRatio}%` }}
+                            />
+                            <div
+                              className="h-full bg-rose-500/80"
+                              style={{
+                                width: `${barWidth * (1 - addRatio)}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-[11px] text-muted-foreground tabular-nums w-10 text-right">
+                            {p.when}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </Card>
+            <Caption>Fig. 04 — the ledger, searched</Caption>
+          </div>
+        </div>
+      </Shell>
+    </section>
+  );
+}
+
+// ── Movement V — In good hands (customers + testimonials) ────────────────
+
+const COMPANIES = ["BlueMenu", "SignOSH", "JobRef", "logdash"];
+
+const TESTIMONIALS = [
+  {
+    quote:
+      "Signosh ships on a tight calendar. Cryptly quietly removed one of our least-favorite weekly rituals — the Slack-DM secret handoff.",
+    name: "Jerzy Wiśniewski",
+    role: "Co-founder, SignOSH",
+    initials: "JW",
+  },
+  {
+    quote:
+      "We wanted end-to-end encryption without reading a whitepaper first. This was it. Onboarding a new engineer is a single link now.",
+    name: "Dominik Mackiewicz",
+    role: "Co-founder, BlueMenu",
+    initials: "DM",
+  },
+];
+
+function CustomersMovement() {
+  return (
+    <section>
+      <Shell>
+        <div className="max-w-2xl">
+          <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+            <span className="text-foreground">In good hands.</span>{" "}
+            <span className="text-muted-foreground">
+              A few of the teams on the vault today — and two of them
+              who agreed to say why.
+            </span>
+          </h2>
+        </div>
+
+        <div className="mt-10">
+          <Card>
+            <CardChrome
+              left={<span>in use today</span>}
+              right={<span style={{ color: ACCENT }}>selected</span>}
+            />
+
+            {/* Wordmarks strip */}
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border/50">
+              {COMPANIES.map((name) => (
+                <div
+                  key={name}
+                  className="px-6 py-8 flex items-center justify-center"
+                >
+                  <span className="text-2xl md:text-[28px] font-semibold tracking-tight text-foreground/80 lowercase">
+                    {name}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Testimonials */}
+            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border/50 border-t border-border/50 bg-neutral-900/20">
+              {TESTIMONIALS.map((t) => (
+                <figure
+                  key={t.name}
+                  className="px-6 md:px-8 py-8 md:py-10 flex flex-col"
+                >
+                  <div
+                    aria-hidden
+                    className="font-serif text-4xl leading-none mb-2"
+                    style={{ color: ACCENT }}
+                  >
+                    &ldquo;
+                  </div>
+                  <blockquote className="text-[15px] text-foreground/90 leading-[1.7] flex-1">
+                    {t.quote}
+                  </blockquote>
+                  <figcaption className="mt-6 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full border border-border/50 bg-neutral-800 flex items-center justify-center text-[11px] font-mono tracking-wider text-foreground/80">
+                      {t.initials}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-medium text-foreground truncate">
+                        {t.name}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {t.role}
+                      </div>
+                    </div>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </Card>
+          <Caption>Fig. 05 — a selection, two of them on the record</Caption>
+        </div>
+      </Shell>
+    </section>
+  );
+}
+
+// ── Numbers ────────────────────────────────────────────────────────────────
+
+function formatStat(value: number): string {
+  return value.toLocaleString("en-US");
+}
+
+type StatsState =
+  | { status: "loading" }
+  | { status: "ready"; data: Stats }
+  | { status: "error" };
+
+const STATS_REFRESH_INTERVAL_MS = 5_000;
+
+function useStatsLoop(): StatsState {
+  const [state, setState] = useState<StatsState>({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    let timeoutId: number | null = null;
+
+    const run = async () => {
+      try {
+        const data = await StatsApi.get();
+        if (!cancelled) setState({ status: "ready", data });
+      } catch {
+        if (!cancelled) setState({ status: "error" });
+      }
+      if (cancelled) return;
+      timeoutId = window.setTimeout(run, STATS_REFRESH_INTERVAL_MS);
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  return state;
+}
+
+function formatOrdinal(n: number): string {
+  const suffixes = ["th", "st", "nd", "rd"];
+  const mod100 = n % 100;
+  const mod10 = n % 10;
+  const suffix =
+    mod100 >= 11 && mod100 <= 13 ? "th" : (suffixes[mod10] ?? "th");
+  return `${n.toLocaleString("en-US")}${suffix}`;
+}
+
+const ONES = [
+  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+  "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
+  "seventeen", "eighteen", "nineteen",
+];
+const TENS = [
+  "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety",
+];
+
+function numberToWords(n: number): string {
+  if (n < 0 || n > 99 || !Number.isInteger(n)) {
+    return n.toLocaleString("en-US");
+  }
+  if (n < 20) return ONES[n];
+  const tens = Math.floor(n / 10);
+  const ones = n % 10;
+  return ones === 0 ? TENS[tens] : `${TENS[tens]}-${ONES[ones]}`;
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function trustHeadline(users: number): string {
+  if (users === 1) return "One person trusts us with their keys.";
+  return `${capitalize(numberToWords(users))} people trust us with their keys.`;
+}
+
+function Numbers({ state }: { state: StatsState }) {
+  const headline =
+    state.status === "ready"
+      ? trustHeadline(state.data.users)
+      : "People trust us with their keys.";
+  return (
+    <section>
+      <Shell>
+        <div className="max-w-2xl">
+          <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.08] tracking-tight">
+            <span className="text-foreground">{headline}</span>{" "}
+            <span className="text-muted-foreground">
+              We thought you should know that before you did.
+            </span>
+          </h2>
+          <p className="mt-6 text-[16px] text-muted-foreground leading-[1.75] max-w-xl">
+            Four numbers, honestly counted. No rounding, no asterisks.
+          </p>
+        </div>
+
+        <div className="mt-10">
+          <Card>
+            <CardChrome
+              left={<span>the house · today</span>}
+              right={<LiveIndicator />}
+            />
+            {state.status === "error" ? (
+              <div className="px-6 py-12 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Couldn't load the latest numbers right now. Please try again in a moment.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border/50">
+                <StatCell k="users">
+                  {state.status === "ready" ? formatStat(state.data.users) : "—"}
+                </StatCell>
+                <StatCell k="projects">
+                  {state.status === "ready" ? formatStat(state.data.projects) : "—"}
+                </StatCell>
+                <StatCell k="diffs">
+                  {state.status === "ready" ? formatStat(state.data.diffs) : "—"}
+                </StatCell>
+                <StatCell k="stars">
+                  {state.status === "ready" ? formatStat(state.data.stars) : "—"}
+                </StatCell>
+              </div>
+            )}
+          </Card>
+          <Caption>Fig. 06 — the house, by the numbers</Caption>
+        </div>
+      </Shell>
+    </section>
+  );
+}
+
+function StatCell({
+  k,
+  children,
+}: {
+  k: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="px-6 py-8 md:py-10">
+      <div className="text-[11px] font-mono uppercase tracking-[0.25em] text-muted-foreground/80">
+        {k}
+      </div>
+      <div className="mt-3 text-5xl md:text-6xl font-semibold text-foreground tabular-nums leading-none">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ── Coda ─────────────────────────────────────────────────────────────────
+
+function Coda({ state }: { state: StatsState }) {
+  const heading =
+    state.status === "ready"
+      ? `Ready to be the ${formatOrdinal(state.data.users + 1)}?`
+      : "Ready to join them?";
+  return (
+    <section className="py-24">
+      <Shell>
+        <h2 className="text-3xl md:text-5xl font-semibold text-foreground leading-[1.05] tracking-tight max-w-3xl">
+          {heading}
+        </h2>
+        <p className="mt-6 text-lg text-muted-foreground leading-[1.7] max-w-xl">
+          Sign in, mint a passphrase in the browser, paste your first
+          value. Three minutes, one vault, no charge.
+        </p>
+        <div className="mt-10 flex flex-wrap items-center gap-3">
+          <PrimaryCTA>
+            Open the dashboard
+            <ArrowRight className="h-4 w-4" />
+          </PrimaryCTA>
+          <GhostCTA href="https://github.com/cryptly-dev/cryptly">
+            <GitHubIcon className="h-4 w-4" />
+            Read the source
+          </GhostCTA>
+        </div>
+      </Shell>
+    </section>
+  );
+}
+
+// ── Footer ───────────────────────────────────────────────────────────────
+
+
+export function IndexPage() {
+  const statsState = useStatsLoop();
+  return (
+    <div className="dark min-h-screen bg-background text-foreground overflow-x-clip relative">
+      {/* Soft ambient background */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(60rem 40rem at 20% -10%, rgba(201,178,135,0.06), transparent 60%), radial-gradient(40rem 30rem at 90% 20%, rgba(255,255,255,0.03), transparent 60%)",
+        }}
+      />
+      <Hero />
+      <SoftDivider />
+      <VaultMovement />
+      <SoftDivider />
+      <InviteMovement />
+      <SoftDivider />
+      <WireMovement />
+      <SoftDivider />
+      <HistoryMovement />
+      <SoftDivider />
+      <CustomersMovement />
+      <SoftDivider />
+      <Numbers state={statsState} />
+      <Coda state={statsState} />
+      <SiteFooter />
     </div>
   );
 }

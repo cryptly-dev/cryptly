@@ -58,7 +58,21 @@ export interface SecretDto {
   plainValue: string;
 }
 
+const isGithubLocalMock =
+  import.meta.env.VITE_GITHUB_LOCAL_MOCK === "true";
+
 export class IntegrationsApi {
+  /** Backend creates a synthetic installation when GITHUB_LOCAL_MOCK is on; used to fake the GitHub App install redirect. */
+  public static async bootstrapLocalGithubMock(
+    jwtToken: string
+  ): Promise<{ githubInstallationId: number }> {
+    const response = await axios.get<{ githubInstallationId: number }>(
+      `/users/me/external-connections/github/local-mock/bootstrap`,
+      { headers: { Authorization: `Bearer ${jwtToken}` } }
+    );
+    return response.data;
+  }
+
   public static async getRepositories(
     jwtToken: string,
     installationEntityId: string
@@ -190,6 +204,10 @@ export class IntegrationsApi {
     integrations: Integration[],
     content: string
   ): Promise<void> {
+    if (isGithubLocalMock) {
+      return;
+    }
+
     const secrets = dotenv.parse(content);
 
     await Promise.all(

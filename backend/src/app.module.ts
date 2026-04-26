@@ -16,6 +16,8 @@ import { getEnvConfig } from './shared/config/env-config';
 import { LogdashModule } from './shared/logdash/logdash.module';
 import { UserCoreModule } from './user/core/user-core.module';
 import { GithubExternalConnectionCoreModule } from './external-connection/github/core/github-external-connection-core.module';
+import { BlogCoreModule } from './blog/core/blog-core.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { GithubExternalConnectionCoreModule } from './external-connection/github
     RefreshTokenCoreModule,
     HealthModule,
     GithubExternalConnectionCoreModule,
+    BlogCoreModule,
+    StatsModule,
   ],
   controllers: [],
   providers: [],

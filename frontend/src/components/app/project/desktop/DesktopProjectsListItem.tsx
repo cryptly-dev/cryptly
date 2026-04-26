@@ -1,5 +1,5 @@
+import { GripLoader } from "@/components/ui/GripLoader";
 import { type Project } from "@/lib/api/projects.api";
-import { Spinner } from "@/components/ui/spinner";
 import { cn, getCompactRelativeTime } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { GripVertical } from "lucide-react";
@@ -32,48 +32,38 @@ export function DesktopProjectsListItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center justify-between gap-2 overflow-hidden rounded-sm px-3.5 py-2.5 text-sm transition-colors select-none",
+        "group relative flex items-center justify-between gap-2 overflow-hidden px-3 py-2 text-sm transition-colors select-none",
         isActive
-          ? "text-primary"
+          ? "text-foreground"
           : isLoading
-            ? "bg-neutral-800/40 text-foreground"
-            : "text-muted-foreground/55 hover:bg-neutral-800/40 hover:text-foreground",
+            ? "bg-neutral-900/60 text-foreground"
+            : "text-muted-foreground/55 hover:bg-neutral-900/60 hover:text-foreground",
       )}
     >
-      {isActive && (
-        <div className="absolute inset-0 bg-neutral-800 rounded-sm pointer-events-none" />
-      )}
       <Link
         to="/app/project/$projectId"
         params={{ projectId: project.id }}
         aria-label={`Open project ${project.name}`}
-        className="absolute inset-0 rounded-sm cursor-pointer"
+        className="absolute inset-0 cursor-pointer z-[2]"
       />
-      <div className="relative z-10 flex items-center gap-2 min-w-0 flex-1 pointer-events-none">
-        <span
-          aria-hidden
-          className="flex h-3 w-3 flex-shrink-0 items-center justify-center"
-        >
-          {isLoading ? (
-            <Spinner className="h-3 w-3 text-primary" />
-          ) : isActive ? (
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          ) : null}
-        </span>
+      <div className="relative z-[2] flex items-center min-w-0 flex-1 pointer-events-none">
         <span
           className={cn(
-            "truncate block relative pointer-events-none text-[15px] font-normal",
-            isActive && "[text-shadow:0_0_0.4px_currentColor]",
+            "truncate block relative pointer-events-none text-[14px]",
+            isActive
+              ? "font-medium [text-shadow:0_0_0.4px_currentColor]"
+              : "font-normal",
           )}
         >
           {project.name}
         </span>
       </div>
-      <div className="relative z-10 flex items-center gap-1.5 flex-shrink-0 pointer-events-none">
+      <div className="relative z-[2] flex items-center gap-1.5 flex-shrink-0 pointer-events-none">
         <span
           className={cn(
-            "text-[13px] tabular-nums transition-opacity group-hover:opacity-0",
-            isActive ? "text-primary/70" : "text-muted-foreground/40",
+            "text-[12px] tabular-nums transition-opacity",
+            isLoading ? "opacity-0" : "group-hover:opacity-0",
+            isActive ? "text-foreground/60" : "text-muted-foreground/40",
           )}
           title={new Date(project.updatedAt).toLocaleString()}
         >
@@ -82,11 +72,21 @@ export function DesktopProjectsListItem({
       </div>
       <div
         onPointerDown={(e) => {
+          if (isLoading) return;
           dragControls.start(e);
         }}
-        className="absolute right-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing touch-none flex items-center z-20 pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity"
+        className={cn(
+          "absolute right-2 top-1/2 -translate-y-1/2 touch-none flex items-center z-[3] transition-opacity",
+          isLoading
+            ? "opacity-100 pointer-events-none"
+            : "opacity-0 group-hover:opacity-100 pointer-events-auto cursor-grab active:cursor-grabbing",
+        )}
       >
-        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/60" />
+        {isLoading ? (
+          <GripLoader color="#c9b287" />
+        ) : (
+          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/60" />
+        )}
       </div>
     </div>
   );

@@ -166,6 +166,15 @@
   *::-webkit-scrollbar-thumb:hover {
     background-color: oklch(0.5 0 0);
   }
+
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer components {
@@ -267,4 +276,18 @@
   .animate-typing-dot-3 {
     animation: typing-dot-3 1.4s steps(1, end) infinite;
   }
+
+  /* Live-indicator sweep: a thin bar that scans left-right under a "live" label. */
+  @keyframes live-scan {
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(150%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
 }

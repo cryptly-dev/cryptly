@@ -1,8 +1,8 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 const AppLayout = () => (
-  <div className="relative min-h-screen bg-background overflow-hidden">
-    <div className="relative z-10 h-screen">
+  <div className="relative min-h-screen-mobile bg-background overflow-hidden">
+    <div className="relative z-10 h-screen-mobile">
       <Outlet />
     </div>
   </div>

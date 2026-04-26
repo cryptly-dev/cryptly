@@ -13,6 +13,7 @@ import type { PersonalInvitation } from "../api/personal-invitations.api";
 import { PersonalInvitationsApi } from "../api/personal-invitations.api";
 import { ProjectMemberRole, ProjectsApi } from "../api/projects.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
+import { SymmetricCrypto } from "../crypto/crypto.symmetric";
 import { authLogic } from "./authLogic";
 import { projectLogic } from "./projectLogic";
 import { suggestedUsersLogic } from "./suggestedUsersLogic";
@@ -66,7 +67,9 @@ export const personalInvitationsLogic = kea<personalInvitationsLogicType>([
       invitedUserPublicKey,
       role,
     }) => {
-      const projectKey = values.projectData!.passphraseAsKey;
+      const projectKey = await SymmetricCrypto.exportAesKey(
+        values.projectData!.aesKey
+      );
 
       const encryptedProjectKey = await AsymmetricCrypto.encrypt(
         projectKey,

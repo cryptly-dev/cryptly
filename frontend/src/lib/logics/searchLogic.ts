@@ -4,6 +4,7 @@ import type { searchLogicType } from "./searchLogicType";
 import { ProjectsApi, type ProjectSearchResponse } from "../api/projects.api";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
+import { keystore } from "../crypto/keystore";
 import { authLogic } from "./authLogic";
 import { keyLogic } from "./keyLogic";
 
@@ -19,7 +20,7 @@ export const searchLogic = kea<searchLogicType>([
   connect({
     values: [
       authLogic, ["jwtToken", "userData"],
-      keyLogic, ["privateKeyDecrypted"],
+      keyLogic, ["hasMasterKey"],
     ],
   }),
 
@@ -52,18 +53,21 @@ export const searchLogic = kea<searchLogicType>([
       [] as SearchableProject[],
       {
         loadSearchableProjects: async () => {
-          if (!values.jwtToken || !values.privateKeyDecrypted || !values.userData) {
+          if (!values.jwtToken || !values.hasMasterKey || !values.userData) {
             return [];
           }
 
+          const masterKey = await keystore.getMasterKey();
+          if (!masterKey) return [];
+
           try {
             const projects = await ProjectsApi.searchProjects(values.jwtToken);
-            
-            // Decrypt each project's content
+
             const decryptedProjects = await Promise.all(
               projects.map(async (project: ProjectSearchResponse) => {
                 try {
-                  const encryptedProjectKey = project.encryptedSecretsKeys[values.userData!.id];
+                  const encryptedProjectKey =
+                    project.encryptedSecretsKeys[values.userData!.id];
                   if (!encryptedProjectKey) {
                     return {
                       id: project.id,
@@ -72,15 +76,24 @@ export const searchLogic = kea<searchLogicType>([
                     };
                   }
 
-                  const projectKey = await AsymmetricCrypto.decrypt(
-                    encryptedProjectKey,
-                    values.privateKeyDecrypted!
-                  );
+                  let aesKey = await keystore.getProjectKey(project.id);
+                  if (!aesKey) {
+                    const projectKeyBase64 =
+                      await AsymmetricCrypto.decryptWithKey(
+                        encryptedProjectKey,
+                        masterKey
+                      );
+                    aesKey = await SymmetricCrypto.importAesKey(
+                      projectKeyBase64
+                    );
+                    await keystore.setProjectKey(project.id, aesKey);
+                  }
 
-                  const decryptedContent = await SymmetricCrypto.decrypt(
-                    project.encryptedSecrets,
-                    projectKey
-                  );
+                  const decryptedContent =
+                    await SymmetricCrypto.decryptWithKey(
+                      project.encryptedSecrets,
+                      aesKey
+                    );
 
                   return {
                     id: project.id,
@@ -88,7 +101,6 @@ export const searchLogic = kea<searchLogicType>([
                     decryptedContent,
                   };
                 } catch {
-                  // If decryption fails, return project with empty content
                   return {
                     id: project.id,
                     name: project.name,

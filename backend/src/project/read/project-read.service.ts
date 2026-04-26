@@ -25,4 +25,8 @@ export class ProjectReadService {
       .exec();
     return projects.map(ProjectSerializer.normalize);
   }
+
+  public async countAll(): Promise<number> {
+    return this.projectModel.countDocuments().exec();
+  }
 }

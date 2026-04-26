@@ -1,6 +1,7 @@
 import {
   actions,
   connect,
+  events,
   kea,
   listeners,
   path,
@@ -8,9 +9,9 @@ import {
   selectors,
 } from "kea";
 
-import { subscriptions } from "kea-subscriptions";
 import { UserApi, type User } from "../api/user.api";
 import { AsymmetricCrypto } from "../crypto/crypto.asymmetric";
+import { keystore } from "../crypto/keystore";
 import { SymmetricCrypto } from "../crypto/crypto.symmetric";
 import { authLogic } from "./authLogic";
 import { ftuxLogic } from "./ftuxLogic";
@@ -25,43 +26,23 @@ export const keyLogic = kea<keyLogicType>([
   }),
 
   actions({
-    // reducers
-    setPassphrase: (passphrase: string) => ({ passphrase }),
-    setPrivateKeyDecrypted: (privateKeyDecrypted: string | null) => ({
-      privateKeyDecrypted,
-    }),
+    setHasMasterKey: (hasMasterKey: boolean) => ({ hasMasterKey }),
+    hydrateMasterKey: true,
 
-    // listeners
     setUpPassphrase: (passphrase: string) => ({ passphrase }),
-    decryptPrivateKey: true,
+    unlock: (passphrase: string) => ({ passphrase }),
     reset: true,
   }),
 
   reducers({
-    passphrase: [
-      null as string | null,
+    hasMasterKey: [
+      false as boolean,
       {
-        persist: true,
-      },
-      {
-        setPassphrase: (
-          _: string | null,
-          { passphrase }: { passphrase: string }
-        ) => passphrase,
-        reset: () => null,
-      },
-    ],
-    privateKeyDecrypted: [
-      null as string | null,
-      {
-        persist: true,
-      },
-      {
-        setPrivateKeyDecrypted: (
-          _: string | null,
-          { privateKeyDecrypted }: { privateKeyDecrypted: string | null }
-        ) => privateKeyDecrypted,
-        reset: () => null,
+        setHasMasterKey: (
+          _: boolean,
+          { hasMasterKey }: { hasMasterKey: boolean }
+        ) => hasMasterKey,
+        reset: () => false,
       },
     ],
   }),
@@ -73,9 +54,19 @@ export const keyLogic = kea<keyLogicType>([
         Boolean(userData) &&
         (!userData!.publicKey || !userData!.privateKeyEncrypted),
     ],
+    // True only when we *know* the account has keys. Distinct from
+    // `!shouldSetUpPassphrase`, which is also false while userData is still
+    // loading — that ambiguity was causing UnlockBrowserDialog to flash.
+    keysAreSetUp: [
+      (state) => [state.userData],
+      (userData: User | null) =>
+        Boolean(userData) &&
+        Boolean(userData!.publicKey) &&
+        Boolean(userData!.privateKeyEncrypted),
+    ],
     browserIsUnlocked: [
-      (state) => [state.privateKeyDecrypted],
-      (privateKeyDecrypted: string | null) => Boolean(privateKeyDecrypted),
+      (state) => [state.hasMasterKey],
+      (hasMasterKey: boolean) => Boolean(hasMasterKey),
     ],
   }),
 
@@ -93,7 +84,12 @@ export const keyLogic = kea<keyLogicType>([
         base64Key
       );
 
-      actions.setPassphrase(passphrase);
+      const masterKey =
+        await AsymmetricCrypto.importPrivateKeyNonExtractable(
+          keyPair.privateKey
+        );
+      await keystore.setMasterKey(masterKey);
+      actions.setHasMasterKey(true);
 
       await UserApi.updateMe(values.jwtToken!, {
         publicKey: keyPair.publicKey,
@@ -104,14 +100,8 @@ export const keyLogic = kea<keyLogicType>([
 
       await actions.loadUserData();
     },
-    decryptPrivateKey: async (): Promise<void> => {
+    unlock: async ({ passphrase }): Promise<void> => {
       const encrypted = values.userData?.privateKeyEncrypted;
-      const passphrase = values.passphrase;
-      if (!passphrase) {
-        actions.setPrivateKeyDecrypted(null);
-        return;
-      }
-
       if (!encrypted) {
         return;
       }
@@ -119,22 +109,30 @@ export const keyLogic = kea<keyLogicType>([
       const base64Key = await SymmetricCrypto.deriveBase64KeyFromPassphrase(
         passphrase
       );
+      let pkcs8Base64: string;
       try {
-        const decrypted = await SymmetricCrypto.decrypt(encrypted, base64Key);
-        actions.setPrivateKeyDecrypted(decrypted);
-      } catch (e) {
-        actions.setPrivateKeyDecrypted(null);
-        throw Error("Invalid passphrase");
+        pkcs8Base64 = await SymmetricCrypto.decrypt(encrypted, base64Key);
+      } catch {
+        throw new Error("Invalid passphrase");
       }
+
+      const masterKey =
+        await AsymmetricCrypto.importPrivateKeyNonExtractable(pkcs8Base64);
+      await keystore.setMasterKey(masterKey);
+      actions.setHasMasterKey(true);
+    },
+    reset: async () => {
+      await keystore.wipeAll();
+    },
+    hydrateMasterKey: async () => {
+      const existing = await keystore.getMasterKey();
+      actions.setHasMasterKey(Boolean(existing));
     },
   })),
 
-  subscriptions(({ actions }) => ({
-    passphrase: () => {
-      actions.decryptPrivateKey();
-    },
-    userData: () => {
-      actions.decryptPrivateKey();
+  events(({ actions }) => ({
+    afterMount: () => {
+      actions.hydrateMasterKey();
     },
   })),
 ]);
