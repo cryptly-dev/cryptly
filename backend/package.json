@@ -1,5 +1,5 @@
 {
-  "name": "starter",
+  "name": "backend",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -19,7 +19,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "stripe": "stripe listen --forward-to localhost:3000/payments/stripe/webhook",
-    "migrate-up": "npx migrate-mongo up"
+    "migrate-up": "npx migrate-mongo up",
+    "openapi:generate": "ts-node -r tsconfig-paths/register src/generate-openapi.ts"
   },
   "dependencies": {
     "@logdash/js-sdk": "^1.0.9",
@@ -104,15 +105,5 @@
       "^src/(.*)$": "<rootDir>/src/$1"
     }
   },
-  "packageManager": "pnpm@10.17.0+sha512.fce8a3dd29a4ed2ec566fb53efbb04d8c44a0f05bc6f24a73046910fb9c3ce7afa35a0980500668fa3573345bd644644fa98338fa168235c80f4aa17aa17fbef",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@nestjs/core",
-      "@scarf/scarf",
-      "cpu-features",
-      "mongodb-memory-server",
-      "protobufjs",
-      "ssh2"
-    ]
-  }
+  "packageManager": "pnpm@10.17.0+sha512.fce8a3dd29a4ed2ec566fb53efbb04d8c44a0f05bc6f24a73046910fb9c3ce7afa35a0980500668fa3573345bd644644fa98338fa168235c80f4aa17aa17fbef"
 }
