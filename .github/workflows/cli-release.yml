@@ -14,7 +14,6 @@ defaults:
 
 permissions:
   contents: write
-  pull-requests: write
   id-token: write
 
 jobs:
@@ -55,36 +54,23 @@ jobs:
           echo "pending=$pending" >> "$GITHUB_OUTPUT"
           echo "Found $pending pending changeset(s)."
 
-      - name: Open or update release PR
+      # Bumps cli/package.json, regenerates CHANGELOG.md, deletes the consumed
+      # changesets, then commits & pushes back to main. Pushes made by the
+      # default GITHUB_TOKEN don't trigger workflow runs, so this can't loop.
+      - name: Version + commit
         if: steps.detect.outputs.pending != '0'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          BRANCH=changesets-release/main
-          git fetch origin
-          git checkout -B "$BRANCH" "origin/${GITHUB_REF_NAME}"
-
           pnpm changeset version
-
           git add -A
           git commit -m "chore(cli): release"
-          git push -f origin "$BRANCH"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
-          if ! gh pr view "$BRANCH" --repo "$GITHUB_REPOSITORY" --json number > /dev/null 2>&1; then
-            gh pr create \
-              --repo "$GITHUB_REPOSITORY" \
-              --title "chore(cli): release" \
-              --body "Automated release PR generated from pending changesets in \`cli/.changeset/\`. Merging this publishes \`@cryptly/cli\` to npm." \
-              --base "$GITHUB_REF_NAME" \
-              --head "$BRANCH"
-          fi
-
+      # Idempotent: if the current version is already on npm, this is a no-op.
       - name: Publish to npm
-        if: steps.detect.outputs.pending == '0'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
