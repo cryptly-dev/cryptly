@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-deploy.yml'
+      - '.github/templates/build-and-push/**'
+      - '.github/templates/deploy-backend-container/**'
+      - '.github/templates/prune/**'
 
 defaults:
   run:
