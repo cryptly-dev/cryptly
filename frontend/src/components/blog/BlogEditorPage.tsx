@@ -28,8 +28,9 @@ Write in markdown on the left. Preview renders live on the right.
 
 Paste an image from clipboard — it will be uploaded and a markdown link inserted automatically.
 
-Resize images by adding a size after a pipe in the alt text:
+Style images by adding modifiers after a pipe in the alt text:
 \`![caption|small](url)\` — also \`medium\`, \`large\`, \`full\`, or pixel widths like \`![caption|400](url)\` and \`![caption|400x250](url)\`.
+Combine with space-separated modifiers: \`center\` to center, \`flat\` to remove rounded corners — e.g. \`![caption|400 center flat](url)\`.
 
 ## Some ideas
 
