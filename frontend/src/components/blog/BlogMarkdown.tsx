@@ -19,30 +19,58 @@ function parseImageSpec(alt: string | undefined): {
   width?: string;
   height?: string;
   isFullWidth: boolean;
+  center: boolean;
+  flat: boolean;
 } {
-  if (!alt) return { alt: "", isFullWidth: true };
-  const pipe = alt.lastIndexOf("|");
-  if (pipe === -1) return { alt, isFullWidth: true };
-  const spec = alt.slice(pipe + 1).trim().toLowerCase();
+  const empty = { alt: "", isFullWidth: true, center: false, flat: false };
+  if (!alt) return empty;
+  const pipe = alt.indexOf("|");
+  if (pipe === -1)
+    return { ...empty, alt, isFullWidth: true };
   const cleanAlt = alt.slice(0, pipe).trim();
-  if (!spec) return { alt: cleanAlt, isFullWidth: true };
+  const tokens = alt
+    .slice(pipe + 1)
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (tokens.length === 0)
+    return { ...empty, alt: cleanAlt };
 
-  if (spec in NAMED_WIDTHS) {
-    const width = NAMED_WIDTHS[spec];
-    return { alt: cleanAlt, width, isFullWidth: spec === "full" };
+  let width: string | undefined;
+  let height: string | undefined;
+  let isFullWidth = true;
+  let center = false;
+  let flat = false;
+  let unknown = false;
+
+  for (const token of tokens) {
+    if (token in NAMED_WIDTHS) {
+      width = NAMED_WIDTHS[token];
+      isFullWidth = token === "full";
+      continue;
+    }
+    const dims = token.match(/^(\d+)(?:x(\d+))?$/);
+    if (dims) {
+      width = `${dims[1]}px`;
+      height = dims[2] ? `${dims[2]}px` : undefined;
+      isFullWidth = false;
+      continue;
+    }
+    if (token === "center") {
+      center = true;
+      continue;
+    }
+    if (token === "flat" || token === "sharp" || token === "square") {
+      flat = true;
+      continue;
+    }
+    unknown = true;
   }
 
-  const dims = spec.match(/^(\d+)(?:x(\d+))?$/);
-  if (dims) {
-    return {
-      alt: cleanAlt,
-      width: `${dims[1]}px`,
-      height: dims[2] ? `${dims[2]}px` : undefined,
-      isFullWidth: false,
-    };
+  if (unknown && width === undefined && !center && !flat) {
+    return { ...empty, alt, isFullWidth: true };
   }
-
-  return { alt, isFullWidth: true };
+  return { alt: cleanAlt, width, height, isFullWidth, center, flat };
 }
 
 export function BlogMarkdown({ content, className }: BlogMarkdownProps) {
@@ -139,15 +167,19 @@ export function BlogMarkdown({ content, className }: BlogMarkdownProps) {
             if (parsed.width) style.width = parsed.width;
             if (parsed.height) style.height = parsed.height;
             if (parsed.width && !parsed.isFullWidth) style.maxWidth = "100%";
+            const classes = [
+              "my-8",
+              "border",
+              "border-neutral-800",
+              "shadow-xl",
+              parsed.flat ? "rounded-none" : "rounded-xl",
+              parsed.isFullWidth ? "w-full" : "",
+              parsed.center ? "block mx-auto" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
             return (
-              <img
-                src={src}
-                alt={parsed.alt}
-                style={style}
-                className={`my-8 rounded-xl border border-neutral-800 shadow-xl${
-                  parsed.isFullWidth ? " w-full" : ""
-                }`}
-              />
+              <img src={src} alt={parsed.alt} style={style} className={classes} />
             );
           },
           table: ({ children }) => (
