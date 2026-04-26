@@ -30,26 +30,28 @@ export const auth = $state({
 
 let loadUserSeq = 0;
 
-export async function loadUserData(): Promise<void> {
+export async function loadUserData(): Promise<boolean> {
   const token = auth.jwtToken;
   if (!token) {
     auth.userData = null;
-    return;
+    return false;
   }
   const seq = ++loadUserSeq;
   try {
     const data = await UserApi.getMe(token);
     if (seq !== loadUserSeq) {
-      return;
+      return false;
     }
     auth.userData = data;
     if (data.email) {
       posthog.identify(data.id, { email: data.email });
     }
+    return true;
   } catch {
     if (seq !== loadUserSeq) {
-      return;
+      return false;
     }
+    return false;
   }
 }
 

@@ -21,6 +21,9 @@
   let projects = $state<Project[] | null>(null);
   let projectsLoading = $state(true);
   let loadError = $state<string | null>(null);
+  let profileLoading = $state(true);
+  let profileError = $state<string | null>(null);
+  let createError = $state<string | null>(null);
 
   let name = $state('');
   let submitting = $state(false);
@@ -51,11 +54,20 @@
       void goto('/app/login');
       return;
     }
-    void loadProjects();
+    void (async () => {
+      profileLoading = true;
+      profileError = null;
+      const ok = await loadUserData();
+      profileLoading = false;
+      if (!ok || !auth.userData) {
+        profileError = 'Could not load your account. Check the API (PUBLIC_API_URL) and that you are logged in.';
+      }
+      await loadProjects();
+    })();
   });
 
   $effect(() => {
-    if (projectsLoading || projects === null) return;
+    if (profileLoading || projectsLoading || projects === null) return;
     if (projects.length > 0) {
       const sorted = [...projects].sort(
         (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
@@ -66,7 +78,7 @@
   });
 
   $effect(() => {
-    if (projectsLoading || !projects || projects.length !== 0) return;
+    if (profileLoading || projectsLoading || !projects || projects.length !== 0) return;
     void tick().then(() => {
       nameInput?.focus();
       if (emptyMotionEl) {
@@ -84,7 +96,12 @@
     const trimmed = name.trim();
     const jwt = auth.jwtToken;
     const user = auth.userData;
-    if (!trimmed || submitting || !jwt || !user?.publicKey) return;
+    createError = null;
+    if (!trimmed || submitting || !jwt) return;
+    if (!user?.publicKey) {
+      createError = 'Encryption keys are not ready. Finish passphrase setup first.';
+      return;
+    }
 
     submitting = true;
     posthog.capture('add_project_button_clicked');
@@ -109,6 +126,7 @@
       await goto(`/app/project/${proj.id}`, { replaceState: true });
     } catch {
       submitting = false;
+      createError = 'Could not create project. Try again or check the API and your connection.';
     }
   }
 </script>
@@ -117,7 +135,30 @@
   <div class="flex h-screen w-screen items-center justify-center bg-background p-6">
     <p class="text-sm text-muted-foreground">{loadError}</p>
   </div>
-{:else if !projectsLoading && projects && projects.length === 0}
+{:else if profileError}
+  <div class="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background p-6">
+    <p class="max-w-md text-center text-sm text-muted-foreground">{profileError}</p>
+    <button
+      type="button"
+      class="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
+      onclick={() => {
+        profileError = null;
+        void (async () => {
+          profileLoading = true;
+          const ok = await loadUserData();
+          profileLoading = false;
+          if (!ok || !auth.userData) {
+            profileError = 'Could not load your account.';
+            return;
+          }
+          await loadProjects();
+        })();
+      }}
+    >
+      Retry
+    </button>
+  </div>
+{:else if !profileLoading && !projectsLoading && projects && projects.length === 0}
   <div class="flex min-h-screen items-center justify-center bg-background p-8">
     <div bind:this={emptyMotionEl} class="w-full max-w-md" style="opacity:0;transform:translateY(14px)">
       <div class="mb-10">
@@ -130,6 +171,17 @@
         </p>
       </div>
 
+      {#if !auth.userData?.publicKey}
+        <p class="mb-4 text-sm text-amber-200/90">
+          Set up your passphrase and keys to create a project.{' '}
+          <a href="/app/set-passphrase" class="underline underline-offset-2 hover:text-foreground"
+            >Continue setup</a
+          >
+        </p>
+      {/if}
+      {#if createError}
+        <p class="mb-3 text-sm text-destructive">{createError}</p>
+      {/if}
       <form onsubmit={handleCreate}>
         <div class="relative">
           <input
@@ -146,7 +198,7 @@
           />
           <button
             type="submit"
-            disabled={!name.trim() || submitting}
+            disabled={!name.trim() || submitting || !auth.userData?.publicKey}
             aria-label="Create project"
             class="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
