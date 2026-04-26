@@ -1,2 +1,6 @@
 .cursor/
 .security-audit/
+node_modules/
+.svelte-kit/
+.wrangler/
+build/

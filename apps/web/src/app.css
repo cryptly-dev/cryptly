@@ -1,0 +1,14 @@
+@import '@fontsource-variable/funnel-display';
+@import 'tailwindcss';
+@plugin 'daisyui';
+
+:root {
+  font-family: 'Funnel Display Variable', Inter, system-ui, sans-serif;
+  color: #101828;
+  background: #f7f8fb;
+}
+
+html,
+body {
+  min-height: 100%;
+}
