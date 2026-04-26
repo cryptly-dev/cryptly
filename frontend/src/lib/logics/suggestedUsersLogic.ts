@@ -19,8 +19,12 @@ export const suggestedUsersLogic = kea<suggestedUsersLogicType>([
   key((props) => props.projectId),
 
   connect({
-    values: [authLogic, ["jwtToken"], projectLogic, ["projectData"]],
-    selectors: [projectLogic, ["currentUserRole"]],
+    values: [
+      authLogic,
+      ["jwtToken"],
+      projectLogic,
+      ["projectData", "currentUserRole"],
+    ],
   }),
 
   loaders(({ values, props }) => ({
