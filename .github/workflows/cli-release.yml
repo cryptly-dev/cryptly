@@ -1,0 +1,77 @@
+name: Release CLI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cli/**'
+      - '.github/workflows/cli-release.yml'
+
+defaults:
+  run:
+    working-directory: ./cli
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: cli/package.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: cli/pnpm-lock.yaml
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Detect pending changesets
+        id: detect
+        run: |
+          pending=$(find .changeset -name "*.md" ! -name "README.md" 2>/dev/null | wc -l | tr -d ' ')
+          echo "pending=$pending" >> "$GITHUB_OUTPUT"
+          echo "Found $pending pending changeset(s)."
+
+      # Bumps cli/package.json, regenerates CHANGELOG.md, deletes the consumed
+      # changesets, then commits & pushes back to main. Pushes made by the
+      # default GITHUB_TOKEN don't trigger workflow runs, so this can't loop.
+      - name: Version + commit
+        if: steps.detect.outputs.pending != '0'
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          pnpm changeset version
+          git add -A
+          git commit -m "chore(cli): release"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      # Idempotent: if the current version is already on npm, this is a no-op.
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm changeset publish
