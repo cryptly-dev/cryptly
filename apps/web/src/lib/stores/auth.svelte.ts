@@ -1,7 +1,7 @@
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
 import posthog from "posthog-js";
-import { AuthApi } from "$lib/auth/auth-api";
+import { AuthApi, AuthRequestError } from "$lib/auth/auth-api";
 import {
   AUTH_JWT_STORAGE_KEY,
   AUTH_REFRESH_STORAGE_KEY,
@@ -26,19 +26,55 @@ export const auth = $state({
   jwtToken: readKey(AUTH_JWT_STORAGE_KEY) as string | null,
   refreshToken: readKey(AUTH_REFRESH_STORAGE_KEY) as string | null,
   userData: null as User | null,
+  accountLoadError: null as null | "network" | "session" | "unknown",
 });
 
 let loadUserSeq = 0;
 
+function isInvalidRefreshFailure(error: unknown): boolean {
+  if (!(error instanceof AuthRequestError)) return false;
+  if (error.status === undefined) return false;
+  return error.status >= 400 && error.status < 500;
+}
+
 export async function loadUserData(): Promise<boolean> {
   const token = auth.jwtToken;
+  auth.accountLoadError = null;
   if (!token) {
     auth.userData = null;
     return false;
   }
   const seq = ++loadUserSeq;
   try {
-    const data = await UserApi.getMe(token);
+    let data: User;
+    try {
+      data = await UserApi.getMe(token);
+    } catch {
+      if (!auth.refreshToken) {
+        auth.accountLoadError = "session";
+        await logout();
+        return false;
+      }
+      let refreshed;
+      try {
+        refreshed = await AuthApi.refresh(auth.refreshToken);
+      } catch (error) {
+        if (isInvalidRefreshFailure(error)) {
+          auth.accountLoadError = "session";
+          await logout();
+        } else {
+          auth.accountLoadError = "network";
+        }
+        return false;
+      }
+      if (!refreshed.refreshToken) {
+        auth.accountLoadError = "session";
+        await logout();
+        return false;
+      }
+      setTokens(refreshed.token, refreshed.refreshToken);
+      data = await UserApi.getMe(refreshed.token);
+    }
     if (seq !== loadUserSeq) {
       return false;
     }
@@ -51,8 +87,19 @@ export async function loadUserData(): Promise<boolean> {
     if (seq !== loadUserSeq) {
       return false;
     }
+    auth.accountLoadError = auth.jwtToken ? "unknown" : "session";
     return false;
   }
+}
+
+export function accountLoadErrorMessage(): string {
+  if (auth.accountLoadError === "network") {
+    return "Cannot reach the Cryptly API. Check your connection and try again.";
+  }
+  if (auth.accountLoadError === "session") {
+    return "Your session expired. Sign in again to continue.";
+  }
+  return "Could not load your account. Try again.";
 }
 
 export function setJwtToken(value: string | null) {
@@ -74,16 +121,21 @@ export function setRefreshToken(value: string | null) {
 }
 
 export function setTokens(jwt: string, refresh: string) {
-  setJwtToken(jwt);
-  setRefreshToken(refresh);
+  auth.accountLoadError = null;
+  auth.refreshToken = refresh;
+  writeKey(AUTH_REFRESH_STORAGE_KEY, refresh);
+  auth.jwtToken = jwt;
+  writeKey(AUTH_JWT_STORAGE_KEY, jwt);
 }
 
 export function setUserData(data: User | null) {
   auth.userData = data;
+  if (data) auth.accountLoadError = null;
 }
 
 export function reset() {
   setUserData(null);
+  auth.accountLoadError = null;
   setJwtToken(null);
   setRefreshToken(null);
 }
@@ -107,8 +159,7 @@ export async function exchangeGoogleCodeForJwt(
   googleCode: string,
 ): Promise<string | null> {
   const result = await AuthApi.loginGoogle(googleCode);
-  setRefreshToken(result.refreshToken);
-  setJwtToken(result.token);
+  setTokens(result.token, result.refreshToken);
   return result.token;
 }
 
@@ -116,14 +167,12 @@ export async function exchangeGithubCodeForJwt(
   githubCode: string,
 ): Promise<string | null> {
   const result = await AuthApi.loginGithub(githubCode);
-  setRefreshToken(result.refreshToken);
-  setJwtToken(result.token);
+  setTokens(result.token, result.refreshToken);
   return result.token;
 }
 
 export async function loginLocal(email: string): Promise<string | null> {
   const result = await AuthApi.loginLocal(email);
-  setRefreshToken(result.refreshToken);
-  setJwtToken(result.token);
+  setTokens(result.token, result.refreshToken);
   return result.token;
 }

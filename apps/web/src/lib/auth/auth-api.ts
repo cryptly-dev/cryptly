@@ -21,9 +21,19 @@ export interface LoginResult {
   refreshToken: string;
 }
 
+export class AuthRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status?: number
+  ) {
+    super(message);
+    this.name = 'AuthRequestError';
+  }
+}
+
 async function parseLogin(res: Response): Promise<LoginResult> {
   if (!res.ok) {
-    throw new Error('Auth request failed');
+    throw new AuthRequestError('Auth request failed', res.status);
   }
   const data = (await res.json()) as { token: string; refreshToken: string };
   return { token: data.token, refreshToken: data.refreshToken };
@@ -61,7 +71,7 @@ export class AuthApi {
       jsonInit({ refreshToken })
     );
     if (!res.ok) {
-      throw new Error('Token refresh failed');
+      throw new AuthRequestError('Token refresh failed', res.status);
     }
     const data = (await res.json()) as { token: string; refreshToken: string };
     return { token: data.token, refreshToken: data.refreshToken };
@@ -73,7 +83,7 @@ export class AuthApi {
       jsonInit({ refreshToken })
     );
     if (!res.ok) {
-      throw new Error('Logout request failed');
+      throw new AuthRequestError('Logout request failed', res.status);
     }
   }
 }

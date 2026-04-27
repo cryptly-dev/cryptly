@@ -146,6 +146,22 @@
     @apply bg-background text-foreground;
   }
 
+  :where(
+    a[href],
+    button:not(:disabled),
+    [role="button"],
+    [role="menuitem"],
+    [role="tab"],
+    summary,
+    label[for],
+    select:not(:disabled),
+    input[type="checkbox"]:not(:disabled),
+    input[type="radio"]:not(:disabled),
+    input[type="range"]:not(:disabled)
+  ) {
+    cursor: pointer;
+  }
+
   * {
     scrollbar-width: thin;
     scrollbar-color: oklch(0.4 0 0) transparent;

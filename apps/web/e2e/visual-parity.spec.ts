@@ -12,6 +12,10 @@ import { PNG } from "pngjs";
 
 const REACT = process.env.REACT_URL ?? "http://127.0.0.1:5173";
 const SVELTE = process.env.SVELTE_URL ?? "http://127.0.0.1:9090";
+const PROJECT_ID =
+  process.env.PARITY_PROJECT_ID ?? "69e4efc7ed94cab2c9b88c9b";
+const REACT_STORAGE_STATE = process.env.PARITY_REACT_STORAGE_STATE;
+const SVELTE_STORAGE_STATE = process.env.PARITY_SVELTE_STORAGE_STATE;
 
 test.beforeAll(async ({ request }, testInfo) => {
   const check = async (url: string) => {
@@ -89,3 +93,50 @@ for (const route of Object.keys(THRESHOLDS)) {
     ).toBeLessThanOrEqual(threshold);
   });
 }
+
+test("authenticated history tab visual parity", async ({ browser }, testInfo) => {
+  if (!REACT_STORAGE_STATE || !SVELTE_STORAGE_STATE) {
+    testInfo.skip(
+      true,
+      "History parity needs authenticated storage states. Provide PARITY_REACT_STORAGE_STATE and PARITY_SVELTE_STORAGE_STATE.",
+    );
+  }
+
+  const route = `/app/project/${PROJECT_ID}`;
+  const reactContext = await browser.newContext({
+    storageState: REACT_STORAGE_STATE,
+    viewport: { width: 1440, height: 900 },
+    deviceScaleFactor: 1,
+    colorScheme: "dark",
+  });
+  const svelteContext = await browser.newContext({
+    storageState: SVELTE_STORAGE_STATE,
+    viewport: { width: 1440, height: 900 },
+    deviceScaleFactor: 1,
+    colorScheme: "dark",
+  });
+
+  const reactPage = await reactContext.newPage();
+  await reactPage.goto(`${REACT}${route}`, { waitUntil: "load" });
+  await reactPage.getByRole("button", { name: "History" }).click();
+  await expect(reactPage.getByPlaceholder("Search edits — author, email, diff content…")).toBeVisible();
+  await reactPage.waitForTimeout(1200);
+
+  const sveltePage = await svelteContext.newPage();
+  await sveltePage.goto(`${SVELTE}${route}`, { waitUntil: "load" });
+  await sveltePage.getByRole("button", { name: "History" }).click();
+  await expect(sveltePage.getByPlaceholder("Search edits — author, email, diff content…")).toBeVisible();
+  await sveltePage.waitForTimeout(1200);
+
+  const reactShot = await reactPage.locator("main").screenshot();
+  const svelteShot = await sveltePage.locator("main").screenshot();
+
+  await reactContext.close();
+  await svelteContext.close();
+
+  const ratio = mismatchRatio(reactShot, svelteShot);
+  expect(
+    ratio,
+    `History tab pixel mismatch ${(ratio * 100).toFixed(2)}% for ${route}.`,
+  ).toBeLessThanOrEqual(0.03);
+});

@@ -13,7 +13,7 @@ export interface PublicEnv {
 export const publicEnv: PublicEnv = {
   // Default matches `apps/web` dev script: `vite dev --port 9090`
   appUrl: env.PUBLIC_APP_URL ?? "http://127.0.0.1:9090",
-  apiUrl: env.PUBLIC_API_URL ?? "http://localhost:3000",
+  apiUrl: env.PUBLIC_API_URL ?? "http://localhost:9050",
   googleClientId: env.PUBLIC_GOOGLE_CLIENT_ID ?? "",
   githubClientId: env.PUBLIC_GITHUB_CLIENT_ID ?? "",
   posthogKey: env.PUBLIC_POSTHOG_KEY ?? "",

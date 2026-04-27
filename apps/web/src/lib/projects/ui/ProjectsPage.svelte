@@ -14,7 +14,7 @@
   import { UserApi } from '$lib/auth/user.api';
   import { ProjectsApi, type Project } from '$lib/projects/projects.api';
   import GripLoader from '$lib/shared/ui/GripLoader.svelte';
-  import { auth, loadUserData } from '$lib/stores/auth.svelte';
+  import { accountLoadErrorMessage, auth, loadUserData } from '$lib/stores/auth.svelte';
 
   const ACCENT = '#DDA15E';
 
@@ -60,7 +60,8 @@
       const ok = await loadUserData();
       profileLoading = false;
       if (!ok || !auth.userData) {
-        profileError = 'Could not load your account. Check the API (PUBLIC_API_URL) and that you are logged in.';
+        if (!auth.jwtToken) return;
+        profileError = accountLoadErrorMessage();
       }
       await loadProjects();
     })();
@@ -132,8 +133,15 @@
 </script>
 
 {#if loadError}
-  <div class="flex h-screen w-screen items-center justify-center bg-background p-6">
-    <p class="text-sm text-muted-foreground">{loadError}</p>
+  <div class="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background p-6">
+    <p class="max-w-md text-center text-sm text-muted-foreground">{loadError}</p>
+    <button
+      type="button"
+      class="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
+      onclick={() => void loadProjects()}
+    >
+      Retry
+    </button>
   </div>
 {:else if profileError}
   <div class="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background p-6">
@@ -148,7 +156,8 @@
           const ok = await loadUserData();
           profileLoading = false;
           if (!ok || !auth.userData) {
-            profileError = 'Could not load your account.';
+            if (!auth.jwtToken) return;
+            profileError = accountLoadErrorMessage();
             return;
           }
           await loadProjects();

@@ -92,7 +92,7 @@ This will:
 - Install all dependencies (pnpm)
 - Set up environment files automatically
 - Start MongoDB in Docker (port 2137)
-- Launch backend on `http://localhost:3000`
+- Launch backend on `http://localhost:9050`
 - Launch frontend on `http://localhost:5173`
 
 > **Note:** Local development mode includes simplified authentication - just enter any email to log in!
