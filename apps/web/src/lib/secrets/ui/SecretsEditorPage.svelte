@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { EventSource } from 'eventsource';
   import { onDestroy } from 'svelte';
   import { fade } from 'svelte/transition';
   import { toast } from 'svelte-sonner';
@@ -14,6 +15,7 @@
   import { IntegrationsApi, type Integration } from '$lib/api/integrations.api';
   import { ProjectsApi } from '$lib/projects/projects.api';
   import { publicEnv } from '$lib/shared/env/public-env';
+  import { secretsEditorNavGuard } from '$lib/secrets/secrets-editor-nav-guard.svelte';
   import SecretsFileEditor from '$lib/secrets/monaco/SecretsFileEditor.svelte';
   import { accountLoadErrorMessage, auth, loadUserData } from '$lib/stores/auth.svelte';
   import { keyAuth } from '$lib/stores/key.svelte';
@@ -21,10 +23,12 @@
 
   let {
     projectId,
+    projectName = '',
     onSaved,
     onConnectIntegrations
   }: {
     projectId: string;
+    projectName?: string;
     onSaved?: () => void | Promise<void>;
     onConnectIntegrations?: () => void;
   } = $props();
@@ -38,6 +42,8 @@
   let saving = $state(false);
   let pushing = $state(false);
   let integrations = $state<Integration[]>([]);
+  let isExternallyUpdated = $state(false);
+  let projectEvents: EventSource | null = null;
   let showSlideToConfirm = $state(false);
   let slideProgress = $state(0);
   let slideDragging = $state(false);
@@ -48,11 +54,12 @@
   let revealOn = $state<ProjectRevealOn>('hover');
 
   const isDirty = $derived(doc !== baseline);
-  const saveDisabled = $derived(saving || !isDirty || readOnly || !aesKey);
+  const saveDisabled = $derived(saving || !isDirty || readOnly || !aesKey || isExternallyUpdated);
   const hasGithubIntegration = $derived(integrations.length > 0);
   const pushDisabled = $derived(isDirty || saving || pushing || readOnly || !hasGithubIntegration);
   const pushDisabledReason = $derived.by(() => {
     if (readOnly) return "You don't have permission to push";
+    if (isExternallyUpdated) return 'Project was updated elsewhere. Refresh first.';
     if (!hasGithubIntegration) return 'You have no integrations';
     if (isDirty) return 'Save your changes first';
     if (saving) return 'Saving…';
@@ -65,6 +72,8 @@
   async function loadProjectFor(pid: string) {
     loadPhase = 'loading';
     loadMessage = null;
+    isExternallyUpdated = false;
+    closeProjectEvents();
     aesKey = null;
     baseline = '';
     doc = '';
@@ -151,6 +160,7 @@
     }
 
     loadPhase = 'ready';
+    openProjectEvents(pid, key);
   }
 
   $effect(() => {
@@ -163,15 +173,18 @@
   });
 
   onDestroy(() => {
+    closeProjectEvents();
     removeSlideListeners();
+    secretsEditorNavGuard.save = null;
+    secretsEditorNavGuard.discard = null;
   });
 
-  async function saveNow(opts?: { silent?: boolean }) {
-    if (saveDisabled) return;
+  async function saveNow(opts?: { silent?: boolean; suppressFailureToast?: boolean }): Promise<boolean> {
+    if (saveDisabled) return false;
     const key = aesKey;
-    if (!key) return;
+    if (!key) return false;
     const jwt = auth.jwtToken;
-    if (!jwt) return;
+    if (!jwt) return false;
     saving = true;
     try {
       const encrypted = await SymmetricCrypto.encryptWithKey(doc, key);
@@ -181,12 +194,85 @@
       if (!opts?.silent) {
         toast.success('Saved');
       }
+      return true;
     } catch {
-      toast.error('Failed to save');
+      if (!opts?.suppressFailureToast) {
+        toast.error('Failed to save');
+      }
+      return false;
     } finally {
       saving = false;
     }
   }
+
+  function closeProjectEvents() {
+    projectEvents?.close();
+    projectEvents = null;
+  }
+
+  function openProjectEvents(pid: string, key: CryptoKey) {
+    const jwt = auth.jwtToken;
+    if (!jwt || projectEvents) return;
+    const url = `${publicEnv.apiUrl.replace(/\/$/, '')}/projects/${pid}/events`;
+    const es = new EventSource(url, {
+      fetch: (input, init) =>
+        fetch(input, {
+          ...init,
+          headers: {
+            ...init?.headers,
+            Authorization: `Bearer ${jwt}`
+          }
+        })
+    });
+    es.onmessage = (event) => {
+      void handleProjectEvent(event.data as string, key);
+    };
+    es.onerror = () => {
+      es.close();
+      if (projectEvents === es) projectEvents = null;
+    };
+    projectEvents = es;
+  }
+
+  async function handleProjectEvent(data: string, key: CryptoKey) {
+    try {
+      const event = JSON.parse(data) as { newEncryptedSecrets?: string };
+      if (!event.newEncryptedSecrets) return;
+      if (isDirty) {
+        isExternallyUpdated = true;
+        return;
+      }
+      const next = await SymmetricCrypto.decryptWithKey(event.newEncryptedSecrets, key);
+      doc = next;
+      baseline = next;
+    } catch {
+      // Manual reload remains available if a malformed or undecryptable event arrives.
+    }
+  }
+
+  $effect(() => {
+    secretsEditorNavGuard.isDirty = loadPhase === 'ready' && doc !== baseline;
+  });
+
+  $effect(() => {
+    secretsEditorNavGuard.readOnly = readOnly;
+  });
+
+  $effect(() => {
+    secretsEditorNavGuard.projectName = projectName;
+  });
+
+  $effect(() => {
+    if (loadPhase !== 'ready') {
+      secretsEditorNavGuard.save = null;
+      secretsEditorNavGuard.discard = null;
+      return;
+    }
+    secretsEditorNavGuard.save = async () => saveNow({ silent: true, suppressFailureToast: true });
+    secretsEditorNavGuard.discard = () => {
+      doc = baseline;
+    };
+  });
 
   function onDocChange(v: string) {
     doc = v;
@@ -315,6 +401,11 @@
   </div>
 {:else if loadPhase === 'ready'}
   <section class="relative h-full min-h-0">
+    {#if isExternallyUpdated}
+      <div class="absolute left-1/2 top-4 z-20 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 shadow-lg">
+        This project was updated elsewhere. Refresh the project before saving or pushing.
+      </div>
+    {/if}
     {#key revealOn}
       <SecretsFileEditor
         height="100%"
@@ -332,7 +423,7 @@
           type="button"
           onclick={() => void saveNow()}
           disabled={saveDisabled}
-          title={saveDisabled && !saving ? (readOnly ? "You don't have permission to edit" : 'No unsaved changes') : undefined}
+          title={saveDisabled && !saving ? (isExternallyUpdated ? 'Project was updated elsewhere. Refresh first.' : readOnly ? "You don't have permission to edit" : 'No unsaved changes') : undefined}
           class={cn(
             pillButtonBase,
             saveDisabled

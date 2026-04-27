@@ -8,6 +8,7 @@ import { CustomJwtService } from '../custom-jwt/custom-jwt.service';
 import { GithubLoginBody } from './dto/github-login.body';
 import { GithubAuthDataService } from './github-auth-data.service';
 import { RefreshTokenWriteService } from '../refresh-token/write/refresh-token-write.service';
+import { ProductAnalyticsService } from '../../shared/posthog/product-analytics.service';
 
 @Injectable()
 export class GithubAuthLoginService {
@@ -19,6 +20,7 @@ export class GithubAuthLoginService {
     private readonly authGithubDataService: GithubAuthDataService,
     private readonly metrics: Metrics,
     private readonly refreshTokenWriteService: RefreshTokenWriteService,
+    private readonly productAnalytics: ProductAnalyticsService,
   ) {}
 
   public async login(dto: GithubLoginBody): Promise<TokenResponse> {
@@ -53,9 +55,13 @@ export class GithubAuthLoginService {
 
       this.metrics.mutate('loginGithub', 1);
 
+      const token = await this.jwtService.sign({ id: user.id });
+      const refreshToken = (await this.refreshTokenWriteService.issue(user.id)).rawToken;
+      this.productAnalytics.loggedIn(user.id, email, 'github');
+
       return {
-        token: await this.jwtService.sign({ id: user.id }),
-        refreshToken: (await this.refreshTokenWriteService.issue(user.id)).rawToken,
+        token,
+        refreshToken,
         isNewUser: true,
       };
     }
@@ -64,9 +70,13 @@ export class GithubAuthLoginService {
 
     this.metrics.mutate('loginGithub', 1);
 
+    const token = await this.jwtService.sign({ id: user.id });
+    const refreshToken = (await this.refreshTokenWriteService.issue(user.id)).rawToken;
+    this.productAnalytics.loggedIn(user.id, email, 'github');
+
     return {
-      token: await this.jwtService.sign({ id: user.id }),
-      refreshToken: (await this.refreshTokenWriteService.issue(user.id)).rawToken,
+      token,
+      refreshToken,
       isNewUser: false,
     };
   }

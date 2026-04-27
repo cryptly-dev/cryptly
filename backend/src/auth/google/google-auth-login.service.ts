@@ -8,6 +8,7 @@ import { CustomJwtService } from '../custom-jwt/custom-jwt.service';
 import { GoogleLoginBody } from './dto/google-login.body';
 import { GoogleAuthDataService } from './google-auth-data.service';
 import { RefreshTokenWriteService } from '../refresh-token/write/refresh-token-write.service';
+import { ProductAnalyticsService } from '../../shared/posthog/product-analytics.service';
 
 @Injectable()
 export class GoogleAuthLoginService {
@@ -19,6 +20,7 @@ export class GoogleAuthLoginService {
     private readonly authGoogleDataService: GoogleAuthDataService,
     private readonly metrics: Metrics,
     private readonly refreshTokenWriteService: RefreshTokenWriteService,
+    private readonly productAnalytics: ProductAnalyticsService,
   ) {}
 
   public async login(dto: GoogleLoginBody): Promise<TokenResponse> {
@@ -51,9 +53,13 @@ export class GoogleAuthLoginService {
 
       this.metrics.mutate('loginGoogle', 1);
 
+      const token = await this.jwtService.sign({ id: user.id });
+      const refreshToken = (await this.refreshTokenWriteService.issue(user.id)).rawToken;
+      this.productAnalytics.loggedIn(user.id, email, 'google');
+
       return {
-        token: await this.jwtService.sign({ id: user.id }),
-        refreshToken: (await this.refreshTokenWriteService.issue(user.id)).rawToken,
+        token,
+        refreshToken,
         isNewUser: true,
       };
     }
@@ -62,9 +68,13 @@ export class GoogleAuthLoginService {
 
     this.metrics.mutate('loginGoogle', 1);
 
+    const token = await this.jwtService.sign({ id: user.id });
+    const refreshToken = (await this.refreshTokenWriteService.issue(user.id)).rawToken;
+    this.productAnalytics.loggedIn(user.id, email, 'google');
+
     return {
-      token: await this.jwtService.sign({ id: user.id }),
-      refreshToken: (await this.refreshTokenWriteService.issue(user.id)).rawToken,
+      token,
+      refreshToken,
       isNewUser: false,
     };
   }

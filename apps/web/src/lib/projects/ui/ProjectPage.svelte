@@ -54,9 +54,15 @@
     ProjectsApi,
     type EncryptedVersion,
     type Project,
+    type ProjectSearchResponse,
     type SuggestedUser
   } from '$lib/projects/projects.api';
-  import { InvitationsApi, type Invitation } from '$lib/invitations/invitations.api';
+  import {
+    InvitationsApi,
+    type Invitation,
+    type InvitationListItem,
+    type PersonalInvitationListItem
+  } from '$lib/invitations/invitations.api';
   import {
     parseValueRangesFromString,
     type ParsedSecret
@@ -71,7 +77,8 @@
   import { publicEnv } from '$lib/shared/env/public-env';
   import { accountLoadErrorMessage, auth, loadUserData, logout } from '$lib/stores/auth.svelte';
   import { keyAuth } from '$lib/stores/key.svelte';
-  import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
+  import ProjectUnsavedNavGuard from '$lib/projects/ui/ProjectUnsavedNavGuard.svelte';
+import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
   import { getCompactRelativeTime } from '$lib/utils';
 
   let { projectId }: { projectId: string } = $props();
@@ -94,6 +101,8 @@
   let loading = $state(true);
   let loadError = $state<string | null>(null);
   let searchQuery = $state('');
+  let searchableProjects = $state<SearchableProject[]>([]);
+  let searchableProjectsLoading = $state(false);
   let activeTab = $state<TabType>(readPersistedActiveTab());
   let showUserMenu = $state(false);
   let editingDisplayName = $state(false);
@@ -127,6 +136,8 @@
   let inviteCopiedField = $state<'link' | 'code' | null>(null);
   let creatingInvitation = $state(false);
   let lastCreatedInvitation = $state<Invitation | null>(null);
+  let pendingLinkInvitations = $state<InvitationListItem[]>([]);
+  let pendingPersonalInvitations = $state<PersonalInvitationListItem[]>([]);
   let updatingMember = $state(false);
   let historyLoading = $state(false);
   let historyLocked = $state(false);
@@ -159,6 +170,12 @@
 
   interface RepoWithInstallation extends Repository {
     installationEntityId: string;
+  }
+
+  interface SearchableProject {
+    id: string;
+    name: string;
+    decryptedContent: string;
   }
 
   interface HistoryVersion extends EncryptedVersion {
@@ -293,7 +310,32 @@
     if (!uniqueProjects) return uniqueProjects;
     const q = searchQuery.trim().toLowerCase();
     if (!q) return uniqueProjects;
-    return uniqueProjects.filter((project) => project.name.toLowerCase().includes(q));
+    const contentMatches = new Set(
+      searchableProjects
+        .filter(
+          (project) =>
+            project.name.toLowerCase().includes(q) || project.decryptedContent.toLowerCase().includes(q)
+        )
+        .map((project) => project.id)
+    );
+    return uniqueProjects.filter(
+      (project) => project.name.toLowerCase().includes(q) || contentMatches.has(project.id)
+    );
+  });
+
+  const searchSnippets = $derived.by(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const snippets = new Map<string, string>();
+    if (!q) return snippets;
+    for (const project of searchableProjects) {
+      const haystack = project.decryptedContent.toLowerCase();
+      const index = haystack.indexOf(q);
+      if (index < 0) continue;
+      const start = Math.max(0, index - 24);
+      const end = Math.min(project.decryptedContent.length, index + q.length + 36);
+      snippets.set(project.id, project.decryptedContent.slice(start, end).replace(/\s+/g, ' ').trim());
+    }
+    return snippets;
   });
 
   const suggestedProjects = $derived.by(() => {
@@ -758,6 +800,53 @@
     return projectKey;
   }
 
+  async function getUnlockedSearchProjectKey(project: ProjectSearchResponse): Promise<CryptoKey | null> {
+    const userId = auth.userData?.id;
+    let projectKey = await keystore.getProjectKey(project.id);
+    if (projectKey) return projectKey;
+
+    const masterKey = await keystore.getMasterKey();
+    const encryptedKey = userId ? project.encryptedSecretsKeys?.[userId] : undefined;
+    if (!masterKey || !encryptedKey) return null;
+
+    const projectKeyB64 = await AsymmetricCrypto.decryptWithKey(encryptedKey, masterKey);
+    projectKey = await SymmetricCrypto.importAesKey(projectKeyB64);
+    await keystore.setProjectKey(project.id, projectKey);
+    return projectKey;
+  }
+
+  async function loadSearchableProjects() {
+    const jwt = auth.jwtToken;
+    if (!jwt || searchableProjectsLoading || searchableProjects.length > 0) return;
+    searchableProjectsLoading = true;
+    try {
+      const results = await ProjectsApi.searchProjects(jwt);
+      searchableProjects = await Promise.all(
+        results.map(async (project) => {
+          try {
+            const projectKey = await getUnlockedSearchProjectKey(project);
+            if (!projectKey) return { id: project.id, name: project.name, decryptedContent: '' };
+            const decryptedContent = await SymmetricCrypto.decryptWithKey(
+              project.encryptedSecrets,
+              projectKey
+            );
+            return { id: project.id, name: project.name, decryptedContent };
+          } catch {
+            return { id: project.id, name: project.name, decryptedContent: '' };
+          }
+        })
+      );
+    } catch {
+      searchableProjects = [];
+    } finally {
+      searchableProjectsLoading = false;
+    }
+  }
+
+  $effect(() => {
+    if (searchQuery.trim()) void loadSearchableProjects();
+  });
+
   const MIN_SWITCH_MS = 500;
 
   function clearSwitchTimer() {
@@ -792,6 +881,50 @@
     renameProjectName = project.name;
     void loadHistory(jwt, project);
     void loadIntegrations(jwt, project.id);
+    void loadPendingInvitations(jwt, project);
+  }
+
+  async function loadPendingInvitations(jwt: string, project: Project) {
+    const uid = auth.userData?.id;
+    const role = uid ? project.members?.find((m) => m.id === uid)?.role : undefined;
+    if (role !== 'admin') {
+      pendingLinkInvitations = [];
+      pendingPersonalInvitations = [];
+      return;
+    }
+    try {
+      const [link, personal] = await Promise.all([
+        InvitationsApi.getProjectInvitations(jwt, project.id),
+        InvitationsApi.getProjectPersonalInvitations(jwt, project.id)
+      ]);
+      pendingLinkInvitations = link;
+      pendingPersonalInvitations = personal;
+    } catch {
+      pendingLinkInvitations = [];
+      pendingPersonalInvitations = [];
+    }
+  }
+
+  async function revokePendingLinkInvitation(invitationId: string) {
+    const jwt = auth.jwtToken;
+    if (!jwt || !activeProject) return;
+    try {
+      await InvitationsApi.deleteInvitation(jwt, invitationId);
+      pendingLinkInvitations = pendingLinkInvitations.filter((i) => i.id !== invitationId);
+    } catch {
+      toast.error('Failed to revoke invitation');
+    }
+  }
+
+  async function revokePendingPersonalInvitation(invitationId: string) {
+    const jwt = auth.jwtToken;
+    if (!jwt || !activeProject) return;
+    try {
+      await InvitationsApi.deletePersonalInvitation(jwt, invitationId);
+      pendingPersonalInvitations = pendingPersonalInvitations.filter((i) => i.id !== invitationId);
+    } catch {
+      toast.error('Failed to revoke invitation');
+    }
   }
 
   async function loadShell(targetProjectId = projectId) {
@@ -1379,6 +1512,31 @@
     }
   }
 
+  async function leaveActiveProject() {
+    const jwt = auth.jwtToken;
+    const userId = auth.userData?.id;
+    if (!jwt || !activeProject || !userId) return;
+    try {
+      const leavingProjectId = activeProject.id;
+      await ProjectsApi.removeMember(jwt, {
+        projectId: leavingProjectId,
+        memberId: userId
+      });
+      const remaining = projects?.filter((project) => project.id !== leavingProjectId) ?? [];
+      projects = remaining;
+      showDeleteConfirm = false;
+      toast.success('Left project');
+      const nextProject = remaining[0];
+      await goto(nextProject ? `/app/project/${nextProject.id}` : '/app/project', { replaceState: true });
+      if (nextProject) {
+        lastLoadKey = '';
+        await loadShell(nextProject.id);
+      }
+    } catch {
+      toast.error('Failed to leave project');
+    }
+  }
+
   async function copyInviteField(field: 'link' | 'code', value: string) {
     if (!value) return;
     await navigator.clipboard.writeText(value);
@@ -1409,6 +1567,7 @@
 </script>
 
 <div class="flex h-screen w-full bg-background text-foreground">
+  <ProjectUnsavedNavGuard />
   <aside class="hidden h-full w-72 shrink-0 flex-col border-r border-border/50 bg-card/40 backdrop-blur-sm md:flex">
     <div class="flex h-14 shrink-0 items-center gap-2 border-b border-border/50 px-3">
       <a href="/" class="shrink-0 text-lg font-semibold tracking-tight transition hover:opacity-80">Cryptly</a>
@@ -1476,6 +1635,11 @@
                 }`}
               >
                 {project.name}
+                {#if searchSnippets.has(project.id)}
+                  <span class="mt-0.5 block truncate text-[11px] font-normal text-muted-foreground/60">
+                    {searchSnippets.get(project.id)}
+                  </span>
+                {/if}
               </span>
               <span class="relative z-[2] flex shrink-0 items-center gap-1.5">
                 <span
@@ -1507,6 +1671,9 @@
         </nav>
       {:else}
         <div class="px-4 py-3 text-sm text-muted-foreground">No projects yet</div>
+      {/if}
+      {#if searchQuery.trim() && searchableProjectsLoading}
+        <div class="px-4 py-2 text-xs text-muted-foreground">Searching encrypted project contents…</div>
       {/if}
     </div>
 
@@ -1860,6 +2027,7 @@
       {:else if activeTab === 'editor'}
         <SecretsEditorPage
           projectId={displayedProjectId}
+          projectName={activeProject?.name ?? ''}
           onSaved={() => {
             const jwt = auth.jwtToken;
             if (jwt && activeProject) void loadHistory(jwt, activeProject);
@@ -2221,6 +2389,48 @@
                 </button>
               {/if}
             </div>
+            {#if isAdmin && (pendingLinkInvitations.length > 0 || pendingPersonalInvitations.length > 0)}
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <Link class="size-4 text-muted-foreground" />
+                  <h3 class="text-sm font-medium">Pending invitations</h3>
+                </div>
+                <div class="divide-y divide-border/50 overflow-hidden rounded-lg border border-border/50 bg-neutral-800/20">
+                  {#each pendingLinkInvitations as inv (inv.id)}
+                    <div class="flex items-center justify-between gap-3 px-4 py-3">
+                      <div class="min-w-0">
+                        <p class="truncate text-sm font-medium">Invite link</p>
+                        <p class="text-xs capitalize text-muted-foreground">{inv.role}</p>
+                      </div>
+                      <button
+                        type="button"
+                        class="text-xs font-medium text-destructive hover:underline"
+                        onclick={() => void revokePendingLinkInvitation(inv.id)}
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  {/each}
+                  {#each pendingPersonalInvitations as pinv (pinv.id)}
+                    <div class="flex items-center justify-between gap-3 px-4 py-3">
+                      <div class="min-w-0">
+                        <p class="truncate text-sm font-medium">
+                          {pinv.invitedUser.displayName || pinv.invitedUser.email || pinv.invitedUser.id}
+                        </p>
+                        <p class="text-xs capitalize text-muted-foreground">{pinv.role} · personal</p>
+                      </div>
+                      <button
+                        type="button"
+                        class="text-xs font-medium text-destructive hover:underline"
+                        onclick={() => void revokePendingPersonalInvitation(pinv.id)}
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {/if}
             <div class="space-y-3">
               <div class="flex items-center gap-2">
                 <Users class="size-4 text-muted-foreground" />
@@ -2546,13 +2756,21 @@
               </div>
               {#if showDeleteConfirm}
                 <div class="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
-                  <div class="mb-3 text-sm font-medium text-destructive">Are you sure you want to delete this project?</div>
+                  <div class="mb-3 text-sm font-medium text-destructive">
+                    {isAdmin ? 'Are you sure you want to delete this project?' : 'Are you sure you want to leave this project?'}
+                  </div>
                   <div class="mb-4 text-sm text-muted-foreground">
-                    This action cannot be undone. This will permanently delete the project and remove all members' access.
+                    {isAdmin
+                      ? "This action cannot be undone. This will permanently delete the project and remove all members' access."
+                      : 'You will lose access to this project until an admin invites you again.'}
                   </div>
                   <div class="flex gap-2">
-                    <button type="button" class="rounded-md bg-destructive px-3 py-2 text-sm text-destructive-foreground" onclick={() => void deleteActiveProject()}>
-                      Delete project
+                    <button
+                      type="button"
+                      class="rounded-md bg-destructive px-3 py-2 text-sm text-destructive-foreground"
+                      onclick={() => void (isAdmin ? deleteActiveProject() : leaveActiveProject())}
+                    >
+                      {isAdmin ? 'Delete project' : 'Leave project'}
                     </button>
                     <button type="button" class="rounded-md px-3 py-2 text-sm hover:bg-neutral-800" onclick={() => (showDeleteConfirm = false)}>
                       Cancel
@@ -2563,18 +2781,18 @@
                 <div class="overflow-hidden rounded-lg border border-border/50 bg-neutral-800/20">
                   <div class="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-neutral-800/40">
                     <div class="min-w-0 flex-1">
-                      <div class="truncate text-sm font-medium">Delete project</div>
-                      <div class="text-xs text-muted-foreground">Permanently delete this project for all members</div>
+                      <div class="truncate text-sm font-medium">{isAdmin ? 'Delete project' : 'Leave project'}</div>
+                      <div class="text-xs text-muted-foreground">
+                        {isAdmin ? 'Permanently delete this project for all members' : 'Remove yourself from this project'}
+                      </div>
                     </div>
-                    {#if isAdmin}
-                      <button
-                        type="button"
-                        class="h-8 px-2 text-sm text-destructive transition hover:bg-destructive/10 hover:text-destructive"
-                        onclick={() => (showDeleteConfirm = true)}
-                      >
-                        Delete
-                      </button>
-                    {/if}
+                    <button
+                      type="button"
+                      class="h-8 px-2 text-sm text-destructive transition hover:bg-destructive/10 hover:text-destructive"
+                      onclick={() => (showDeleteConfirm = true)}
+                    >
+                      {isAdmin ? 'Delete' : 'Leave'}
+                    </button>
                   </div>
                 </div>
               {/if}

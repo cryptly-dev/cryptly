@@ -1,6 +1,5 @@
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
-import posthog from "posthog-js";
 import { AuthApi, AuthRequestError } from "$lib/auth/auth-api";
 import {
   AUTH_JWT_STORAGE_KEY,
@@ -79,9 +78,6 @@ export async function loadUserData(): Promise<boolean> {
       return false;
     }
     auth.userData = data;
-    if (data.email) {
-      posthog.identify(data.id, { email: data.email });
-    }
     return true;
   } catch {
     if (seq !== loadUserSeq) {

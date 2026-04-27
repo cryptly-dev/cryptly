@@ -1,6 +1,9 @@
 import { publicEnv } from "$lib/shared/env/public-env";
 import { SodiumCrypto } from "$lib/auth/sodium-crypto";
-import { lineColToOffset, parseValueRangesFromString } from "$lib/secrets/monaco/parser";
+import {
+  lineColToOffset,
+  parseValueRangesFromString,
+} from "$lib/secrets/monaco/parser";
 
 const baseUrl = () => publicEnv.apiUrl.replace(/\/$/, "");
 
@@ -15,26 +18,37 @@ export class IntegrationsApi {
   static async bootstrapLocalGithubMock(
     jwtToken: string,
   ): Promise<{ githubInstallationId: number }> {
-    const res = await fetch(`${baseUrl()}/users/me/external-connections/github/local-mock/bootstrap`, {
-      headers: authHeaders(jwtToken),
-    });
+    const res = await fetch(
+      `${baseUrl()}/users/me/external-connections/github/local-mock/bootstrap`,
+      {
+        headers: authHeaders(jwtToken),
+      },
+    );
     if (!res.ok) {
       throw new Error("Failed to bootstrap GitHub local mock");
     }
     return res.json() as Promise<{ githubInstallationId: number }>;
   }
 
-  static async getInstallationAvailableForUser(jwtToken: string): Promise<Installation[]> {
-    const res = await fetch(`${baseUrl()}/users/me/external-connections/github/installations`, {
-      headers: authHeaders(jwtToken),
-    });
+  static async getInstallationAvailableForUser(
+    jwtToken: string,
+  ): Promise<Installation[]> {
+    const res = await fetch(
+      `${baseUrl()}/users/me/external-connections/github/installations`,
+      {
+        headers: authHeaders(jwtToken),
+      },
+    );
     if (!res.ok) {
       throw new Error("Failed to load GitHub installations");
     }
     return res.json() as Promise<Installation[]>;
   }
 
-  static async getRepositories(jwtToken: string, installationEntityId: string): Promise<Repository[]> {
+  static async getRepositories(
+    jwtToken: string,
+    installationEntityId: string,
+  ): Promise<Repository[]> {
     const res = await fetch(
       `${baseUrl()}/external-connections/github/installations/${installationEntityId}/repositories`,
       { headers: authHeaders(jwtToken) },
@@ -47,24 +61,37 @@ export class IntegrationsApi {
 
   static async createIntegration(
     jwtToken: string,
-    dto: { projectId: string; repositoryId: number; installationEntityId: string },
+    dto: {
+      projectId: string;
+      repositoryId: number;
+      installationEntityId: string;
+    },
   ): Promise<Integration> {
-    const res = await fetch(`${baseUrl()}/external-connections/github/integrations`, {
-      method: "POST",
-      headers: authHeaders(jwtToken),
-      body: JSON.stringify(dto),
-    });
+    const res = await fetch(
+      `${baseUrl()}/external-connections/github/integrations`,
+      {
+        method: "POST",
+        headers: authHeaders(jwtToken),
+        body: JSON.stringify(dto),
+      },
+    );
     if (!res.ok) {
       throw new Error("Failed to create GitHub integration");
     }
     return res.json() as Promise<Integration>;
   }
 
-  static async deleteIntegration(jwtToken: string, integrationId: string): Promise<void> {
-    const res = await fetch(`${baseUrl()}/external-connections/github/integrations/${integrationId}`, {
-      method: "DELETE",
-      headers: authHeaders(jwtToken),
-    });
+  static async deleteIntegration(
+    jwtToken: string,
+    integrationId: string,
+  ): Promise<void> {
+    const res = await fetch(
+      `${baseUrl()}/external-connections/github/integrations/${integrationId}`,
+      {
+        method: "DELETE",
+        headers: authHeaders(jwtToken),
+      },
+    );
     if (!res.ok) {
       throw new Error("Failed to remove GitHub integration");
     }
@@ -117,7 +144,10 @@ export class IntegrationsApi {
     return body.token;
   }
 
-  static async pushSecret(githubJwtToken: string, dto: PushSecretDto): Promise<void> {
+  static async pushSecret(
+    githubJwtToken: string,
+    dto: PushSecretDto,
+  ): Promise<void> {
     const res = await fetch(
       `https://api.github.com/repos/${dto.owner}/${dto.repo}/actions/secrets/${dto.secretName}`,
       {
@@ -137,6 +167,22 @@ export class IntegrationsApi {
     }
   }
 
+  static async acknowledgeSecretsPushed(
+    jwtToken: string,
+    projectId: string,
+  ): Promise<void> {
+    const res = await fetch(
+      `${baseUrl()}/projects/${projectId}/analytics/secrets-pushed`,
+      {
+        method: "POST",
+        headers: authHeaders(jwtToken),
+      },
+    );
+    if (!res.ok) {
+      throw new Error("Failed to acknowledge secrets push");
+    }
+  }
+
   static async pushSecrets(
     jwtToken: string,
     integrations: Integration[],
@@ -151,10 +197,17 @@ export class IntegrationsApi {
         const repo = integration.repositoryData?.name;
         if (!owner || !repo) return;
 
-        const githubToken = await this.getAccessToken(jwtToken, integration.projectId, integration.id);
+        const githubToken = await this.getAccessToken(
+          jwtToken,
+          integration.projectId,
+          integration.id,
+        );
         await Promise.all(
           Object.entries(secrets).map(async ([key, value]) => {
-            const encryptedValue = await SodiumCrypto.encrypt(value, integration.githubRepositoryPublicKey);
+            const encryptedValue = await SodiumCrypto.encrypt(
+              value,
+              integration.githubRepositoryPublicKey,
+            );
             await this.pushSecret(githubToken, {
               owner,
               repo,
@@ -166,6 +219,14 @@ export class IntegrationsApi {
         );
       }),
     );
+    const pid = integrations[0]?.projectId;
+    if (pid) {
+      try {
+        await this.acknowledgeSecretsPushed(jwtToken, pid);
+      } catch {
+        // analytics must not fail the push flow
+      }
+    }
   }
 }
 
@@ -184,8 +245,16 @@ function parseDotenv(content: string): Record<string, string> {
   const lineLengths = lines.map((line) => line.length);
 
   for (const secret of parsed) {
-    const start = lineColToOffset(lineLengths, secret.range.startLine, secret.range.startCol);
-    const end = lineColToOffset(lineLengths, secret.range.endLine, secret.range.endCol);
+    const start = lineColToOffset(
+      lineLengths,
+      secret.range.startLine,
+      secret.range.startCol,
+    );
+    const end = lineColToOffset(
+      lineLengths,
+      secret.range.endLine,
+      secret.range.endCol,
+    );
     const rawValue = content.slice(start, end);
     values[secret.key] = parseSecretValue(rawValue);
   }

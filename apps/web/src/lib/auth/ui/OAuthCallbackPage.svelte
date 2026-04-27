@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import posthog from 'posthog-js';
   import { gotoAfterLogin } from '$lib/auth/after-login';
   import {
     auth,
@@ -38,15 +37,10 @@
   });
 
   $effect(() => {
-    if (!exchangeSucceeded || afterLoginRan) {
-      return;
-    }
-    const email = auth.userData?.email;
-    if (!email) {
+    if (!exchangeSucceeded || afterLoginRan || !auth.userData) {
       return;
     }
     afterLoginRan = true;
-    posthog.capture('logged_in', { method, email });
     void gotoAfterLogin();
   });
 </script>

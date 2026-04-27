@@ -32,7 +32,6 @@
     "marked": "^15.0.8",
     "monaco-editor": "^0.52.2",
     "motion": "^12.23.12",
-    "posthog-js": "^1.266.3",
     "svelte-dnd-action": "^0.9.61",
     "svelte-sonner": "^1.1.0",
     "tailwind-merge": "^3.3.1",
