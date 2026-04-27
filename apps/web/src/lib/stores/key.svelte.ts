@@ -6,15 +6,19 @@ import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
 import { UserApi } from "$lib/auth/user.api";
 import { auth, loadUserData } from "./auth.svelte";
 
-export const keyAuth = $state({ hasMasterKey: false });
+export const keyAuth = $state({ hasMasterKey: false, masterKeyHydrated: false });
 
 export function setHasMasterKey(value: boolean) {
   keyAuth.hasMasterKey = value;
 }
 
 export async function hydrateMasterKey() {
-  const existing = await keystore.getMasterKey();
-  setHasMasterKey(Boolean(existing));
+  try {
+    const existing = await keystore.getMasterKey();
+    setHasMasterKey(Boolean(existing));
+  } finally {
+    keyAuth.masterKeyHydrated = true;
+  }
 }
 
 if (browser) {
@@ -72,4 +76,5 @@ export async function unlock(passphrase: string): Promise<void> {
 export async function reset() {
   await keystore.wipeAll();
   setHasMasterKey(false);
+  keyAuth.masterKeyHydrated = true;
 }

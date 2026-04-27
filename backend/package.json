@@ -18,7 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "stripe": "stripe listen --forward-to localhost:3000/payments/stripe/webhook",
+    "stripe": "stripe listen --forward-to localhost:9050/payments/stripe/webhook",
     "migrate-up": "npx migrate-mongo up",
     "openapi:generate": "ts-node -r tsconfig-paths/register src/generate-openapi.ts"
   },

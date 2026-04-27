@@ -15,6 +15,14 @@ export interface ProjectMember {
   role: string;
 }
 
+export interface SuggestedUser {
+  id: string;
+  email?: string;
+  avatarUrl?: string;
+  displayName: string;
+  publicKey?: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -27,6 +35,14 @@ export interface Project {
   integrations: { githubInstallationId: number };
 }
 
+export interface EncryptedVersion {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  author: ProjectMember;
+  encryptedSecrets: string;
+}
+
 export interface CreateProjectDto {
   name: string;
   encryptedSecrets: string;
@@ -36,6 +52,11 @@ export interface CreateProjectDto {
 
 export interface UpdateProjectContentDto {
   encryptedSecrets: string;
+}
+
+export interface UpdateProjectDto {
+  name?: string;
+  settings?: ProjectSettings;
 }
 
 export class ProjectsApi {
@@ -65,6 +86,19 @@ export class ProjectsApi {
     return res.json() as Promise<Project>;
   }
 
+  static async getProjectVersions(
+    jwtToken: string,
+    projectId: string,
+  ): Promise<EncryptedVersion[]> {
+    const res = await fetch(`${baseUrl()}/projects/${projectId}/history`, {
+      headers: { ...authHeaders(jwtToken) },
+    });
+    if (!res.ok) {
+      throw new Error("Failed to load project history");
+    }
+    return res.json() as Promise<EncryptedVersion[]>;
+  }
+
   static async updateProjectContent(
     jwtToken: string,
     projectId: string,
@@ -83,6 +117,25 @@ export class ProjectsApi {
     }
   }
 
+  static async updateProject(
+    jwtToken: string,
+    projectId: string,
+    dto: UpdateProjectDto,
+  ): Promise<Project> {
+    const res = await fetch(`${baseUrl()}/projects/${projectId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(jwtToken),
+      },
+      body: JSON.stringify(dto),
+    });
+    if (!res.ok) {
+      throw new Error("Failed to update project");
+    }
+    return res.json() as Promise<Project>;
+  }
+
   static async createProject(
     jwtToken: string,
     dto: CreateProjectDto,
@@ -99,6 +152,75 @@ export class ProjectsApi {
       throw new Error("Failed to create project");
     }
     return res.json() as Promise<Project>;
+  }
+
+  static async deleteProject(jwtToken: string, projectId: string): Promise<void> {
+    const res = await fetch(`${baseUrl()}/projects/${projectId}`, {
+      method: "DELETE",
+      headers: { ...authHeaders(jwtToken) },
+    });
+    if (!res.ok) {
+      throw new Error("Failed to delete project");
+    }
+  }
+
+  static async removeMember(
+    jwtToken: string,
+    dto: { projectId: string; memberId: string },
+  ): Promise<void> {
+    const res = await fetch(`${baseUrl()}/projects/${dto.projectId}/members/${dto.memberId}`, {
+      method: "DELETE",
+      headers: { ...authHeaders(jwtToken) },
+    });
+    if (!res.ok) {
+      throw new Error("Failed to remove member");
+    }
+  }
+
+  static async updateMemberRole(
+    jwtToken: string,
+    dto: { projectId: string; memberId: string; role: "read" | "write" | "admin" },
+  ): Promise<void> {
+    const res = await fetch(`${baseUrl()}/projects/${dto.projectId}/members/${dto.memberId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(jwtToken),
+      },
+      body: JSON.stringify({ role: dto.role }),
+    });
+    if (!res.ok) {
+      throw new Error("Failed to update member role");
+    }
+  }
+
+  static async getSuggestedUsers(jwtToken: string, projectId: string): Promise<SuggestedUser[]> {
+    const res = await fetch(`${baseUrl()}/projects/${projectId}/suggested-users`, {
+      headers: { ...authHeaders(jwtToken) },
+    });
+    if (!res.ok) {
+      throw new Error("Failed to load suggested users");
+    }
+    return res.json() as Promise<SuggestedUser[]>;
+  }
+
+  static async addEncryptedSecretsKey(
+    jwtToken: string,
+    projectId: string,
+    userId: string,
+    encryptedSecretsKey: string,
+  ): Promise<void> {
+    const res = await fetch(`${baseUrl()}/projects/${projectId}/encrypted-secrets-keys`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(jwtToken),
+      },
+      body: JSON.stringify({ userId, encryptedSecretsKey }),
+    });
+    if (!res.ok) {
+      throw new Error("Failed to add encrypted secrets key");
+    }
   }
 }
 
