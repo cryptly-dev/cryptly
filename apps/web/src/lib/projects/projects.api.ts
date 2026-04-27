@@ -35,6 +35,13 @@ export interface Project {
   integrations: { githubInstallationId: number };
 }
 
+export interface ProjectSearchResponse {
+  id: string;
+  name: string;
+  encryptedSecretsKeys: Record<string, string>;
+  encryptedSecrets: string;
+}
+
 export interface EncryptedVersion {
   id: string;
   createdAt: string;
@@ -68,6 +75,16 @@ export class ProjectsApi {
       throw new Error("Failed to load projects");
     }
     return res.json() as Promise<Project[]>;
+  }
+
+  static async searchProjects(jwtToken: string): Promise<ProjectSearchResponse[]> {
+    const res = await fetch(`${baseUrl()}/users/me/projects/search`, {
+      headers: { ...authHeaders(jwtToken) },
+    });
+    if (!res.ok) {
+      throw new Error("Failed to search projects");
+    }
+    return res.json() as Promise<ProjectSearchResponse[]>;
   }
 
   static async getProject(
