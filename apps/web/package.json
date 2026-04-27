@@ -14,8 +14,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test:parity": "playwright test",
     "lint": "prettier --check . && eslint .",
-    "deploy:staging": "pnpm build && wrangler deploy --env staging",
-    "deploy:production": "pnpm build && wrangler deploy --env production",
+    "deploy": "pnpm build && wrangler deploy",
     "wrangler": "wrangler"
   },
   "dependencies": {
