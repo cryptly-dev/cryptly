@@ -156,7 +156,7 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
   let integrationsLoading = $state(false);
   let allRepositories = $state<RepoWithInstallation[]>([]);
   let suggestionsLoading = $state(false);
-  let acceptingRepoId = $state<number | null>(null);
+  let suggestedCreateRepo = $state<RepoWithInstallation | null>(null);
   let dismissedRepoIds = $state<number[]>([]);
   let lastLoadKey = '';
   let loadSeq = 0;
@@ -694,7 +694,14 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
   function closeCreateDialog() {
     if (!creatingProject) {
       showCreateDialog = false;
+      suggestedCreateRepo = null;
     }
+  }
+
+  function openCreateDialog(repo: RepoWithInstallation | null = null) {
+    suggestedCreateRepo = repo;
+    newProjectName = repo?.name ?? '';
+    showCreateDialog = true;
   }
 
   function clearHistorySearch() {
@@ -1207,8 +1214,17 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
         settings
       });
 
+      if (suggestedCreateRepo) {
+        await IntegrationsApi.createIntegration(jwt, {
+          projectId: created.id,
+          repositoryId: suggestedCreateRepo.id,
+          installationEntityId: suggestedCreateRepo.installationEntityId
+        });
+      }
+
       await UserApi.updateMe(jwt, { projectCreationDefaults: settings });
       newProjectName = '';
+      suggestedCreateRepo = null;
       showCreateDialog = false;
       await goto(`/app/project/${created.id}`, { replaceState: true });
       lastLoadKey = '';
@@ -1217,40 +1233,6 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
       toast.error('Could not create project');
     } finally {
       creatingProject = false;
-    }
-  }
-
-  async function acceptSuggestion(repo: RepoWithInstallation) {
-    const jwt = auth.jwtToken;
-    const user = auth.userData;
-    if (!jwt || !user?.publicKey || acceptingRepoId !== null) return;
-    acceptingRepoId = repo.id;
-    try {
-      const settings = normalizeProjectSettings(
-        user.projectCreationDefaults ?? DEFAULT_PROJECT_SETTINGS
-      );
-      const projectKey = await SymmetricCrypto.generateProjectKey();
-      const content = `# Define your secrets below. Example:\nAPI_KEY="your-value-here"\nDATABASE_URL="postgres://..."`;
-      const contentEncrypted = await SymmetricCrypto.encrypt(content, projectKey);
-      const projectKeyEncrypted = await AsymmetricCrypto.encrypt(projectKey, user.publicKey);
-      const created = await ProjectsApi.createProject(jwt, {
-        name: repo.name,
-        encryptedSecrets: contentEncrypted,
-        encryptedSecretsKeys: { [user.id]: projectKeyEncrypted },
-        settings
-      });
-      await IntegrationsApi.createIntegration(jwt, {
-        projectId: created.id,
-        repositoryId: repo.id,
-        installationEntityId: repo.installationEntityId
-      });
-      await goto(`/app/project/${created.id}`, { replaceState: true });
-      lastLoadKey = '';
-      await loadShell(created.id);
-    } catch {
-      toast.error('Could not create project from repository');
-    } finally {
-      acceptingRepoId = null;
     }
   }
 
@@ -1557,7 +1539,7 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
   function onMobileProjectChange(event: Event) {
     const value = (event.currentTarget as HTMLSelectElement).value;
     if (value === '__add_project__') {
-      showCreateDialog = true;
+      openCreateDialog();
       return;
     }
     if (value && value !== displayedProjectId) {
@@ -1586,9 +1568,7 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
         aria-label="Add project"
         title="Add project"
         class="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-neutral-800 hover:text-foreground"
-        onclick={() => {
-          showCreateDialog = true;
-        }}
+        onclick={() => openCreateDialog()}
       >
         <Plus class="size-4" />
       </button>
@@ -1702,17 +1682,12 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
             >
               <button
                 type="button"
-                disabled={acceptingRepoId !== null}
                 aria-label={`Create project from ${repo.name}`}
-                class="absolute inset-0 rounded-md disabled:cursor-not-allowed"
-                onclick={() => void acceptSuggestion(repo)}
+                class="absolute inset-0 rounded-md"
+                onclick={() => openCreateDialog(repo)}
               ></button>
               <div class="pointer-events-none flex min-w-0 flex-1 items-center gap-2">
-                {#if acceptingRepoId === repo.id}
-                  <span class="size-3 shrink-0 animate-spin rounded-full border-2 border-primary/30 border-t-primary"></span>
-                {:else}
-                  <Plus class="size-3 shrink-0 opacity-50" />
-                {/if}
+                <Plus class="size-3 shrink-0 opacity-50" />
                 <span class="truncate text-[13px]">{repo.name}</span>
               </div>
               <button
@@ -1852,9 +1827,7 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
           aria-label="Add project"
           title="Add project"
           class="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-neutral-800 hover:text-foreground"
-          onclick={() => {
-            showCreateDialog = true;
-          }}
+          onclick={() => openCreateDialog()}
         >
           <Plus class="size-4" />
         </button>

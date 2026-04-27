@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
+  import { untrack } from 'svelte';
   import { Check, X } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
   import {
@@ -17,8 +18,7 @@
     Boolean(auth.jwtToken && page.url.pathname.startsWith('/app') && !page.url.pathname.startsWith('/app/login'))
   );
 
-  async function loadInvitations() {
-    const jwt = auth.jwtToken;
+  async function loadInvitations(jwt: string) {
     if (!jwt || loading) return;
     loading = true;
     try {
@@ -31,7 +31,8 @@
   }
 
   $effect(() => {
-    if (shouldShow) void loadInvitations();
+    const jwt = auth.jwtToken;
+    if (shouldShow && jwt) untrack(() => void loadInvitations(jwt));
     else invitations = [];
   });
 
