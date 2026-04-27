@@ -1,6 +1,7 @@
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
 
+import { readAndClearCliAuthorizeReturn } from "$lib/auth/cli-authorize-return";
 import { COMMON_INVITE_AFTER_LOGIN_KEY } from "$lib/auth/kea-storage-keys";
 
 /** Same shape as kea-localstorage JSON values (string or null). */
@@ -43,6 +44,12 @@ export async function gotoAfterLogin(): Promise<void> {
   if (inviteId) {
     clearStoredInviteAfterLogin();
     await goto(`/invite/${inviteId}`);
+    return;
+  }
+  /** Pending invite wins over CLI return (localStorage set before OAuth). */
+  const cliReturn = readAndClearCliAuthorizeReturn();
+  if (cliReturn) {
+    await goto(cliReturn);
     return;
   }
   await goto("/app/project");
