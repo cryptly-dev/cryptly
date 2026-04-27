@@ -486,10 +486,10 @@
                     type="button"
                     aria-label="Slide to confirm push"
                     class={cn(
-                      'absolute left-[1px] top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 touch-none items-center justify-center rounded-full bg-background shadow-sm transition-colors duration-200',
+                      'absolute left-[1px] top-[2px] z-10 flex h-10 w-10 touch-none items-center justify-center rounded-full bg-background shadow-sm transition-colors duration-200',
                       slideDragging ? 'cursor-grabbing' : 'cursor-grab hover:bg-accent'
                     )}
-                    style={`transform: translate(${slideX}px, -50%) ${slideDragging ? 'scale(1.05)' : 'scale(1)'}; transition: ${slideDragging ? 'background-color 200ms' : 'transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 200ms'};`}
+                    style={`transform: translateX(${slideX}px) ${slideDragging ? 'scale(1.05)' : 'scale(1)'}; transition: ${slideDragging ? 'background-color 200ms' : 'transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 200ms'};`}
                     onpointerdown={startSlideDrag}
                   >
                     <ChevronRight
