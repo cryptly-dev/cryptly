@@ -5,6 +5,8 @@
  * `VITE_ALLOW_LOCAL_LOGIN` / `PUBLIC_ALLOW_LOCAL_LOGIN` so login UI matches.
  *
  *   REACT_URL=http://127.0.0.1:5173 SVELTE_URL=http://127.0.0.1:9090 pnpm exec playwright test
+ *
+ * Pair with `e2e/MANUAL_SMOKE.md` for behavioral checks beyond pixels.
  */
 import { expect, test } from "@playwright/test";
 import pixelmatch from "pixelmatch";
@@ -12,8 +14,7 @@ import { PNG } from "pngjs";
 
 const REACT = process.env.REACT_URL ?? "http://127.0.0.1:5173";
 const SVELTE = process.env.SVELTE_URL ?? "http://127.0.0.1:9090";
-const PROJECT_ID =
-  process.env.PARITY_PROJECT_ID ?? "69e4efc7ed94cab2c9b88c9b";
+const PROJECT_ID = process.env.PARITY_PROJECT_ID ?? "69e4efc7ed94cab2c9b88c9b";
 const REACT_STORAGE_STATE = process.env.PARITY_REACT_STORAGE_STATE;
 const SVELTE_STORAGE_STATE = process.env.PARITY_SVELTE_STORAGE_STATE;
 
@@ -47,6 +48,9 @@ const THRESHOLDS: Record<string, number> = {
   "/blog": 0.0005,
   "/blog/new": 0.0002,
   "/app/login": 0.005,
+  /** Logged-out shell redirects; timing/motion vs React may diverge slightly */
+  "/app/cli-authorize": 0.02,
+  "/app/project": 0.02,
   "/invite/parity-invite": 0.0002,
 };
 
@@ -94,7 +98,9 @@ for (const route of Object.keys(THRESHOLDS)) {
   });
 }
 
-test("authenticated history tab visual parity", async ({ browser }, testInfo) => {
+test("authenticated history tab visual parity", async ({
+  browser,
+}, testInfo) => {
   if (!REACT_STORAGE_STATE || !SVELTE_STORAGE_STATE) {
     testInfo.skip(
       true,
@@ -119,13 +125,17 @@ test("authenticated history tab visual parity", async ({ browser }, testInfo) =>
   const reactPage = await reactContext.newPage();
   await reactPage.goto(`${REACT}${route}`, { waitUntil: "load" });
   await reactPage.getByRole("button", { name: "History" }).click();
-  await expect(reactPage.getByPlaceholder("Search edits — author, email, diff content…")).toBeVisible();
+  await expect(
+    reactPage.getByPlaceholder("Search edits — author, email, diff content…"),
+  ).toBeVisible();
   await reactPage.waitForTimeout(1200);
 
   const sveltePage = await svelteContext.newPage();
   await sveltePage.goto(`${SVELTE}${route}`, { waitUntil: "load" });
   await sveltePage.getByRole("button", { name: "History" }).click();
-  await expect(sveltePage.getByPlaceholder("Search edits — author, email, diff content…")).toBeVisible();
+  await expect(
+    sveltePage.getByPlaceholder("Search edits — author, email, diff content…"),
+  ).toBeVisible();
   await sveltePage.waitForTimeout(1200);
 
   const reactShot = await reactPage.locator("main").screenshot();

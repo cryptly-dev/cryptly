@@ -30,7 +30,7 @@
 - **👥 Team collaboration** - Share encrypted secrets with team members via secure invitations
 - **📝 Version history** - Track all changes to your secrets with full version control
 - **🔄 GitHub integration** - Sync secrets directly to your GitHub repositories
-- **🎨 Modern UI** - Beautiful, responsive interface built with React
+- **🎨 Modern UI** - Responsive SvelteKit app in `apps/web` (Cloudflare Workers); legacy React UI remains in `frontend/` until post-cutover retirement
 - **🚀 Real-time updates** - See changes instantly with SSE support
 - **🔑 Multiple auth ooptions** - Login with Google, GitHub, or local development mode
 - **📦 Project organization** - Organize secrets by projects for better management
@@ -93,7 +93,9 @@ This will:
 - Set up environment files automatically
 - Start MongoDB in Docker (port 2137)
 - Launch backend on `http://localhost:9050`
-- Launch frontend on `http://localhost:5173`
+- Launch the legacy React app on `http://localhost:5173` (when used for parity or maintenance)
+
+The **SvelteKit** app (`apps/web`) runs separately, for example `pnpm --filter web dev` on **9090** (see `apps/web/package.json`). For local CLI browser approval links, set backend **`WEB_APP_URL`** to the app users will open (typically `http://localhost:9090` when developing against Svelte). See [docs/web-app-cutover-runbook.md](docs/web-app-cutover-runbook.md) for flip/rollback and env alignment.
 
 > **Note:** Local development mode includes simplified authentication - just enter any email to log in!
 
