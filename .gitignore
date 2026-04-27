@@ -1,4 +1,6 @@
 .cursor/
+.claude/
+.codex/
 .security-audit/
 node_modules/
 .svelte-kit/
