@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import { ArrowRight, Eye, EyeOff, Laptop, LogOut } from 'lucide-svelte';
   import { logout } from '$lib/stores/auth.svelte';
   import { hydrateMasterKey, keyAuth, unlock } from '$lib/stores/key.svelte';
@@ -11,8 +12,19 @@
   let inputEl: HTMLInputElement | undefined = $state();
 
   const keysAreSetUp = $derived(Boolean(auth.userData?.publicKey && auth.userData?.privateKeyEncrypted));
+  const isAppUnlockRoute = $derived(
+    page.url.pathname.startsWith('/app') &&
+      !page.url.pathname.startsWith('/app/login') &&
+      !page.url.pathname.startsWith('/app/callbacks/')
+  );
   const open = $derived(
-    Boolean(auth.jwtToken && keysAreSetUp && keyAuth.masterKeyHydrated && !keyAuth.hasMasterKey)
+    Boolean(
+      isAppUnlockRoute &&
+        auth.jwtToken &&
+        keysAreSetUp &&
+        keyAuth.masterKeyHydrated &&
+        !keyAuth.hasMasterKey
+    )
   );
 
   $effect(() => {
@@ -26,7 +38,7 @@
   });
 
   $effect(() => {
-    if (auth.jwtToken && keysAreSetUp && !keyAuth.masterKeyHydrated) {
+    if (isAppUnlockRoute && auth.jwtToken && keysAreSetUp && !keyAuth.masterKeyHydrated) {
       void hydrateMasterKey();
     }
   });

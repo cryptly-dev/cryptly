@@ -90,7 +90,7 @@
         </nav>
 
         <a
-          href="/app"
+          href="/app/project"
           class="group relative inline-flex items-center gap-1.5 overflow-hidden rounded-full bg-white px-3.5 py-1.5 text-sm font-medium text-black shadow-md shadow-black/30 transition-all duration-300 hover:bg-neutral-100 hover:shadow-lg [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:translate-x-0.5"
         >
           <span

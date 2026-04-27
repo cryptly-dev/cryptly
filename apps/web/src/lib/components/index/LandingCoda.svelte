@@ -21,7 +21,7 @@
     </p>
     <div class="mt-10 flex flex-wrap items-center gap-3">
       <a
-        href="/app"
+        href="/app/project"
         class="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-lg shadow-black/40 transition-all duration-300 hover:bg-neutral-100 hover:shadow-xl [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:translate-x-0.5"
       >
         <span
