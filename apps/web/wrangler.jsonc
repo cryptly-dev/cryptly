@@ -17,9 +17,8 @@
   "workers_dev": false,
   "preview_urls": true,
   "route": {
-    "pattern": "cryptly.dev",
-    "zone_name": "cryptly.dev",
-    "custom_domain": true
+    "pattern": "cryptly.dev/*",
+    "zone_name": "cryptly.dev"
   },
   "vars": {
     "PUBLIC_APP_URL": "https://cryptly.dev",
