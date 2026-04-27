@@ -1,6 +1,12 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { ArrowRight, Eye, EyeOff, Laptop, LogOut } from 'lucide-svelte';
+  import { ArrowRight, Eye, EyeOff, Laptop, LogOut, Send } from 'lucide-svelte';
+  import {
+    attachDeviceFlowRequester,
+    detachDeviceFlowRequester,
+    deviceFlowRequester,
+    requestUnlockFromDevice
+  } from '$lib/device-flow/device-flow-requester.svelte';
   import { logout } from '$lib/stores/auth.svelte';
   import { hydrateMasterKey, keyAuth, unlock } from '$lib/stores/key.svelte';
   import { auth } from '$lib/stores/auth.svelte';
@@ -9,6 +15,7 @@
   let showPassphrase = $state(false);
   let submitting = $state(false);
   let isError = $state(false);
+  let sendingUnlockRequest = $state(false);
   let inputEl: HTMLInputElement | undefined = $state();
 
   const keysAreSetUp = $derived(Boolean(auth.userData?.publicKey && auth.userData?.privateKeyEncrypted));
@@ -43,6 +50,14 @@
     }
   });
 
+  $effect(() => {
+    if (!open) {
+      detachDeviceFlowRequester();
+      return;
+    }
+    attachDeviceFlowRequester();
+  });
+
   async function handleUnlock() {
     if (!passphrase || submitting) return;
     submitting = true;
@@ -58,6 +73,18 @@
       });
     } finally {
       submitting = false;
+    }
+  }
+
+  async function onRequestUnlock(deviceId: string) {
+    if (sendingUnlockRequest) return;
+    sendingUnlockRequest = true;
+    try {
+      await requestUnlockFromDevice(deviceId);
+    } finally {
+      setTimeout(() => {
+        sendingUnlockRequest = false;
+      }, 800);
     }
   }
 </script>
@@ -155,23 +182,61 @@
           <span class="text-sm font-medium">Connected Devices</span>
         </div>
 
-        <div
-          class="relative overflow-hidden rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-4"
-        >
-          <div class="animate-shimmer absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent"></div>
-          <div class="relative flex items-start gap-3">
-            <div class="mt-0.5 rounded-full bg-primary/20 p-2">
-              <Laptop class="size-4 text-primary" />
-            </div>
-            <div class="flex-1">
-              <p class="mb-1 text-sm font-medium text-foreground">Searching for devices...</p>
-              <p class="text-xs leading-relaxed text-muted-foreground">
-                Open Cryptly on an already authenticated device and approve the unlock request from
-                there. No passphrase typing needed.
-              </p>
+        {#if deviceFlowRequester.approvers.length === 0}
+          <div
+            class="relative overflow-hidden rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-4"
+          >
+            <div class="animate-shimmer absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent"></div>
+            <div class="relative flex items-start gap-3">
+              <div class="mt-0.5 rounded-full bg-primary/20 p-2">
+                <Laptop class="size-4 text-primary" />
+              </div>
+              <div class="flex-1">
+                <p class="mb-1 text-sm font-medium text-foreground">Searching for devices...</p>
+                <p class="text-xs leading-relaxed text-muted-foreground">
+                  Open Cryptly on an already authenticated device and approve the unlock request from
+                  there. No passphrase typing needed.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        {:else}
+          <div class="max-h-32 space-y-2 overflow-y-auto">
+            {#each deviceFlowRequester.approvers as approver (approver.deviceId)}
+              <div
+                class="flex items-center justify-between rounded-lg border border-border/50 bg-gradient-to-br from-muted/50 to-muted/30 p-3 transition-all hover:from-muted/70 hover:to-muted/50"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="rounded-full bg-primary/10 p-2">
+                    <Laptop class="size-3.5 text-primary" />
+                  </div>
+                  <span class="text-sm font-medium text-foreground">
+                    {approver.deviceName || 'Unknown Device'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-8 shrink-0 items-center rounded-md border border-border px-3 text-xs font-medium transition hover:bg-secondary disabled:opacity-50"
+                  onclick={() => void onRequestUnlock(approver.deviceId)}
+                  disabled={sendingUnlockRequest}
+                >
+                  <Send class="mr-1 size-3" />
+                  Request
+                </button>
+              </div>
+            {/each}
+          </div>
+          {#if deviceFlowRequester.unlockRequestPin}
+            <div class="mt-3 rounded-lg border border-primary/20 bg-primary/10 p-3">
+              <p class="text-center font-mono text-2xl font-bold tracking-wider text-primary">
+                {deviceFlowRequester.unlockRequestPin}
+              </p>
+              <p class="mt-1 text-center text-xs text-muted-foreground">
+                Verify this PIN matches on your other device
+              </p>
+            </div>
+          {/if}
+        {/if}
       </section>
     </div>
   </div>

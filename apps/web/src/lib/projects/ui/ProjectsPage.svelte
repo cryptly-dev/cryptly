@@ -3,7 +3,6 @@
   import { tick } from 'svelte';
   import { animate } from 'motion';
   import { ArrowRight } from 'lucide-svelte';
-  import posthog from 'posthog-js';
   import { AsymmetricCrypto } from '$lib/auth/asymmetric-crypto';
   import {
     DEFAULT_PROJECT_SETTINGS,
@@ -105,7 +104,6 @@
     }
 
     submitting = true;
-    posthog.capture('add_project_button_clicked');
     try {
       const settings: ProjectSettings = normalizeProjectSettings(
         user.projectCreationDefaults ?? DEFAULT_PROJECT_SETTINGS,

@@ -38,6 +38,7 @@ import { ProjectSerialized } from './entities/project.interface';
 import { ProjectSerializer } from './entities/project.serializer';
 import { ProjectMemberGuard } from './guards/project-member.guard';
 import { RemoveProjectMemberGuard } from './guards/remove-project-member.guard';
+import { ProductAnalyticsService } from '../../shared/posthog/product-analytics.service';
 
 @Controller('')
 @ApiTags('Projects')
@@ -51,6 +52,7 @@ export class ProjectCoreController {
     private readonly projectSecretsVersionReadService: ProjectSecretsVersionReadService,
     private readonly personalInvitationReadService: PersonalInvitationReadService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly productAnalytics: ProductAnalyticsService,
   ) {}
 
   @Sse('projects/:projectId/events')
@@ -141,6 +143,8 @@ export class ProjectCoreController {
     );
 
     await this.userWriteService.addToProjectsOrder(userId, project.id);
+
+    this.productAnalytics.capture(userId, 'project_created', { project_id: project.id });
 
     const members = await this.userReadService.readByIds([userId]);
     const membersHydrated = members.map((user) => UserSerializer.serializePartial(user));
@@ -248,6 +252,7 @@ export class ProjectCoreController {
         ProjectEvent.SecretsUpdated,
         new SecretsUpdatedEvent(projectId, body.encryptedSecrets, author!, latestVersion.updatedAt),
       );
+      this.productAnalytics.capture(userId, 'secrets_saved', { project_id: projectId });
     }
 
     return ProjectSerializer.serialize(
@@ -255,6 +260,17 @@ export class ProjectCoreController {
       membersHydrated,
       latestVersion.encryptedSecrets,
     );
+  }
+
+  @Post('projects/:projectId/analytics/secrets-pushed')
+  @UseGuards(ProjectMemberGuard)
+  @RequireRole(Role.Write, Role.Admin)
+  @HttpCode(204)
+  public async trackSecretsPushed(
+    @Param('projectId') projectId: string,
+    @CurrentUserId() userId: string,
+  ): Promise<void> {
+    this.productAnalytics.capture(userId, 'secrets_pushed', { project_id: projectId });
   }
 
   @Post('projects/:projectId/encrypted-secrets-keys')

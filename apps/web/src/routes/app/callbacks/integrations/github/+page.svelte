@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import posthog from 'posthog-js';
   import { IntegrationsApi } from '$lib/api/integrations.api';
   import { publicEnv } from '$lib/shared/env/public-env';
   import { auth } from '$lib/stores/auth.svelte';
@@ -27,8 +26,6 @@
       }
 
       const projectId = projectIdMatch[1];
-
-      posthog.capture('installation_created', { type: 'github' });
 
       try {
         if (!publicEnv.githubLocalMock) {
