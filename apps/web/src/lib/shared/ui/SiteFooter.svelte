@@ -17,7 +17,7 @@
       <div>
         <div class="font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground/80">Product</div>
         <ul class="mt-4 space-y-2.5 text-sm">
-          <li><a href="/app" class="text-foreground/90 transition-colors hover:text-foreground">Open app</a></li>
+          <li><a href="/app/project" class="text-foreground/90 transition-colors hover:text-foreground">Open app</a></li>
           <li><a href="/blog" class="text-foreground/90 transition-colors hover:text-foreground">Blog</a></li>
         </ul>
       </div>

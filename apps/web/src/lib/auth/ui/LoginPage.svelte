@@ -42,7 +42,7 @@
         <button
           type="button"
           disabled={loadingProvider !== null}
-          class="flex h-10 w-full cursor-pointer items-center justify-center gap-3 rounded-md border-[0.5px] border-neutral-700/60 bg-neutral-800/80 transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80 disabled:opacity-60"
+          class="inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-3 whitespace-nowrap rounded-md border-[0.5px] border-neutral-700/60 bg-neutral-800/80 text-sm font-medium transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0"
           onclick={handleGoogleLogin}
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5">
@@ -75,7 +75,7 @@
         <button
           type="button"
           disabled={loadingProvider !== null}
-          class="flex h-10 w-full cursor-pointer items-center justify-center gap-3 rounded-md border-[0.5px] border-neutral-700/60 bg-neutral-800/80 transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80 disabled:opacity-60"
+          class="inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-3 whitespace-nowrap rounded-md border-[0.5px] border-neutral-700/60 bg-neutral-800/80 text-sm font-medium transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0"
           onclick={handleGitHubLogin}
         >
           <GitHubIcon class="h-5 w-5" />
