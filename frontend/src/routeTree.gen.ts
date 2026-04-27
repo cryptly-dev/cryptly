@@ -18,6 +18,7 @@ import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AppSetPassphraseRouteImport } from './routes/app/set-passphrase'
 import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppDeveloperRouteImport } from './routes/app/developer'
+import { Route as AppCliAuthorizeRouteImport } from './routes/app/cli-authorize'
 import { Route as AppProjectIndexRouteImport } from './routes/app/project/index'
 import { Route as BlogEditSlugRouteImport } from './routes/blog/edit/$slug'
 import { Route as AppProjectProjectIdRouteImport } from './routes/app/project/$projectId'
@@ -70,6 +71,11 @@ const AppDeveloperRoute = AppDeveloperRouteImport.update({
   path: '/developer',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCliAuthorizeRoute = AppCliAuthorizeRouteImport.update({
+  id: '/cli-authorize',
+  path: '/cli-authorize',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProjectIndexRoute = AppProjectIndexRouteImport.update({
   id: '/project/',
   path: '/project/',
@@ -105,6 +111,7 @@ const AppCallbacksIntegrationsGithubRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/cli-authorize': typeof AppCliAuthorizeRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
   '/app/set-passphrase': typeof AppSetPassphraseRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/cli-authorize': typeof AppCliAuthorizeRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
   '/app/set-passphrase': typeof AppSetPassphraseRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/cli-authorize': typeof AppCliAuthorizeRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
   '/app/set-passphrase': typeof AppSetPassphraseRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/app/cli-authorize'
     | '/app/developer'
     | '/app/login'
     | '/app/set-passphrase'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/app'
+    | '/app/cli-authorize'
     | '/app/developer'
     | '/app/login'
     | '/app/set-passphrase'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/app/cli-authorize'
     | '/app/developer'
     | '/app/login'
     | '/app/set-passphrase'
@@ -283,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDeveloperRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/cli-authorize': {
+      id: '/app/cli-authorize'
+      path: '/cli-authorize'
+      fullPath: '/app/cli-authorize'
+      preLoaderRoute: typeof AppCliAuthorizeRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/project/': {
       id: '/app/project/'
       path: '/project'
@@ -329,6 +348,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppCliAuthorizeRoute: typeof AppCliAuthorizeRoute
   AppDeveloperRoute: typeof AppDeveloperRoute
   AppLoginRoute: typeof AppLoginRoute
   AppSetPassphraseRoute: typeof AppSetPassphraseRoute
@@ -340,6 +360,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCliAuthorizeRoute: AppCliAuthorizeRoute,
   AppDeveloperRoute: AppDeveloperRoute,
   AppLoginRoute: AppLoginRoute,
   AppSetPassphraseRoute: AppSetPassphraseRoute,

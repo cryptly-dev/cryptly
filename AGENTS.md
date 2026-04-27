@@ -58,11 +58,33 @@ pnpm build             # vite build using the Cloudflare adapter
 - `pnpm check` is the typecheck for the SvelteKit app.
 - `pnpm build` verifies the Cloudflare Workers output.
 
+### CLI (`cli/`)
+
+```bash
+# From cli/
+pnpm test              # vitest run
+pnpm build             # tsc --noEmit && tsup
+```
+
+- `pnpm build` chains the typecheck into the bundle step. Do not run `tsc` on its own.
+- Both should pass at the end.
+
+### Releasing the CLI
+
+After a change you want shipped to npm:
+
+1. From `cli/`, run `pnpm changeset` and describe the change (pick patch / minor / major).
+2. Commit the generated `cli/.changeset/*.md` alongside your code change.
+3. Merge to `main`. The `cli-release` workflow auto-bumps `cli/package.json`, commits the bump back to `main`, and publishes `@cryptly/cli` to npm in one run.
+
+If you don't add a changeset, nothing publishes — the change just sits on `main` until someone bundles a changeset with it.
+
 ### Package manager
 
-This repo uses **pnpm workspaces** from the root. The root `pnpm-lock.yaml` is the source of truth.
+This repo uses **pnpm**.
 
-Workspace packages currently include `backend`, `frontend`, `apps/*`, and `packages/*`.
+- The root `pnpm-workspace.yaml` currently includes `backend`, `frontend`, `apps/*`, and `packages/*`. The root `pnpm-lock.yaml` is the source of truth for those workspace packages.
+- The CLI lives in `cli/` with its own `pnpm-lock.yaml` and is not part of the root workspace.
 
 ## Repo shorthand
 
