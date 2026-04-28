@@ -9,6 +9,8 @@ import { randomBytes } from 'crypto';
 import { Model, Types } from 'mongoose';
 import { CustomJwtService } from '../custom-jwt/custom-jwt.service';
 import { RefreshTokenWriteService } from '../refresh-token/write/refresh-token-write.service';
+import { UserReadService } from '../../user/read/user-read.service';
+import { ProductAnalyticsService } from '../../shared/posthog/product-analytics.service';
 import { ApproveCliSessionBody } from './dto/approve-session.body';
 import { CliSessionStatus } from './core/entities/cli-session-status.enum';
 import { CliSessionEntity } from './core/entities/cli-session.entity';
@@ -37,6 +39,8 @@ export class CliFlowService {
     private readonly sessionModel: Model<CliSessionEntity>,
     private readonly jwtService: CustomJwtService,
     private readonly refreshTokenWriteService: RefreshTokenWriteService,
+    private readonly userReadService: UserReadService,
+    private readonly productAnalytics: ProductAnalyticsService,
   ) {}
 
   public async start(params: {
@@ -124,6 +128,9 @@ export class CliFlowService {
     const userId = consumed.userId.toString();
     const jwt = await this.jwtService.sign({ id: userId });
     const refresh = await this.refreshTokenWriteService.issue(userId);
+
+    const user = await this.userReadService.readByIdOrThrow(userId);
+    this.productAnalytics.loggedIn(userId, user.email ?? userId, 'cli');
 
     return {
       status: CliSessionStatus.Approved,

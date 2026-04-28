@@ -23,6 +23,7 @@ import { PROJECT_HISTORY_SIZE } from '../../src/project-secrets-version/write/pr
 import { ProjectEntity } from '../../src/project/core/entities/project.entity';
 import { ProjectCoreModule } from '../../src/project/core/project-core.module';
 import { LogdashModule } from '../../src/shared/logdash/logdash.module';
+import { PosthogAnalyticsModule } from '../../src/shared/posthog/posthog-analytics.module';
 import { UserEntity } from '../../src/user/core/entities/user.entity';
 import { UserCoreModule } from '../../src/user/core/user-core.module';
 import { GithubExternalConnectionUtils } from './github-external-connection.utils';
@@ -70,6 +71,7 @@ export async function createTestApp(): Promise<TestApp> {
       PersonalInvitationCoreModule,
       ScheduleModule.forRoot(),
       EventEmitterModule.forRoot(),
+      PosthogAnalyticsModule,
       AuthCoreModule,
       LogdashModule,
       GoogleAuthModule,
@@ -112,9 +114,7 @@ export async function createTestApp(): Promise<TestApp> {
   const personalInvitationModel: Model<PersonalInvitationEntity> = module.get(
     getModelToken(PersonalInvitationEntity.name),
   );
-  const cliSessionModel: Model<CliSessionEntity> = module.get(
-    getModelToken(CliSessionEntity.name),
-  );
+  const cliSessionModel: Model<CliSessionEntity> = module.get(getModelToken(CliSessionEntity.name));
 
   const clearDatabase = async () => {
     await Promise.all([

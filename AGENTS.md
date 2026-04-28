@@ -45,6 +45,19 @@ pnpm build
 - `pnpm build` chains `tsc -b && vite build`, so it *is* the typecheck. Do not run `tsc` on its own.
 - There is no frontend test suite. Do not add one unless explicitly asked.
 
+### Web (`apps/web/`)
+
+Two commands. Run them **at the very end**.
+
+```bash
+# From apps/web/
+pnpm check             # svelte-kit sync + svelte-check
+pnpm build             # vite build using the Cloudflare adapter
+```
+
+- `pnpm check` is the typecheck for the SvelteKit app.
+- `pnpm build` verifies the Cloudflare Workers output.
+
 ### CLI (`cli/`)
 
 ```bash
@@ -68,7 +81,10 @@ If you don't add a changeset, nothing publishes — the change just sits on `mai
 
 ### Package manager
 
-Backend, frontend, and the CLI all use **pnpm**. Each package has its own `pnpm-lock.yaml`; there is no workspace.
+This repo uses **pnpm**.
+
+- The root `pnpm-workspace.yaml` currently includes `backend`, `frontend`, `apps/*`, and `packages/*`. The root `pnpm-lock.yaml` is the source of truth for those workspace packages.
+- The CLI lives in `cli/` with its own `pnpm-lock.yaml` and is not part of the root workspace.
 
 ## Repo shorthand
 

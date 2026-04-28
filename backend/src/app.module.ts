@@ -18,10 +18,12 @@ import { UserCoreModule } from './user/core/user-core.module';
 import { GithubExternalConnectionCoreModule } from './external-connection/github/core/github-external-connection-core.module';
 import { BlogCoreModule } from './blog/core/blog-core.module';
 import { StatsModule } from './stats/stats.module';
+import { PosthogAnalyticsModule } from './shared/posthog/posthog-analytics.module';
 
 @Module({
   imports: [
     MongooseModule.forRoot(getEnvConfig().mongo.url),
+    PosthogAnalyticsModule,
     UserCoreModule,
     ProjectCoreModule,
     ProjectSecretsVersionCoreModule,

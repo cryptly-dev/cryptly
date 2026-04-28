@@ -1,0 +1,2591 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/users/me": {
+      "get": {
+        "operationId": "UserCoreController_readCurrentUser",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Users"
+        ]
+      },
+      "patch": {
+        "operationId": "UserCoreController_updateUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/keys": {
+      "delete": {
+        "operationId": "UserCoreController_deleteKeys",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/public-keys": {
+      "post": {
+        "operationId": "UserCoreController_getPublicKeys",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetPublicKeysBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPublicKeysResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/projects/{projectId}/events": {
+      "get": {
+        "operationId": "ProjectCoreController_streamEvents",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/users/me/projects": {
+      "get": {
+        "operationId": "ProjectCoreController_findUserProjects",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectSerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/users/me/projects/search": {
+      "get": {
+        "operationId": "ProjectCoreController_findUserProjectsForSearch",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectSearchResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/projects": {
+      "post": {
+        "operationId": "ProjectCoreController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/projects/{projectId}": {
+      "get": {
+        "operationId": "ProjectCoreController_findById",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      },
+      "patch": {
+        "operationId": "ProjectCoreController_update",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      },
+      "delete": {
+        "operationId": "ProjectCoreController_delete",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/projects/{projectId}/suggested-users": {
+      "get": {
+        "operationId": "ProjectCoreController_getSuggestedUsers",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserPartialSerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/projects/{projectId}/history": {
+      "get": {
+        "operationId": "ProjectCoreController_findHistoryById",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectSecretsVersionSerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/projects/{projectId}/encrypted-secrets-keys": {
+      "post": {
+        "operationId": "ProjectCoreController_addEncryptedSecretsKey",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddEncryptedSecretsKeyBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/projects/{projectId}/members/{memberId}": {
+      "delete": {
+        "operationId": "ProjectCoreController_removeMember",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "memberId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      },
+      "patch": {
+        "operationId": "ProjectCoreController_updateMemberRole",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "memberId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberRoleBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/projects/{projectId}/invitations": {
+      "get": {
+        "operationId": "InvitationCoreController_findProjectInvitations",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvitationSerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Invitations"
+        ]
+      }
+    },
+    "/invitations": {
+      "post": {
+        "operationId": "InvitationCoreController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvitationBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Invitations"
+        ]
+      }
+    },
+    "/invitations/{id}": {
+      "get": {
+        "operationId": "InvitationCoreController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Invitations"
+        ]
+      },
+      "delete": {
+        "operationId": "InvitationCoreController_revoke",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Invitations"
+        ]
+      }
+    },
+    "/invitations/{id}/accept": {
+      "post": {
+        "operationId": "InvitationCoreController_accept",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInvitationBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Invitations"
+        ]
+      }
+    },
+    "/projects/{projectId}/personal-invitations": {
+      "get": {
+        "operationId": "PersonalInvitationCoreController_findProjectPersonalInvitations",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PersonalInvitationSerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Personal Invitations"
+        ]
+      },
+      "post": {
+        "operationId": "PersonalInvitationCoreController_create",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePersonalInvitationBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalInvitationSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Personal Invitations"
+        ]
+      }
+    },
+    "/users/me/personal-invitations": {
+      "get": {
+        "operationId": "PersonalInvitationCoreController_findMyPersonalInvitations",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PersonalInvitationSerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Personal Invitations"
+        ]
+      }
+    },
+    "/personal-invitations/{personalInvitationId}/accept": {
+      "post": {
+        "operationId": "PersonalInvitationCoreController_accept",
+        "parameters": [
+          {
+            "name": "personalInvitationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalInvitationSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Personal Invitations"
+        ]
+      }
+    },
+    "/personal-invitations/{personalInvitationId}": {
+      "delete": {
+        "operationId": "PersonalInvitationCoreController_delete",
+        "parameters": [
+          {
+            "name": "personalInvitationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Personal Invitations"
+        ]
+      }
+    },
+    "/personal-invitations/{personalInvitationId}/reject": {
+      "post": {
+        "operationId": "PersonalInvitationCoreController_reject",
+        "parameters": [
+          {
+            "name": "personalInvitationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Personal Invitations"
+        ]
+      }
+    },
+    "/auth/github/login": {
+      "post": {
+        "operationId": "GithubAuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GithubLoginBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth (github)"
+        ]
+      }
+    },
+    "/auth/google/login": {
+      "post": {
+        "operationId": "GoogleAuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth (google)"
+        ]
+      }
+    },
+    "/auth/device-flow/messages": {
+      "get": {
+        "operationId": "DeviceFlowController_streamMessages",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deviceName",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth (device-flow)"
+        ]
+      }
+    },
+    "/auth/device-flow/send-message": {
+      "post": {
+        "operationId": "DeviceFlowController_sendMessage",
+        "parameters": [
+          {
+            "name": "role",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth (device-flow)"
+        ]
+      }
+    },
+    "/auth/local/login": {
+      "post": {
+        "operationId": "LocalAuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalLoginBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth (local)"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "RefreshTokenCoreController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth (refresh)"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "RefreshTokenCoreController_logout",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth (refresh)"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/external-connections/github/installations/{installationEntityId}/repositories": {
+      "get": {
+        "operationId": "GithubExternalConnectionCoreController_getRepositoriesAvailableForInstallation",
+        "parameters": [
+          {
+            "name": "installationEntityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GithubRepositorySerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      }
+    },
+    "/external-connections/github/installations/{installationEntityId}": {
+      "get": {
+        "operationId": "GithubExternalConnectionCoreController_getInstallationById",
+        "parameters": [
+          {
+            "name": "installationEntityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      }
+    },
+    "/users/me/external-connections/github/installations": {
+      "post": {
+        "operationId": "GithubExternalConnectionCoreController_createInstallation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGithubInstallationBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubInstallationSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      },
+      "get": {
+        "operationId": "GithubExternalConnectionCoreController_getCurrentUserInstallations",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GithubInstallationSerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      }
+    },
+    "/users/me/external-connections/github/local-mock/bootstrap": {
+      "get": {
+        "operationId": "GithubExternalConnectionCoreController_getLocalGithubMockBootstrap",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GithubInstallationSerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      }
+    },
+    "/external-connections/github/integrations": {
+      "post": {
+        "operationId": "GithubExternalConnectionCoreController_createIntegration",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGithubIntegrationBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubIntegrationSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      }
+    },
+    "/projects/{projectId}/external-connections/github/integrations": {
+      "get": {
+        "operationId": "GithubExternalConnectionCoreController_getProjectIntegrations",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GithubIntegrationSerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      }
+    },
+    "/projects/{projectId}/external-connections/github/integrations/{integrationId}/access-token": {
+      "get": {
+        "operationId": "GithubExternalConnectionCoreController_getInstallationAccessToken",
+        "parameters": [
+          {
+            "name": "integrationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      }
+    },
+    "/external-connections/github/integrations/{integrationId}": {
+      "delete": {
+        "operationId": "GithubExternalConnectionCoreController_deleteIntegration",
+        "parameters": [
+          {
+            "name": "integrationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      }
+    },
+    "/webhooks/github": {
+      "post": {
+        "operationId": "GithubExternalConnectionCoreController_handleGithubWebhook",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GithubWebhookBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      }
+    },
+    "/blog/posts": {
+      "get": {
+        "operationId": "BlogCoreController_findAll",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BlogPostSerialized"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Blog"
+        ]
+      },
+      "post": {
+        "operationId": "BlogCoreController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBlogPostBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogPostSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Blog"
+        ]
+      }
+    },
+    "/blog/posts/{slug}": {
+      "get": {
+        "operationId": "BlogCoreController_findBySlug",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogPostSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Blog"
+        ]
+      }
+    },
+    "/blog/posts/{id}": {
+      "patch": {
+        "operationId": "BlogCoreController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBlogPostBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlogPostSerialized"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Blog"
+        ]
+      },
+      "delete": {
+        "operationId": "BlogCoreController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Blog"
+        ]
+      }
+    },
+    "/stats": {
+      "get": {
+        "operationId": "StatsController_getStats",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Stats"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Cryptly",
+    "description": "",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      },
+      "project-api-key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "project-api-key"
+      }
+    },
+    "schemas": {
+      "ProjectCreationDefaultsSerialized": {
+        "type": "object",
+        "properties": {
+          "revealOn": {
+            "type": "string",
+            "enum": [
+              "always",
+              "hover",
+              "never"
+            ]
+          }
+        },
+        "required": [
+          "revealOn"
+        ]
+      },
+      "UserSerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "publicKey": {
+            "type": "string"
+          },
+          "authMethod": {
+            "type": "string",
+            "enum": [
+              "google",
+              "github",
+              "local"
+            ]
+          },
+          "privateKeyEncrypted": {
+            "type": "string"
+          },
+          "projectCreationDefaults": {
+            "$ref": "#/components/schemas/ProjectCreationDefaultsSerialized"
+          },
+          "isAdmin": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "avatarUrl",
+          "displayName",
+          "authMethod",
+          "projectCreationDefaults",
+          "isAdmin"
+        ]
+      },
+      "ProjectCreationDefaultsBody": {
+        "type": "object",
+        "properties": {
+          "revealOn": {
+            "type": "string",
+            "enum": [
+              "always",
+              "hover",
+              "never"
+            ]
+          }
+        },
+        "required": [
+          "revealOn"
+        ]
+      },
+      "UpdateUserBody": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "publicKey": {
+            "type": "string"
+          },
+          "privateKeyEncrypted": {
+            "type": "string"
+          },
+          "projectsOrder": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "projectCreationDefaults": {
+            "$ref": "#/components/schemas/ProjectCreationDefaultsBody"
+          }
+        }
+      },
+      "GetPublicKeysBody": {
+        "type": "object",
+        "properties": {
+          "userIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "userIds"
+        ]
+      },
+      "GetPublicKeysResponse": {
+        "type": "object",
+        "properties": {
+          "publicKeys": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "publicKeys"
+        ]
+      },
+      "ProjectMemberSerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "publicKey": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "avatarUrl",
+          "displayName",
+          "role"
+        ]
+      },
+      "ProjectSettingsSerialized": {
+        "type": "object",
+        "properties": {
+          "revealOn": {
+            "type": "string",
+            "enum": [
+              "always",
+              "hover",
+              "never"
+            ]
+          }
+        },
+        "required": [
+          "revealOn"
+        ]
+      },
+      "ProjectSerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectMemberSerialized"
+            }
+          },
+          "encryptedSecretsKeys": {
+            "type": "object"
+          },
+          "encryptedSecrets": {
+            "type": "string"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ProjectSettingsSerialized"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "members",
+          "encryptedSecretsKeys",
+          "encryptedSecrets",
+          "settings",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ProjectSearchResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "encryptedSecretsKeys": {
+            "type": "object"
+          },
+          "encryptedSecrets": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "encryptedSecretsKeys",
+          "encryptedSecrets"
+        ]
+      },
+      "ProjectSettingsBody": {
+        "type": "object",
+        "properties": {
+          "revealOn": {
+            "type": "string",
+            "enum": [
+              "always",
+              "hover",
+              "never"
+            ]
+          }
+        },
+        "required": [
+          "revealOn"
+        ]
+      },
+      "CreateProjectBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "encryptedSecrets": {
+            "type": "string"
+          },
+          "encryptedSecretsKeys": {
+            "type": "object"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ProjectSettingsBody"
+          }
+        },
+        "required": [
+          "name",
+          "encryptedSecrets",
+          "encryptedSecretsKeys",
+          "settings"
+        ]
+      },
+      "UserPartialSerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "publicKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "avatarUrl",
+          "displayName"
+        ]
+      },
+      "ProjectSecretsVersionSerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserPartialSerialized"
+          },
+          "encryptedSecrets": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "author",
+          "encryptedSecrets",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateProjectBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "encryptedSecrets": {
+            "type": "string"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ProjectSettingsBody"
+          }
+        }
+      },
+      "AddEncryptedSecretsKeyBody": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "encryptedSecretsKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "encryptedSecretsKey"
+        ]
+      },
+      "UpdateMemberRoleBody": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ]
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "InvitationSerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserPartialSerialized"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ]
+          },
+          "temporaryPublicKey": {
+            "type": "string"
+          },
+          "temporaryPrivateKey": {
+            "type": "string"
+          },
+          "temporarySecretsKey": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "author",
+          "role",
+          "temporaryPublicKey",
+          "temporaryPrivateKey",
+          "temporarySecretsKey",
+          "createdAt"
+        ]
+      },
+      "CreateInvitationBody": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string"
+          },
+          "temporaryPublicKey": {
+            "type": "string"
+          },
+          "temporaryPrivateKey": {
+            "type": "string"
+          },
+          "temporarySecretsKey": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ]
+          }
+        },
+        "required": [
+          "projectId",
+          "temporaryPublicKey",
+          "temporaryPrivateKey",
+          "temporarySecretsKey",
+          "role"
+        ]
+      },
+      "AcceptInvitationBody": {
+        "type": "object",
+        "properties": {
+          "newSecretsKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "newSecretsKey"
+        ]
+      },
+      "PersonalInvitationSerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserPartialSerialized"
+          },
+          "invitedUser": {
+            "$ref": "#/components/schemas/UserPartialSerialized"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "projectName",
+          "author",
+          "invitedUser",
+          "role",
+          "createdAt"
+        ]
+      },
+      "CreatePersonalInvitationBody": {
+        "type": "object",
+        "properties": {
+          "invitedUserId": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write",
+              "admin"
+            ]
+          }
+        },
+        "required": [
+          "invitedUserId",
+          "role"
+        ]
+      },
+      "GithubLoginBody": {
+        "type": "object",
+        "properties": {
+          "githubCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "githubCode"
+        ]
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "isNewUser": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "GoogleLoginBody": {
+        "type": "object",
+        "properties": {
+          "googleCode": {
+            "type": "string"
+          },
+          "forceLocalLogin": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "googleCode",
+          "forceLocalLogin"
+        ]
+      },
+      "SendMessageBody": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string"
+          },
+          "message": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "deviceId",
+          "message"
+        ]
+      },
+      "LocalLoginBody": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "RefreshBody": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "GithubRepositorySerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "isPrivate": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "owner",
+          "avatarUrl",
+          "name",
+          "url",
+          "isPrivate"
+        ]
+      },
+      "CreateGithubInstallationBody": {
+        "type": "object",
+        "properties": {
+          "githubInstallationId": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "githubInstallationId"
+        ]
+      },
+      "GithubInstallationLiveDataSerialized": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "avatar"
+        ]
+      },
+      "GithubInstallationSerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "githubInstallationId": {
+            "type": "number"
+          },
+          "liveData": {
+            "$ref": "#/components/schemas/GithubInstallationLiveDataSerialized"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "githubInstallationId",
+          "liveData",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateGithubIntegrationBody": {
+        "type": "object",
+        "properties": {
+          "repositoryId": {
+            "type": "number"
+          },
+          "installationEntityId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "repositoryId",
+          "installationEntityId",
+          "projectId"
+        ]
+      },
+      "GithubIntegrationSerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "githubRepositoryId": {
+            "type": "number"
+          },
+          "githubRepositoryPublicKey": {
+            "type": "string"
+          },
+          "githubRepositoryPublicKeyId": {
+            "type": "string"
+          },
+          "installationEntityId": {
+            "type": "string"
+          },
+          "repositoryData": {
+            "type": "object"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "githubRepositoryId",
+          "githubRepositoryPublicKey",
+          "githubRepositoryPublicKeyId",
+          "installationEntityId",
+          "repositoryData",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "InstallationPayload": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "GithubWebhookBody": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "installation": {
+            "$ref": "#/components/schemas/InstallationPayload"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "BlogPostSerialized": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "excerpt": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserPartialSerialized"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "slug",
+          "content",
+          "author",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateBlogPostBody": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "excerpt": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "content"
+        ]
+      },
+      "UpdateBlogPostBody": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "excerpt": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        }
+      },
+      "StatsResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "number"
+          },
+          "projects": {
+            "type": "number"
+          },
+          "diffs": {
+            "type": "number"
+          },
+          "stars": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "users",
+          "projects",
+          "diffs",
+          "stars"
+        ]
+      }
+    }
+  }
+}

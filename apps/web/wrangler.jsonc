@@ -1,0 +1,31 @@
+{
+  "name": "cryptly-web",
+  "main": ".svelte-kit/cloudflare/_worker.js",
+  "compatibility_date": "2026-04-26",
+  // SvelteKit expects nodejs_als (AsyncLocalStorage); keep nodejs_compat for Node APIs.
+  "compatibility_flags": [
+    "nodejs_als",
+    "nodejs_compat"
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".svelte-kit/cloudflare"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "workers_dev": false,
+  "preview_urls": true,
+  "route": {
+    "pattern": "cryptly.dev/*",
+    "zone_name": "cryptly.dev"
+  },
+  "vars": {
+    "PUBLIC_APP_URL": "https://cryptly.dev",
+    "PUBLIC_API_URL": "https://api.cryptly.dev",
+    "PUBLIC_GOOGLE_CLIENT_ID": "",
+    "PUBLIC_GITHUB_CLIENT_ID": "",
+    "PUBLIC_ALLOW_LOCAL_LOGIN": "false",
+    "PUBLIC_GITHUB_LOCAL_MOCK": "false"
+  }
+}
