@@ -4,18 +4,31 @@ import { queueFTUX } from "$lib/auth/ftux-queue";
 import { keystore } from "$lib/auth/keystore";
 import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
 import { UserApi } from "$lib/auth/user.api";
+import { recordUnlockActivity } from "$lib/keys/auto-lock";
 import { auth, loadUserData } from "./auth.svelte";
+import {
+  keyAuth,
+  markKeyLocked,
+  markKeyUnlocked,
+} from "./key-state.svelte";
 
-export const keyAuth = $state({ hasMasterKey: false, masterKeyHydrated: false });
-
-export function setHasMasterKey(value: boolean) {
-  keyAuth.hasMasterKey = value;
-}
+export {
+  broadcastKeyLock,
+  keyAuth,
+  markKeyLocked,
+  markKeyUnlocked,
+  markMasterKeyHydrated,
+  setHasMasterKey,
+} from "./key-state.svelte";
 
 export async function hydrateMasterKey() {
   try {
     const existing = await keystore.getMasterKey();
-    setHasMasterKey(Boolean(existing));
+    if (existing) {
+      markKeyUnlocked();
+    } else {
+      markKeyLocked();
+    }
   } finally {
     keyAuth.masterKeyHydrated = true;
   }
@@ -41,7 +54,8 @@ export async function setUpPassphrase(passphrase: string) {
     keyPair.privateKey,
   );
   await keystore.setMasterKey(masterKey);
-  setHasMasterKey(true);
+  markKeyUnlocked();
+  recordUnlockActivity();
 
   await UserApi.updateMe(auth.jwtToken!, {
     publicKey: keyPair.publicKey,
@@ -70,11 +84,11 @@ export async function unlock(passphrase: string): Promise<void> {
   const masterKey =
     await AsymmetricCrypto.importPrivateKeyNonExtractable(pkcs8Base64);
   await keystore.setMasterKey(masterKey);
-  setHasMasterKey(true);
+  markKeyUnlocked();
+  recordUnlockActivity();
 }
 
 export async function reset() {
   await keystore.wipeAll();
-  setHasMasterKey(false);
-  keyAuth.masterKeyHydrated = true;
+  markKeyLocked();
 }

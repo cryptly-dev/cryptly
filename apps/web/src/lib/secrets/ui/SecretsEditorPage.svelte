@@ -69,7 +69,26 @@
   const slideMaxX = $derived(Math.max(0, slideTrackWidth - 42));
   const slideX = $derived(slideProgress * slideMaxX);
 
+  function clearDecryptedState(nextPhase: typeof loadPhase = 'locked') {
+    closeProjectEvents();
+    removeSlideListeners();
+    aesKey = null;
+    baseline = '';
+    doc = '';
+    saving = false;
+    pushing = false;
+    isExternallyUpdated = false;
+    showSlideToConfirm = false;
+    resetSlideConfirm();
+    loadPhase = nextPhase;
+    loadMessage =
+      nextPhase === 'locked'
+        ? 'This browser is locked. Unlock with your passphrase (same as the main app) to decrypt project keys.'
+        : null;
+  }
+
   async function loadProjectFor(pid: string) {
+    const loadRevision = keyAuth.revision;
     loadPhase = 'loading';
     loadMessage = null;
     isExternallyUpdated = false;
@@ -128,17 +147,23 @@
     }
 
     let key = await keystore.getProjectKey(project.id);
+    if (loadRevision !== keyAuth.revision || !keyAuth.hasMasterKey) {
+      clearDecryptedState();
+      return;
+    }
     if (!key) {
       const masterKey = await keystore.getMasterKey();
       if (!masterKey) {
-        loadPhase = 'locked';
-        loadMessage =
-          'This browser is locked. Unlock with your passphrase (same as the main app) to decrypt project keys.';
+        clearDecryptedState();
         return;
       }
       try {
         const projectKeyB64 = await AsymmetricCrypto.decryptWithKey(encKeyForUser, masterKey);
         key = await SymmetricCrypto.importAesKey(projectKeyB64);
+        if (loadRevision !== keyAuth.revision || !keyAuth.hasMasterKey) {
+          clearDecryptedState();
+          return;
+        }
         await keystore.setProjectKey(project.id, key);
       } catch {
         loadPhase = 'error';
@@ -151,6 +176,10 @@
 
     try {
       const content = await SymmetricCrypto.decryptWithKey(project.encryptedSecrets, key);
+      if (loadRevision !== keyAuth.revision || !keyAuth.hasMasterKey) {
+        clearDecryptedState();
+        return;
+      }
       doc = content;
       baseline = content;
     } catch {
@@ -168,6 +197,11 @@
   });
 
   $effect(() => {
+    if (keyAuth.hasMasterKey) return;
+    clearDecryptedState();
+  });
+
+  $effect(() => {
     if (loadPhase !== 'locked' || !keyAuth.hasMasterKey) return;
     void loadProjectFor(projectId);
   });
@@ -182,14 +216,18 @@
   async function saveNow(opts?: { silent?: boolean; suppressFailureToast?: boolean }): Promise<boolean> {
     if (saveDisabled) return false;
     const key = aesKey;
+    const content = doc;
+    const saveRevision = keyAuth.revision;
     if (!key) return false;
     const jwt = auth.jwtToken;
     if (!jwt) return false;
     saving = true;
     try {
-      const encrypted = await SymmetricCrypto.encryptWithKey(doc, key);
+      if (saveRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return false;
+      const encrypted = await SymmetricCrypto.encryptWithKey(content, key);
+      if (saveRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return false;
       await ProjectsApi.updateProjectContent(jwt, projectId, { encryptedSecrets: encrypted });
-      baseline = doc;
+      baseline = content;
       await onSaved?.();
       if (!opts?.silent) {
         toast.success('Saved');
@@ -358,9 +396,12 @@
       resetSlideConfirm();
       return;
     }
+    const content = doc;
+    const pushRevision = keyAuth.revision;
     pushing = true;
     try {
-      await IntegrationsApi.pushSecrets(jwt, integrations, doc);
+      if (pushRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return;
+      await IntegrationsApi.pushSecrets(jwt, integrations, content);
       toast.success(
         publicEnv.githubLocalMock
           ? 'Pushed to GitHub (local mock — no secrets sent)'

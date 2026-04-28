@@ -12,10 +12,8 @@
   import { SymmetricCrypto } from '$lib/auth/symmetric-crypto';
   import { UserApi } from '$lib/auth/user.api';
   import { ProjectsApi, type Project } from '$lib/projects/projects.api';
-  import GripLoader from '$lib/shared/ui/GripLoader.svelte';
+  import ShellLoader from '$lib/shared/ui/ShellLoader.svelte';
   import { accountLoadErrorMessage, auth, loadUserData } from '$lib/stores/auth.svelte';
-
-  const ACCENT = '#DDA15E';
 
   let projects = $state<Project[] | null>(null);
   let projectsLoading = $state(true);
@@ -222,7 +220,5 @@
     </div>
   </div>
 {:else}
-  <div class="flex h-screen w-screen items-center justify-center">
-    <GripLoader color={ACCENT} class="h-12 w-12" />
-  </div>
+  <ShellLoader class="h-screen w-screen" />
 {/if}

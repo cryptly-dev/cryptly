@@ -8,6 +8,7 @@
   import BlogHeader from '$lib/components/blog/BlogHeader.svelte';
   import PassphraseGate from '$lib/components/shell/PassphraseGate.svelte';
   import PersonalInvitationsInbox from '$lib/invitations/ui/PersonalInvitationsInbox.svelte';
+  import { startKeyAutoLock } from '$lib/keys/auto-lock';
   import UnlockBrowserDialog from '$lib/keys/ui/UnlockBrowserDialog.svelte';
   import { auth } from '$lib/stores/auth.svelte';
   import { keyAuth } from '$lib/stores/key.svelte';
@@ -23,6 +24,12 @@
     if (!browser) return;
     if (!auth.jwtToken || !keyAuth.hasMasterKey) return;
     return subscribeApproverStream();
+  });
+
+  $effect(() => {
+    if (!browser) return;
+    if (!auth.jwtToken || !keyAuth.hasMasterKey) return;
+    return startKeyAutoLock();
   });
 </script>
 

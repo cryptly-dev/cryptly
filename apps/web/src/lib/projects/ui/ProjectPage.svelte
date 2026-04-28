@@ -73,13 +73,14 @@
   import DiffEditor from './DiffEditor.svelte';
   import GripLoader from '$lib/shared/ui/GripLoader.svelte';
   import HistoryIcon from '$lib/shared/ui/HistoryIcon.svelte';
+  import ShellLoader from '$lib/shared/ui/ShellLoader.svelte';
   import SlidersIcon from '$lib/shared/ui/SlidersIcon.svelte';
   import YearHeatmap from './YearHeatmap.svelte';
   import { publicEnv } from '$lib/shared/env/public-env';
   import { accountLoadErrorMessage, auth, loadUserData, logout } from '$lib/stores/auth.svelte';
   import { keyAuth } from '$lib/stores/key.svelte';
   import ProjectUnsavedNavGuard from '$lib/projects/ui/ProjectUnsavedNavGuard.svelte';
-import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
+  import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
   import { getCompactRelativeTime } from '$lib/utils';
 
   let { projectId }: { projectId: string } = $props();
@@ -160,6 +161,7 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
   let suggestedCreateRepo = $state<RepoWithInstallation | null>(null);
   let dismissedRepoIds = $state<number[]>([]);
   let lastLoadKey = '';
+  let lastUnlockReloadRevision = 0;
   let loadSeq = 0;
   let switchTimer: ReturnType<typeof setTimeout> | null = null;
   let createInput: HTMLInputElement | undefined = $state();
@@ -794,46 +796,60 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
   }
 
   async function getUnlockedProjectKey(project: Project): Promise<CryptoKey | null> {
+    const expectedRevision = keyAuth.revision;
+    if (!keyAuth.hasMasterKey) return null;
     const userId = auth.userData?.id;
     let projectKey = await keystore.getProjectKey(project.id);
+    if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return null;
     if (projectKey) return projectKey;
 
     const masterKey = await keystore.getMasterKey();
     const encryptedKey = userId ? project.encryptedSecretsKeys?.[userId] : undefined;
+    if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return null;
     if (!masterKey || !encryptedKey) return null;
 
     const projectKeyB64 = await AsymmetricCrypto.decryptWithKey(encryptedKey, masterKey);
     projectKey = await SymmetricCrypto.importAesKey(projectKeyB64);
+    if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return null;
     await keystore.setProjectKey(project.id, projectKey);
     return projectKey;
   }
 
   async function getUnlockedSearchProjectKey(project: ProjectSearchResponse): Promise<CryptoKey | null> {
+    const expectedRevision = keyAuth.revision;
+    if (!keyAuth.hasMasterKey) return null;
     const userId = auth.userData?.id;
     let projectKey = await keystore.getProjectKey(project.id);
+    if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return null;
     if (projectKey) return projectKey;
 
     const masterKey = await keystore.getMasterKey();
     const encryptedKey = userId ? project.encryptedSecretsKeys?.[userId] : undefined;
+    if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return null;
     if (!masterKey || !encryptedKey) return null;
 
     const projectKeyB64 = await AsymmetricCrypto.decryptWithKey(encryptedKey, masterKey);
     projectKey = await SymmetricCrypto.importAesKey(projectKeyB64);
+    if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return null;
     await keystore.setProjectKey(project.id, projectKey);
     return projectKey;
   }
 
   async function loadSearchableProjects() {
     const jwt = auth.jwtToken;
-    if (!jwt || searchableProjectsLoading || searchableProjects.length > 0) return;
+    const expectedRevision = keyAuth.revision;
+    if (!jwt || !keyAuth.hasMasterKey || searchableProjectsLoading || searchableProjects.length > 0) return;
     searchableProjectsLoading = true;
     try {
       const results = await ProjectsApi.searchProjects(jwt);
-      searchableProjects = await Promise.all(
+      const decryptedProjects = await Promise.all(
         results.map(async (project) => {
           try {
             const projectKey = await getUnlockedSearchProjectKey(project);
             if (!projectKey) return { id: project.id, name: project.name, decryptedContent: '' };
+            if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) {
+              return { id: project.id, name: project.name, decryptedContent: '' };
+            }
             const decryptedContent = await SymmetricCrypto.decryptWithKey(
               project.encryptedSecrets,
               projectKey
@@ -844,7 +860,10 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
           }
         })
       );
+      if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return;
+      searchableProjects = decryptedProjects;
     } catch {
+      if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return;
       searchableProjects = [];
     } finally {
       searchableProjectsLoading = false;
@@ -879,7 +898,13 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
     };
   });
 
-  function applyLoadedProject(project: Project, jwt: string, targetProjectId: string, seq: number) {
+  function applyLoadedProject(
+    project: Project,
+    jwt: string,
+    targetProjectId: string,
+    seq: number,
+    options?: { navigateAfterLoad?: boolean }
+  ) {
     if (seq !== loadSeq) return;
     activeProject = project;
     displayedProjectId = targetProjectId;
@@ -890,6 +915,10 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
     void loadHistory(jwt, project);
     void loadIntegrations(jwt, project.id);
     void loadPendingInvitations(jwt, project);
+    if (options?.navigateAfterLoad && targetProjectId !== projectId) {
+      lastLoadKey = `${jwt}:${targetProjectId}`;
+      void goto(`/app/project/${targetProjectId}`);
+    }
   }
 
   async function loadPendingInvitations(jwt: string, project: Project) {
@@ -935,7 +964,7 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
     }
   }
 
-  async function loadShell(targetProjectId = projectId) {
+  async function loadShell(targetProjectId = projectId, options?: { navigateAfterLoad?: boolean }) {
     const seq = ++loadSeq;
     clearSwitchTimer();
     const jwt = auth.jwtToken;
@@ -991,10 +1020,10 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
         const remaining = Math.max(0, MIN_SWITCH_MS - elapsed);
         switchTimer = setTimeout(() => {
           switchTimer = null;
-          applyLoadedProject(found, activeJwt, targetProjectId, seq);
+          applyLoadedProject(found, activeJwt, targetProjectId, seq, options);
         }, remaining);
       } else {
-        applyLoadedProject(found, activeJwt, targetProjectId, seq);
+        applyLoadedProject(found, activeJwt, targetProjectId, seq, options);
       }
     } catch (error) {
       if (seq !== loadSeq) return;
@@ -1009,6 +1038,11 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
   }
 
   async function loadHistory(jwt: string, project: Project) {
+    const expectedRevision = keyAuth.revision;
+    if (!keyAuth.hasMasterKey) {
+      clearDecryptedProjectState();
+      return;
+    }
     historyLoading = true;
     historyLocked = false;
     historyLoadMessage = null;
@@ -1023,6 +1057,10 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
       }
 
       const projectKey = await getUnlockedProjectKey(project);
+      if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) {
+        clearDecryptedProjectState();
+        return;
+      }
       if (!projectKey) {
         historyVersions = [];
         historyLocked = true;
@@ -1033,6 +1071,7 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
         versions.map(async (version) => {
           let content = '';
           try {
+            if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return { ...version, content };
             content = projectKey
               ? await SymmetricCrypto.decryptWithKey(version.encryptedSecrets, projectKey)
               : '';
@@ -1045,6 +1084,10 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
           };
         })
       );
+      if (expectedRevision !== keyAuth.revision || !keyAuth.hasMasterKey) {
+        clearDecryptedProjectState();
+        return;
+      }
 
       const chronologicalVersions = [...decryptedVersions].reverse();
       const patches: HistoryVersion[] = [];
@@ -1143,6 +1186,23 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
     }
   }
 
+  function clearDecryptedProjectState() {
+    clearSwitchTimer();
+    pendingProjectId = null;
+    searchableProjects = [];
+    searchableProjectsLoading = false;
+    historyLoading = false;
+    historyLocked = true;
+    historyLoadMessage = 'Unlock your safe to view encrypted history.';
+    historyVersions = [];
+    selectedHistoryId = null;
+    historyQuery = '';
+    historyMode = null;
+    historySuggestionsOpen = false;
+    selectedHistoryDay = null;
+    selectedHistoryAuthorId = null;
+  }
+
   $effect(() => {
     const key = `${auth.jwtToken ?? ''}:${projectId}`;
     if (key === lastLoadKey) return;
@@ -1153,6 +1213,22 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
   $effect(() => {
     if (!historyLocked || !keyAuth.hasMasterKey || !auth.jwtToken || !activeProject) return;
     void loadHistory(auth.jwtToken, activeProject);
+  });
+
+  $effect(() => {
+    if (keyAuth.hasMasterKey) return;
+    clearDecryptedProjectState();
+  });
+
+  $effect(() => {
+    if (!keyAuth.hasMasterKey || !auth.jwtToken) return;
+    const revision = keyAuth.revision;
+    if (revision === lastUnlockReloadRevision) return;
+    lastUnlockReloadRevision = revision;
+    if (loading || !activeProject || projects === null) {
+      lastLoadKey = '';
+      void loadShell(projectId);
+    }
   });
 
   $effect(() => {
@@ -1548,8 +1624,18 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
       return;
     }
     if (value && value !== displayedProjectId) {
-      void goto(`/app/project/${value}`);
+      void loadShell(value, { navigateAfterLoad: true });
     }
+  }
+
+  function onProjectLinkClick(event: MouseEvent, targetProjectId: string) {
+    if (targetProjectId === displayedProjectId || targetProjectId === pendingProjectId) {
+      event.preventDefault();
+      return;
+    }
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    event.preventDefault();
+    void loadShell(targetProjectId, { navigateAfterLoad: true });
   }
 </script>
 
@@ -1581,8 +1667,16 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
 
     <div class="relative flex-1 overflow-y-auto overflow-x-hidden pt-2">
       {#if loading && !projects}
-        <div class="flex h-32 items-center justify-center">
-          <GripLoader color="#DDA15E" class="size-8" />
+        <div class="space-y-2 px-3 py-3" aria-label="Loading projects" role="status">
+          {#each Array.from({ length: 5 }) as _, i (i)}
+            <div class="flex items-center justify-between gap-3 rounded-md px-0 py-1.5">
+              <span
+                class="h-3 rounded-full bg-neutral-800/80"
+                style={`width: ${i === 0 ? 64 : i === 1 ? 112 : i === 2 ? 88 : i === 3 ? 132 : 76}px`}
+              ></span>
+              <span class="h-2 w-6 rounded-full bg-neutral-900/80"></span>
+            </div>
+          {/each}
         </div>
       {:else if loadError && !projects}
         <div class="px-4 py-3 text-sm">
@@ -1600,9 +1694,10 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
           {#each filteredProjects as project, index (project.id)}
             {@const isDisplayed = project.id === displayedProjectId}
             {@const isPending = project.id === pendingProjectId}
-            <a
-              href={`/app/project/${project.id}`}
-              class={`project-row-enter group relative flex items-center justify-between gap-2 overflow-hidden px-3 py-2 text-sm transition-colors ${
+              <a
+                href={`/app/project/${project.id}`}
+                onclick={(event) => onProjectLinkClick(event, project.id)}
+                class={`project-row-enter group relative flex items-center justify-between gap-2 overflow-hidden px-3 py-2 text-sm transition-colors ${
                 isDisplayed
                   ? 'bg-neutral-900 text-foreground'
                   : isPending
@@ -1976,9 +2071,7 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
       }`}
     >
       {#if loading && !activeProject}
-        <div class="flex h-full items-center justify-center">
-          <GripLoader color="#DDA15E" class="size-12" />
-        </div>
+        <ShellLoader label="Loading project" class="h-full" />
       {:else if loadError && !activeProject}
         <section class="flex h-full items-center justify-center bg-background p-6">
           <div class="max-w-sm text-center">

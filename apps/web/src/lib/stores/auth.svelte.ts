@@ -5,7 +5,12 @@ import {
   AUTH_JWT_STORAGE_KEY,
   AUTH_REFRESH_STORAGE_KEY,
 } from "$lib/auth/kea-storage-keys";
+import { keystore } from "$lib/auth/keystore";
 import { UserApi, type User } from "$lib/auth/user.api";
+import {
+  broadcastKeyLock,
+  markKeyLocked,
+} from "$lib/stores/key-state.svelte";
 
 function readKey(storageKey: string): string | null {
   if (!browser) return null;
@@ -29,6 +34,8 @@ export const auth = $state({
 });
 
 let loadUserSeq = 0;
+let loadUserPromise: Promise<boolean> | null = null;
+let loadUserPromiseToken: string | null = null;
 
 function isInvalidRefreshFailure(error: unknown): boolean {
   if (!(error instanceof AuthRequestError)) return false;
@@ -43,8 +50,13 @@ export async function loadUserData(): Promise<boolean> {
     auth.userData = null;
     return false;
   }
+  if (loadUserPromise && loadUserPromiseToken === token) {
+    return loadUserPromise;
+  }
   const seq = ++loadUserSeq;
-  try {
+  loadUserPromiseToken = token;
+  loadUserPromise = (async () => {
+    try {
     let data: User;
     try {
       data = await UserApi.getMe(token);
@@ -75,17 +87,24 @@ export async function loadUserData(): Promise<boolean> {
       data = await UserApi.getMe(refreshed.token);
     }
     if (seq !== loadUserSeq) {
-      return false;
+      return Boolean(auth.userData);
     }
     auth.userData = data;
     return true;
-  } catch {
+    } catch {
     if (seq !== loadUserSeq) {
-      return false;
+      return Boolean(auth.userData);
     }
     auth.accountLoadError = auth.jwtToken ? "unknown" : "session";
     return false;
-  }
+    }
+  })().finally(() => {
+    if (loadUserPromiseToken === token) {
+      loadUserPromise = null;
+      loadUserPromiseToken = null;
+    }
+  });
+  return loadUserPromise;
 }
 
 export function accountLoadErrorMessage(): string {
@@ -139,6 +158,12 @@ export function reset() {
 export async function logout() {
   const currentRefresh = auth.refreshToken;
   reset();
+  try {
+    await keystore.wipeAll();
+  } finally {
+    markKeyLocked();
+    broadcastKeyLock();
+  }
   if (browser) {
     void goto("/app/login");
   }

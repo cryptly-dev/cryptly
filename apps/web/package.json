@@ -12,6 +12,7 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 9090 --strictPort",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test:browser-lock": "playwright test e2e/browser-lock.spec.ts",
     "test:parity": "playwright test",
     "lint": "prettier --check . && eslint .",
     "deploy": "pnpm build && wrangler deploy",
