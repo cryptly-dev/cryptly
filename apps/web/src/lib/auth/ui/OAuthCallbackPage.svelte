@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { gotoAfterLogin } from '$lib/auth/after-login';
+  import { consumeOAuthState } from '$lib/auth/browser-state';
   import {
     auth,
     exchangeGithubCodeForJwt,
@@ -18,7 +19,9 @@
     void (async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
-      if (!code) {
+      const state = params.get('state');
+      const stateMatchesProvider = consumeOAuthState(method, state);
+      if (params.get('error') || !code || !stateMatchesProvider) {
         await goto('/app/login');
         return;
       }

@@ -1,29 +1,34 @@
 <script lang="ts">
   import CryptlyLogo from '$lib/shared/ui/CryptlyLogo.svelte';
   import GitHubIcon from '$lib/shared/ui/GitHubIcon.svelte';
+  import { createOAuthState } from '$lib/auth/browser-state';
   import { publicEnv } from '$lib/shared/env/public-env';
   import LocalLoginForm from './LocalLoginForm.svelte';
 
   let loadingProvider = $state<'google' | 'github' | null>(null);
 
-  function googleOAuthUrl() {
+  function googleOAuthUrl(state: string) {
     const { googleClientId, appUrl } = publicEnv;
-    return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleClientId)}&redirect_uri=${encodeURIComponent(`${appUrl.replace(/\/$/, '')}/app/callbacks/oauth/google`)}&response_type=code&scope=openid%20email%20profile`;
+    return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleClientId)}&redirect_uri=${encodeURIComponent(`${appUrl.replace(/\/$/, '')}/app/callbacks/oauth/google`)}&response_type=code&scope=openid%20email%20profile&state=${encodeURIComponent(state)}`;
   }
 
-  function githubOAuthUrl() {
+  function githubOAuthUrl(state: string) {
     const { githubClientId, appUrl } = publicEnv;
-    return `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(githubClientId)}&redirect_uri=${encodeURIComponent(`${appUrl.replace(/\/$/, '')}/app/callbacks/oauth/github`)}&scope=user:email`;
+    return `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(githubClientId)}&redirect_uri=${encodeURIComponent(`${appUrl.replace(/\/$/, '')}/app/callbacks/oauth/github`)}&scope=user:email&state=${encodeURIComponent(state)}`;
   }
 
   function handleGoogleLogin() {
+    const state = createOAuthState('google');
+    if (!state) return;
     loadingProvider = 'google';
-    window.location.href = googleOAuthUrl();
+    window.location.href = googleOAuthUrl(state);
   }
 
   function handleGitHubLogin() {
+    const state = createOAuthState('github');
+    if (!state) return;
     loadingProvider = 'github';
-    window.location.href = githubOAuthUrl();
+    window.location.href = githubOAuthUrl(state);
   }
 </script>
 

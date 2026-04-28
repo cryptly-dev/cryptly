@@ -100,7 +100,7 @@ export interface UploadImageResult {
 
 const IMGBB_API_KEY = "0baaf5df435c58c7f85fd01d775bbe73";
 
-export async function uploadImage(file: Blob): Promise<UploadImageResult> {
+export async function uploadImage(_jwtToken: string, file: Blob): Promise<UploadImageResult> {
   const formData = new FormData();
   formData.append("image", file);
 

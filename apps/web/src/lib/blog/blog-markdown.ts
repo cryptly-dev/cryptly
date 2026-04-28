@@ -95,6 +95,16 @@ marked.use({
       });
       return `<img src="${safeHref}" alt="${escapeAttr(parsed.alt)}" class="${classes}"${style.length ? ` style="${style.join(";")}"` : ""} />`;
     },
+    link(token) {
+      const href = token.href;
+      const text = token.text;
+      if (!href) return text;
+      const safeHref = DOMPurify.sanitize(href, {
+        ALLOWED_URI_REGEXP:
+          /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+      });
+      return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    },
   },
 });
 
@@ -107,9 +117,11 @@ function escapeAttr(s: string): string {
 }
 
 export function renderBlogMarkdown(markdown: string): string {
-  const raw = marked.parse(markdown, { async: false }) as string;
+  const raw = (marked.parse(markdown, { async: false }) as string)
+    .replace(/<table>/g, '<div class="table-wrap"><table>')
+    .replace(/<\/table>/g, '</table></div>');
   return DOMPurify.sanitize(raw, {
     USE_PROFILES: { html: true },
-    ADD_ATTR: ["class", "style"],
+    ADD_ATTR: ["class", "style", "target", "rel"],
   });
 }

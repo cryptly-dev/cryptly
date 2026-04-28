@@ -46,14 +46,13 @@ export const example = () => "hello, world";
   let releaseDate = $state('');
   let content = $state(PLACEHOLDER);
   let postId = $state<string | null>(null);
-  let loadingPost = $state(false);
+  let loadingPost = $state(true);
   let saving = $state(false);
   let deleting = $state(false);
   let uploadingImage = $state(false);
-
   let textareaEl: HTMLTextAreaElement | undefined = $state();
-
   const wordCount = $derived(content.trim().split(/\s+/).filter(Boolean).length);
+  const isLoadingPost = $derived(mode === 'edit' && loadingPost);
 
   onMount(() => {
     if (mode !== 'edit' || !slug) return () => {};
@@ -100,30 +99,29 @@ export const example = () => "hello, world";
   }
 
   async function uploadPastedImage(file: File) {
+    const jwtToken = auth.jwtToken;
+    if (!jwtToken) {
+      toast.error('Not authenticated');
+      return;
+    }
     const placeholderToken = `__uploading_${Date.now()}__`;
     const placeholderMarkdown = `![uploading…](${placeholderToken})`;
     insertAtCursor(placeholderMarkdown);
     uploadingImage = true;
     try {
-      const result = await uploadImage(file);
-      content = content.replace(
-        placeholderMarkdown,
-        `![image](${result.displayUrl || result.url})`,
-      );
+      const result = await uploadImage(jwtToken, file);
+      content = content.replace(placeholderMarkdown, `![image](${result.displayUrl || result.url})`);
       toast.success('Image uploaded');
     } catch (err) {
       content = content.replace(placeholderMarkdown, '');
-      const message =
-        err && typeof err === 'object' && 'message' in err && typeof (err as Error).message === 'string'
-          ? (err as Error).message
-          : 'Image upload failed';
+      const message = err instanceof Error ? err.message : 'Image upload failed';
       toast.error(message);
     } finally {
       uploadingImage = false;
     }
   }
 
-  function handlePasteContent(e: ClipboardEvent) {
+  function handlePaste(e: ClipboardEvent) {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (const item of Array.from(items)) {
@@ -154,28 +152,28 @@ export const example = () => "hello, world";
     }
   }
 
-  async function handleCoverImagePaste(e: ClipboardEvent) {
+  function handleCoverImagePaste(e: ClipboardEvent) {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (const item of Array.from(items)) {
       if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const jwtToken = auth.jwtToken;
         const file = item.getAsFile();
-        if (!file) continue;
+        if (!file || !jwtToken) continue;
         e.preventDefault();
-        uploadingImage = true;
-        try {
-          const result = await uploadImage(file);
-          coverImageUrl = result.displayUrl || result.url;
-          toast.success('Cover image uploaded');
-        } catch (err) {
-          const message =
-            err && typeof err === 'object' && 'message' in err && typeof (err as Error).message === 'string'
-              ? (err as Error).message
-              : 'Image upload failed';
-          toast.error(message);
-        } finally {
-          uploadingImage = false;
-        }
+        void (async () => {
+          uploadingImage = true;
+          try {
+            const result = await uploadImage(jwtToken, file);
+            coverImageUrl = result.displayUrl || result.url;
+            toast.success('Cover image uploaded');
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Image upload failed';
+            toast.error(message);
+          } finally {
+            uploadingImage = false;
+          }
+        })();
         return;
       }
     }
@@ -295,17 +293,17 @@ export const example = () => "hello, world";
       <p class="mt-3 text-neutral-400">You need admin privileges to access the editor.</p>
       <button
         type="button"
-        class="mt-8 inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
+        class="mt-8 inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs transition-all outline-none hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
         onclick={() => goto('/blog')}
       >
         Back to blog
       </button>
     </div>
   </div>
-{:else if loadingPost}
+{:else if isLoadingPost}
   <div class="min-h-screen bg-black text-foreground">
     <div class="mx-auto flex max-w-3xl items-center justify-center px-6 py-24">
-      <Loader2 class="h-6 w-6 animate-spin" />
+      <Loader2 class="h-6 w-6 animate-spin" role="status" aria-label="Loading" />
     </div>
   </div>
 {:else}
@@ -324,7 +322,7 @@ export const example = () => "hello, world";
           <div class="flex items-center gap-2">
             {#if uploadingImage}
               <span class="inline-flex items-center gap-2 text-xs text-neutral-500">
-                <Loader2 class="h-3 w-3 animate-spin" />
+                <Loader2 class="h-3 w-3 animate-spin" role="status" aria-label="Loading" />
                 Uploading image…
               </span>
             {/if}
@@ -333,7 +331,7 @@ export const example = () => "hello, world";
                 type="button"
                 onclick={handleDelete}
                 disabled={deleting || saving}
-                class="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-red-900/60 bg-background px-3 text-sm font-medium text-destructive shadow-xs hover:bg-red-950/40 disabled:pointer-events-none disabled:opacity-50"
+                class="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-red-900/60 bg-background px-2.5 text-sm font-medium text-destructive shadow-xs transition-all outline-none hover:bg-red-950/40 hover:text-destructive focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 dark:bg-neutral-800 dark:hover:bg-red-950/40 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Trash2 class="h-3.5 w-3.5" />
                 {deleting ? 'Deleting…' : 'Delete'}
@@ -343,7 +341,7 @@ export const example = () => "hello, world";
               type="button"
               onclick={handleSave}
               disabled={saving || deleting}
-              class="inline-flex h-8 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+              class="inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-primary px-2.5 text-sm font-medium text-primary-foreground shadow-xs transition-all outline-none hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
             >
               <Save class="h-3.5 w-3.5" />
               {saving ? 'Saving…' : mode === 'create' ? 'Publish' : 'Save'}
@@ -405,7 +403,7 @@ export const example = () => "hello, world";
         <textarea
           bind:this={textareaEl}
           bind:value={content}
-          onpaste={handlePasteContent}
+          onpaste={handlePaste}
           ondragover={handleDragOver}
           ondrop={handleDrop}
           spellcheck={false}

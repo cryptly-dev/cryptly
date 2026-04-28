@@ -353,7 +353,7 @@ body {
     @apply my-6 overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900/80 p-4 text-sm leading-relaxed text-neutral-200;
   }
   .blog-prose :where(pre code) {
-    @apply rounded-none bg-transparent p-0 text-neutral-200;
+    @apply rounded-none bg-transparent p-0 font-mono text-sm text-neutral-200;
   }
   .blog-prose :where(hr) {
     @apply my-10 border-neutral-800;

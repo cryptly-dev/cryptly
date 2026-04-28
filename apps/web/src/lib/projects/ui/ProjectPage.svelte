@@ -41,6 +41,7 @@
     type Repository
   } from '$lib/api/integrations.api';
   import { AsymmetricCrypto } from '$lib/auth/asymmetric-crypto';
+  import { createGitHubAppInstallState } from '$lib/auth/browser-state';
   import {
     DEFAULT_PROJECT_SETTINGS,
     normalizeProjectSettings,
@@ -1333,10 +1334,14 @@ import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
     try {
       if (publicEnv.githubLocalMock && jwt) {
         const { githubInstallationId } = await IntegrationsApi.bootstrapLocalGithubMock(jwt);
-        window.location.href = `${publicEnv.appUrl.replace(/\/$/, '')}/app/callbacks/integrations/github?installation_id=${githubInstallationId}&state=${encodeURIComponent(`"projectId=${activeProject.id}"`)}`;
+        const state = createGitHubAppInstallState(activeProject.id);
+        if (!state) throw new Error('Failed to start GitHub installation');
+        window.location.href = `${publicEnv.appUrl.replace(/\/$/, '')}/app/callbacks/integrations/github?installation_id=${githubInstallationId}&state=${encodeURIComponent(state)}`;
         return;
       }
-      window.location.href = `https://github.com/apps/cryptly-dev/installations/new?state="projectId=${activeProject.id}"`;
+      const state = createGitHubAppInstallState(activeProject.id);
+      if (!state) throw new Error('Failed to start GitHub installation');
+      window.location.href = `https://github.com/apps/cryptly-dev/installations/new?state=${encodeURIComponent(state)}`;
     } catch {
       installingGithubApp = false;
       toast.error('Failed to start GitHub installation');
