@@ -16,6 +16,7 @@ import { Route as InviteInviteIdRouteImport } from './routes/invite/$inviteId'
 import { Route as BlogNewRouteImport } from './routes/blog/new'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AppSetPassphraseRouteImport } from './routes/app/set-passphrase'
+import { Route as AppSavePushLabRouteImport } from './routes/app/save-push-lab'
 import { Route as AppLoginRouteImport } from './routes/app/login'
 import { Route as AppDeveloperRouteImport } from './routes/app/developer'
 import { Route as AppCliAuthorizeRouteImport } from './routes/app/cli-authorize'
@@ -59,6 +60,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
 const AppSetPassphraseRoute = AppSetPassphraseRouteImport.update({
   id: '/set-passphrase',
   path: '/set-passphrase',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSavePushLabRoute = AppSavePushLabRouteImport.update({
+  id: '/save-push-lab',
+  path: '/save-push-lab',
   getParentRoute: () => AppRoute,
 } as any)
 const AppLoginRoute = AppLoginRouteImport.update({
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/app/cli-authorize': typeof AppCliAuthorizeRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/app/save-push-lab': typeof AppSavePushLabRoute
   '/app/set-passphrase': typeof AppSetPassphraseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/app/cli-authorize': typeof AppCliAuthorizeRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/app/save-push-lab': typeof AppSavePushLabRoute
   '/app/set-passphrase': typeof AppSetPassphraseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/app/cli-authorize': typeof AppCliAuthorizeRoute
   '/app/developer': typeof AppDeveloperRoute
   '/app/login': typeof AppLoginRoute
+  '/app/save-push-lab': typeof AppSavePushLabRoute
   '/app/set-passphrase': typeof AppSetPassphraseRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/app/cli-authorize'
     | '/app/developer'
     | '/app/login'
+    | '/app/save-push-lab'
     | '/app/set-passphrase'
     | '/blog/$slug'
     | '/blog/new'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/app/cli-authorize'
     | '/app/developer'
     | '/app/login'
+    | '/app/save-push-lab'
     | '/app/set-passphrase'
     | '/blog/$slug'
     | '/blog/new'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/app/cli-authorize'
     | '/app/developer'
     | '/app/login'
+    | '/app/save-push-lab'
     | '/app/set-passphrase'
     | '/blog/$slug'
     | '/blog/new'
@@ -281,6 +293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSetPassphraseRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/save-push-lab': {
+      id: '/app/save-push-lab'
+      path: '/save-push-lab'
+      fullPath: '/app/save-push-lab'
+      preLoaderRoute: typeof AppSavePushLabRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/login': {
       id: '/app/login'
       path: '/login'
@@ -351,6 +370,7 @@ interface AppRouteChildren {
   AppCliAuthorizeRoute: typeof AppCliAuthorizeRoute
   AppDeveloperRoute: typeof AppDeveloperRoute
   AppLoginRoute: typeof AppLoginRoute
+  AppSavePushLabRoute: typeof AppSavePushLabRoute
   AppSetPassphraseRoute: typeof AppSetPassphraseRoute
   AppProjectProjectIdRoute: typeof AppProjectProjectIdRoute
   AppProjectIndexRoute: typeof AppProjectIndexRoute
@@ -363,6 +383,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCliAuthorizeRoute: AppCliAuthorizeRoute,
   AppDeveloperRoute: AppDeveloperRoute,
   AppLoginRoute: AppLoginRoute,
+  AppSavePushLabRoute: AppSavePushLabRoute,
   AppSetPassphraseRoute: AppSetPassphraseRoute,
   AppProjectProjectIdRoute: AppProjectProjectIdRoute,
   AppProjectIndexRoute: AppProjectIndexRoute,
