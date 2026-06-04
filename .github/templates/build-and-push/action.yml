@@ -45,3 +45,7 @@ runs:
         file: ${{ inputs.file }}
         push: true
         tags: ${{ inputs.image-name }}:latest
+        build-args: |
+          POSTHOG_CLI_API_KEY=${{ inputs.posthog-api-key }}
+          POSTHOG_CLI_HOST=${{ inputs.posthog-host }}
+          POSTHOG_CLI_PROJECT_ID=${{ inputs.posthog-project-id }}

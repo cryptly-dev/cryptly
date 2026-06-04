@@ -11,6 +11,12 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY . .
 
 FROM node:22-alpine AS build
+ARG POSTHOG_CLI_API_KEY
+ARG POSTHOG_CLI_HOST
+ARG POSTHOG_CLI_PROJECT_ID
+ENV POSTHOG_CLI_API_KEY=$POSTHOG_CLI_API_KEY
+ENV POSTHOG_CLI_HOST=$POSTHOG_CLI_HOST
+ENV POSTHOG_CLI_PROJECT_ID=$POSTHOG_CLI_PROJECT_ID
 RUN corepack enable
 WORKDIR /usr/src/app
 COPY --from=development /usr/src/app ./
