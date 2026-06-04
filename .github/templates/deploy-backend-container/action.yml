@@ -31,7 +31,7 @@ inputs:
   logdash-api-key:
     required: true
 
-  posthog-api-key:
+  posthog-api-token:
     required: true
   posthog-host:
     required: true
@@ -96,7 +96,7 @@ runs:
           -e GH_CRYPTLY_APP_ID=${{ inputs.gh-cryptly-app-id }} \
           -e GH_CRYPTLY_APP_PRIVATE_KEY="${{ inputs.gh-cryptly-app-private-key }}" \
           -e GH_WEBHOOKS_SECRET="${{ inputs.gh-webhooks-secret }}" \
-          -e POSTHOG_API_KEY=${{ inputs.posthog-api-key }} \
+          -e POSTHOG_API_TOKEN=${{ inputs.posthog-api-token }} \
           -e POSTHOG_HOST=${{ inputs.posthog-host }} \
           -e WEB_APP_URL=${{ inputs.web-app-url }} \
           -e PORT=${{ inputs.application-port }} \

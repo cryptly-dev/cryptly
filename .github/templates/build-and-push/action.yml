@@ -15,6 +15,14 @@ inputs:
   image-name:
     required: true
 
+  # posthog
+  posthog-api-key:
+    required: true
+  posthog-host:
+    required: true
+  posthog-project-id:
+    required: true
+
 runs:
   using: "composite"
   steps:
