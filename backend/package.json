@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && posthog-cli --env-file .env sourcemap inject --directory ./dist && posthog-cli --env-file .env sourcemap upload --directory ./dist --release-name cryptly-backend",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -48,6 +48,7 @@
     "stripe": "^17.7.0"
   },
   "devDependencies": {
+    "@posthog/cli": "latest",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/testing": "^11.1.3",
     "@testcontainers/clickhouse": "^11.0.1",
