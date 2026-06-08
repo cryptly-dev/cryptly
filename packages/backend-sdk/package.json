@@ -1,0 +1,28 @@
+{
+  "name": "@packages/backend-sdk",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./openapi": {
+      "types": "./src/openapi.generated.ts",
+      "default": "./src/openapi.generated.ts"
+    }
+  },
+  "scripts": {
+    "generate": "pnpm --filter backend openapi:generate && openapi-typescript openapi.json -o src/openapi.generated.ts",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.15.0",
+    "openapi-typescript-helpers": "^0.0.15"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.9.1",
+    "typescript": "~5.8.3"
+  }
+}

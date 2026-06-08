@@ -1,2 +1,11 @@
 .cursor/
+.claude/
+.codex/
+frontend/.agents/
 .security-audit/
+node_modules/
+.svelte-kit/
+.wrangler/
+build/
+**/test-results/
+**/playwright-report/

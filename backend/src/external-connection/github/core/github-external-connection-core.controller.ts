@@ -36,6 +36,7 @@ import { GithubInstallationSerializer } from './entities/github-installation.ser
 import { GithubIntegrationSerialized } from './entities/github-integration.interface';
 import { GithubIntegrationSerializer } from './entities/github-integration.serializer';
 import { GithubWebhookSignatureGuard } from './guards/github-webhook-signature.guard';
+import { ProductAnalyticsService } from '../../../shared/posthog/product-analytics.service';
 
 @Controller('')
 @ApiTags('Github external connections')
@@ -48,6 +49,7 @@ export class GithubExternalConnectionCoreController {
     private readonly integrationReadService: GithubIntegrationReadService,
     private readonly integrationWriteService: GithubIntegrationWriteService,
     private readonly projectReadService: ProjectReadService,
+    private readonly productAnalytics: ProductAnalyticsService,
   ) {}
 
   @ApiResponse({ type: GithubRepositorySerialized, isArray: true })
@@ -104,6 +106,11 @@ export class GithubExternalConnectionCoreController {
       userId: currentUserId,
     });
 
+    this.productAnalytics.capture(currentUserId, 'installation_created', {
+      type: 'github',
+      github_installation_id: dto.githubInstallationId,
+    });
+
     return GithubInstallationSerializer.serialize(created);
   }
 
@@ -116,9 +123,8 @@ export class GithubExternalConnectionCoreController {
       throw new ForbiddenException('Local GitHub mock is not enabled');
     }
 
-    const installation = await this.installationWriteService.ensureLocalMockInstallationForUser(
-      currentUserId,
-    );
+    const installation =
+      await this.installationWriteService.ensureLocalMockInstallationForUser(currentUserId);
 
     return { githubInstallationId: installation.githubInstallationId };
   }
@@ -247,6 +253,12 @@ export class GithubExternalConnectionCoreController {
       repositoryPublicKey: githubRepositoryKey.key,
       repositoryPublicKeyId: githubRepositoryKey.keyId,
       installationEntityId: body.installationEntityId,
+    });
+
+    this.productAnalytics.capture(currentUserId, 'integration_created', {
+      type: 'github',
+      project_id: body.projectId,
+      github_repository_id: body.repositoryId,
     });
 
     return GithubIntegrationSerializer.serialize(integration);
