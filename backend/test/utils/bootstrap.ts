@@ -2,6 +2,7 @@ import { Logger, Metrics } from '@logdash/js-sdk';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { getModelToken } from '@nestjs/mongoose';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Model } from 'mongoose';
@@ -89,7 +90,10 @@ export async function createTestApp(): Promise<TestApp> {
     .useValue(githubExternalConnectionClientMock)
     .compile();
 
-  const app = module.createNestApplication({ rawBody: true });
+  const app = module.createNestApplication<NestExpressApplication>({ rawBody: true });
+
+  app.useBodyParser('json', { limit: '1mb' });
+  app.useBodyParser('urlencoded', { extended: true, limit: '1mb' });
 
   app.useGlobalPipes(
     new ValidationPipe({
