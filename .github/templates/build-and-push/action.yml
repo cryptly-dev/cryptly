@@ -49,3 +49,8 @@ runs:
           POSTHOG_CLI_API_KEY=${{ inputs.posthog-api-key }}
           POSTHOG_CLI_HOST=${{ inputs.posthog-host }}
           POSTHOG_CLI_PROJECT_ID=${{ inputs.posthog-project-id }}
+          GITHUB_ACTIONS=true
+          GITHUB_SHA=${{ github.sha }}
+          GITHUB_REF_NAME=${{ github.ref_name }}
+          GITHUB_REPOSITORY=${{ github.repository }}
+          GITHUB_SERVER_URL=${{ github.server_url }}
