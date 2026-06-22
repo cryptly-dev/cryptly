@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build && posthog-cli --dotenv-file .env sourcemap inject --directory ./dist && posthog-cli --dotenv-file .env sourcemap upload --directory ./dist --release-name cryptly-backend",
+    "build": "nest build && posthog-cli --dotenv-file .env sourcemap process --directory ./dist --release-name cryptly-backend",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
