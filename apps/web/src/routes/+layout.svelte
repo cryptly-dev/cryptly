@@ -43,4 +43,9 @@
 <UnlockBrowserDialog />
 <DeviceFlowApproverDialog />
 <PersonalInvitationsInbox />
-<Toaster position="bottom-right" theme="dark" />
+<Toaster
+  position="top-center"
+  theme="system"
+  class="toaster group"
+  style="--normal-bg: var(--popover); --normal-text: var(--popover-foreground); --normal-border: var(--border);"
+/>

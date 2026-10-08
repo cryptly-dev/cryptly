@@ -9,6 +9,7 @@
     ArrowDownUp,
     ArrowLeft,
     Check,
+    ChevronDown,
     ChevronRight,
     CornerDownLeft,
     Copy,
@@ -16,10 +17,12 @@
     Eye,
     EyeOff,
     ExternalLink,
+    FolderOpen,
     Github,
     GripVertical,
     Info,
     Link,
+    LoaderCircle,
     LogOut,
     Minus,
     Pencil,
@@ -28,12 +31,14 @@
     Shield,
     Sparkles,
     Trash2,
+    User,
     UserPlus,
     Users,
     Wand2,
     X
   } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
+  import { dragHandle, dragHandleZone, type DndEvent } from 'svelte-dnd-action';
   import {
     IntegrationsApi,
     type Integration,
@@ -76,12 +81,28 @@
   import ShellLoader from '$lib/shared/ui/ShellLoader.svelte';
   import SlidersIcon from '$lib/shared/ui/SlidersIcon.svelte';
   import YearHeatmap from './YearHeatmap.svelte';
+  import RevealOnPicker, { REVEAL_ON_OPTIONS } from './RevealOnPicker.svelte';
   import { publicEnv } from '$lib/shared/env/public-env';
   import { accountLoadErrorMessage, auth, loadUserData, logout } from '$lib/stores/auth.svelte';
   import { keyAuth } from '$lib/stores/key.svelte';
   import ProjectUnsavedNavGuard from '$lib/projects/ui/ProjectUnsavedNavGuard.svelte';
+  import { secretsEditorNavGuard } from '$lib/secrets/secrets-editor-nav-guard.svelte';
   import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
-  import { getCompactRelativeTime } from '$lib/utils';
+  import FtuxPopover from '$lib/shared/ui/FtuxPopover.svelte';
+  import GitHubIcon from '$lib/shared/ui/GitHubIcon.svelte';
+  import { ftux, ftuxUserOpenedIntegrations } from '$lib/stores/ftux.svelte';
+  import { getCompactRelativeTime, getRelativeTime } from '$lib/utils';
+  import {
+    IconCheck,
+    IconCopy,
+    IconEdit,
+    IconLink,
+    IconShieldLock,
+    IconTrash,
+    IconUserMinus,
+    IconUserPlus,
+    IconX
+  } from '@tabler/icons-svelte';
 
   let { projectId }: { projectId: string } = $props();
 
@@ -103,6 +124,7 @@
   let loading = $state(true);
   let loadError = $state<string | null>(null);
   let searchQuery = $state('');
+  let searchActive = $state(false);
   let searchableProjects = $state<SearchableProject[]>([]);
   let searchableProjectsLoading = $state(false);
   let activeTab = $state<TabType>(readPersistedActiveTab());
@@ -121,6 +143,7 @@
   let renamingProject = $state(false);
   let revealEditing = $state(false);
   let showDeleteConfirm = $state(false);
+  let leavingOrDeleting = $state(false);
   let showAddPeopleDialog = $state(false);
   let showIntegrationDialog = $state(false);
   let selectedInstallationEntityId = $state('');
@@ -140,6 +163,8 @@
   let lastCreatedInvitation = $state<Invitation | null>(null);
   let pendingLinkInvitations = $state<InvitationListItem[]>([]);
   let pendingPersonalInvitations = $state<PersonalInvitationListItem[]>([]);
+  let copiedInviteId = $state<string | null>(null);
+  let revokingInviteId = $state<string | null>(null);
   let updatingMember = $state(false);
   let historyLoading = $state(false);
   let historyLocked = $state(false);
@@ -153,13 +178,15 @@
   let historyTimeRange = $state<'all' | '24h' | '7d' | '30d'>('all');
   let selectedHistoryDay = $state<string | null>(null);
   let selectedHistoryAuthorId = $state<string | null>(null);
+  let pinnedHistoryAuthorIds = $state<string[]>([]);
+  let historyAuthorsOverflowOpen = $state(false);
   let installations = $state<Installation[]>([]);
   let integrations = $state<Integration[]>([]);
   let integrationsLoading = $state(false);
   let allRepositories = $state<RepoWithInstallation[]>([]);
   let suggestionsLoading = $state(false);
-  let suggestedCreateRepo = $state<RepoWithInstallation | null>(null);
   let dismissedRepoIds = $state<number[]>([]);
+  let acceptingRepoId = $state<number | null>(null);
   let lastLoadKey = '';
   let lastUnlockReloadRevision = 0;
   let loadSeq = 0;
@@ -169,6 +196,7 @@
   let selectedMemberId = $state<string | null>(null);
   let tabBar: HTMLDivElement | undefined = $state();
   let tabUnderline = $state({ left: 0, width: 0, ready: false });
+  let integrationsTabWidth = $state(147);
   const tabElements = new Map<TabType, HTMLElement>();
 
   interface RepoWithInstallation extends Repository {
@@ -213,17 +241,6 @@
     activeTab = tab;
     persistActiveTab(tab);
   }
-
-  const revealOptions: {
-    key: ProjectRevealOn;
-    label: string;
-    description: string;
-    icon: typeof Eye;
-  }[] = [
-    { key: 'always', label: 'Always', description: 'Values stay visible in the editor', icon: Eye },
-    { key: 'hover', label: 'Hover', description: 'Values stay masked until hover or click', icon: Eye },
-    { key: 'never', label: 'Never', description: 'Values stay masked and copy without revealing', icon: EyeOff }
-  ];
 
   const roleMeta = {
     read: {
@@ -279,25 +296,10 @@
   );
   const isAdmin = $derived(currentRole === 'admin');
   const isSwitching = $derived(pendingProjectId !== null);
-  const revealMeta = $derived.by(() => {
-    const revealOn = normalizeProjectSettings(activeProject?.settings).revealOn;
-    if (revealOn === 'always') {
-      return {
-        label: 'Always',
-        description: 'Values are visible by default'
-      };
-    }
-    if (revealOn === 'never') {
-      return {
-        label: 'Never',
-        description: 'Values stay masked until copied'
-      };
-    }
-    return {
-      label: 'Hover',
-      description: 'Values stay masked until hover or click'
-    };
-  });
+  const DangerIcon = $derived(isAdmin ? IconTrash : IconUserMinus);
+  const revealOnSetting = $derived(normalizeProjectSettings(activeProject?.settings).revealOn);
+  const settingsActionClass =
+    'inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium text-muted-foreground opacity-0 transition-opacity hover:bg-neutral-800 hover:text-foreground group-hover:opacity-100';
 
   const uniqueProjects = $derived.by(() => {
     if (!projects) return projects;
@@ -309,36 +311,14 @@
     });
   });
 
-  const filteredProjects = $derived.by(() => {
-    if (!uniqueProjects) return uniqueProjects;
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return uniqueProjects;
-    const contentMatches = new Set(
-      searchableProjects
-        .filter(
-          (project) =>
-            project.name.toLowerCase().includes(q) || project.decryptedContent.toLowerCase().includes(q)
-        )
-        .map((project) => project.id)
-    );
-    return uniqueProjects.filter(
-      (project) => project.name.toLowerCase().includes(q) || contentMatches.has(project.id)
-    );
-  });
+  const isSearching = $derived(searchActive || searchQuery.trim().length > 0);
 
-  const searchSnippets = $derived.by(() => {
+  const searchResults = $derived.by(() => {
     const q = searchQuery.trim().toLowerCase();
-    const snippets = new Map<string, string>();
-    if (!q) return snippets;
-    for (const project of searchableProjects) {
-      const haystack = project.decryptedContent.toLowerCase();
-      const index = haystack.indexOf(q);
-      if (index < 0) continue;
-      const start = Math.max(0, index - 24);
-      const end = Math.min(project.decryptedContent.length, index + q.length + 36);
-      snippets.set(project.id, project.decryptedContent.slice(start, end).replace(/\s+/g, ' ').trim());
-    }
-    return snippets;
+    if (!q) return [];
+    return searchableProjects.filter(
+      (project) => project.name.toLowerCase().includes(q) || project.decryptedContent.toLowerCase().includes(q)
+    );
   });
 
   const suggestedProjects = $derived.by(() => {
@@ -379,8 +359,22 @@
         });
       }
     }
-    return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, 3);
+    return [...counts.values()].sort((a, b) => b.count - a.count);
   });
+
+  const MAX_VISIBLE_HISTORY_AUTHORS = 3;
+
+  const visibleHistoryAuthors = $derived.by(() => {
+    const pinned = pinnedHistoryAuthorIds
+      .map((id) => historyAuthors.find((author) => author.id === id))
+      .filter((author) => author !== undefined);
+    const rest = historyAuthors.filter((author) => !pinnedHistoryAuthorIds.includes(author.id));
+    return [...pinned, ...rest].slice(0, MAX_VISIBLE_HISTORY_AUTHORS);
+  });
+
+  const overflowHistoryAuthors = $derived(
+    historyAuthors.filter((author) => !visibleHistoryAuthors.some((visible) => visible.id === author.id))
+  );
   const historyRevealOn = $derived(normalizeProjectSettings(activeProject?.settings).revealOn);
 
   const filteredHistory = $derived.by(() => {
@@ -615,10 +609,6 @@
     return { additions, deletions };
   }
 
-  function revealIndex(value: ProjectRevealOn): number {
-    return value === 'always' ? 0 : value === 'hover' ? 1 : 2;
-  }
-
   function generateInviteCode(length = 16): string {
     const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ123456789';
     const array = new Uint8Array(length);
@@ -638,6 +628,7 @@
   }
 
   function updateTabUnderline() {
+    integrationsTabWidth = tabElements.get('integrations')?.offsetWidth ?? integrationsTabWidth;
     if (!tabBar) return;
     const activeElement = tabElements.get(activeTab);
     if (!activeElement) return;
@@ -697,13 +688,11 @@
   function closeCreateDialog() {
     if (!creatingProject) {
       showCreateDialog = false;
-      suggestedCreateRepo = null;
     }
   }
 
-  function openCreateDialog(repo: RepoWithInstallation | null = null) {
-    suggestedCreateRepo = repo;
-    newProjectName = repo?.name ?? '';
+  function openCreateDialog() {
+    newProjectName = '';
     showCreateDialog = true;
   }
 
@@ -874,6 +863,44 @@
     if (searchQuery.trim()) void loadSearchableProjects();
   });
 
+  function clearSearch() {
+    searchQuery = '';
+    searchActive = false;
+    // Drop decrypted search content; the next search re-fetches fresh data.
+    searchableProjects = [];
+  }
+
+  function contentSnippet(content: string, query: string, before: number, after: number): string | null {
+    const q = query.trim().toLowerCase();
+    const matchIndex = content.toLowerCase().indexOf(q);
+    if (!q || matchIndex === -1) return null;
+    const start = Math.max(0, matchIndex - before);
+    const end = Math.min(content.length, matchIndex + q.length + after);
+    return `${start > 0 ? '...' : ''}${content.slice(start, end)}${end < content.length ? '...' : ''}`;
+  }
+
+  function openSearchResult(event: MouseEvent, targetProjectId: string) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    event.preventDefault();
+    clearSearch();
+    if (targetProjectId !== displayedProjectId) switchProject(targetProjectId);
+  }
+
+  function onProjectsConsider(event: CustomEvent<DndEvent<Project>>) {
+    projects = event.detail.items;
+  }
+
+  async function onProjectsFinalize(event: CustomEvent<DndEvent<Project>>) {
+    projects = event.detail.items;
+    const jwt = auth.jwtToken;
+    if (!jwt) return;
+    try {
+      await UserApi.updateMe(jwt, { projectsOrder: event.detail.items.map((project) => project.id) });
+    } catch {
+      toast.error('Failed to save project order');
+    }
+  }
+
   const MIN_SWITCH_MS = 500;
 
   function clearSwitchTimer() {
@@ -942,25 +969,41 @@
     }
   }
 
-  async function revokePendingLinkInvitation(invitationId: string) {
-    const jwt = auth.jwtToken;
-    if (!jwt || !activeProject) return;
-    try {
-      await InvitationsApi.deleteInvitation(jwt, invitationId);
-      pendingLinkInvitations = pendingLinkInvitations.filter((i) => i.id !== invitationId);
-    } catch {
-      toast.error('Failed to revoke invitation');
-    }
+  type ActiveInvite =
+    | { type: 'link'; data: InvitationListItem }
+    | { type: 'personal'; data: PersonalInvitationListItem };
+
+  const activeInvites = $derived.by((): ActiveInvite[] =>
+    [
+      ...pendingLinkInvitations.map((data) => ({ type: 'link' as const, data })),
+      ...pendingPersonalInvitations.map((data) => ({ type: 'personal' as const, data }))
+    ].sort((a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime())
+  );
+
+  async function copyActiveInviteLink(invitationId: string) {
+    await navigator.clipboard.writeText(`${publicEnv.appUrl.replace(/\/$/, '')}/invite/${invitationId}`);
+    copiedInviteId = invitationId;
+    setTimeout(() => {
+      if (copiedInviteId === invitationId) copiedInviteId = null;
+    }, 1000);
   }
 
-  async function revokePendingPersonalInvitation(invitationId: string) {
+  async function revokeActiveInvite(invite: ActiveInvite) {
     const jwt = auth.jwtToken;
-    if (!jwt || !activeProject) return;
+    if (!jwt || !activeProject || revokingInviteId) return;
+    revokingInviteId = invite.data.id;
     try {
-      await InvitationsApi.deletePersonalInvitation(jwt, invitationId);
-      pendingPersonalInvitations = pendingPersonalInvitations.filter((i) => i.id !== invitationId);
+      if (invite.type === 'link') {
+        await InvitationsApi.deleteInvitation(jwt, invite.data.id);
+        pendingLinkInvitations = pendingLinkInvitations.filter((i) => i.id !== invite.data.id);
+      } else {
+        await InvitationsApi.deletePersonalInvitation(jwt, invite.data.id);
+        pendingPersonalInvitations = pendingPersonalInvitations.filter((i) => i.id !== invite.data.id);
+      }
     } catch {
       toast.error('Failed to revoke invitation');
+    } finally {
+      revokingInviteId = null;
     }
   }
 
@@ -1246,6 +1289,10 @@
   });
 
   $effect(() => {
+    if (activeTab === 'integrations') ftuxUserOpenedIntegrations();
+  });
+
+  $effect(() => {
     if (activeTab !== 'history' || historyLoading || historyVersions.length === 0) return;
     void tick().then(() => historySearchInput?.focus());
   });
@@ -1266,6 +1313,56 @@
     }
   }
 
+  async function createEncryptedProject(
+    jwt: string,
+    user: { id: string; publicKey: string },
+    name: string,
+    settings: ProjectSettingsType,
+    repo: RepoWithInstallation | null
+  ): Promise<Project> {
+    const projectKey = await SymmetricCrypto.generateProjectKey();
+    const content = `# Define your secrets below. Example:\nAPI_KEY="your-value-here"\nDATABASE_URL="postgres://..."`;
+    const contentEncrypted = await SymmetricCrypto.encrypt(content, projectKey);
+    const projectKeyEncrypted = await AsymmetricCrypto.encrypt(projectKey, user.publicKey);
+
+    const created = await ProjectsApi.createProject(jwt, {
+      name,
+      encryptedSecrets: contentEncrypted,
+      encryptedSecretsKeys: { [user.id]: projectKeyEncrypted },
+      settings
+    });
+
+    if (repo) {
+      await IntegrationsApi.createIntegration(jwt, {
+        projectId: created.id,
+        repositoryId: repo.id,
+        installationEntityId: repo.installationEntityId
+      });
+    }
+    return created;
+  }
+
+  async function acceptSuggestion(repo: RepoWithInstallation) {
+    const jwt = auth.jwtToken;
+    const user = auth.userData;
+    if (!jwt || acceptingRepoId !== null) return;
+    if (!user?.publicKey) {
+      toast.error('Finish passphrase setup first');
+      return;
+    }
+    acceptingRepoId = repo.id;
+    try {
+      const settings = normalizeProjectSettings(user.projectCreationDefaults ?? DEFAULT_PROJECT_SETTINGS);
+      const created = await createEncryptedProject(jwt, { id: user.id, publicKey: user.publicKey }, repo.name, settings, repo);
+      projects = await ProjectsApi.getProjects(jwt);
+      switchProject(created.id);
+    } catch {
+      toast.error('Could not create project');
+    } finally {
+      acceptingRepoId = null;
+    }
+  }
+
   async function createProject() {
     const jwt = auth.jwtToken;
     const user = auth.userData;
@@ -1279,29 +1376,16 @@
     creatingProject = true;
     try {
       const settings = normalizeProjectSettings({ revealOn: createRevealOn });
-      const projectKey = await SymmetricCrypto.generateProjectKey();
-      const content = `# Define your secrets below. Example:\nAPI_KEY="your-value-here"\nDATABASE_URL="postgres://..."`;
-      const contentEncrypted = await SymmetricCrypto.encrypt(content, projectKey);
-      const projectKeyEncrypted = await AsymmetricCrypto.encrypt(projectKey, user.publicKey);
-
-      const created = await ProjectsApi.createProject(jwt, {
-        name: trimmed,
-        encryptedSecrets: contentEncrypted,
-        encryptedSecretsKeys: { [user.id]: projectKeyEncrypted },
-        settings
-      });
-
-      if (suggestedCreateRepo) {
-        await IntegrationsApi.createIntegration(jwt, {
-          projectId: created.id,
-          repositoryId: suggestedCreateRepo.id,
-          installationEntityId: suggestedCreateRepo.installationEntityId
-        });
-      }
+      const created = await createEncryptedProject(
+        jwt,
+        { id: user.id, publicKey: user.publicKey },
+        trimmed,
+        settings,
+        null
+      );
 
       await UserApi.updateMe(jwt, { projectCreationDefaults: settings });
       newProjectName = '';
-      suggestedCreateRepo = null;
       showCreateDialog = false;
       await goto(`/app/project/${created.id}`, { replaceState: true });
       lastLoadKey = '';
@@ -1323,7 +1407,6 @@
       });
       activeProject = updated;
       projects = projects?.map((project) => (project.id === updated.id ? updated : project)) ?? null;
-      toast.success('Settings saved');
     } catch {
       toast.error('Failed to save settings');
     } finally {
@@ -1341,7 +1424,6 @@
       activeProject = updated;
       projects = projects?.map((project) => (project.id === updated.id ? updated : project)) ?? null;
       showRenameForm = false;
-      toast.success('Project renamed');
     } catch {
       toast.error('Failed to rename project');
     } finally {
@@ -1376,7 +1458,6 @@
             installation?.githubInstallationId ?? activeProject.integrations?.githubInstallationId
         }
       };
-      toast.success('Repository connected');
     } catch {
       toast.error('Failed to connect repository');
     } finally {
@@ -1392,7 +1473,6 @@
     try {
       await IntegrationsApi.deleteIntegration(jwt, integration.id);
       integrations = integrations.filter((item) => item.id !== integration.id);
-      toast.success('Repository disconnected');
       if (activeProject) {
         void loadIntegrations(jwt, activeProject.id);
       }
@@ -1473,6 +1553,7 @@
       invitePassphrase = passphrase;
       lastCreatedInvitation = invitation;
       addPeopleStep = 'done';
+      void loadPendingInvitations(jwt, project);
     } catch {
       toast.error('Failed to create invitation');
     } finally {
@@ -1501,6 +1582,7 @@
         role
       });
       addPeopleStep = 'done';
+      void loadPendingInvitations(jwt, project);
     } catch {
       toast.error('Failed to send invitation');
     } finally {
@@ -1525,7 +1607,6 @@
         )
       };
       projects = projects?.map((project) => (project.id === activeProject?.id ? activeProject : project)) ?? null;
-      toast.success('Member role updated');
     } catch {
       toast.error('Failed to update member role');
     } finally {
@@ -1548,7 +1629,6 @@
       };
       projects = projects?.map((project) => (project.id === activeProject?.id ? activeProject : project)) ?? null;
       selectedMemberId = null;
-      toast.success('Member removed');
     } catch {
       toast.error('Failed to remove member');
     } finally {
@@ -1558,7 +1638,8 @@
 
   async function deleteActiveProject() {
     const jwt = auth.jwtToken;
-    if (!jwt || !activeProject) return;
+    if (!jwt || !activeProject || leavingOrDeleting) return;
+    leavingOrDeleting = true;
     try {
       await ProjectsApi.deleteProject(jwt, activeProject.id);
       const remaining = projects?.filter((project) => project.id !== activeProject?.id) ?? [];
@@ -1572,13 +1653,16 @@
       }
     } catch {
       toast.error('Failed to delete project');
+    } finally {
+      leavingOrDeleting = false;
     }
   }
 
   async function leaveActiveProject() {
     const jwt = auth.jwtToken;
     const userId = auth.userData?.id;
-    if (!jwt || !activeProject || !userId) return;
+    if (!jwt || !activeProject || !userId || leavingOrDeleting) return;
+    leavingOrDeleting = true;
     try {
       const leavingProjectId = activeProject.id;
       await ProjectsApi.removeMember(jwt, {
@@ -1588,7 +1672,6 @@
       const remaining = projects?.filter((project) => project.id !== leavingProjectId) ?? [];
       projects = remaining;
       showDeleteConfirm = false;
-      toast.success('Left project');
       const nextProject = remaining[0];
       await goto(nextProject ? `/app/project/${nextProject.id}` : '/app/project', { replaceState: true });
       if (nextProject) {
@@ -1597,6 +1680,8 @@
       }
     } catch {
       toast.error('Failed to leave project');
+    } finally {
+      leavingOrDeleting = false;
     }
   }
 
@@ -1617,15 +1702,25 @@
     return (member.displayName || member.email || 'U').charAt(0).toUpperCase();
   }
 
+  function switchProject(targetProjectId: string) {
+    // Navigate first when there are unsaved edits so the unsaved-changes guard can stop the
+    // switch before the editor swaps to the next project.
+    if (secretsEditorNavGuard.isDirty) {
+      void goto(`/app/project/${targetProjectId}`);
+      return;
+    }
+    void loadShell(targetProjectId, { navigateAfterLoad: true });
+  }
+
   function onMobileProjectChange(event: Event) {
-    const value = (event.currentTarget as HTMLSelectElement).value;
+    const select = event.currentTarget as HTMLSelectElement;
+    const value = select.value;
+    select.value = displayedProjectId;
     if (value === '__add_project__') {
       openCreateDialog();
       return;
     }
-    if (value && value !== displayedProjectId) {
-      void loadShell(value, { navigateAfterLoad: true });
-    }
+    if (value && value !== displayedProjectId) switchProject(value);
   }
 
   function onProjectLinkClick(event: MouseEvent, targetProjectId: string) {
@@ -1635,7 +1730,7 @@
     }
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     event.preventDefault();
-    void loadShell(targetProjectId, { navigateAfterLoad: true });
+    switchProject(targetProjectId);
   }
 </script>
 
@@ -1689,15 +1784,32 @@
             Retry
           </button>
         </div>
-      {:else if filteredProjects && filteredProjects.length > 0}
-        <nav>
-          {#each filteredProjects as project, index (project.id)}
+      {:else if uniqueProjects && uniqueProjects.length > 0}
+        <nav
+          use:dragHandleZone={{
+            items: uniqueProjects,
+            type: 'projects',
+            flipDurationMs: 150,
+            dropTargetStyle: {},
+            // The row enter animation would pin the drag clone's transform in place.
+            transformDraggedElement: (element) => {
+              if (element) element.style.animation = 'none';
+            }
+          }}
+          onconsider={onProjectsConsider}
+          onfinalize={(event) => void onProjectsFinalize(event)}
+        >
+          {#each uniqueProjects as project, index (project.id)}
             {@const isDisplayed = project.id === displayedProjectId}
             {@const isPending = project.id === pendingProjectId}
+            {@const isShadow = (project as Project & { isDndShadowItem?: boolean }).isDndShadowItem}
               <a
                 href={`/app/project/${project.id}`}
+                draggable="false"
                 onclick={(event) => onProjectLinkClick(event, project.id)}
-                class={`project-row-enter group relative flex items-center justify-between gap-2 overflow-hidden px-3 py-2 text-sm transition-colors ${
+                class={`project-row-enter group relative flex select-none items-center justify-between gap-2 overflow-hidden px-3 py-2 text-sm transition-colors ${
+                isShadow ? 'invisible' : ''
+              } ${
                 isDisplayed
                   ? 'bg-neutral-900 text-foreground'
                   : isPending
@@ -1715,11 +1827,6 @@
                 }`}
               >
                 {project.name}
-                {#if searchSnippets.has(project.id)}
-                  <span class="mt-0.5 block truncate text-[11px] font-normal text-muted-foreground/60">
-                    {searchSnippets.get(project.id)}
-                  </span>
-                {/if}
               </span>
               <span class="relative z-[2] flex shrink-0 items-center gap-1.5">
                 <span
@@ -1732,9 +1839,20 @@
                 </span>
               </span>
               <span
-                class={`absolute right-2 top-1/2 z-[3] flex h-3.5 w-3.5 -translate-y-1/2 items-center justify-center transition-opacity ${
-                  isPending ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                use:dragHandle
+                aria-label={`Reorder ${project.name}`}
+                role="button"
+                tabindex="-1"
+                class={`absolute right-2 top-1/2 z-[3] flex h-3.5 w-3.5 -translate-y-1/2 touch-none items-center justify-center transition-opacity ${
+                  isPending
+                    ? 'pointer-events-none opacity-100'
+                    : 'cursor-grab opacity-0 group-hover:opacity-100 active:cursor-grabbing'
                 }`}
+                onclick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+                onkeydown={() => {}}
               >
                 {#if isPending}
                   <span class="absolute inset-0" transition:fade={{ duration: 150 }}>
@@ -1750,10 +1868,7 @@
           {/each}
         </nav>
       {:else}
-        <div class="px-4 py-3 text-sm text-muted-foreground">No projects yet</div>
-      {/if}
-      {#if searchQuery.trim() && searchableProjectsLoading}
-        <div class="px-4 py-2 text-xs text-muted-foreground">Searching encrypted project contents…</div>
+        <div class="px-2 py-4 text-sm text-muted-foreground">No projects yet</div>
       {/if}
     </div>
 
@@ -1783,11 +1898,16 @@
               <button
                 type="button"
                 aria-label={`Create project from ${repo.name}`}
-                class="absolute inset-0 rounded-md"
-                onclick={() => openCreateDialog(repo)}
+                disabled={acceptingRepoId !== null}
+                class="absolute inset-0 cursor-pointer rounded-md disabled:cursor-not-allowed"
+                onclick={() => void acceptSuggestion(repo)}
               ></button>
               <div class="pointer-events-none flex min-w-0 flex-1 items-center gap-2">
-                <Plus class="size-3 shrink-0 opacity-50" />
+                {#if acceptingRepoId === repo.id}
+                  <span class="size-3 shrink-0 animate-spin rounded-full border-2 border-primary/30 border-t-primary"></span>
+                {:else}
+                  <Plus class="size-3 shrink-0 opacity-50" />
+                {/if}
                 <span class="truncate text-[13px]">{repo.name}</span>
               </div>
               <button
@@ -1824,7 +1944,7 @@
             />
           {:else}
             <div class="flex size-8 items-center justify-center rounded-full bg-muted">
-              <Users class="size-4 text-muted-foreground" />
+              <User class="size-4 text-muted-foreground" />
             </div>
           {/if}
           <div class="min-w-0 flex-1">
@@ -1905,14 +2025,115 @@
   </aside>
 
   <main class="flex h-full min-w-0 flex-1 flex-col">
-    <div class="flex shrink-0 flex-col border-b border-border/50 bg-card/20 backdrop-blur-sm md:hidden">
+    {#if isSearching}
+      <div class="shrink-0 border-b border-border/50 bg-card/20 px-3 py-2 backdrop-blur-sm md:hidden">
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Close search"
+            class="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md transition-all hover:bg-neutral-800"
+            onclick={clearSearch}
+          >
+            <X class="size-4" />
+          </button>
+          <div class="relative flex-1">
+            <Search class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <!-- svelte-ignore a11y_autofocus -->
+            <input
+              type="search"
+              name="project-search"
+              bind:value={searchQuery}
+              placeholder="Search..."
+              autofocus
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
+              class="h-9 w-full rounded-md border border-border/50 bg-muted/50 pl-8 pr-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20"
+            />
+          </div>
+          {#if !searchableProjectsLoading}
+            <span class="shrink-0 text-xs text-muted-foreground">
+              {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+            </span>
+          {/if}
+        </div>
+      </div>
+      <div class="hidden h-14 shrink-0 items-center justify-between border-b border-border/50 bg-card/20 px-4 backdrop-blur-sm md:flex">
+        <div class="flex items-center gap-3">
+          <Search class="size-4 text-muted-foreground" />
+          <span class="text-sm">
+            <span class="text-muted-foreground">Results for</span>
+            <span class="font-medium">"{searchQuery}"</span>{#if !searchableProjectsLoading}<span
+                class="ml-2 text-muted-foreground">({searchResults.length})</span
+              >{/if}
+          </span>
+        </div>
+        <button
+          type="button"
+          class="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-all hover:bg-neutral-800"
+          onclick={clearSearch}
+        >
+          <X class="mr-1.5 size-4" />
+          <span class="text-sm">Clear</span>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-3 md:p-4">
+        {#if searchableProjectsLoading}
+          <div class="flex h-full flex-col items-center justify-center py-12 text-center">
+            <div class="mb-4 size-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary"></div>
+            <p class="text-muted-foreground">Searching...</p>
+          </div>
+        {:else if searchResults.length === 0}
+          <div class="flex h-full flex-col items-center justify-center py-12 text-center">
+            <Search class="mb-4 size-10 text-muted-foreground/30 md:size-12" />
+            <p class="text-muted-foreground">No projects found</p>
+            <p class="mt-1 text-sm text-muted-foreground/70">Try a different search term</p>
+          </div>
+        {:else}
+          <div class="space-y-2">
+            {#each searchResults as result (result.id)}
+              {@const mobileSnippet = contentSnippet(result.decryptedContent, searchQuery, 20, 40)}
+              {@const desktopSnippet = contentSnippet(result.decryptedContent, searchQuery, 30, 50)}
+              <a
+                href={`/app/project/${result.id}`}
+                onclick={(event) => openSearchResult(event, result.id)}
+                class="group flex cursor-pointer items-start gap-3 rounded-lg border border-border/50 p-3 transition-colors active:bg-neutral-800 md:p-4 md:hover:bg-neutral-800"
+              >
+                <div class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-neutral-800 md:size-10">
+                  <FolderOpen class="size-4 text-primary md:size-5" />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate font-medium text-foreground transition-colors md:group-hover:text-primary">
+                    {result.name}
+                  </p>
+                  {#if mobileSnippet}
+                    <p class="mt-1 truncate rounded bg-neutral-800 px-2 py-1 font-mono text-xs text-muted-foreground md:hidden">
+                      {mobileSnippet}
+                    </p>
+                    <p class="mt-1 hidden rounded bg-neutral-800 px-2 py-1 font-mono text-xs text-muted-foreground md:block">
+                      {desktopSnippet}
+                    </p>
+                  {/if}
+                </div>
+                <ArrowLeft class="mt-3 hidden size-4 rotate-180 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 md:block" />
+              </a>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    {/if}
+    <div class={`${isSearching ? 'hidden' : 'flex'} shrink-0 flex-col border-b border-border/50 bg-card/20 backdrop-blur-sm md:hidden`}>
       <div class="flex items-center gap-2 px-3 py-2">
         <a href="/" class="shrink-0 text-lg font-semibold tracking-tight transition hover:opacity-80">Cryptly</a>
         <div class="relative min-w-0 flex-1">
+          <FolderOpen class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <select
             aria-label="Select project"
             value={displayedProjectId}
-            class="h-9 w-full appearance-none truncate rounded-md border border-border/50 bg-neutral-800 px-3 pr-8 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+            class="h-9 w-full appearance-none truncate rounded-md border border-border/50 bg-neutral-800 pl-9 pr-8 text-sm text-foreground outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
             onchange={onMobileProjectChange}
           >
             {#each uniqueProjects ?? [] as project (project.id)}
@@ -1924,12 +2145,11 @@
         </div>
         <button
           type="button"
-          aria-label="Add project"
-          title="Add project"
-          class="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-neutral-800 hover:text-foreground"
-          onclick={() => openCreateDialog()}
+          aria-label="Search projects"
+          class="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors"
+          onclick={() => (searchActive = true)}
         >
-          <Plus class="size-4" />
+          <Search class="size-4" />
         </button>
         <button
           type="button"
@@ -1946,7 +2166,7 @@
               class="size-8 rounded-full object-cover"
             />
           {:else}
-            <Users class="size-4" />
+            <User class="size-4" />
           {/if}
         </button>
       </div>
@@ -2038,23 +2258,36 @@
       </div>
     </div>
 
-    <div class="hidden h-14 shrink-0 items-center justify-between overflow-visible border-b border-border/50 bg-card/20 px-3 backdrop-blur-sm md:flex">
+    <div class={`relative z-20 hidden h-14 shrink-0 items-center justify-between overflow-visible border-b border-border/50 bg-card/20 px-3 backdrop-blur-sm ${isSearching ? '' : 'md:flex'}`}>
       <div bind:this={tabBar} class="relative flex h-full items-stretch gap-0">
         {#each tabs as tab (tab.id)}
           {@const Icon = tab.icon}
-          <button
-            type="button"
-            use:trackTab={tab.id}
-            class={`relative flex h-full items-center gap-2 px-3 text-sm font-medium transition ${
-              activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-            onclick={() => {
-              setActiveTab(tab.id);
-            }}
-          >
-            <Icon class="size-4" />
-            <span>{tab.label}</span>
-          </button>
+          <div class="relative flex h-full">
+            <button
+              type="button"
+              use:trackTab={tab.id}
+              class={`relative flex h-full items-center gap-2 px-3 text-sm font-medium transition ${
+                activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onclick={() => {
+                setActiveTab(tab.id);
+              }}
+            >
+              <Icon class="size-4" />
+              <span>{tab.label}</span>
+            </button>
+            {#if tab.id === 'integrations' && ftux.step === 'integrations'}
+              <FtuxPopover
+                arrow="top"
+                arrowStyle={`left: ${integrationsTabWidth / 2 - 6}px;`}
+                class="left-0 top-full mt-[11px]"
+                nextLabel="Done"
+              >
+                Connect <GitHubIcon class="inline size-4 align-text-bottom" /> GitHub repositories to automatically
+                sync your secrets.
+              </FtuxPopover>
+            {/if}
+          </div>
         {/each}
         {#if tabUnderline.ready}
           <span
@@ -2068,7 +2301,7 @@
     <div
       class={`min-h-0 flex-1 overflow-hidden transition-opacity duration-300 ease-in-out ${
         isSwitching ? 'pointer-events-none opacity-60' : 'opacity-100'
-      }`}
+      } ${isSearching ? 'hidden' : ''}`}
     >
       {#if loading && !activeProject}
         <ShellLoader label="Loading project" class="h-full" />
@@ -2095,17 +2328,21 @@
             </div>
           </div>
         </section>
-      {:else if activeTab === 'editor'}
-        <SecretsEditorPage
-          projectId={displayedProjectId}
-          projectName={activeProject?.name ?? ''}
-          onSaved={() => {
-            const jwt = auth.jwtToken;
-            if (jwt && activeProject) void loadHistory(jwt, activeProject);
-          }}
-          onConnectIntegrations={() => setActiveTab('integrations')}
-        />
-      {:else if activeTab === 'history'}
+      {:else}
+        <!-- Kept mounted on every tab (only hidden) so unsaved editor edits survive tab switches. -->
+        <div class={activeTab === 'editor' ? 'h-full' : 'hidden'}>
+          <SecretsEditorPage
+            projectId={displayedProjectId}
+            projectName={activeProject?.name ?? ''}
+            active={activeTab === 'editor'}
+            onSaved={() => {
+              const jwt = auth.jwtToken;
+              if (jwt && activeProject) void loadHistory(jwt, activeProject);
+            }}
+            onConnectIntegrations={() => setActiveTab('integrations')}
+          />
+        </div>
+        {#if activeTab === 'history'}
         <section class="flex h-full flex-col bg-background md:flex-row">
           {#if historyLoading}
             <div class="flex h-full flex-1 items-center justify-center text-sm text-muted-foreground">
@@ -2200,7 +2437,7 @@
                         <X class="size-3" />
                       </button>
                     {:else}
-                      <span class="rounded border border-border/60 bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-400">/</span>
+                      <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-400">/</kbd>
                     {/if}
                   </div>
                 </div>
@@ -2209,6 +2446,7 @@
                     <div class="border-b border-border/50 bg-black/40 px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
                       What do you mean by <span class="font-mono normal-case text-foreground">"{historyQuery.trim()}"</span>?
                     </div>
+                    <div class="py-1">
                     {#each historySearchSuggestions as suggestion, index (suggestion.mode)}
                       {@const SuggestionIcon = suggestion.icon}
                       {@const isHighlighted = index === historySuggestionIndex}
@@ -2236,25 +2474,26 @@
                           </span>
                         </span>
                         {#if isHighlighted}
-                          <span class="rounded border border-border/60 bg-neutral-800 px-1 text-[10px] text-neutral-300">
+                          <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium shrink-0 border border-border/60 bg-neutral-800 px-1 text-neutral-300">
                             <CornerDownLeft class="size-2.5" />
-                          </span>
+                          </kbd>
                         {/if}
                       </button>
                     {/each}
+                    </div>
                     <div class="flex items-center justify-between border-t border-border/50 bg-black/40 px-3 py-1.5 text-[10px] text-muted-foreground">
                       <div class="flex items-center gap-2">
                         <span class="flex items-center gap-1">
-                          <span class="rounded border border-border/60 bg-neutral-800 px-1 text-neutral-300">↑</span>
-                          <span class="rounded border border-border/60 bg-neutral-800 px-1 text-neutral-300">↓</span>
+                          <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-300">↑</kbd>
+                          <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-300">↓</kbd>
                           <span>navigate</span>
                         </span>
                         <span class="flex items-center gap-1">
-                          <span class="rounded border border-border/60 bg-neutral-800 px-1 text-neutral-300">↵</span>
+                          <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-300">↵</kbd>
                           <span>apply</span>
                         </span>
                         <span class="flex items-center gap-1">
-                          <span class="rounded border border-border/60 bg-neutral-800 px-1 text-neutral-300">esc</span>
+                          <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-300">esc</kbd>
                           <span>dismiss</span>
                         </span>
                       </div>
@@ -2295,8 +2534,9 @@
                   {/each}
                 </div>
 
-                <div class="ml-auto flex min-w-0 items-center gap-1.5 overflow-hidden">
-                  {#each historyAuthors as author (author.id)}
+                <div class="ml-auto flex min-w-0 items-center gap-1.5">
+                  <div class="flex min-w-0 items-center gap-1.5 overflow-hidden">
+                  {#each visibleHistoryAuthors as author (author.id)}
                     <button
                       type="button"
                       class={`shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] transition-colors ${
@@ -2313,6 +2553,54 @@
                       <span class="opacity-60"> ({author.count})</span>
                     </button>
                   {/each}
+                  </div>
+                  {#if overflowHistoryAuthors.length > 0}
+                    <div class="relative shrink-0">
+                      <button
+                        type="button"
+                        aria-expanded={historyAuthorsOverflowOpen}
+                        class="flex cursor-pointer items-center gap-0.5 whitespace-nowrap rounded-full border border-border/60 bg-neutral-900 px-2 py-0.5 text-[11px] text-muted-foreground hover:border-border hover:text-foreground"
+                        onclick={() => (historyAuthorsOverflowOpen = !historyAuthorsOverflowOpen)}
+                      >
+                        +{overflowHistoryAuthors.length}
+                        <ChevronDown class="size-2.5" />
+                      </button>
+                      {#if historyAuthorsOverflowOpen}
+                        <button
+                          type="button"
+                          aria-label="Close authors"
+                          tabindex="-1"
+                          class="fixed inset-0 z-40 cursor-default"
+                          onclick={() => (historyAuthorsOverflowOpen = false)}
+                        ></button>
+                        <div
+                          class="absolute right-0 top-full z-50 mt-1.5 w-56 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+                          transition:fade={{ duration: 120 }}
+                        >
+                          <div class="max-h-64 overflow-y-auto">
+                            {#each overflowHistoryAuthors as author (author.id)}
+                              <button
+                                type="button"
+                                class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-neutral-800"
+                                onclick={() => {
+                                  pinnedHistoryAuthorIds = [
+                                    author.id,
+                                    ...pinnedHistoryAuthorIds.filter((id) => id !== author.id)
+                                  ].slice(0, MAX_VISIBLE_HISTORY_AUTHORS);
+                                  selectedHistoryAuthorId = author.id;
+                                  historyAuthorsOverflowOpen = false;
+                                }}
+                              >
+                                <img src={author.avatarUrl || DEFAULT_AVATAR} alt="" class="size-5 shrink-0 rounded-full object-cover" />
+                                <span class="flex-1 truncate">{author.displayName}</span>
+                                <span class="text-[10px] tabular-nums text-muted-foreground">{author.count}</span>
+                              </button>
+                            {/each}
+                          </div>
+                        </div>
+                      {/if}
+                    </div>
+                  {/if}
                 </div>
               </div>
 
@@ -2329,7 +2617,7 @@
                       type="button"
                       class={`flex w-full items-center gap-3 border-l-2 px-3 py-2 text-left transition-colors focus:outline-none ${
                         isSelected
-                          ? 'border-[#DDA15E] bg-neutral-900'
+                          ? 'border-primary bg-neutral-900'
                           : 'border-transparent hover:bg-neutral-900/60'
                       }`}
                       onclick={() => {
@@ -2372,15 +2660,15 @@
               <div class="hidden items-center justify-between gap-3 border-t border-border/50 bg-black/60 px-3 py-2 text-[11px] text-muted-foreground md:flex">
                 <div class="flex items-center gap-3">
                   <span class="flex items-center gap-1">
-                    <span class="rounded border border-border/60 bg-neutral-800 px-1">↑</span>
-                    <span class="rounded border border-border/60 bg-neutral-800 px-1">↓</span>
+                    <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-300">↑</kbd>
+                    <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-300">↓</kbd>
                     <span class="text-muted-foreground/50">·</span>
-                    <span class="rounded border border-border/60 bg-neutral-800 px-1">j</span>
-                    <span class="rounded border border-border/60 bg-neutral-800 px-1">k</span>
+                    <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-300">j</kbd>
+                    <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-300">k</kbd>
                     <span class="ml-1">navigate</span>
                   </span>
                   <span class="flex items-center gap-1">
-                    <span class="rounded border border-border/60 bg-neutral-800 px-1">/</span>
+                    <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-300">/</kbd>
                     <span class="ml-1">search</span>
                   </span>
                 </div>
@@ -2460,48 +2748,6 @@
                 </button>
               {/if}
             </div>
-            {#if isAdmin && (pendingLinkInvitations.length > 0 || pendingPersonalInvitations.length > 0)}
-              <div class="space-y-3">
-                <div class="flex items-center gap-2">
-                  <Link class="size-4 text-muted-foreground" />
-                  <h3 class="text-sm font-medium">Pending invitations</h3>
-                </div>
-                <div class="divide-y divide-border/50 overflow-hidden rounded-lg border border-border/50 bg-neutral-800/20">
-                  {#each pendingLinkInvitations as inv (inv.id)}
-                    <div class="flex items-center justify-between gap-3 px-4 py-3">
-                      <div class="min-w-0">
-                        <p class="truncate text-sm font-medium">Invite link</p>
-                        <p class="text-xs capitalize text-muted-foreground">{inv.role}</p>
-                      </div>
-                      <button
-                        type="button"
-                        class="text-xs font-medium text-destructive hover:underline"
-                        onclick={() => void revokePendingLinkInvitation(inv.id)}
-                      >
-                        Revoke
-                      </button>
-                    </div>
-                  {/each}
-                  {#each pendingPersonalInvitations as pinv (pinv.id)}
-                    <div class="flex items-center justify-between gap-3 px-4 py-3">
-                      <div class="min-w-0">
-                        <p class="truncate text-sm font-medium">
-                          {pinv.invitedUser.displayName || pinv.invitedUser.email || pinv.invitedUser.id}
-                        </p>
-                        <p class="text-xs capitalize text-muted-foreground">{pinv.role} · personal</p>
-                      </div>
-                      <button
-                        type="button"
-                        class="text-xs font-medium text-destructive hover:underline"
-                        onclick={() => void revokePendingPersonalInvitation(pinv.id)}
-                      >
-                        Revoke
-                      </button>
-                    </div>
-                  {/each}
-                </div>
-              </div>
-            {/if}
             <div class="space-y-3">
               <div class="flex items-center gap-2">
                 <Users class="size-4 text-muted-foreground" />
@@ -2535,6 +2781,77 @@
               {/each}
               </div>
             </div>
+            {#if isAdmin && activeInvites.length > 0}
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <IconUserPlus class="size-4 text-muted-foreground" />
+                  <h3 class="text-sm font-medium">Active invites</h3>
+                </div>
+                <div class="divide-y divide-border/50 overflow-hidden rounded-lg border border-border/50 bg-neutral-800/20">
+                  {#each activeInvites as invite (`${invite.type}-${invite.data.id}`)}
+                    <div class="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-neutral-800/40">
+                      <div class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-medium">
+                        {#if invite.type === 'personal'}
+                          {#if invite.data.invitedUser.avatarUrl}
+                            <img
+                              src={invite.data.invitedUser.avatarUrl}
+                              alt={invite.data.invitedUser.displayName}
+                              class="size-8 rounded-full object-cover"
+                            />
+                          {:else}
+                            <span>{(invite.data.invitedUser.displayName || 'U').charAt(0).toUpperCase()}</span>
+                          {/if}
+                        {:else}
+                          <IconLink class="size-4" />
+                        {/if}
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <div class="truncate text-sm font-medium">
+                          {invite.type === 'personal' ? invite.data.invitedUser.displayName : 'Invite link'}
+                        </div>
+                        <div class="truncate text-xs text-muted-foreground">
+                          {#if invite.type === 'personal'}
+                            {invite.data.role} &middot; {getRelativeTime(invite.data.createdAt)}
+                          {:else}
+                            ID: {invite.data.id.slice(-8)}
+                          {/if}
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        {#if invite.type === 'link'}
+                          {@const inviteId = invite.data.id}
+                          <button
+                            type="button"
+                            aria-label="Copy link"
+                            class="inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2 text-muted-foreground opacity-0 transition-opacity hover:bg-neutral-800 hover:text-foreground group-hover:opacity-100"
+                            onclick={() => void copyActiveInviteLink(inviteId)}
+                          >
+                            {#if copiedInviteId === inviteId}
+                              <IconCheck class="size-3.5 text-green-600" />
+                            {:else}
+                              <IconCopy class="size-3.5" />
+                            {/if}
+                          </button>
+                        {/if}
+                        <button
+                          type="button"
+                          aria-label={invite.type === 'link' ? 'Revoke link' : 'Revoke invitation'}
+                          disabled={revokingInviteId === invite.data.id}
+                          class="inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-50 group-hover:opacity-100"
+                          onclick={() => void revokeActiveInvite(invite)}
+                        >
+                          {#if revokingInviteId === invite.data.id}
+                            <span class="size-3.5 animate-spin rounded-full border-2 border-current/30 border-t-current"></span>
+                          {:else}
+                            <IconTrash class="size-3.5" />
+                          {/if}
+                        </button>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {/if}
           </div>
         </section>
       {:else if activeTab === 'integrations'}
@@ -2729,26 +3046,55 @@
 
             <div class="space-y-3 overflow-hidden">
               <div class="flex items-center gap-2">
-                <Pencil class="size-4 text-muted-foreground" />
+                <IconEdit class="size-4 text-muted-foreground" />
                 <h3 class="text-sm font-medium">Rename project</h3>
               </div>
-              {#if showRenameForm}
-                <div class="flex gap-2 rounded-lg border border-border/50 bg-neutral-800/20 p-3">
+              {#if !isAdmin}
+                <div class="rounded-lg border border-dashed border-border/50 bg-neutral-800/20 px-4 py-6 text-center">
+                  <div class="text-sm text-muted-foreground">
+                    Only <span class="font-medium underline">Admins</span> can rename projects.
+                  </div>
+                </div>
+              {:else if showRenameForm}
+                <div class="flex items-stretch rounded-lg border border-border bg-background transition-colors focus-within:border-neutral-500">
+                  <!-- svelte-ignore a11y_autofocus -->
                   <input
                     bind:value={renameProjectName}
+                    type="text"
                     placeholder="Project name"
-                    class="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none"
+                    autofocus
+                    class="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-base outline-none placeholder:text-muted-foreground/50 md:text-sm"
                     onkeydown={(event) => {
-                      if (event.key === 'Enter') void renameProject();
-                      if (event.key === 'Escape') showRenameForm = false;
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        void renameProject();
+                      }
                     }}
                   />
-                  <button type="button" class="h-9 rounded-md bg-white px-3 text-sm font-semibold text-neutral-900" onclick={() => void renameProject()}>
-                    {renamingProject ? 'Saving…' : 'Save'}
-                  </button>
-                  <button type="button" class="h-9 rounded-md px-3 text-sm hover:bg-neutral-800" onclick={() => (showRenameForm = false)}>
-                    Cancel
-                  </button>
+                  <div class="flex items-center gap-0.5 pr-1">
+                    <button
+                      type="button"
+                      aria-label="Cancel"
+                      disabled={renamingProject}
+                      class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-neutral-800 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      onclick={() => (showRenameForm = false)}
+                    >
+                      <IconX class="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Save"
+                      disabled={!renameProjectName.trim() || renameProjectName.trim() === activeProject?.name || renamingProject}
+                      class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md bg-white text-neutral-900 transition-colors hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-40"
+                      onclick={() => void renameProject()}
+                    >
+                      {#if renamingProject}
+                        <LoaderCircle class="size-4 animate-spin" />
+                      {:else}
+                        <IconCheck class="size-4" />
+                      {/if}
+                    </button>
+                  </div>
                 </div>
               {:else}
                 <div class="overflow-hidden rounded-lg border border-border/50 bg-neutral-800/20">
@@ -2756,18 +3102,17 @@
                     <div class="min-w-0 flex-1">
                       <div class="truncate text-sm font-medium">{activeProject?.name}</div>
                     </div>
-                    {#if isAdmin}
-                      <button
-                        type="button"
-                        class="h-8 px-2 text-sm text-muted-foreground transition hover:text-foreground"
-                        onclick={() => {
-                          renameProjectName = activeProject?.name ?? '';
-                          showRenameForm = true;
-                        }}
-                      >
-                        Rename
-                      </button>
-                    {/if}
+                    <button
+                      type="button"
+                      class={settingsActionClass}
+                      onclick={() => {
+                        renameProjectName = activeProject?.name ?? '';
+                        showRenameForm = true;
+                      }}
+                    >
+                      <IconEdit class="mr-1.5 size-4" />
+                      Rename
+                    </button>
                   </div>
                 </div>
               {/if}
@@ -2775,46 +3120,64 @@
 
             <div class="space-y-3 overflow-hidden">
               <div class="flex items-center gap-2">
-                <Shield class="size-4 text-muted-foreground" />
+                <IconShieldLock class="size-4 text-muted-foreground" />
                 <h3 class="text-sm font-medium">Reveal on</h3>
               </div>
-              {#if revealEditing}
+              {#if !isAdmin}
+                <div class="rounded-lg border border-dashed border-border/50 bg-neutral-800/20 px-4 py-6 text-center">
+                  <div class="text-sm text-muted-foreground">
+                    Only <span class="font-medium underline">Admins</span> can change project reveal settings.
+                  </div>
+                </div>
+              {:else if revealEditing}
                 <div class="space-y-3 rounded-lg border border-border/50 bg-neutral-800/20 p-3">
-                  <select
-                    bind:value={settingsDraft.revealOn}
-                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none"
-                  >
-                    <option value="hover">Hover</option>
-                    <option value="always">Always</option>
-                    <option value="never">Never</option>
-                  </select>
+                  <RevealOnPicker bind:value={settingsDraft.revealOn} disabled={savingSettings} />
                   <div class="flex justify-end gap-2">
-                    <button type="button" class="h-8 rounded-md px-3 text-sm hover:bg-neutral-800" onclick={() => (revealEditing = false)}>
+                    <button
+                      type="button"
+                      disabled={savingSettings}
+                      class="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-all hover:bg-neutral-800 disabled:pointer-events-none disabled:opacity-50"
+                      onclick={() => (revealEditing = false)}
+                    >
+                      <IconX class="mr-1.5 size-4" />
                       Cancel
                     </button>
                     <button
                       type="button"
-                      disabled={savingSettings}
-                      class="h-8 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                      disabled={savingSettings || settingsDraft.revealOn === revealOnSetting}
+                      class="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-primary px-2.5 text-sm font-medium text-primary-foreground shadow-xs transition-all hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
                       onclick={() => void saveRevealSettings()}
                     >
-                      {savingSettings ? 'Saving…' : 'Save'}
+                      {#if savingSettings}
+                        <LoaderCircle class="mr-1.5 size-4 animate-spin" />
+                      {:else}
+                        <IconCheck class="mr-1.5 size-4" />
+                      {/if}
+                      Save
                     </button>
                   </div>
                 </div>
               {:else}
+                {@const revealMeta = REVEAL_ON_OPTIONS.find((option) => option.key === revealOnSetting) ?? REVEAL_ON_OPTIONS[1]}
+                {@const RevealIcon = revealMeta.icon}
                 <div class="overflow-hidden rounded-lg border border-border/50 bg-neutral-800/20">
                   <div class="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-neutral-800/40">
-                    <Shield class="size-4 shrink-0 text-muted-foreground" />
+                    <RevealIcon class="size-4 shrink-0 text-muted-foreground" />
                     <div class="min-w-0 flex-1">
                       <div class="truncate text-sm font-medium">{revealMeta.label}</div>
                       <div class="truncate text-xs text-muted-foreground">{revealMeta.description}</div>
                     </div>
-                    {#if isAdmin}
-                      <button type="button" class="h-8 px-2 text-sm text-muted-foreground transition hover:text-foreground" onclick={() => (revealEditing = true)}>
-                        Edit
-                      </button>
-                    {/if}
+                    <button
+                      type="button"
+                      class={settingsActionClass}
+                      onclick={() => {
+                        settingsDraft = { ...settingsDraft, revealOn: revealOnSetting };
+                        revealEditing = true;
+                      }}
+                    >
+                      <IconEdit class="mr-1.5 size-4" />
+                      Edit
+                    </button>
                   </div>
                 </div>
               {/if}
@@ -2822,7 +3185,7 @@
 
             <div class="space-y-3 overflow-hidden">
               <div class="flex items-center gap-2">
-                <Trash2 class="size-4 text-muted-foreground" />
+                <DangerIcon class="size-4 text-muted-foreground" />
                 <h3 class="text-sm font-medium">Danger zone</h3>
               </div>
               {#if showDeleteConfirm}
@@ -2833,17 +3196,26 @@
                   <div class="mb-4 text-sm text-muted-foreground">
                     {isAdmin
                       ? "This action cannot be undone. This will permanently delete the project and remove all members' access."
-                      : 'You will lose access to this project until an admin invites you again.'}
+                      : "You will lose access to this project and its secrets. You'll need a new invitation to rejoin."}
                   </div>
                   <div class="flex gap-2">
                     <button
                       type="button"
-                      class="rounded-md bg-destructive px-3 py-2 text-sm text-destructive-foreground"
+                      disabled={leavingOrDeleting}
+                      class="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md bg-destructive/60 px-4 py-2 text-sm font-medium text-white shadow-xs transition-all hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
                       onclick={() => void (isAdmin ? deleteActiveProject() : leaveActiveProject())}
                     >
+                      {#if leavingOrDeleting}
+                        <LoaderCircle class="size-4 animate-spin" />
+                      {/if}
                       {isAdmin ? 'Delete project' : 'Leave project'}
                     </button>
-                    <button type="button" class="rounded-md px-3 py-2 text-sm hover:bg-neutral-800" onclick={() => (showDeleteConfirm = false)}>
+                    <button
+                      type="button"
+                      disabled={leavingOrDeleting}
+                      class="inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-all hover:bg-neutral-800 disabled:pointer-events-none disabled:opacity-50"
+                      onclick={() => (showDeleteConfirm = false)}
+                    >
                       Cancel
                     </button>
                   </div>
@@ -2859,9 +3231,10 @@
                     </div>
                     <button
                       type="button"
-                      class="h-8 px-2 text-sm text-destructive transition hover:bg-destructive/10 hover:text-destructive"
+                      class="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium text-destructive opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
                       onclick={() => (showDeleteConfirm = true)}
                     >
+                      <DangerIcon class="mr-1.5 size-4" />
                       {isAdmin ? 'Delete' : 'Leave'}
                     </button>
                   </div>
@@ -2870,6 +3243,7 @@
             </div>
           </div>
         </section>
+        {/if}
       {/if}
     </div>
   </main>
@@ -3382,70 +3756,7 @@
 
     <div class="grid gap-2">
       <span class="text-sm font-medium">Reveal on</span>
-      <div
-        class={`flex flex-col gap-3 rounded-lg border border-border/50 bg-neutral-800/20 p-4 ${creatingProject ? 'opacity-60' : ''}`}
-        data-slot="project-reveal-on-picker"
-      >
-        <div class="grid grid-cols-3 gap-2">
-          {#each revealOptions as option, index (option.key)}
-            {@const RevealIcon = option.icon}
-            {@const activeReveal = index === revealIndex(createRevealOn)}
-            <button
-              type="button"
-              disabled={creatingProject}
-              aria-pressed={activeReveal}
-              aria-label={option.label}
-              class={`flex h-10 items-center justify-center rounded-md transition-all disabled:cursor-not-allowed ${
-                activeReveal ? 'text-primary' : 'text-muted-foreground/60 hover:text-muted-foreground'
-              }`}
-              onclick={() => (createRevealOn = option.key)}
-            >
-              <RevealIcon class={`size-5 transition-transform ${activeReveal ? 'scale-110' : ''}`} />
-            </button>
-          {/each}
-        </div>
-
-        <div class="relative h-8 select-none">
-          <div class="absolute inset-x-2 top-1/2 h-1 -translate-y-1/2 rounded-full bg-neutral-700/70"></div>
-          <div
-            class="absolute left-2 top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary transition-all duration-200"
-            style={`width: calc(((100% - 1rem) / 2) * ${revealIndex(createRevealOn)})`}
-          ></div>
-          <div class="absolute inset-x-2 top-0 grid h-full grid-cols-3">
-            {#each revealOptions as option, index (option.key)}
-              {@const activeDot = index === revealIndex(createRevealOn)}
-              {@const behindDot = index < revealIndex(createRevealOn)}
-              <button
-                type="button"
-                disabled={creatingProject}
-                aria-label={`Select ${option.label}`}
-                class="relative flex items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed"
-                style={`justify-self: ${index === 0 ? 'start' : index === revealOptions.length - 1 ? 'end' : 'center'}`}
-                onclick={() => (createRevealOn = option.key)}
-              >
-                <span
-                  class={`relative z-10 block rounded-full transition-all duration-200 ${
-                    activeDot
-                      ? 'size-4 bg-primary ring-4 ring-primary/20'
-                      : behindDot
-                        ? 'size-3 bg-primary'
-                        : 'size-3 bg-neutral-600'
-                  }`}
-                ></span>
-              </button>
-            {/each}
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-0.5 text-center">
-          {#each revealOptions as option (option.key)}
-            {#if option.key === createRevealOn}
-              <span class="text-sm font-semibold text-foreground">{option.label}</span>
-              <span class="text-xs text-muted-foreground">{option.description}</span>
-            {/if}
-          {/each}
-        </div>
-      </div>
+      <RevealOnPicker bind:value={createRevealOn} disabled={creatingProject} />
     </div>
 
     <div class="flex justify-end gap-2 pt-2">

@@ -1,11 +1,11 @@
 import { browser } from "$app/environment";
 import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
-import { queueFTUX } from "$lib/auth/ftux-queue";
 import { keystore } from "$lib/auth/keystore";
 import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
 import { UserApi } from "$lib/auth/user.api";
 import { recordUnlockActivity } from "$lib/keys/auto-lock";
 import { auth, loadUserData } from "./auth.svelte";
+import { queueFTUX } from "./ftux.svelte";
 import {
   keyAuth,
   markKeyLocked,

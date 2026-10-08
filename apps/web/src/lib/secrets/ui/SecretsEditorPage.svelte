@@ -4,34 +4,43 @@
   import { onDestroy } from 'svelte';
   import { fade } from 'svelte/transition';
   import { toast } from 'svelte-sonner';
-  import { ChevronRight } from 'lucide-svelte';
+  import { ChevronRight, Command } from 'lucide-svelte';
   import { AsymmetricCrypto } from '$lib/auth/asymmetric-crypto';
   import {
     normalizeProjectSettings,
     type ProjectRevealOn
   } from '$lib/auth/domain/project-settings';
   import { keystore } from '$lib/auth/keystore';
+  import { createAuthedFetch } from '$lib/auth/token-refresh';
   import { SymmetricCrypto } from '$lib/auth/symmetric-crypto';
   import { IntegrationsApi, type Integration } from '$lib/api/integrations.api';
   import { ProjectsApi } from '$lib/projects/projects.api';
   import { publicEnv } from '$lib/shared/env/public-env';
   import { secretsEditorNavGuard } from '$lib/secrets/secrets-editor-nav-guard.svelte';
   import SecretsFileEditor from '$lib/secrets/monaco/SecretsFileEditor.svelte';
+  import GithubSyncToast from '$lib/integrations/ui/GithubSyncToast.svelte';
   import { accountLoadErrorMessage, auth, loadUserData } from '$lib/stores/auth.svelte';
   import { keyAuth } from '$lib/stores/key.svelte';
+  import { ftux, ftuxUserMadeEdit, ftuxUserSaved, startFTUX } from '$lib/stores/ftux.svelte';
+  import FtuxPopover from '$lib/shared/ui/FtuxPopover.svelte';
   import { cn } from '$lib/utils';
 
   let {
     projectId,
     projectName = '',
+    active = true,
     onSaved,
     onConnectIntegrations
   }: {
     projectId: string;
     projectName?: string;
+    /** False while another project tab is shown; the editor stays mounted so unsaved edits survive. */
+    active?: boolean;
     onSaved?: () => void | Promise<void>;
     onConnectIntegrations?: () => void;
   } = $props();
+
+  const EVENTS_RECONNECT_MS = 3000;
 
   let loadPhase = $state<'loading' | 'ready' | 'locked' | 'error' | 'forbidden'>('loading');
   let loadMessage = $state<string | null>(null);
@@ -44,6 +53,7 @@
   let integrations = $state<Integration[]>([]);
   let isExternallyUpdated = $state(false);
   let projectEvents: EventSource | null = null;
+  let projectEventsReconnect: ReturnType<typeof setTimeout> | null = null;
   let showSlideToConfirm = $state(false);
   let slideProgress = $state(0);
   let slideDragging = $state(false);
@@ -53,19 +63,30 @@
 
   let revealOn = $state<ProjectRevealOn>('hover');
 
-  const isDirty = $derived(doc !== baseline);
+  /** Monaco / OS paste can change CRLF; avoids false "dirty" after save. */
+  const normalizeEditorText = (text: string) => text.replace(/\r\n?/g, '\n');
+  const isDirty = $derived(normalizeEditorText(doc) !== normalizeEditorText(baseline));
   const saveDisabled = $derived(saving || !isDirty || readOnly || !aesKey || isExternallyUpdated);
   const hasGithubIntegration = $derived(integrations.length > 0);
-  const pushDisabled = $derived(isDirty || saving || pushing || readOnly || !hasGithubIntegration);
-  const pushDisabledReason = $derived.by(() => {
-    if (readOnly) return "You don't have permission to push";
-    if (isExternallyUpdated) return 'Project was updated elsewhere. Refresh first.';
-    if (!hasGithubIntegration) return 'You have no integrations';
-    if (isDirty) return 'Save your changes first';
-    if (saving) return 'Saving…';
-    if (pushing) return 'Pushing…';
+  const pushDisabled = $derived(
+    isDirty || saving || pushing || readOnly || isExternallyUpdated || !hasGithubIntegration
+  );
+  const saveDisabledReason = $derived.by(() => {
+    if (readOnly) return "You don't have permission to edit";
+    if (isExternallyUpdated) return 'Project was updated externally. Refresh first.';
+    if (!isDirty && !saving) return 'No unsaved changes';
     return undefined;
   });
+  const pushDisabledReason = $derived.by(() => {
+    if (readOnly) return "You don't have permission to push";
+    if (!hasGithubIntegration) return 'No GitHub repository connected';
+    if (isDirty) return 'Save your changes first';
+    if (isExternallyUpdated) return 'Project was updated externally. Refresh first.';
+    return undefined;
+  });
+  const showSaveShortcut = $derived(
+    isDirty && !saving && !isExternallyUpdated && !readOnly && !showSlideToConfirm && ftux.step !== 'save'
+  );
   const slideMaxX = $derived(Math.max(0, slideTrackWidth - 42));
   const slideX = $derived(slideProgress * slideMaxX);
 
@@ -209,11 +230,13 @@
   onDestroy(() => {
     closeProjectEvents();
     removeSlideListeners();
+    secretsEditorNavGuard.isDirty = false;
+    secretsEditorNavGuard.externallyUpdated = false;
     secretsEditorNavGuard.save = null;
     secretsEditorNavGuard.discard = null;
   });
 
-  async function saveNow(opts?: { silent?: boolean; suppressFailureToast?: boolean }): Promise<boolean> {
+  async function saveNow(opts?: { suppressFailureToast?: boolean }): Promise<boolean> {
     if (saveDisabled) return false;
     const key = aesKey;
     const content = doc;
@@ -228,14 +251,12 @@
       if (saveRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return false;
       await ProjectsApi.updateProjectContent(jwt, projectId, { encryptedSecrets: encrypted });
       baseline = content;
+      ftuxUserSaved();
       await onSaved?.();
-      if (!opts?.silent) {
-        toast.success('Saved');
-      }
       return true;
     } catch {
       if (!opts?.suppressFailureToast) {
-        toast.error('Failed to save');
+        toast.error('Failed to save', { richColors: true });
       }
       return false;
     } finally {
@@ -244,30 +265,30 @@
   }
 
   function closeProjectEvents() {
+    if (projectEventsReconnect) {
+      clearTimeout(projectEventsReconnect);
+      projectEventsReconnect = null;
+    }
     projectEvents?.close();
     projectEvents = null;
   }
 
   function openProjectEvents(pid: string, key: CryptoKey) {
-    const jwt = auth.jwtToken;
-    if (!jwt || projectEvents) return;
+    if (!auth.jwtToken || projectEvents) return;
     const url = `${publicEnv.apiUrl.replace(/\/$/, '')}/projects/${pid}/events`;
-    const es = new EventSource(url, {
-      fetch: (input, init) =>
-        fetch(input, {
-          ...init,
-          headers: {
-            ...init?.headers,
-            Authorization: `Bearer ${jwt}`
-          }
-        })
-    });
+    const es = new EventSource(url, { fetch: createAuthedFetch(() => auth.jwtToken) });
     es.onmessage = (event) => {
       void handleProjectEvent(event.data as string, key);
     };
     es.onerror = () => {
       es.close();
-      if (projectEvents === es) projectEvents = null;
+      if (projectEvents !== es) return;
+      projectEvents = null;
+      // Keep listening after drops so "updated elsewhere" still protects unsaved edits.
+      projectEventsReconnect = setTimeout(() => {
+        projectEventsReconnect = null;
+        if (aesKey === key && projectId === pid && auth.jwtToken) openProjectEvents(pid, key);
+      }, EVENTS_RECONNECT_MS);
     };
     projectEvents = es;
   }
@@ -289,7 +310,20 @@
   }
 
   $effect(() => {
-    secretsEditorNavGuard.isDirty = loadPhase === 'ready' && doc !== baseline;
+    secretsEditorNavGuard.isDirty = loadPhase === 'ready' && isDirty;
+  });
+
+  $effect(() => {
+    secretsEditorNavGuard.externallyUpdated = isExternallyUpdated;
+  });
+
+  $effect(() => {
+    // The legacy app only runs the tour on desktop.
+    if (loadPhase === 'ready' && active && window.matchMedia('(min-width: 768px)').matches) startFTUX();
+  });
+
+  $effect(() => {
+    if (isDirty) ftuxUserMadeEdit();
   });
 
   $effect(() => {
@@ -306,7 +340,7 @@
       secretsEditorNavGuard.discard = null;
       return;
     }
-    secretsEditorNavGuard.save = async () => saveNow({ silent: true, suppressFailureToast: true });
+    secretsEditorNavGuard.save = async () => saveNow({ suppressFailureToast: true });
     secretsEditorNavGuard.discard = () => {
       doc = baseline;
     };
@@ -319,7 +353,7 @@
   function onGlobalKeydown(e: KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key === 's') {
       e.preventDefault();
-      if (isDirty && !readOnly) void saveNow();
+      if (active) void saveNow();
     }
   }
 
@@ -402,13 +436,12 @@
     try {
       if (pushRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return;
       await IntegrationsApi.pushSecrets(jwt, integrations, content);
-      toast.success(
-        publicEnv.githubLocalMock
-          ? 'Pushed to GitHub (local mock — no secrets sent)'
-          : 'Synced with GitHub'
-      );
+      if (publicEnv.githubLocalMock) {
+        toast.success('Pushed to GitHub (local mock — no secrets sent)', { richColors: true });
+      }
+      toast.custom(GithubSyncToast, { componentProps: { ok: true } });
     } catch {
-      toast.error('Failed to sync with GitHub');
+      toast.custom(GithubSyncToast, { componentProps: { ok: false } });
     } finally {
       pushing = false;
       showSlideToConfirm = false;
@@ -421,6 +454,18 @@
 
   const pillButtonBase =
     'flex items-center gap-2.5 px-6 py-3 transition-all duration-200 cursor-pointer disabled:cursor-default rounded-full';
+  const kbdClass =
+    'pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-md bg-white/20 px-1 font-sans text-xs font-medium text-white';
+  const ftuxKbdClass =
+    'pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm bg-background/10 px-1 font-sans text-xs font-medium text-white';
+  const tooltipBoxClass =
+    'whitespace-nowrap rounded-lg border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md';
+  /** Hover tooltip that stays open while the pointer travels onto it (the padding bridges the gap). */
+  const hoverTooltipClass = (groupHover: string) =>
+    cn(
+      'invisible absolute bottom-full left-1/2 z-[100] -translate-x-1/2 pb-2 opacity-0 transition-[opacity,visibility] duration-150 group-hover/save:delay-200 group-hover/push:delay-200',
+      groupHover
+    );
 </script>
 
 <svelte:window onkeydown={onGlobalKeydown} />
@@ -456,42 +501,68 @@
         readOnly={readOnly}
       />
     {/key}
+    {#if active && ftux.step === 'editor'}
+      <FtuxPopover arrow="bottom" class="left-1/2 top-[176px] -translate-x-1/2 -translate-y-full">
+        <div>Store API keys, tokens, and sensitive data.</div>
+        <div>Everything is end-to-end encrypted.</div>
+      </FtuxPopover>
+    {/if}
     <div class="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
       <div
-        class="pointer-events-auto flex items-center rounded-full border border-[#2a2a2a] bg-[#1e1e1e] p-1.5 shadow-[4px_4px_12px_rgba(0,0,0,0.4),-4px_-4px_12px_rgba(255,255,255,0.03)]"
+        class="pointer-events-auto relative flex items-center rounded-full border border-[#2a2a2a] bg-[#1e1e1e] p-1.5 shadow-[4px_4px_12px_rgba(0,0,0,0.4),-4px_-4px_12px_rgba(255,255,255,0.03)]"
       >
-        <button
-          type="button"
-          onclick={() => void saveNow()}
-          disabled={saveDisabled}
-          title={saveDisabled && !saving ? (isExternallyUpdated ? 'Project was updated elsewhere. Refresh first.' : readOnly ? "You don't have permission to edit" : 'No unsaved changes') : undefined}
-          class={cn(
-            pillButtonBase,
-            saveDisabled
-              ? 'text-base font-medium text-neutral-600'
-              : 'bg-white text-[17px] font-semibold text-black hover:bg-neutral-100'
-          )}
-        >
-          {#if saving}
-            <span
-              class="inline-block size-4 animate-spin rounded-full border-2 border-neutral-600 border-t-neutral-300"
-            ></span>
-            <span>Saving…</span>
-          {:else if !isDirty}
-            <span>Saved</span>
-          {:else}
-            <span>Save</span>
+        {#if active && ftux.step === 'save'}
+          <FtuxPopover arrow="bottom" class="bottom-full left-1/2 mb-[18px] -translate-x-1/2">
+            Click Save or press <kbd class={ftuxKbdClass}><Command class="size-3" /></kbd> +
+            <kbd class={ftuxKbdClass}>S</kbd>. Your data is encrypted before it ever leaves your device.
+          </FtuxPopover>
+        {/if}
+        <div class="group/save relative inline-flex">
+          <button
+            type="button"
+            onclick={() => void saveNow()}
+            disabled={saveDisabled}
+            class={cn(
+              pillButtonBase,
+              saveDisabled
+                ? 'text-base font-medium text-neutral-600'
+                : 'bg-white text-[17px] font-semibold text-black hover:bg-neutral-100'
+            )}
+          >
+            {#if saving}
+              <span
+                class="inline-block size-4 animate-spin rounded-full border-2 border-neutral-600 border-t-neutral-300"
+              ></span>
+              <span>Saving…</span>
+            {:else if !isDirty}
+              <span>Saved</span>
+            {:else}
+              <span>Save</span>
+            {/if}
+          </button>
+          {#if active && showSaveShortcut}
+            <div
+              class="pointer-events-none absolute bottom-full left-1/2 z-[100] mb-2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md"
+              transition:fade={{ duration: 150 }}
+            >
+              <kbd class={kbdClass}><Command class="size-3" /></kbd>
+              <span>+</span>
+              <kbd class={kbdClass}>S</kbd>
+            </div>
+          {:else if saveDisabledReason}
+            <div class={hoverTooltipClass('group-hover/save:visible group-hover/save:opacity-100')}>
+              <div class={tooltipBoxClass}>{saveDisabledReason}</div>
+            </div>
           {/if}
-        </button>
+        </div>
 
         <div class="my-2 w-px self-stretch bg-neutral-700/30"></div>
 
-        <div class="relative inline-flex">
+        <div class="group/push relative inline-flex">
           <button
             type="button"
             onclick={handlePushClick}
             disabled={pushDisabled}
-            title={pushDisabledReason}
             class={cn(
               pillButtonBase,
               pushDisabled
@@ -508,6 +579,21 @@
               <span>Push</span>
             {/if}
           </button>
+          {#if pushDisabledReason && !showSlideToConfirm}
+            <div class={hoverTooltipClass('group-hover/push:visible group-hover/push:opacity-100')}>
+              <div class={tooltipBoxClass}>
+                {pushDisabledReason}{#if !hasGithubIntegration && !readOnly && onConnectIntegrations}.
+                  <button
+                    type="button"
+                    class="cursor-pointer underline underline-offset-2 hover:text-white focus:outline-none"
+                    onclick={onConnectIntegrations}
+                  >
+                    Connect now?
+                  </button>
+                {/if}
+              </div>
+            </div>
+          {/if}
 
           {#if showSlideToConfirm}
             <div

@@ -2,6 +2,7 @@
 export const secretsEditorNavGuard = $state({
   isDirty: false,
   readOnly: false,
+  externallyUpdated: false,
   projectName: "",
   save: null as null | (() => Promise<boolean>),
   discard: null as null | (() => void),

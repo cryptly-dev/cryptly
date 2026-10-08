@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { toast } from 'svelte-sonner';
   import { consumeGitHubAppInstallState } from '$lib/auth/browser-state';
   import { IntegrationsApi } from '$lib/api/integrations.api';
   import { publicEnv } from '$lib/shared/env/public-env';
@@ -22,6 +23,10 @@
 
       if (!installationId || !projectId || !auth.jwtToken) {
         await goto('/app/project');
+        if (installationId) {
+          // The one-time state only lives in the tab that started the install (CSRF guard).
+          toast.error('Could not finish connecting GitHub. Start the installation again from your project.');
+        }
         return;
       }
 
@@ -34,6 +39,7 @@
         await goto(`/app/project/${projectId}`);
       } catch {
         await goto('/app/project');
+        toast.error('Failed to connect GitHub');
       }
     })();
   });

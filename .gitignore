@@ -9,3 +9,7 @@ node_modules/
 build/
 **/test-results/
 **/playwright-report/
+.env
+.env.*
+!.env.example
+.dev.vars

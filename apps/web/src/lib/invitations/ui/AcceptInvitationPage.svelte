@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { IconArrowRight, IconExclamationCircle, IconKey, IconUsers } from '@tabler/icons-svelte';
-  import { toast } from 'svelte-sonner';
   import { AsymmetricCrypto } from '$lib/auth/asymmetric-crypto';
   import { persistInviteIdForAfterLogin } from '$lib/auth/after-login';
   import { SymmetricCrypto } from '$lib/auth/symmetric-crypto';
@@ -59,7 +58,6 @@
       await InvitationsApi.acceptInvitation(jwt, invitation.id, {
         newSecretsKey: reEncryptedProjectKey
       });
-      toast.success('Invitation accepted');
       await goto(`/app/project/${invitation.projectId}`);
     } catch {
       isError = true;

@@ -96,4 +96,4 @@
   });
 </script>
 
-<div bind:this={host} class="ph-no-capture w-full overflow-hidden rounded-md border border-border" style:height></div>
+<div bind:this={host} class="ph-no-capture w-full overflow-hidden" style:height></div>
