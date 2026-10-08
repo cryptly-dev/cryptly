@@ -79,6 +79,7 @@
   import GripLoader from '$lib/shared/ui/GripLoader.svelte';
   import HistoryIcon from '$lib/shared/ui/HistoryIcon.svelte';
   import ShellLoader from '$lib/shared/ui/ShellLoader.svelte';
+  import ButtonLoader from '$lib/shared/ui/ButtonLoader.svelte';
   import SlidersIcon from '$lib/shared/ui/SlidersIcon.svelte';
   import YearHeatmap from './YearHeatmap.svelte';
   import RevealOnPicker, { REVEAL_ON_OPTIONS } from './RevealOnPicker.svelte';
@@ -93,9 +94,20 @@
   import { ftux, ftuxUserOpenedIntegrations } from '$lib/stores/ftux.svelte';
   import { getCompactRelativeTime, getRelativeTime } from '$lib/utils';
   import {
+    IconArrowLeft,
+    IconArrowRight,
+    IconBraces,
+    IconBrandGithub,
+    IconExternalLink,
+    IconPlus,
     IconCheck,
+    IconChevronRight,
     IconCopy,
+    IconCrown,
     IconEdit,
+    IconEye,
+    IconPencil,
+    IconUsers,
     IconLink,
     IconShieldLock,
     IconTrash,
@@ -191,7 +203,6 @@
   let lastUnlockReloadRevision = 0;
   let loadSeq = 0;
   let switchTimer: ReturnType<typeof setTimeout> | null = null;
-  let createInput: HTMLInputElement | undefined = $state();
   let historySearchInput: HTMLInputElement | undefined = $state();
   let selectedMemberId = $state<string | null>(null);
   let tabBar: HTMLDivElement | undefined = $state();
@@ -246,19 +257,24 @@
     read: {
       label: 'Read',
       description: 'View secrets, project name, and integrations.',
-      icon: Eye
+      icon: IconEye
     },
     write: {
       label: 'Write',
       description: 'Read access plus create, edit, and delete secrets.',
-      icon: Pencil
+      icon: IconPencil
     },
     admin: {
       label: 'Admin',
       description: 'Full control — integrations, members, and project settings.',
-      icon: Crown
+      icon: IconCrown
     }
   } as const;
+
+  const addPeopleTotalSteps = $derived(addPeopleType === 'suggested-user' ? 3 : 2);
+  const addPeopleStepNumber = $derived(
+    addPeopleStep === 'type' ? 1 : addPeopleStep === 'role' && addPeopleType === 'suggested-user' ? 3 : 2
+  );
 
   const historySearchSuggestions = [
     {
@@ -1279,7 +1295,6 @@
     createRevealOn = normalizeProjectSettings(
       auth.userData?.projectCreationDefaults ?? DEFAULT_PROJECT_SETTINGS
     ).revealOn;
-    void tick().then(() => createInput?.focus());
   });
 
   $effect(() => {
@@ -1292,10 +1307,19 @@
     if (activeTab === 'integrations') ftuxUserOpenedIntegrations();
   });
 
-  $effect(() => {
-    if (activeTab !== 'history' || historyLoading || historyVersions.length === 0) return;
-    void tick().then(() => historySearchInput?.focus());
-  });
+
+  const menuItemClass =
+    'relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent focus-visible:bg-accent';
+
+  function closeUserMenu() {
+    showUserMenu = false;
+    cancelDisplayNameEdit();
+  }
+
+  function cancelDisplayNameEdit() {
+    displayNameInput = auth.userData?.displayName ?? '';
+    editingDisplayName = false;
+  }
 
   async function saveDisplayName() {
     const jwt = auth.jwtToken;
@@ -1734,9 +1758,123 @@
   }
 </script>
 
+{#snippet connectionIcon(className: string)}
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    class={className}
+  >
+    <path d="M10 13.229C10.1416 13.4609 10.3097 13.6804 10.5042 13.8828C11.7117 15.1395 13.5522 15.336 14.9576 14.4722C15.218 14.3121 15.4634 14.1157 15.6872 13.8828L18.9266 10.5114C20.3578 9.02184 20.3578 6.60676 18.9266 5.11718C17.4953 3.6276 15.1748 3.62761 13.7435 5.11718L13.03 5.85978" />
+    <path d="M10.9703 18.14L10.2565 18.8828C8.82526 20.3724 6.50471 20.3724 5.07345 18.8828C3.64218 17.3932 3.64218 14.9782 5.07345 13.4886L8.31287 10.1172C9.74413 8.62761 12.0647 8.6276 13.4959 10.1172C13.6904 10.3195 13.8584 10.539 14 10.7708" />
+  </svg>
+{/snippet}
+
+{#snippet wizardStepper(current: number, total: number)}
+  <div class="flex items-center justify-center gap-1.5">
+    {#each Array.from({ length: total }, (_, index) => index + 1) as step (step)}
+      <span
+        class="h-1.5 rounded-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={`width: ${step === current ? 24 : 8}px; background-color: ${
+          step === current ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)'
+        };`}
+      ></span>
+    {/each}
+  </div>
+{/snippet}
+
+{#snippet hoverTip(text: string, extra = '')}
+  <span
+    class={`pointer-events-none invisible absolute left-1/2 top-full z-[100] mt-1 -translate-x-1/2 whitespace-nowrap rounded-lg border bg-popover px-3 py-2 text-sm font-normal text-popover-foreground opacity-0 shadow-md transition-[opacity,visibility] duration-150 group-hover/tip:visible group-hover/tip:opacity-100 group-hover/tip:delay-400 ${extra}`}
+  >
+    {text}
+  </span>
+{/snippet}
+
+{#snippet userMenuContent(mobile: boolean)}
+  {#if mobile}
+    <div class="px-2 py-1.5">
+      <p class="truncate text-sm font-medium">{auth.userData?.displayName || auth.userData?.email || 'User'}</p>
+      {#if auth.userData?.email}
+        <p class="truncate text-xs text-muted-foreground">{auth.userData.email}</p>
+      {/if}
+    </div>
+    <div class="-mx-1 my-1 h-px bg-border"></div>
+  {/if}
+  {#if editingDisplayName}
+    <div class="p-2">
+      <label for={mobile ? 'mobile-display-name-input' : 'display-name-input'} class="mb-1.5 block text-xs font-medium text-muted-foreground">
+        Display Name
+      </label>
+      <div class="flex gap-1.5">
+        <!-- svelte-ignore a11y_autofocus -->
+        <input
+          id={mobile ? 'mobile-display-name-input' : 'display-name-input'}
+          bind:value={displayNameInput}
+          placeholder="Enter display name"
+          maxlength="200"
+          disabled={savingDisplayName}
+          autofocus
+          class="flex h-8 w-full min-w-0 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          onkeydown={(event) => {
+            if (event.key === 'Enter') void saveDisplayName();
+            if (event.key === 'Escape') cancelDisplayNameEdit();
+          }}
+        />
+        <button
+          type="button"
+          disabled={savingDisplayName}
+          class="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md bg-primary p-0 text-primary-foreground shadow-xs transition-all hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+          onclick={() => void saveDisplayName()}
+        >
+          {#if savingDisplayName}
+            <ButtonLoader />
+          {:else}
+            <Check class="size-3.5" />
+          {/if}
+        </button>
+        <button
+          type="button"
+          disabled={savingDisplayName}
+          class="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md p-0 transition-all hover:bg-neutral-800 disabled:pointer-events-none disabled:opacity-50"
+          onclick={cancelDisplayNameEdit}
+        >
+          <X class="size-3.5" />
+        </button>
+      </div>
+    </div>
+  {:else}
+    <button type="button" class={menuItemClass} onclick={() => (editingDisplayName = true)}>
+      <Pencil class="mr-2 size-4 text-muted-foreground" />
+      Edit display name
+    </button>
+  {/if}
+  <div class="-mx-1 my-1 h-px bg-border"></div>
+  <button
+    type="button"
+    class={`${menuItemClass} text-destructive`}
+    onclick={() => {
+      showUserMenu = false;
+      void logout();
+    }}
+  >
+    <LogOut class="mr-2 size-4 text-muted-foreground" />
+    Log out
+  </button>
+{/snippet}
+
+<svelte:window
+  onkeydown={(event) => {
+    if (event.key === 'Escape' && showUserMenu) closeUserMenu();
+  }}
+/>
+
 <div class="flex h-screen w-full bg-background text-foreground">
   <ProjectUnsavedNavGuard />
-  <aside class="hidden h-full w-72 shrink-0 flex-col border-r border-border/50 bg-card/40 backdrop-blur-sm md:flex">
+  <aside class="relative z-30 hidden h-full w-72 shrink-0 flex-col border-r border-border/50 bg-card/40 backdrop-blur-sm md:flex">
     <div class="flex h-14 shrink-0 items-center gap-2 border-b border-border/50 px-3">
       <a href="/" class="shrink-0 text-lg font-semibold tracking-tight transition hover:opacity-80">Cryptly</a>
       <div class="relative min-w-0 flex-1">
@@ -1957,67 +2095,13 @@
         </button>
 
         {#if showUserMenu}
+          <button type="button" aria-label="Close menu" tabindex="-1" class="fixed inset-0 z-40 cursor-default" onclick={closeUserMenu}></button>
           <div
-            class="absolute bottom-full left-full z-20 mb-2 ml-2 w-64 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-xl"
+            role="menu"
+            class="absolute bottom-0 left-full z-50 ml-1 w-64 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+            transition:fade={{ duration: 120 }}
           >
-            {#if editingDisplayName}
-              <div class="p-2">
-                <label for="display-name-input" class="mb-1.5 block text-xs font-medium text-muted-foreground">
-                  Display Name
-                </label>
-                <div class="flex gap-1.5">
-                  <input
-                    id="display-name-input"
-                    bind:value={displayNameInput}
-                    maxlength="200"
-                    disabled={savingDisplayName}
-                    class="h-8 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary/60"
-                    onkeydown={(event) => {
-                      if (event.key === 'Enter') void saveDisplayName();
-                      if (event.key === 'Escape') editingDisplayName = false;
-                    }}
-                  />
-                  <button
-                    type="button"
-                    disabled={savingDisplayName}
-                    class="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-50"
-                    onclick={() => void saveDisplayName()}
-                  >
-                    <Check class="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    class="flex size-8 items-center justify-center rounded-md hover:bg-secondary"
-                    onclick={() => {
-                      displayNameInput = auth.userData?.displayName ?? '';
-                      editingDisplayName = false;
-                    }}
-                  >
-                    <X class="size-3.5" />
-                  </button>
-                </div>
-              </div>
-            {:else}
-              <button
-                type="button"
-                class="flex w-full items-center rounded-sm px-2 py-2 text-sm hover:bg-secondary"
-                onclick={() => {
-                  editingDisplayName = true;
-                }}
-              >
-                <Pencil class="mr-2 size-4" />
-                Edit display name
-              </button>
-            {/if}
-            <div class="my-1 h-px bg-border"></div>
-            <button
-              type="button"
-              class="flex w-full items-center rounded-sm px-2 py-2 text-sm text-destructive hover:bg-secondary"
-              onclick={() => void logout()}
-            >
-              <LogOut class="mr-2 size-4" />
-              Log out
-            </button>
+            {@render userMenuContent(false)}
           </div>
         {/if}
       </div>
@@ -2151,88 +2235,39 @@
         >
           <Search class="size-4" />
         </button>
-        <button
-          type="button"
-          aria-label="User menu"
-          class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-muted-foreground"
-          onclick={() => {
-            showUserMenu = !showUserMenu;
-          }}
-        >
-          {#if auth.userData?.avatarUrl}
-            <img
-              src={auth.userData.avatarUrl}
-              alt={auth.userData.displayName || 'User'}
-              class="size-8 rounded-full object-cover"
-            />
-          {:else}
-            <User class="size-4" />
-          {/if}
-        </button>
-      </div>
-      {#if showUserMenu}
-        <div class="mx-3 mb-2 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-xl">
-          {#if editingDisplayName}
-            <div class="p-2">
-              <label for="mobile-display-name-input" class="mb-1.5 block text-xs font-medium text-muted-foreground">
-                Display Name
-              </label>
-              <div class="flex gap-1.5">
-                <input
-                  id="mobile-display-name-input"
-                  bind:value={displayNameInput}
-                  maxlength="200"
-                  disabled={savingDisplayName}
-                  class="h-8 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary/60"
-                  onkeydown={(event) => {
-                    if (event.key === 'Enter') void saveDisplayName();
-                    if (event.key === 'Escape') editingDisplayName = false;
-                  }}
-                />
-                <button
-                  type="button"
-                  disabled={savingDisplayName}
-                  class="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-50"
-                  onclick={() => void saveDisplayName()}
-                >
-                  <Check class="size-3.5" />
-                </button>
-                <button
-                  type="button"
-                  class="flex size-8 items-center justify-center rounded-md hover:bg-secondary"
-                  onclick={() => {
-                    displayNameInput = auth.userData?.displayName ?? '';
-                    editingDisplayName = false;
-                  }}
-                >
-                  <X class="size-3.5" />
-                </button>
-              </div>
-            </div>
-          {:else}
-            <button
-              type="button"
-              class="flex w-full items-center rounded-sm px-2 py-2 text-sm hover:bg-secondary"
-              onclick={() => {
-                editingDisplayName = true;
-              }}
-            >
-              <Pencil class="mr-2 size-4" />
-              Edit display name
-            </button>
-          {/if}
-          <div class="my-1 h-px bg-border"></div>
+        <div class="relative shrink-0">
           <button
             type="button"
-            class="flex w-full items-center rounded-sm px-2 py-2 text-sm text-destructive hover:bg-secondary"
-            onclick={() => void logout()}
+            aria-label="User menu"
+            class="flex size-8 cursor-pointer items-center justify-center overflow-hidden rounded-full"
+            onclick={() => {
+              showUserMenu = !showUserMenu;
+            }}
           >
-            <LogOut class="mr-2 size-4" />
-            Log out
+            {#if auth.userData?.avatarUrl}
+              <img
+                src={auth.userData.avatarUrl}
+                alt={auth.userData.displayName || 'User'}
+                class="size-full object-cover"
+              />
+            {:else}
+              <div class="flex size-full items-center justify-center rounded-full bg-muted">
+                <User class="size-4 text-muted-foreground" />
+              </div>
+            {/if}
           </button>
+          {#if showUserMenu}
+            <button type="button" aria-label="Close menu" tabindex="-1" class="fixed inset-0 z-40 cursor-default" onclick={closeUserMenu}></button>
+            <div
+              role="menu"
+              class="absolute right-0 top-full z-50 mt-1 w-64 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+              transition:fade={{ duration: 120 }}
+            >
+              {@render userMenuContent(true)}
+            </div>
+          {/if}
         </div>
-      {/if}
-
+      </div>
       <div class="relative overflow-hidden">
         <div class="hide-scrollbar flex items-stretch gap-0 overflow-x-auto px-3">
           {#each tabs as tab (tab.id)}
@@ -2738,19 +2773,19 @@
               {#if isAdmin}
                 <button
                   type="button"
-                  class="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+                  class="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-xs transition-all hover:bg-primary/90"
                   onclick={() => {
                     showAddPeopleDialog = true;
                   }}
                 >
-                  <UserPlus class="mr-2 size-4" />
+                  <IconUserPlus class="mr-2 size-4" />
                   Add people
                 </button>
               {/if}
             </div>
             <div class="space-y-3">
               <div class="flex items-center gap-2">
-                <Users class="size-4 text-muted-foreground" />
+                <IconUsers class="size-4 text-muted-foreground" />
                 <h3 class="text-sm font-medium">Members</h3>
               </div>
               <div class="divide-y divide-border/50 overflow-hidden rounded-lg border border-border/50 bg-neutral-800/20">
@@ -2776,7 +2811,7 @@
                       {meta.label}
                     </p>
                   </div>
-                  <ChevronRight class="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                  <IconChevronRight class="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                 </button>
               {/each}
               </div>
@@ -2880,15 +2915,15 @@
                             class="size-8 rounded-full object-cover"
                           />
                         {:else}
-                          <Github class="size-4" />
+                          <IconBrandGithub class="size-4" />
                         {/if}
                       </div>
                       <div class="min-w-0 flex-1">
                         <div class="truncate text-sm font-medium">
-                          {integration.repositoryData?.name ?? `Repository ${integration.githubRepositoryId}`}
+                          {integration.repositoryData?.name ?? 'Unknown'}
                         </div>
                         <div class="truncate text-xs text-muted-foreground">
-                          {integration.repositoryData?.owner ?? 'GitHub'}
+                          {integration.repositoryData?.owner ?? ''}
                         </div>
                       </div>
                       <div class="flex items-center gap-1">
@@ -2897,19 +2932,18 @@
                             href={repoHref}
                             target="_blank"
                             rel="noreferrer"
-                            class="inline-flex h-8 items-center justify-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                            class="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium text-muted-foreground opacity-0 transition-opacity hover:bg-neutral-800 hover:text-foreground group-hover:opacity-100"
                           >
-                            <ExternalLink class="size-4" />
-                            <span>Open</span>
+                            <IconExternalLink class="mr-1.5 size-4" />
+                            Open
                           </a>
                         {/if}
                         {#if isAdmin}
                           <button
                             type="button"
                             aria-label="Remove connection"
-                            title="Remove connection?"
                             disabled={disconnectingIntegrationId !== null}
-                            class="group/disconnect inline-flex size-8 items-center justify-center rounded-md text-green-600 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+                            class="group/disconnect group/tip relative inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-green-600 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
                             onclick={(event) => {
                               event.stopPropagation();
                               void disconnectRepository(integration);
@@ -2918,18 +2952,7 @@
                             {#if disconnectingIntegrationId === integration.id}
                               <span class="size-3.5 animate-spin rounded-full border-2 border-current/30 border-t-current"></span>
                             {:else}
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.5"
-                                stroke-linecap="round"
-                                class="size-4 group-hover/disconnect:hidden"
-                              >
-                                <path d="M10 13.229C10.1416 13.4609 10.3097 13.6804 10.5042 13.8828C11.7117 15.1395 13.5522 15.336 14.9576 14.4722C15.218 14.3121 15.4634 14.1157 15.6872 13.8828L18.9266 10.5114C20.3578 9.02184 20.3578 6.60676 18.9266 5.11718C17.4953 3.6276 15.1748 3.62761 13.7435 5.11718L13.03 5.85978" />
-                                <path d="M10.9703 18.14L10.2565 18.8828C8.82526 20.3724 6.50471 20.3724 5.07345 18.8828C3.64218 17.3932 3.64218 14.9782 5.07345 13.4886L8.31287 10.1172C9.74413 8.62761 12.0647 8.6276 13.4959 10.1172C13.6904 10.3195 13.8584 10.539 14 10.7708" />
-                              </svg>
+                              {@render connectionIcon('size-4 group-hover/disconnect:hidden')}
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
@@ -2945,31 +2968,31 @@
                                 <path d="M3.00009 8H5.07898M8.00009 3L8.00009 5.07889" />
                               </svg>
                             {/if}
+                            <span
+                              class="pointer-events-none invisible absolute bottom-full left-1/2 z-[100] mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg border bg-popover px-3 py-2 text-sm font-normal text-popover-foreground opacity-0 shadow-md transition-[opacity,visibility] duration-150 group-hover/tip:visible group-hover/tip:opacity-100 group-hover/tip:delay-150"
+                            >
+                              Remove connection?
+                            </span>
                           </button>
                         {:else}
                           <span class="inline-flex size-8 items-center justify-center text-green-600">
-                            <Link class="size-4" />
+                            {@render connectionIcon('size-4')}
                           </span>
                         {/if}
                       </div>
                     </div>
                   {/each}
                 </div>
-              {:else if integrationsLoading}
-                <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span class="size-3 animate-spin rounded-full border-2 border-primary/30 border-t-primary"></span>
-                  Loading repositories...
-                </div>
               {/if}
-              {#if isAdmin}
+              {#if isAdmin && !integrationsLoading}
                 <button
                   type="button"
-                  class="inline-flex h-8 w-fit items-center justify-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-neutral-900 shadow-sm transition hover:bg-white/90"
+                  class="inline-flex h-8 w-fit cursor-pointer items-center justify-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-neutral-900 shadow-sm transition-colors hover:bg-white/90"
                   onclick={() => {
                     showIntegrationDialog = true;
                   }}
                 >
-                  <Plus class="size-4" />
+                  <IconPlus class="size-4" />
                   {integrations.length > 0 ? 'Connect another repository' : 'Connect repository'}
                 </button>
               {:else if !integrationsLoading && integrations.length === 0}
@@ -2992,19 +3015,25 @@
                     <button
                       type="button"
                       disabled={connectingIntegration}
-                      class="group flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+                      class={`group flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left transition-colors disabled:cursor-not-allowed ${
+                        connectingIntegrationRepoId === repo.id ? 'bg-primary/10' : 'hover:bg-primary/10 disabled:opacity-50'
+                      }`}
                       onclick={() => void connectRepository(repo)}
                     >
-                      <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs">
-                        <Github class="size-3.5" />
+                      <span class="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10">
+                        {#if repo.avatarUrl}
+                          <img src={repo.avatarUrl} alt={repo.owner} class="size-6 rounded-full object-cover" />
+                        {:else}
+                          <IconBrandGithub class="size-3.5" />
+                        {/if}
                       </span>
                       <span class="min-w-0 flex-1 truncate text-sm">
                         <span class="text-muted-foreground">{repo.owner}/</span><span class="font-medium">{repo.name}</span>
                       </span>
                       {#if connectingIntegrationRepoId === repo.id}
-                        <span class="size-3.5 animate-spin rounded-full border-2 border-primary/30 border-t-primary"></span>
+                        <LoaderCircle class="size-3.5 animate-spin text-primary" />
                       {:else}
-                        <ArrowLeft class="size-3.5 rotate-180 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
+                        <IconArrowRight class="size-3.5 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
                       {/if}
                     </button>
                   {/each}
@@ -3025,10 +3054,10 @@
                   <span
                     class="inline-flex items-center gap-1 rounded bg-secondary/50 px-1.5 py-0.5 align-middle text-[11px] font-medium text-foreground"
                   >
-                    <BracketsIcon class="size-3" />
+                    <IconBraces class="size-3" />
                     Editor
                   </span>
-                  to sync your secrets with <Github class="inline size-3.5 align-text-bottom text-muted-foreground" /> GitHub Actions.
+                  to sync your secrets with <IconBrandGithub class="inline size-3.5 align-text-bottom text-muted-foreground" /> GitHub Actions.
                 </p>
               </div>
             {/if}
@@ -3297,7 +3326,7 @@
                 {@const RoleChoiceIcon = meta.icon}
                 <button
                   type="button"
-                  class={`flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-all ${
+                  class={`group/tip relative flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                     selectedMember.role === role
                       ? 'border-primary bg-primary/10'
                       : 'border-border/50 bg-neutral-800/50 hover:border-primary/30 hover:bg-neutral-800'
@@ -3307,6 +3336,7 @@
                 >
                   <RoleChoiceIcon class="size-4 text-primary" />
                   <span class="text-xs font-medium">{meta.label}</span>
+                  {@render hoverTip(meta.description, 'max-w-48 whitespace-normal text-center')}
                 </button>
               {/each}
             </div>
@@ -3318,11 +3348,15 @@
               <button
                 type="button"
                 disabled={updatingMember}
-                class="inline-flex h-9 items-center justify-center rounded-md border border-border px-3 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                class="inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md border border-neutral-700 bg-neutral-800 px-4 py-2 text-sm font-medium text-destructive shadow-xs transition-all hover:bg-neutral-700 hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
                 onclick={() => void removeSelectedMember()}
               >
-                <Trash2 class="mr-2 size-4" />
-                Remove
+                {#if updatingMember}
+                  <ButtonLoader />
+                {:else}
+                  <IconTrash class="mr-2 size-4" />
+                  Remove
+                {/if}
               </button>
             </div>
           </div>
@@ -3398,7 +3432,7 @@
           }
         }}
       >
-        <ArrowLeft class="size-4" />
+        <IconArrowLeft class="size-4" />
       </button>
     {/if}
     <button
@@ -3413,19 +3447,11 @@
 
     {#if addPeopleStep !== 'done'}
       <div class="flex flex-col items-center gap-3 pt-1">
-        <h2 class="text-center text-lg font-semibold">
-          {addPeopleStep === 'type' ? 'Add people' : addPeopleStep === 'suggested-user' ? 'Choose a person' : 'Choose role'}
+        <h2 class="text-center text-lg font-semibold leading-none">
+          {addPeopleStep === 'type' ? 'Add people' : addPeopleStep === 'suggested-user' ? 'Choose a person' : 'Choose a role'}
         </h2>
-        <div class="flex items-center gap-1.5">
-          {#each [1, 2, 3] as step}
-            <span
-              class={`h-1.5 rounded-full transition-all ${
-                step <= (addPeopleStep === 'type' ? 1 : addPeopleStep === 'role' && addPeopleType === 'suggested-user' ? 3 : 2) ? 'w-5 bg-primary' : 'w-1.5 bg-muted'
-              }`}
-            ></span>
-          {/each}
-        </div>
-        <p class="sr-only">Step {addPeopleStep === 'type' ? 1 : addPeopleStep === 'role' && addPeopleType === 'suggested-user' ? 3 : 2} of 3</p>
+        {@render wizardStepper(addPeopleStepNumber, addPeopleTotalSteps)}
+        <p class="sr-only">Step {addPeopleStepNumber} of {addPeopleTotalSteps}</p>
       </div>
     {/if}
 
@@ -3433,7 +3459,7 @@
       <div class="grid grid-cols-3 gap-3 pt-2">
         <button
           type="button"
-          class="flex flex-col items-center gap-2 rounded-lg border border-border/50 bg-neutral-800/50 p-5 text-center transition-all hover:border-primary/30 hover:bg-neutral-800"
+          class="group/tip relative flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-border/50 bg-neutral-800/50 p-5 text-center transition-all hover:border-primary/30 hover:bg-neutral-800"
           onclick={() => {
             addPeopleType = 'invite-link';
             invitePassphrase = generateInviteCode();
@@ -3441,13 +3467,14 @@
           }}
         >
           <div class="flex size-10 items-center justify-center rounded-full bg-primary/10">
-            <Link class="size-5 text-primary" />
+            <IconLink class="size-5 text-primary" />
           </div>
           <div class="text-sm font-medium">Invite link</div>
+          {@render hoverTip('Secure single-use link')}
         </button>
         <button
           type="button"
-          class="flex flex-col items-center gap-2 rounded-lg border border-border/50 bg-neutral-800/50 p-5 text-center transition-all hover:border-primary/30 hover:bg-neutral-800"
+          class="group/tip relative flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-border/50 bg-neutral-800/50 p-5 text-center transition-all hover:border-primary/30 hover:bg-neutral-800"
           onclick={() => {
             addPeopleType = 'suggested-user';
             selectedSuggestedUser = null;
@@ -3456,20 +3483,22 @@
           }}
         >
           <div class="flex size-10 items-center justify-center rounded-full bg-primary/10">
-            <UserPlus class="size-5 text-primary" />
+            <IconUserPlus class="size-5 text-primary" />
           </div>
           <div class="text-sm font-medium">Suggested</div>
+          {@render hoverTip("Someone you've worked with")}
         </button>
         <button
           type="button"
           disabled
-          class="relative flex cursor-not-allowed flex-col items-center gap-2 rounded-lg border border-border/50 bg-neutral-800/30 p-5 text-center opacity-50"
+          class="group/tip relative flex cursor-not-allowed flex-col items-center gap-2 rounded-lg border border-border/50 bg-neutral-800/30 p-5 text-center opacity-50"
         >
           <div class="flex size-10 items-center justify-center rounded-full bg-primary/10">
-            <Users class="size-5 text-primary" />
+            <IconUsers class="size-5 text-primary" />
           </div>
           <div class="text-sm font-medium">Team</div>
           <span class="absolute right-2 top-2 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">Soon</span>
+          {@render hoverTip('Invite an entire team at once')}
         </button>
       </div>
     {:else if addPeopleStep === 'suggested-user'}
@@ -3484,7 +3513,7 @@
               <button
                 type="button"
                 disabled={!user.publicKey}
-                class="flex w-full items-center gap-3 rounded-lg border border-border/50 bg-neutral-800/50 p-3 text-left transition-all hover:border-primary/30 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border/50 bg-neutral-800/50 p-3 text-left transition-all hover:border-primary/30 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
                 onclick={() => {
                   selectedSuggestedUser = user;
                   addPeopleStep = 'role';
@@ -3510,7 +3539,7 @@
           <button
             type="button"
             disabled={creatingInvitation}
-            class="flex flex-col items-center gap-2 rounded-lg border border-border/50 bg-neutral-800/50 p-5 text-center transition-all hover:border-primary/30 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+            class="group/tip relative flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-border/50 bg-neutral-800/50 p-5 text-center transition-all hover:border-primary/30 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
             onclick={() => {
               if (addPeopleType === 'invite-link') {
                 void createInviteLink(role as 'read' | 'write' | 'admin');
@@ -3523,14 +3552,15 @@
               <InviteRoleIcon class="size-5 text-primary" />
             </div>
             <div class="text-sm font-medium">{meta.label}</div>
+            {@render hoverTip(meta.description, 'max-w-48 whitespace-normal text-center')}
           </button>
         {/each}
       </div>
     {:else}
       <div class="space-y-4">
-        <div class="text-center">
-          <h2 class="text-lg font-semibold">{addPeopleType === 'invite-link' ? 'Invite ready' : 'Invitation sent'}</h2>
-          <p class="mt-2 text-sm text-muted-foreground">
+        <div class="flex flex-col gap-2 text-left">
+          <h2 class="text-center text-lg font-semibold leading-none">{addPeopleType === 'invite-link' ? 'Invite ready' : 'Invitation sent'}</h2>
+          <p class="text-center text-sm text-muted-foreground">
             {addPeopleType === 'invite-link'
               ? 'The invited person needs both the link and the code to join.'
               : `${selectedSuggestedUser?.displayName ?? 'The selected person'} has been invited to the project.`}
@@ -3540,26 +3570,42 @@
           <div class="space-y-3">
           <div class="space-y-1.5">
             <label for="invite-link" class="text-xs font-medium text-muted-foreground">Invite link</label>
-            <div class="flex overflow-hidden rounded-md border border-input bg-background">
-              <input id="invite-link" value={inviteUrl} readonly class="min-w-0 flex-1 truncate bg-transparent px-3 py-2 font-mono text-sm outline-none" />
-              <button type="button" class="flex size-9 items-center justify-center hover:bg-secondary" onclick={() => void copyInviteField('link', inviteUrl)}>
-                {#if inviteCopiedField === 'link'}<Check class="size-4 text-green-500" />{:else}<Copy class="size-4" />{/if}
-              </button>
+            <div class="flex items-stretch rounded-lg border border-border bg-background transition-colors">
+              <input id="invite-link" value={inviteUrl} readonly class="min-w-0 flex-1 truncate bg-transparent px-3 py-2.5 font-mono text-base outline-none placeholder:text-muted-foreground/50 md:text-sm" />
+              <div class="flex items-center gap-0.5 pr-1">
+                <button
+                  type="button"
+                  class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  onclick={() => void copyInviteField('link', inviteUrl)}
+                >
+                  {#if inviteCopiedField === 'link'}<IconCheck class="size-4 text-green-500" />{:else}<IconCopy class="size-4" />{/if}
+                </button>
+              </div>
             </div>
           </div>
           <div class="space-y-1.5">
             <label for="invite-code" class="text-xs font-medium text-muted-foreground">Invitation code</label>
-            <div class="flex overflow-hidden rounded-md border border-input bg-background">
-              <input id="invite-code" value={invitePassphrase} readonly class="min-w-0 flex-1 truncate bg-transparent px-3 py-2 font-mono text-sm outline-none" />
-              <button type="button" class="flex size-9 items-center justify-center hover:bg-secondary" onclick={() => void copyInviteField('code', invitePassphrase)}>
-                {#if inviteCopiedField === 'code'}<Check class="size-4 text-green-500" />{:else}<Copy class="size-4" />{/if}
-              </button>
+            <div class="flex items-stretch rounded-lg border border-border bg-background transition-colors">
+              <input id="invite-code" value={invitePassphrase} readonly class="min-w-0 flex-1 truncate bg-transparent px-3 py-2.5 font-mono text-base outline-none placeholder:text-muted-foreground/50 md:text-sm" />
+              <div class="flex items-center gap-0.5 pr-1">
+                <button
+                  type="button"
+                  class="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  onclick={() => void copyInviteField('code', invitePassphrase)}
+                >
+                  {#if inviteCopiedField === 'code'}<IconCheck class="size-4 text-green-500" />{:else}<IconCopy class="size-4" />{/if}
+                </button>
+              </div>
             </div>
           </div>
           <p class="text-center text-xs text-muted-foreground">You won't be able to see the code again after closing this dialog.</p>
         </div>
         {/if}
-        <button type="button" class="h-10 w-full rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground" onclick={closeAddPeopleDialog}>
+        <button
+          type="button"
+          class="inline-flex h-9 w-full cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs transition-all hover:bg-primary/90"
+          onclick={closeAddPeopleDialog}
+        >
           Done
         </button>
       </div>
@@ -3592,7 +3638,7 @@
           integrationRepoSearch = '';
         }}
       >
-        <ArrowLeft class="size-4" />
+        <IconArrowLeft class="size-4" />
       </button>
     {/if}
     <button
@@ -3606,11 +3652,8 @@
     </button>
 
     <div class="flex flex-col items-center gap-3 pt-1">
-      <h2 class="text-center text-lg font-semibold">{selectedInstallationEntityId ? 'Choose repository' : 'Choose installation'}</h2>
-      <div class="flex items-center gap-1.5">
-        <span class="h-1.5 w-5 rounded-full bg-primary"></span>
-        <span class={`h-1.5 rounded-full transition-all ${selectedInstallationEntityId ? 'w-5 bg-primary' : 'w-1.5 bg-muted'}`}></span>
-      </div>
+      <h2 class="text-center text-lg font-semibold leading-none">{selectedInstallationEntityId ? 'Choose repository' : 'Choose installation'}</h2>
+      {@render wizardStepper(selectedInstallationEntityId ? 2 : 1, 2)}
       <p class="sr-only">Step {selectedInstallationEntityId ? 2 : 1} of 2</p>
     </div>
 
@@ -3733,23 +3776,24 @@
       </button>
     {/if}
 
-    <div>
-      <h2 class="text-lg font-semibold">Add a new project</h2>
-      <p class="mt-2 text-sm text-muted-foreground">
+    <div class="flex flex-col gap-2 text-left">
+      <h2 class="text-lg font-semibold leading-none">Add a new project</h2>
+      <p class="text-sm text-muted-foreground">
         Name your project and choose how secrets should reveal in the editor. We'll remember this for next time.
       </p>
     </div>
 
     <div class="grid gap-2">
       <label for="new-project-name" class="text-sm font-medium">Project name</label>
+      <!-- svelte-ignore a11y_autofocus -->
       <input
-        bind:this={createInput}
         id="new-project-name"
+        autofocus
         type="text"
         bind:value={newProjectName}
         autocomplete="off"
         disabled={creatingProject}
-        class="h-10 w-full rounded-md border border-input bg-background px-3 text-base outline-none transition focus:border-primary/60 sm:text-sm"
+        class="w-full rounded-md border bg-background px-3 py-2 text-base sm:text-sm"
         required
       />
     </div>
@@ -3763,9 +3807,13 @@
       <button
         type="submit"
         disabled={!newProjectName.trim() || creatingProject}
-        class="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        class="inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs transition-all hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
       >
-        {creatingProject ? 'Creating…' : 'Create project'}
+        {#if creatingProject}
+          <ButtonLoader />
+        {:else}
+          Create project
+        {/if}
       </button>
     </div>
   </form>

@@ -288,3 +288,39 @@ async function seedAuthOnly(page: Page) {
     { jwtKey: JWT_STORAGE_KEY, refreshKey: REFRESH_STORAGE_KEY }
   );
 }
+
+test('unsaved edits survive tab switches and project switches go through the guard', async ({ page }) => {
+  const passphrase = 'correct horse battery staple';
+  const fixtures = await createUnlockedFixtures(page, passphrase);
+  const second = { ...fixtures.project, id: 'project-two', name: 'Second Project' };
+  await mockApi(page, { user: fixtures.user, projects: [fixtures.project, second] });
+  await page.route('**/projects/project-two', async (route) => {
+    await route.fulfill({ json: second });
+  });
+  await seedAuthOnly(page);
+
+  await page.goto(`${APP}/app/project/project-eval`, { waitUntil: 'domcontentloaded' });
+  await page.getByRole('textbox', { name: 'Passphrase' }).fill(passphrase);
+  await page.getByRole('button', { name: 'Unlock' }).click();
+
+  const editor = page.locator('.monaco-editor .view-lines');
+  await editor.click();
+  await page.keyboard.press('ControlOrMeta+End');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('UNSAVED="1"');
+  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
+
+  await page.getByRole('button', { name: 'History', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Editor', exact: true }).first().click();
+  await expect(editor).toContainText('UNSAVED');
+
+  await page.locator('aside nav a', { hasText: 'Second Project' }).click();
+  const guard = page.getByRole('dialog', { name: 'Save your changes?' });
+  await expect(guard).toBeVisible();
+  await expect(page).toHaveURL(/project-eval$/);
+  await expect(editor).toContainText('UNSAVED');
+
+  await guard.getByRole('button', { name: 'Discard changes' }).click();
+  await expect(page).toHaveURL(/project-two$/);
+  await expect(guard).toHaveCount(0);
+});
