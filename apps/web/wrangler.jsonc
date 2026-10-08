@@ -23,8 +23,8 @@
   "vars": {
     "PUBLIC_APP_URL": "https://cryptly.dev",
     "PUBLIC_API_URL": "https://api.cryptly.dev",
-    "PUBLIC_GOOGLE_CLIENT_ID": "",
-    "PUBLIC_GITHUB_CLIENT_ID": "",
+    "PUBLIC_GOOGLE_CLIENT_ID": "456428460773-39vislc8t7omv2h9klmelsklg0497afm.apps.googleusercontent.com",
+    "PUBLIC_GITHUB_CLIENT_ID": "Ov23li1XSEkV94LTAO3N",
     "PUBLIC_ALLOW_LOCAL_LOGIN": "false",
     "PUBLIC_GITHUB_LOCAL_MOCK": "false"
   }

@@ -45,6 +45,19 @@ pnpm build
 - `pnpm build` chains `tsc -b && vite build`, so it *is* the typecheck. Do not run `tsc` on its own.
 - There is no frontend test suite. Do not add one unless explicitly asked.
 
+### Web (`apps/web/`)
+
+Two commands. Run them **at the very end**.
+
+```bash
+# From apps/web/
+pnpm check             # svelte-kit sync + svelte-check
+pnpm build             # vite build using the Cloudflare adapter
+```
+
+- `pnpm check` is the typecheck for the SvelteKit app.
+- `pnpm build` verifies the Cloudflare Workers output.
+
 ### CLI (`cli/`)
 
 ```bash
@@ -61,11 +74,15 @@ pnpm build             # tsc --noEmit && tsup
 After a change you want shipped to npm:
 
 1. From `cli/`, run `pnpm changeset` and describe the change (pick patch / minor / major).
-2. Commit the generated `cli/.changeset/*.md` alongside your code change.
+2. Commit the generated `.changeset/*.md` (repo root) alongside your code change.
 3. Merge to `main`. The `cli-release` workflow auto-bumps `cli/package.json`, commits the bump back to `main`, and publishes `@cryptly/cli` to npm in one run.
 
 If you don't add a changeset, nothing publishes — the change just sits on `main` until someone bundles a changeset with it.
 
 ### Package manager
 
-Backend, frontend, and the CLI all use **pnpm**. Each package has its own `pnpm-lock.yaml`; there is no workspace.
+This repo is a single **pnpm** workspace.
+
+- The root `pnpm-workspace.yaml` includes `backend`, `cli`, `frontend`, `apps/*`, and `packages/*`.
+- The root `pnpm-lock.yaml` is the only lockfile. Run `pnpm install` from the repo root; never add per-package lockfiles.
+- The backend Docker image is built from the repo root (`docker build -f backend/Dockerfile .`).

@@ -74,17 +74,18 @@ pnpm build             # tsc --noEmit && tsup
 After a change you want shipped to npm:
 
 1. From `cli/`, run `pnpm changeset` and describe the change (pick patch / minor / major).
-2. Commit the generated `cli/.changeset/*.md` alongside your code change.
+2. Commit the generated `.changeset/*.md` (repo root) alongside your code change.
 3. Merge to `main`. The `cli-release` workflow auto-bumps `cli/package.json`, commits the bump back to `main`, and publishes `@cryptly/cli` to npm in one run.
 
 If you don't add a changeset, nothing publishes — the change just sits on `main` until someone bundles a changeset with it.
 
 ### Package manager
 
-This repo uses **pnpm**.
+This repo is a single **pnpm** workspace.
 
-- The root `pnpm-workspace.yaml` currently includes `backend`, `frontend`, `apps/*`, and `packages/*`. The root `pnpm-lock.yaml` is the source of truth for those workspace packages.
-- The CLI lives in `cli/` with its own `pnpm-lock.yaml` and is not part of the root workspace.
+- The root `pnpm-workspace.yaml` includes `backend`, `cli`, `frontend`, `apps/*`, and `packages/*`.
+- The root `pnpm-lock.yaml` is the only lockfile. Run `pnpm install` from the repo root; never add per-package lockfiles.
+- The backend Docker image is built from the repo root (`docker build -f backend/Dockerfile .`).
 
 ## Repo shorthand
 

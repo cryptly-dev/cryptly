@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'cli/**'
+      - '.changeset/**'
       - '.github/workflows/cli-release.yml'
 
 defaults:
@@ -28,18 +29,18 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          package_json_file: cli/package.json
+          package_json_file: package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: cli/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --filter @cryptly/cli
 
       - name: Test
         run: pnpm test
@@ -50,7 +51,7 @@ jobs:
       - name: Detect pending changesets
         id: detect
         run: |
-          pending=$(find .changeset -name "*.md" ! -name "README.md" 2>/dev/null | wc -l | tr -d ' ')
+          pending=$(find ../.changeset -name "*.md" ! -name "README.md" 2>/dev/null | wc -l | tr -d ' ')
           echo "pending=$pending" >> "$GITHUB_OUTPUT"
           echo "Found $pending pending changeset(s)."
 
