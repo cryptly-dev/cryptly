@@ -3,12 +3,12 @@ import { getEnvConfig } from '../config/env-config';
 import { posthog } from './posthog.client';
 
 /**
- * High-signal product events (PostHog). No-ops when POSTHOG_API_KEY is unset.
+ * High-signal product events (PostHog). No-ops when POSTHOG_API_TOKEN is unset.
  */
 @Injectable()
 export class ProductAnalyticsService {
   private enabled(): boolean {
-    return Boolean(getEnvConfig().posthog.apiKey);
+    return Boolean(getEnvConfig().posthog.apiToken);
   }
 
   /** Call when a JWT is minted so downstream captures align with the authenticated user. */

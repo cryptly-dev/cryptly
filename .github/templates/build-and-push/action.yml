@@ -15,6 +15,14 @@ inputs:
   image-name:
     required: true
 
+  # posthog
+  posthog-api-key:
+    required: true
+  posthog-host:
+    required: true
+  posthog-project-id:
+    required: true
+
 runs:
   using: "composite"
   steps:
@@ -37,3 +45,12 @@ runs:
         file: ${{ inputs.file }}
         push: true
         tags: ${{ inputs.image-name }}:latest
+        build-args: |
+          POSTHOG_CLI_API_KEY=${{ inputs.posthog-api-key }}
+          POSTHOG_CLI_HOST=${{ inputs.posthog-host }}
+          POSTHOG_CLI_PROJECT_ID=${{ inputs.posthog-project-id }}
+          GITHUB_ACTIONS=true
+          GITHUB_SHA=${{ github.sha }}
+          GITHUB_REF_NAME=${{ github.ref_name }}
+          GITHUB_REPOSITORY=${{ github.repository }}
+          GITHUB_SERVER_URL=${{ github.server_url }}

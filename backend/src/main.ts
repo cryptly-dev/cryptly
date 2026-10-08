@@ -1,6 +1,7 @@
 import { Logger } from '@logdash/js-sdk';
 import { ValidationPipe } from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { createOpenApiDocument } from './openapi';
@@ -8,11 +9,17 @@ import { AllExceptionsFilter } from './shared/filters/all-exceptions.filter';
 import { MetricsInterceptor } from './shared/posthog/metrics.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
+
+  // registering any parser manually disables Nest's default ones, so both are listed
+  app.useBodyParser('json', { limit: '1mb' });
+  app.useBodyParser('urlencoded', { extended: true, limit: '1mb' });
 
   app.enableCors({ origin: '*' });
 
-  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger)));
+  app.useGlobalFilters(
+    new AllExceptionsFilter(app.get(Logger), app.get(HttpAdapterHost).httpAdapter),
+  );
   app.useGlobalInterceptors(new MetricsInterceptor(app.get(Reflector)));
 
   SwaggerModule.setup('docs', app, () => createOpenApiDocument(app));
@@ -28,6 +35,7 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 9050);
 }
 bootstrap();
+
 
 process.on('uncaughtException', (error) => {
   console.error(error);

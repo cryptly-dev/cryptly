@@ -34,7 +34,7 @@ export interface EnvConfig {
     apiKey: string;
   };
   posthog: {
-    apiKey: string;
+    apiToken: string;
     host: string;
     sampleRate: number;
   };
@@ -84,7 +84,7 @@ export const EnvConfigs: EnvConfigs = {
       apiKey: process.env.LOGDASH_API_KEY!,
     },
     posthog: {
-      apiKey: process.env.POSTHOG_API_KEY!,
+      apiToken: process.env.POSTHOG_API_TOKEN!,
       host: process.env.POSTHOG_HOST!,
       sampleRate: 1,
     },
@@ -127,7 +127,7 @@ export const EnvConfigs: EnvConfigs = {
       apiKey: process.env.LOGDASH_API_KEY!,
     },
     posthog: {
-      apiKey: process.env.POSTHOG_API_KEY!,
+      apiToken: process.env.POSTHOG_API_TOKEN!,
       host: process.env.POSTHOG_HOST!,
       sampleRate: 1,
     },

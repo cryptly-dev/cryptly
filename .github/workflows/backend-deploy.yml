@@ -68,6 +68,9 @@ jobs:
           dockerhub-username: ${{ secrets.DOCKERHUB_USERNAME }}
           dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
           image-name: ${{ secrets.DOCKER_IMAGE_NAME }}
+          posthog-api-key: ${{ secrets.POSTHOG_CLI_API_KEY }}
+          posthog-host: ${{ secrets.POSTHOG_CLI_HOST }}
+          posthog-project-id: ${{ secrets.POSTHOG_CLI_PROJECT_ID }}
       - name: Deploy
         uses: "./.github/templates/deploy-backend-container"
         with:
@@ -98,7 +101,7 @@ jobs:
 
           logdash-api-key: ${{ secrets.LOGDASH_API_KEY }}
 
-          posthog-api-key: ${{ secrets.POSTHOG_API_KEY }}
+          posthog-api-token: ${{ secrets.POSTHOG_API_TOKEN }}
           posthog-host: ${{ secrets.POSTHOG_HOST }}
 
           web-app-url: https://cryptly.dev
