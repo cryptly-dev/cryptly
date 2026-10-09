@@ -493,12 +493,7 @@
     {loadMessage ?? 'Something went wrong.'}
   </div>
 {:else if loadPhase === 'locked'}
-  <div class="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
-    <div class="max-w-sm px-6">
-      <p class="font-medium text-foreground">Unlock your safe to edit secrets</p>
-      <p class="mt-1">{loadMessage}</p>
-    </div>
-  </div>
+  <!-- The unlock dialog covers this state (prod shows an empty editor area). -->
 {:else if loadPhase === 'ready'}
   <section class="relative h-full min-h-0">
     {#if isExternallyUpdated}
