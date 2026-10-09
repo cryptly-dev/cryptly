@@ -89,6 +89,8 @@
   import ProjectUnsavedNavGuard from '$lib/projects/ui/ProjectUnsavedNavGuard.svelte';
   import { secretsEditorNavGuard } from '$lib/secrets/secrets-editor-nav-guard.svelte';
   import SecretsEditorPage from '$lib/secrets/ui/SecretsEditorPage.svelte';
+  import MobileSavePushButtons from '$lib/secrets/ui/MobileSavePushButtons.svelte';
+  import { MediaQuery } from 'svelte/reactivity';
   import FtuxPopover from '$lib/shared/ui/FtuxPopover.svelte';
   import GitHubIcon from '$lib/shared/ui/GitHubIcon.svelte';
   import { ftux, ftuxUserOpenedIntegrations } from '$lib/stores/ftux.svelte';
@@ -99,6 +101,8 @@
     IconBraces,
     IconBrandGithub,
     IconExternalLink,
+    IconHistory,
+    IconSettings,
     IconPlus,
     IconCheck,
     IconChevronRight,
@@ -120,6 +124,14 @@
 
   type TabType = 'editor' | 'history' | 'members' | 'integrations' | 'settings';
   const ACTIVE_TAB_STORAGE_KEY = 'cryptly.project.activeTab';
+
+  const mobileTabs: { id: TabType; label: string; icon: any }[] = [
+    { id: 'editor', label: 'Editor', icon: IconBraces },
+    { id: 'history', label: 'History', icon: IconHistory },
+    { id: 'members', label: 'Members', icon: IconUsers },
+    { id: 'integrations', label: 'GitHub secrets', icon: IconBrandGithub },
+    { id: 'settings', label: 'Settings', icon: IconSettings }
+  ];
 
   const tabs: { id: TabType; label: string; icon: any }[] = [
     { id: 'editor', label: 'Editor', icon: BracketsIcon },
@@ -208,6 +220,10 @@
   let tabBar: HTMLDivElement | undefined = $state();
   let tabUnderline = $state({ left: 0, width: 0, ready: false });
   let integrationsTabWidth = $state(147);
+  let mobileTabsEl: HTMLDivElement | undefined = $state();
+  let mobileTabsCanScrollLeft = $state(false);
+  let mobileTabsCanScrollRight = $state(false);
+  const mobileQuery = new MediaQuery('(max-width: 767px)');
   const tabElements = new Map<TabType, HTMLElement>();
 
   interface RepoWithInstallation extends Repository {
@@ -1307,6 +1323,37 @@
     if (activeTab === 'integrations') ftuxUserOpenedIntegrations();
   });
 
+  function updateMobileTabFades() {
+    if (!mobileTabsEl) return;
+    const { scrollLeft, scrollWidth, clientWidth } = mobileTabsEl;
+    // 1px tolerance for sub-pixel rounding
+    mobileTabsCanScrollLeft = scrollLeft > 1;
+    mobileTabsCanScrollRight = scrollLeft + clientWidth < scrollWidth - 1;
+  }
+
+  $effect(() => {
+    const el = mobileTabsEl;
+    if (!el) return;
+    updateMobileTabFades();
+    const observer = new ResizeObserver(updateMobileTabFades);
+    observer.observe(el);
+    return () => observer.disconnect();
+  });
+
+  $effect(() => {
+    // Keep the active tab's underline in view on narrow screens.
+    mobileTabsEl
+      ?.querySelector<HTMLElement>(`[data-tab-id="${activeTab}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+  });
+
+  const changedByLabel = $derived.by(() => {
+    const author = historyVersions[0]?.author;
+    if (!author || !activeProject) return null;
+    const who = author.id === auth.userData?.id ? 'you' : author.displayName;
+    return `Changed by ${who} ${getRelativeTime(activeProject.updatedAt)}`;
+  });
+
 
   const menuItemClass =
     'relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent focus-visible:bg-accent';
@@ -2225,7 +2272,7 @@
             {/each}
             <option value="__add_project__">Add new project</option>
           </select>
-          <ChevronRight class="pointer-events-none absolute right-2.5 top-1/2 size-4 rotate-90 -translate-y-1/2 text-muted-foreground" />
+          <ChevronDown class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 opacity-50" />
         </div>
         <button
           type="button"
@@ -2268,28 +2315,47 @@
           {/if}
         </div>
       </div>
-      <div class="relative overflow-hidden">
-        <div class="hide-scrollbar flex items-stretch gap-0 overflow-x-auto px-3">
-          {#each tabs as tab (tab.id)}
-            {@const Icon = tab.icon}
-            <button
-              type="button"
-              class={`relative flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm font-medium transition ${
-                activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground'
-              }`}
-              onclick={() => {
-                setActiveTab(tab.id);
-              }}
-            >
-              <Icon class="size-4" />
-              <span>{tab.label}</span>
-              {#if activeTab === tab.id}
-                <span class="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#DDA15E]"></span>
-              {/if}
-            </button>
-          {/each}
+      <div class="flex items-stretch">
+        <div class="relative min-w-0 flex-1">
+          <div
+            bind:this={mobileTabsEl}
+            class="hide-scrollbar flex items-stretch gap-0 overflow-x-auto overflow-y-hidden px-3"
+            onscroll={updateMobileTabFades}
+          >
+            {#each mobileTabs as tab (tab.id)}
+              {@const Icon = tab.icon}
+              <button
+                type="button"
+                data-tab-id={tab.id}
+                class={`relative flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors ${
+                  activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground'
+                }`}
+                onclick={() => {
+                  setActiveTab(tab.id);
+                }}
+              >
+                <Icon class="size-4" />
+                <span>{tab.label}</span>
+                {#if activeTab === tab.id}
+                  <span class="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-[#DDA15E]"></span>
+                {/if}
+              </button>
+            {/each}
+          </div>
+          <div
+            aria-hidden="true"
+            class={`pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent transition-opacity duration-150 ${mobileTabsCanScrollLeft ? 'opacity-100' : 'opacity-0'}`}
+          ></div>
+          <div
+            aria-hidden="true"
+            class={`pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent transition-opacity duration-150 ${mobileTabsCanScrollRight ? 'opacity-100' : 'opacity-0'}`}
+          ></div>
         </div>
-        <div class="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent"></div>
+        {#if activeProject}
+          <div class="flex items-center pr-3">
+            <MobileSavePushButtons />
+          </div>
+        {/if}
       </div>
     </div>
 
@@ -2369,6 +2435,7 @@
           <SecretsEditorPage
             projectId={displayedProjectId}
             projectName={activeProject?.name ?? ''}
+            changedBy={changedByLabel}
             active={activeTab === 'editor'}
             onSaved={() => {
               const jwt = auth.jwtToken;
@@ -2378,7 +2445,7 @@
           />
         </div>
         {#if activeTab === 'history'}
-        <section class="flex h-full flex-col bg-background md:flex-row">
+        <section class="flex h-full bg-background">
           {#if historyLoading}
             <div class="flex h-full flex-1 items-center justify-center text-sm text-muted-foreground">
               Loading history...
@@ -2416,8 +2483,64 @@
                 <p class="mt-1">Make changes to see version history.</p>
               </div>
             </div>
+          {:else if mobileQuery.current}
+            <div class="flex h-full w-full flex-col">
+              <div class="relative z-10 h-[38%] shrink-0 overflow-y-auto bg-[#0a0a0a] shadow-[0_4px_6px_-2px_rgba(0,0,0,0.5)]">
+                {#each historyVersions as version (version.id)}
+                  {@const isSelected = selectedHistory?.id === version.id}
+                  {@const volume = version.additions + version.deletions}
+                  {@const addRatio = version.additions / Math.max(volume, 1)}
+                  {@const barWidthPct = (volume / Math.max(...historyVersions.map((v) => v.additions + v.deletions), 1)) * 100}
+                  <button
+                    type="button"
+                    class={`flex w-full cursor-pointer items-center gap-2.5 border-l-2 px-3 py-2 text-left transition-colors ${
+                      isSelected ? 'border-primary bg-neutral-900' : 'border-transparent active:bg-neutral-900/60'
+                    }`}
+                    onclick={() => (selectedHistoryId = version.id)}
+                  >
+                    <img src={version.author?.avatarUrl || DEFAULT_AVATAR} alt="" class="size-5 shrink-0 rounded-full object-cover" />
+                    <span class={`min-w-0 flex-1 truncate text-sm ${isSelected ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                      {version.author?.displayName || 'System'}
+                      {#if version.author?.id === auth.userData?.id}
+                        <span class="ml-1 text-[11px] text-primary/70">· you</span>
+                      {/if}
+                    </span>
+                    <span class="flex shrink-0 items-center gap-2">
+                      <span class="font-mono text-[11px] tabular-nums">
+                        <span class="text-emerald-400">+{version.additions}</span>
+                        <span class="text-rose-400">-{version.deletions}</span>
+                      </span>
+                      <span class="flex h-1 w-[56px] overflow-hidden rounded-full bg-neutral-800/60">
+                        <span class="h-full bg-emerald-500/80" style={`width: ${barWidthPct * addRatio}%`}></span>
+                        <span class="h-full bg-rose-500/80" style={`width: ${barWidthPct * (1 - addRatio)}%`}></span>
+                      </span>
+                      <span class="w-9 text-right text-[11px] tabular-nums text-muted-foreground">
+                        {getCompactRelativeTime(version.createdAt)}
+                      </span>
+                    </span>
+                  </button>
+                {/each}
+              </div>
+              <div class="min-h-0 flex-1 border-t border-border bg-background">
+                {#if selectedHistory}
+                  <div class="h-full">
+                    {#key selectedHistory.id}
+                      <DiffEditor
+                        value={selectedHistory.patchContent}
+                        revealedValue={selectedHistory.revealedPatchContent}
+                        revealOn={historyRevealOn}
+                      />
+                    {/key}
+                  </div>
+                {:else}
+                  <div class="flex h-full items-start justify-center pt-8">
+                    <div class="text-center text-sm text-muted-foreground">Select a version to see changes</div>
+                  </div>
+                {/if}
+              </div>
+            </div>
           {:else}
-            <div class="flex h-[42%] w-full shrink-0 flex-col border-b border-border/50 bg-[#0a0a0a] md:h-auto md:w-[560px] md:border-b-0 md:border-r">
+            <div class="flex w-[560px] flex-col border-r border-border/50 bg-[#0a0a0a]">
               <div class="relative border-b border-border/50 bg-neutral-900">
                 <div class="relative flex h-10 items-center">
                   {#if historyMode}
@@ -2684,7 +2807,7 @@
                 {/if}
               </div>
 
-              <div class="hidden border-t border-border/50 bg-card/20 px-4 pb-3 pt-3 md:block">
+              <div class="border-t border-border/50 bg-card/20 px-4 pb-3 pt-3">
                 <YearHeatmap
                   patches={historyVersions}
                   selectedDayKey={selectedHistoryDay}
@@ -2692,7 +2815,7 @@
                 />
               </div>
 
-              <div class="hidden items-center justify-between gap-3 border-t border-border/50 bg-black/60 px-3 py-2 text-[11px] text-muted-foreground md:flex">
+              <div class="flex items-center justify-between gap-3 border-t border-border/50 bg-black/60 px-3 py-2 text-[11px] text-muted-foreground">
                 <div class="flex items-center gap-3">
                   <span class="flex items-center gap-1">
                     <kbd class="pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm font-sans text-xs font-medium border border-border/60 bg-neutral-800 px-1 text-neutral-300">↑</kbd>

@@ -92,6 +92,12 @@
   });
 
   $effect(() => {
+    if (!masking) return;
+    // Monaco's default is 5; the mobile layout narrows the gutter.
+    editorInstance?.updateOptions({ fontSize, padding, lineNumbersMinChars: lineNumbersMinChars ?? 5 });
+  });
+
+  $effect(() => {
     masking?.syncExternalValue(value, revealOn);
   });
 </script>

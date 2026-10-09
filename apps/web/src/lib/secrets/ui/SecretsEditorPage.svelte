@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { EventSource } from 'eventsource';
   import { onDestroy } from 'svelte';
+  import { MediaQuery } from 'svelte/reactivity';
   import { fade } from 'svelte/transition';
   import { toast } from 'svelte-sonner';
   import { ChevronRight, Command } from 'lucide-svelte';
@@ -28,12 +29,15 @@
   let {
     projectId,
     projectName = '',
+    changedBy = null,
     active = true,
     onSaved,
     onConnectIntegrations
   }: {
     projectId: string;
     projectName?: string;
+    /** Mobile footer label, e.g. "Changed by you just now". */
+    changedBy?: string | null;
     /** False while another project tab is shown; the editor stays mounted so unsaved edits survive. */
     active?: boolean;
     onSaved?: () => void | Promise<void>;
@@ -41,6 +45,7 @@
   } = $props();
 
   const EVENTS_RECONNECT_MS = 3000;
+  const mobile = new MediaQuery('(max-width: 767px)');
 
   let loadPhase = $state<'loading' | 'ready' | 'locked' | 'error' | 'forbidden'>('loading');
   let loadMessage = $state<string | null>(null);
@@ -234,6 +239,7 @@
     secretsEditorNavGuard.externallyUpdated = false;
     secretsEditorNavGuard.save = null;
     secretsEditorNavGuard.discard = null;
+    secretsEditorNavGuard.push = null;
   });
 
   async function saveNow(opts?: { suppressFailureToast?: boolean }): Promise<boolean> {
@@ -318,6 +324,12 @@
   });
 
   $effect(() => {
+    secretsEditorNavGuard.saving = saving;
+    secretsEditorNavGuard.pushing = pushing;
+    secretsEditorNavGuard.hasIntegrations = hasGithubIntegration;
+  });
+
+  $effect(() => {
     // The legacy app only runs the tour on desktop.
     if (loadPhase === 'ready' && active && window.matchMedia('(min-width: 768px)').matches) startFTUX();
   });
@@ -338,12 +350,14 @@
     if (loadPhase !== 'ready') {
       secretsEditorNavGuard.save = null;
       secretsEditorNavGuard.discard = null;
+      secretsEditorNavGuard.push = null;
       return;
     }
     secretsEditorNavGuard.save = async () => saveNow({ suppressFailureToast: true });
     secretsEditorNavGuard.discard = () => {
       doc = baseline;
     };
+    secretsEditorNavGuard.push = pushToGithub;
   });
 
   function onDocChange(v: string) {
@@ -499,15 +513,25 @@
         onChange={onDocChange}
         {revealOn}
         readOnly={readOnly}
+        fontSize={mobile.current ? 16 : 14}
+        padding={mobile.current ? { top: 12, bottom: 80 } : { top: 16, bottom: 80 }}
+        lineNumbersMinChars={mobile.current ? 3 : undefined}
       />
     {/key}
+    {#if changedBy}
+      <div class="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center md:hidden" transition:fade={{ duration: 100 }}>
+        <span class="rounded-full border border-border/50 bg-card/80 px-3 py-1 text-xs text-muted-foreground shadow-sm backdrop-blur">
+          {changedBy}
+        </span>
+      </div>
+    {/if}
     {#if active && ftux.step === 'editor'}
       <FtuxPopover arrow="bottom" class="left-1/2 top-[176px] -translate-x-1/2 -translate-y-full">
         <div>Store API keys, tokens, and sensitive data.</div>
         <div>Everything is end-to-end encrypted.</div>
       </FtuxPopover>
     {/if}
-    <div class="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
+    <div class="pointer-events-none absolute inset-x-0 bottom-6 hidden justify-center md:flex">
       <div
         class="pointer-events-auto relative flex items-center rounded-full border border-[#2a2a2a] bg-[#1e1e1e] p-1.5 shadow-[4px_4px_12px_rgba(0,0,0,0.4),-4px_-4px_12px_rgba(255,255,255,0.03)]"
       >
