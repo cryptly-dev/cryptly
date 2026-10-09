@@ -1,7 +1,8 @@
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
-import { AuthApi, AuthRequestError } from "$lib/auth/auth-api";
+import { ApiResponseError } from "$lib/api/backend";
+import { AuthApi } from "$lib/auth/auth-api";
 import {
   AUTH_JWT_STORAGE_KEY,
   AUTH_REFRESH_STORAGE_KEY,
@@ -36,7 +37,7 @@ let loadUserPromise: Promise<boolean> | null = null;
 let loadUserPromiseToken: string | null = null;
 
 function isInvalidRefreshFailure(error: unknown): boolean {
-  if (!(error instanceof AuthRequestError)) return false;
+  if (!(error instanceof ApiResponseError)) return false;
   if (error.status === undefined) return false;
   return error.status >= 400 && error.status < 500;
 }
@@ -74,11 +75,6 @@ export async function loadUserData(): Promise<boolean> {
           } else {
             auth.accountLoadError = "network";
           }
-          return false;
-        }
-        if (!refreshed.refreshToken) {
-          auth.accountLoadError = "session";
-          await logout();
           return false;
         }
         setTokens(refreshed.token, refreshed.refreshToken);

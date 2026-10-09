@@ -1,6 +1,5 @@
-import axios from "axios";
+import { createPublicClient } from "../api/client.js";
 import { clearAuthState, readAuthState } from "../config/auth-store.js";
-import { defaultApiUrl } from "../config/paths.js";
 import { ok } from "../util/style.js";
 
 export async function logoutCommand(): Promise<void> {
@@ -12,11 +11,9 @@ export async function logoutCommand(): Promise<void> {
 
   // Best-effort revoke on the server. We always wipe the local file regardless.
   try {
-    await axios.post(
-      `${defaultApiUrl()}/auth/logout`,
-      { refreshToken: auth.refreshToken },
-      { timeout: 10_000 },
-    );
+    await createPublicClient().POST("/auth/logout", {
+      body: { refreshToken: auth.refreshToken },
+    });
   } catch {
     // ignore — local state will be cleared anyway
   }

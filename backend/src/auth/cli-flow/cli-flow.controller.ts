@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { getEnvConfig } from '../../shared/config/env-config';
 import { CurrentUserId } from '../core/decorators/current-user-id.decorator';
 import { Public } from '../core/decorators/is-public';
@@ -17,7 +17,7 @@ export class CliFlowController {
 
   @Public()
   @Post('sessions')
-  @ApiResponse({ type: StartCliSessionResponse })
+  @ApiCreatedResponse({ type: StartCliSessionResponse })
   public async start(@Body() body: StartCliSessionBody): Promise<StartCliSessionResponse> {
     const { publicId, expiresAt } = await this.cliFlowService.start({
       tempPublicKey: body.tempPublicKey,
@@ -35,7 +35,7 @@ export class CliFlowController {
 
   @Get('sessions/:sessionId')
   @ApiBearerAuth()
-  @ApiResponse({ type: CliSessionInfoResponse })
+  @ApiOkResponse({ type: CliSessionInfoResponse })
   public async info(@Param('sessionId') sessionId: string): Promise<CliSessionInfoResponse> {
     const session = await this.cliFlowService.getInfo(sessionId);
     return {
@@ -59,7 +59,7 @@ export class CliFlowController {
 
   @Public()
   @Get('sessions/:sessionId/poll')
-  @ApiResponse({ type: PollCliSessionResponse })
+  @ApiOkResponse({ type: PollCliSessionResponse })
   public async poll(@Param('sessionId') sessionId: string): Promise<PollCliSessionResponse> {
     return this.cliFlowService.pollAndConsume(sessionId);
   }

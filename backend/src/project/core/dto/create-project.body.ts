@@ -24,7 +24,7 @@ export class CreateProjectBody {
   @MaxLength(ENCRYPTED_SECRETS_MAX_LENGTH)
   public encryptedSecrets: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: 'object', additionalProperties: { type: 'string' } })
   @IsObject()
   public encryptedSecretsKeys: Record<string, string>;
 

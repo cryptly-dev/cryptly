@@ -4,8 +4,8 @@ export class TokenResponse {
   @ApiProperty()
   token: string;
 
-  @ApiPropertyOptional()
-  refreshToken?: string;
+  @ApiProperty()
+  refreshToken: string;
 
   @ApiPropertyOptional()
   isNewUser?: boolean;

@@ -1,9 +1,8 @@
 import { browser } from "$app/environment";
-import { AuthApi, AuthRequestError } from "$lib/auth/auth-api";
+import { ApiResponseError } from "$lib/api/backend";
+import { AuthApi } from "$lib/auth/auth-api";
 import { AUTH_REFRESH_STORAGE_KEY } from "$lib/auth/kea-storage-keys";
 import { auth, logout, setTokens } from "$lib/stores/auth.svelte";
-
-export const REFRESH_URL = "/auth/refresh";
 
 let refreshPromise: Promise<string> | null = null;
 
@@ -23,13 +22,14 @@ export async function refreshAccessToken(): Promise<string> {
     refreshPromise = (async () => {
       const storedRefreshToken = getStoredRefreshToken();
       if (!storedRefreshToken) {
-        throw new AuthRequestError("No refresh token available", 401);
+        throw new ApiResponseError(
+          undefined,
+          401,
+          "No refresh token available",
+        );
       }
 
       const result = await AuthApi.refresh(storedRefreshToken);
-      if (!result.refreshToken) {
-        throw new AuthRequestError("No refresh token in response", 401);
-      }
       setTokens(result.token, result.refreshToken);
       return result.token;
     })().finally(() => {
@@ -45,7 +45,7 @@ export function handleAuthFailure(): void {
 }
 
 export function shouldLogoutAfterRefreshFailure(error: unknown): boolean {
-  if (!(error instanceof AuthRequestError)) return false;
+  if (!(error instanceof ApiResponseError)) return false;
   if (error.status === undefined) return false;
   return error.status >= 400 && error.status < 500;
 }

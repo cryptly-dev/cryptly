@@ -58,6 +58,18 @@ pnpm build             # vite build using the Cloudflare adapter
 - `pnpm check` is the typecheck for the SvelteKit app.
 - `pnpm build` verifies the Cloudflare Workers output.
 
+### Backend SDK (`packages/backend-sdk/`)
+
+`apps/web` and `cli` talk to the backend only through this typed client, generated from the backend's OpenAPI document.
+
+```bash
+# From the repo root, after changing any backend controller or DTO
+pnpm generate:backend-sdk
+```
+
+- Commit the regenerated `openapi.json` and `src/openapi.generated.ts`. CI fails when they are stale.
+- Declare response bodies with `@ApiOkResponse` / `@ApiCreatedResponse` (matching the real status code), not `@ApiResponse`. Untyped `default` responses leave the SDK response type empty.
+
 ### CLI (`cli/`)
 
 ```bash

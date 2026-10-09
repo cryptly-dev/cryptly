@@ -4,6 +4,6 @@ export class GoogleLoginBody {
   @ApiProperty()
   googleCode: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   forceLocalLogin?: boolean;
 }

@@ -12,14 +12,13 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { RequireRole } from 'src/project/decorators/require-project-role.decorator';
 import { CurrentUserId } from '../../../auth/core/decorators/current-user-id.decorator';
 import { Public } from '../../../auth/core/decorators/is-public';
 import { ProjectMemberGuard } from '../../../project/core/guards/project-member.guard';
 import { ProjectReadService } from '../../../project/read/project-read.service';
 import { getEnvConfig } from '../../../shared/config/env-config';
-import { TokenResponse } from '../../../shared/responses/token.response';
 import { Role } from '../../../shared/types/role.enum';
 import { GithubRepositorySerialized } from '../client/dto/github-repository.dto';
 import { GithubExternalConnectionClientService } from '../client/github-external-connection-client.service';
@@ -30,6 +29,8 @@ import { GithubIntegrationWriteService } from '../write/github-integration-write
 import { CreateGithubInstallationBody } from './dto/create-github-installation.body';
 import { CreateGithubIntegrationBody } from './dto/create-github-integration.body';
 import { FindProjectsByRepoResponse } from './dto/find-projects-by-repo.response';
+import { GithubAccessTokenResponse } from './dto/github-access-token.response';
+import { GithubLocalMockBootstrapResponse } from './dto/github-local-mock-bootstrap.response';
 import { GithubWebhookBody } from './dto/github-installation-deleted-webhook.body';
 import { GithubInstallationSerialized } from './entities/github-installation.interface';
 import { GithubInstallationSerializer } from './entities/github-installation.serializer';
@@ -52,7 +53,7 @@ export class GithubExternalConnectionCoreController {
     private readonly productAnalytics: ProductAnalyticsService,
   ) {}
 
-  @ApiResponse({ type: GithubRepositorySerialized, isArray: true })
+  @ApiOkResponse({ type: GithubRepositorySerialized, isArray: true })
   @Get('/external-connections/github/installations/:installationEntityId/repositories')
   public async getRepositoriesAvailableForInstallation(
     @Param('installationEntityId') installationEntityId: string,
@@ -67,6 +68,7 @@ export class GithubExternalConnectionCoreController {
     return this.client.getRepositoriesAvailableForInstallation(installation.githubInstallationId);
   }
 
+  @ApiOkResponse({ type: GithubInstallationSerialized })
   @Get('/external-connections/github/installations/:installationEntityId')
   public async getInstallationById(
     @Param('installationEntityId') installationEntityId: string,
@@ -87,7 +89,7 @@ export class GithubExternalConnectionCoreController {
     });
   }
 
-  @ApiResponse({ type: GithubInstallationSerialized })
+  @ApiCreatedResponse({ type: GithubInstallationSerialized })
   @Post('users/me/external-connections/github/installations')
   public async createInstallation(
     @CurrentUserId() currentUserId: string,
@@ -114,11 +116,11 @@ export class GithubExternalConnectionCoreController {
     return GithubInstallationSerializer.serialize(created);
   }
 
-  @ApiResponse({ type: GithubInstallationSerialized, isArray: true })
+  @ApiOkResponse({ type: GithubLocalMockBootstrapResponse })
   @Get('users/me/external-connections/github/local-mock/bootstrap')
   public async getLocalGithubMockBootstrap(
     @CurrentUserId() currentUserId: string,
-  ): Promise<{ githubInstallationId: number }> {
+  ): Promise<GithubLocalMockBootstrapResponse> {
     if (!getEnvConfig().githubLocalMock) {
       throw new ForbiddenException('Local GitHub mock is not enabled');
     }
@@ -129,7 +131,7 @@ export class GithubExternalConnectionCoreController {
     return { githubInstallationId: installation.githubInstallationId };
   }
 
-  @ApiResponse({ type: GithubInstallationSerialized, isArray: true })
+  @ApiOkResponse({ type: GithubInstallationSerialized, isArray: true })
   @Get('users/me/external-connections/github/installations')
   public async getCurrentUserInstallations(
     @CurrentUserId() currentUserId: string,
@@ -153,7 +155,7 @@ export class GithubExternalConnectionCoreController {
     );
   }
 
-  @ApiResponse({ type: FindProjectsByRepoResponse, isArray: true })
+  @ApiOkResponse({ type: FindProjectsByRepoResponse, isArray: true })
   @Get('users/me/external-connections/github/find-projects-by-repo')
   public async findProjectsByRepo(
     @CurrentUserId() currentUserId: string,
@@ -205,7 +207,7 @@ export class GithubExternalConnectionCoreController {
     return matches;
   }
 
-  @ApiResponse({ type: GithubIntegrationSerialized })
+  @ApiCreatedResponse({ type: GithubIntegrationSerialized })
   @Post('/external-connections/github/integrations')
   public async createIntegration(
     @Body() body: CreateGithubIntegrationBody,
@@ -264,7 +266,7 @@ export class GithubExternalConnectionCoreController {
     return GithubIntegrationSerializer.serialize(integration);
   }
 
-  @ApiResponse({ type: GithubIntegrationSerialized, isArray: true })
+  @ApiOkResponse({ type: GithubIntegrationSerialized, isArray: true })
   @Get('/projects/:projectId/external-connections/github/integrations')
   @UseGuards(ProjectMemberGuard)
   public async getProjectIntegrations(
@@ -298,13 +300,13 @@ export class GithubExternalConnectionCoreController {
     );
   }
 
-  @ApiResponse({ type: TokenResponse })
+  @ApiOkResponse({ type: GithubAccessTokenResponse })
   @Get('/projects/:projectId/external-connections/github/integrations/:integrationId/access-token')
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Admin, Role.Write)
   public async getInstallationAccessToken(
     @Param('integrationId') integrationId: string,
-  ): Promise<any> {
+  ): Promise<GithubAccessTokenResponse> {
     const integration = await this.integrationReadService.findById(integrationId);
 
     if (!integration) {

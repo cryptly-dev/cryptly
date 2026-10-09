@@ -1,37 +1,26 @@
+import { unwrap, type Schemas } from "@packages/backend-sdk";
 import type { ApiClient } from "./client.js";
 
-export interface UserMe {
-  id: string;
-  email?: string;
-  displayName: string;
-  publicKey?: string;
-  privateKeyEncrypted?: string;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  encryptedSecretsKeys: Record<string, string>;
-  encryptedSecrets: string;
-  updatedAt: string;
-}
+export type UserMe = Schemas["UserSerialized"];
+export type Project = Schemas["ProjectSerialized"];
+export type FindProjectsByRepoMatch = Schemas["FindProjectsByRepoResponse"];
 
 export class UsersApi {
-  public static async me(client: ApiClient): Promise<UserMe> {
-    const response = await client.axios.get<UserMe>("/users/me");
-    return response.data;
+  public static me(client: ApiClient): Promise<UserMe> {
+    return unwrap(client.GET("/users/me"), "Failed to load your account");
   }
 }
 
 export class ProjectsApi {
-  public static async listMine(client: ApiClient): Promise<Project[]> {
-    const response = await client.axios.get<Project[]>("/users/me/projects");
-    return response.data;
+  public static listMine(client: ApiClient): Promise<Project[]> {
+    return unwrap(client.GET("/users/me/projects"), "Failed to load projects");
   }
 
-  public static async get(client: ApiClient, projectId: string): Promise<Project> {
-    const response = await client.axios.get<Project>(`/projects/${projectId}`);
-    return response.data;
+  public static get(client: ApiClient, projectId: string): Promise<Project> {
+    return unwrap(
+      client.GET("/projects/{projectId}", { params: { path: { projectId } } }),
+      "Failed to load project",
+    );
   }
 
   public static async updateContent(
@@ -39,32 +28,27 @@ export class ProjectsApi {
     projectId: string,
     encryptedSecrets: string,
   ): Promise<void> {
-    await client.axios.patch(`/projects/${projectId}`, { encryptedSecrets });
+    await unwrap(
+      client.PATCH("/projects/{projectId}", {
+        params: { path: { projectId } },
+        body: { encryptedSecrets },
+      }),
+      "Failed to save project",
+    );
   }
 }
 
-export interface FindProjectsByRepoMatch {
-  projectId: string;
-  projectName: string;
-  integrationCount: number;
-}
-
 export class ExternalConnectionsApi {
-  public static async findProjectsByRepo(
+  public static findProjectsByRepo(
     client: ApiClient,
     owner: string,
     name: string,
   ): Promise<FindProjectsByRepoMatch[]> {
-    const response = await client.axios.get<FindProjectsByRepoMatch[]>(
-      "/users/me/external-connections/github/find-projects-by-repo",
-      { params: { owner, name } },
+    return unwrap(
+      client.GET("/users/me/external-connections/github/find-projects-by-repo", {
+        params: { query: { owner, name } },
+      }),
+      "Failed to look up projects for this repository",
     );
-    return response.data;
-  }
-}
-
-export class AuthApi {
-  public static async logout(client: ApiClient, refreshToken: string): Promise<void> {
-    await client.axios.post("/auth/logout", { refreshToken });
   }
 }

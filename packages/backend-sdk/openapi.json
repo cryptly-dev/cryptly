@@ -6,7 +6,7 @@
         "operationId": "UserCoreController_readCurrentUser",
         "parameters": [],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -40,7 +40,7 @@
           }
         },
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -95,7 +95,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -152,7 +152,7 @@
         "operationId": "ProjectCoreController_findUserProjects",
         "parameters": [],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -181,7 +181,7 @@
         "operationId": "ProjectCoreController_findUserProjectsForSearch",
         "parameters": [],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -220,7 +220,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -255,7 +255,7 @@
           }
         ],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -298,7 +298,7 @@
           }
         },
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -359,7 +359,7 @@
           }
         ],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -397,7 +397,7 @@
           }
         ],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -409,6 +409,34 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/projects/{projectId}/analytics/secrets-pushed": {
+      "post": {
+        "operationId": "ProjectCoreController_trackSecretsPushed",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
           }
         },
         "security": [
@@ -553,7 +581,7 @@
           }
         ],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -592,7 +620,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -627,7 +655,7 @@
           }
         ],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -698,7 +726,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -733,7 +761,7 @@
           }
         ],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -779,7 +807,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -805,7 +833,7 @@
         "operationId": "PersonalInvitationCoreController_findMyPersonalInvitations",
         "parameters": [],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -843,7 +871,7 @@
           }
         ],
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -935,7 +963,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -966,7 +994,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -999,6 +1027,10 @@
             "required": true,
             "in": "query",
             "schema": {
+              "enum": [
+                "requester",
+                "approver"
+              ],
               "type": "string"
             }
           },
@@ -1030,6 +1062,10 @@
             "required": true,
             "in": "query",
             "schema": {
+              "enum": [
+                "requester",
+                "approver"
+              ],
               "type": "string"
             }
           }
@@ -1054,6 +1090,140 @@
         ]
       }
     },
+    "/auth/cli-flow/sessions": {
+      "post": {
+        "operationId": "CliFlowController_start",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartCliSessionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartCliSessionResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth (cli-flow)"
+        ]
+      }
+    },
+    "/auth/cli-flow/sessions/{sessionId}": {
+      "get": {
+        "operationId": "CliFlowController_info",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliSessionInfoResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Auth (cli-flow)"
+        ]
+      }
+    },
+    "/auth/cli-flow/sessions/{sessionId}/approve": {
+      "post": {
+        "operationId": "CliFlowController_approve",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveCliSessionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Auth (cli-flow)"
+        ]
+      }
+    },
+    "/auth/cli-flow/sessions/{sessionId}/poll": {
+      "get": {
+        "operationId": "CliFlowController_poll",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollCliSessionResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth (cli-flow)"
+        ]
+      }
+    },
     "/auth/local/login": {
       "post": {
         "operationId": "LocalAuthController_login",
@@ -1069,7 +1239,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -1100,7 +1270,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -1168,7 +1338,7 @@
           }
         ],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -1207,7 +1377,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubInstallationSerialized"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1235,7 +1412,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -1259,7 +1436,7 @@
         "operationId": "GithubExternalConnectionCoreController_getCurrentUserInstallations",
         "parameters": [],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -1288,14 +1465,57 @@
         "operationId": "GithubExternalConnectionCoreController_getLocalGithubMockBootstrap",
         "parameters": [],
         "responses": {
-          "default": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubLocalMockBootstrapResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Github external connections"
+        ]
+      }
+    },
+    "/users/me/external-connections/github/find-projects-by-repo": {
+      "get": {
+        "operationId": "GithubExternalConnectionCoreController_findProjectsByRepo",
+        "parameters": [
+          {
+            "name": "owner",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GithubInstallationSerialized"
+                    "$ref": "#/components/schemas/FindProjectsByRepoResponse"
                   }
                 }
               }
@@ -1327,7 +1547,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -1362,7 +1582,7 @@
           }
         ],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -1400,12 +1620,12 @@
           }
         ],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
+                  "$ref": "#/components/schemas/GithubAccessTokenResponse"
                 }
               }
             }
@@ -1483,7 +1703,7 @@
         "operationId": "BlogCoreController_findAll",
         "parameters": [],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -1520,7 +1740,7 @@
           }
         },
         "responses": {
-          "default": {
+          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -1555,7 +1775,7 @@
           }
         ],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -1600,7 +1820,7 @@
           }
         },
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -1652,7 +1872,7 @@
         "operationId": "StatsController_getStats",
         "parameters": [],
         "responses": {
-          "default": {
+          "200": {
             "description": "",
             "content": {
               "application/json": {
@@ -1885,7 +2105,10 @@
             }
           },
           "encryptedSecretsKeys": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "encryptedSecrets": {
             "type": "string"
@@ -1921,7 +2144,10 @@
             "type": "string"
           },
           "encryptedSecretsKeys": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "encryptedSecrets": {
             "type": "string"
@@ -1960,7 +2186,10 @@
             "type": "string"
           },
           "encryptedSecretsKeys": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "settings": {
             "$ref": "#/components/schemas/ProjectSettingsBody"
@@ -2222,6 +2451,9 @@
         "properties": {
           "githubCode": {
             "type": "string"
+          },
+          "forceLocalLogin": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2242,7 +2474,8 @@
           }
         },
         "required": [
-          "token"
+          "token",
+          "refreshToken"
         ]
       },
       "GoogleLoginBody": {
@@ -2256,8 +2489,7 @@
           }
         },
         "required": [
-          "googleCode",
-          "forceLocalLogin"
+          "googleCode"
         ]
       },
       "SendMessageBody": {
@@ -2267,12 +2499,134 @@
             "type": "string"
           },
           "message": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": true
           }
         },
         "required": [
           "deviceId",
           "message"
+        ]
+      },
+      "StartCliSessionBody": {
+        "type": "object",
+        "properties": {
+          "tempPublicKey": {
+            "type": "string",
+            "description": "Base64 SPKI of the CLI temp RSA-OAEP public key"
+          },
+          "deviceName": {
+            "type": "string",
+            "description": "Human-readable device label, e.g. \"macbook-air · darwin\""
+          }
+        },
+        "required": [
+          "tempPublicKey",
+          "deviceName"
+        ]
+      },
+      "StartCliSessionResponse": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "approveUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "number",
+            "description": "Unix milliseconds at which this session expires."
+          }
+        },
+        "required": [
+          "sessionId",
+          "approveUrl",
+          "expiresAt"
+        ]
+      },
+      "CliSessionInfoResponse": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "consumed"
+            ]
+          },
+          "expiresAt": {
+            "type": "number",
+            "description": "Unix milliseconds at which this session expires."
+          },
+          "tempPublicKey": {
+            "type": "string",
+            "description": "Base64 SPKI of the CLI temp public key — needed by the browser to wrap the private key."
+          }
+        },
+        "required": [
+          "sessionId",
+          "deviceName",
+          "status",
+          "expiresAt",
+          "tempPublicKey"
+        ]
+      },
+      "ApproveCliSessionBody": {
+        "type": "object",
+        "properties": {
+          "wrappedKey": {
+            "type": "string",
+            "description": "RSA-OAEP-encrypted ephemeral AES key (wraps the user private key)"
+          },
+          "encryptedPrivateKey": {
+            "type": "string",
+            "description": "AES-GCM-encrypted user private key (PKCS8)"
+          }
+        },
+        "required": [
+          "wrappedKey",
+          "encryptedPrivateKey"
+        ]
+      },
+      "PollCliSessionResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "consumed"
+            ]
+          },
+          "jwt": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "wrappedKey": {
+            "type": "string",
+            "description": "RSA-OAEP-encrypted ephemeral AES key"
+          },
+          "encryptedPrivateKey": {
+            "type": "string",
+            "description": "AES-GCM-encrypted user private key (PKCS8)"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
         ]
       },
       "LocalLoginBody": {
@@ -2328,17 +2682,6 @@
           "isPrivate"
         ]
       },
-      "CreateGithubInstallationBody": {
-        "type": "object",
-        "properties": {
-          "githubInstallationId": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "githubInstallationId"
-        ]
-      },
       "GithubInstallationLiveDataSerialized": {
         "type": "object",
         "properties": {
@@ -2380,9 +2723,50 @@
           "id",
           "userId",
           "githubInstallationId",
-          "liveData",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "CreateGithubInstallationBody": {
+        "type": "object",
+        "properties": {
+          "githubInstallationId": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "githubInstallationId"
+        ]
+      },
+      "GithubLocalMockBootstrapResponse": {
+        "type": "object",
+        "properties": {
+          "githubInstallationId": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "githubInstallationId"
+        ]
+      },
+      "FindProjectsByRepoResponse": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string"
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "integrationCount": {
+            "type": "number",
+            "description": "Total github integrations on the project — useful for ranking matches."
+          }
+        },
+        "required": [
+          "projectId",
+          "projectName",
+          "integrationCount"
         ]
       },
       "CreateGithubIntegrationBody": {
@@ -2426,7 +2810,7 @@
             "type": "string"
           },
           "repositoryData": {
-            "type": "object"
+            "$ref": "#/components/schemas/GithubRepositorySerialized"
           },
           "createdAt": {
             "type": "string"
@@ -2442,9 +2826,19 @@
           "githubRepositoryPublicKey",
           "githubRepositoryPublicKeyId",
           "installationEntityId",
-          "repositoryData",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "GithubAccessTokenResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
         ]
       },
       "InstallationPayload": {

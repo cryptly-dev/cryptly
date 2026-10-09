@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ProjectMemberGuard } from 'src/project/core/guards/project-member.guard';
 import { RequireRole } from 'src/project/decorators/require-project-role.decorator';
 import { Role } from 'src/shared/types/role.enum';
@@ -30,7 +30,7 @@ export class InvitationCoreController {
   @Get('projects/:projectId/invitations')
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Admin)
-  @ApiResponse({ type: [InvitationSerialized] })
+  @ApiOkResponse({ type: [InvitationSerialized] })
   public async findProjectInvitations(
     @Param('projectId') projectId: string,
   ): Promise<InvitationSerialized[]> {
@@ -50,7 +50,7 @@ export class InvitationCoreController {
   }
 
   @Post('invitations')
-  @ApiResponse({ type: InvitationSerialized })
+  @ApiCreatedResponse({ type: InvitationSerialized })
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Admin)
   public async create(
@@ -67,7 +67,7 @@ export class InvitationCoreController {
   }
 
   @Get('invitations/:id')
-  @ApiResponse({ type: InvitationSerialized })
+  @ApiOkResponse({ type: InvitationSerialized })
   public async findById(@Param('id') id: string): Promise<InvitationSerialized> {
     const invitation = await this.invitationReadService.findById(id);
     const author = await this.userReadService.readByIdOrThrow(invitation.authorId);
@@ -76,7 +76,7 @@ export class InvitationCoreController {
   }
 
   @Post('invitations/:id/accept')
-  @ApiResponse({ type: InvitationSerialized })
+  @ApiCreatedResponse({ type: InvitationSerialized })
   public async accept(
     @Param('id') id: string,
     @CurrentUserId() userId: string,

@@ -1,20 +1,9 @@
-import { publicEnv } from "$lib/shared/env/public-env";
+import { backend, unwrap, type Schemas } from "$lib/api/backend";
 
-export interface Stats {
-  users: number;
-  projects: number;
-  diffs: number;
-  stars: number;
-}
+export type Stats = Schemas["StatsResponse"];
 
 export class StatsApi {
-  public static async get(): Promise<Stats> {
-    const response = await fetch(
-      `${publicEnv.apiUrl.replace(/\/$/, "")}/stats`,
-    );
-    if (!response.ok) {
-      throw new Error(`stats ${response.status}`);
-    }
-    return response.json() as Promise<Stats>;
+  public static get() {
+    return unwrap(backend.GET("/stats"), "Failed to load stats");
   }
 }

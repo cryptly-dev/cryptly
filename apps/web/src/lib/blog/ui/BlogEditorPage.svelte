@@ -4,6 +4,7 @@
   import { onMount } from "svelte";
   import { ArrowLeft, ImageUp, Loader2, Save, Trash2 } from "lucide-svelte";
   import { toast } from "svelte-sonner";
+  import { ApiResponseError } from "$lib/api/backend";
   import { BlogApi, uploadImage, type BlogPost } from "$lib/api/blog.api";
   import { auth } from "$lib/stores/auth.svelte";
   import BlogMarkdown from "./BlogMarkdown.svelte";
@@ -238,18 +239,13 @@ export const example = () => "hello, world";
         }
       }
     } catch (err) {
+      const details =
+        err instanceof ApiResponseError
+          ? (err.details as { message?: unknown } | undefined)
+          : undefined;
       const message =
-        err &&
-        typeof err === "object" &&
-        "response" in err &&
-        err.response &&
-        typeof err.response === "object" &&
-        "data" in err.response &&
-        err.response.data &&
-        typeof err.response.data === "object" &&
-        "message" in err.response.data &&
-        typeof (err.response.data as { message?: string }).message === "string"
-          ? (err.response.data as { message: string }).message
+        typeof details?.message === "string"
+          ? details.message
           : err instanceof Error
             ? err.message
             : "Save failed";

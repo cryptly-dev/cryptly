@@ -1,4 +1,7 @@
+import type { components } from './openapi.generated';
+
 export { ApiResponseError } from './api-response-error';
-export { createBackendClient, type BackendClient, type BackendSdkOptions } from './client';
-export { getResponseErrors } from './get-response-errors';
+export { createBackendClient, unwrap, type BackendClient } from './client';
 export type { components, operations, paths } from './openapi.generated';
+
+export type Schemas = components['schemas'];

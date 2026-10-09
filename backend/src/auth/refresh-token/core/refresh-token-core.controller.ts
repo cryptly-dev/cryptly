@@ -1,5 +1,5 @@
 import { Body, Controller, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { TokenResponse } from '../../../shared/responses/token.response';
 import { Public } from '../../core/decorators/is-public';
 import { CustomJwtService } from '../../custom-jwt/custom-jwt.service';
@@ -23,7 +23,7 @@ export class RefreshTokenCoreController {
   ) {}
 
   @Post('refresh')
-  @ApiResponse({ type: TokenResponse })
+  @ApiCreatedResponse({ type: TokenResponse })
   public async refresh(@Body() body: RefreshBody): Promise<TokenResponse> {
     const tokenHash = hashRefreshToken(body.refreshToken);
     const existing = await this.refreshTokenReadService.findByHash(tokenHash);

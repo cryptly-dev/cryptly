@@ -7,11 +7,11 @@
   import { toast } from "svelte-sonner";
   import {
     InvitationsApi,
-    type PersonalInvitationListItem,
+    type PersonalInvitation,
   } from "$lib/invitations/invitations.api";
   import { auth } from "$lib/stores/auth.svelte";
 
-  let invitations = $state<PersonalInvitationListItem[]>([]);
+  let invitations = $state<PersonalInvitation[]>([]);
   let loading = $state(false);
   let actingId = $state<string | null>(null);
 
@@ -41,7 +41,7 @@
     else invitations = [];
   });
 
-  async function accept(invitation: PersonalInvitationListItem) {
+  async function accept(invitation: PersonalInvitation) {
     const jwt = auth.jwtToken;
     if (!jwt || actingId) return;
     actingId = invitation.id;
@@ -57,7 +57,7 @@
     }
   }
 
-  async function reject(invitation: PersonalInvitationListItem) {
+  async function reject(invitation: PersonalInvitation) {
     const jwt = auth.jwtToken;
     if (!jwt || actingId) return;
     actingId = invitation.id;

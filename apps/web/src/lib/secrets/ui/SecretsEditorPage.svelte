@@ -7,6 +7,7 @@
   import { fade } from "svelte/transition";
   import { toast } from "svelte-sonner";
   import { ChevronRight, Command } from "lucide-svelte";
+  import { ApiResponseError } from "$lib/api/backend";
   import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
   import {
     normalizeProjectSettings,
@@ -174,7 +175,7 @@
     try {
       project = await ProjectsApi.getProject(activeJwt, pid);
     } catch (e) {
-      if (e instanceof Error && e.message === "PROJECT_NOT_FOUND") {
+      if (e instanceof ApiResponseError && e.status === 404) {
         void goto(resolve("/app/project"), { replaceState: true });
         return;
       }

@@ -1,3 +1,4 @@
+import { backend, bearer, unwrap, type Schemas } from "$lib/api/backend";
 import { publicEnv } from "$lib/shared/env/public-env";
 import { SodiumCrypto } from "$lib/auth/sodium-crypto";
 import {
@@ -5,127 +6,86 @@ import {
   parseValueRangesFromString,
 } from "$lib/secrets/monaco/parser";
 
-const baseUrl = () => publicEnv.apiUrl.replace(/\/$/, "");
-
-function authHeaders(jwt: string) {
-  return {
-    Authorization: `Bearer ${jwt}`,
-    "Content-Type": "application/json",
-  };
-}
+export type Repository = Schemas["GithubRepositorySerialized"];
+export type Integration = Schemas["GithubIntegrationSerialized"];
+export type Installation = Schemas["GithubInstallationSerialized"];
+export type CreateIntegrationDto = Schemas["CreateGithubIntegrationBody"];
+export type CreateInstallationDto = Schemas["CreateGithubInstallationBody"];
 
 export class IntegrationsApi {
-  static async bootstrapLocalGithubMock(
-    jwtToken: string,
-  ): Promise<{ githubInstallationId: number }> {
-    const res = await fetch(
-      `${baseUrl()}/users/me/external-connections/github/local-mock/bootstrap`,
-      {
-        headers: authHeaders(jwtToken),
-      },
+  static bootstrapLocalGithubMock(jwtToken: string) {
+    return unwrap(
+      backend.GET(
+        "/users/me/external-connections/github/local-mock/bootstrap",
+        { headers: bearer(jwtToken) },
+      ),
+      "Failed to bootstrap GitHub local mock",
     );
-    if (!res.ok) {
-      throw new Error("Failed to bootstrap GitHub local mock");
-    }
-    return res.json() as Promise<{ githubInstallationId: number }>;
   }
 
-  static async getInstallationAvailableForUser(
-    jwtToken: string,
-  ): Promise<Installation[]> {
-    const res = await fetch(
-      `${baseUrl()}/users/me/external-connections/github/installations`,
-      {
-        headers: authHeaders(jwtToken),
-      },
+  static getInstallationAvailableForUser(jwtToken: string) {
+    return unwrap(
+      backend.GET("/users/me/external-connections/github/installations", {
+        headers: bearer(jwtToken),
+      }),
+      "Failed to load GitHub installations",
     );
-    if (!res.ok) {
-      throw new Error("Failed to load GitHub installations");
-    }
-    return res.json() as Promise<Installation[]>;
   }
 
-  static async getRepositories(
-    jwtToken: string,
-    installationEntityId: string,
-  ): Promise<Repository[]> {
-    const res = await fetch(
-      `${baseUrl()}/external-connections/github/installations/${installationEntityId}/repositories`,
-      { headers: authHeaders(jwtToken) },
+  static getRepositories(jwtToken: string, installationEntityId: string) {
+    return unwrap(
+      backend.GET(
+        "/external-connections/github/installations/{installationEntityId}/repositories",
+        {
+          params: { path: { installationEntityId } },
+          headers: bearer(jwtToken),
+        },
+      ),
+      "Failed to load GitHub repositories",
     );
-    if (!res.ok) {
-      throw new Error("Failed to load GitHub repositories");
-    }
-    return res.json() as Promise<Repository[]>;
   }
 
-  static async createIntegration(
-    jwtToken: string,
-    dto: {
-      projectId: string;
-      repositoryId: number;
-      installationEntityId: string;
-    },
-  ): Promise<Integration> {
-    const res = await fetch(
-      `${baseUrl()}/external-connections/github/integrations`,
-      {
-        method: "POST",
-        headers: authHeaders(jwtToken),
-        body: JSON.stringify(dto),
-      },
+  static createIntegration(jwtToken: string, dto: CreateIntegrationDto) {
+    return unwrap(
+      backend.POST("/external-connections/github/integrations", {
+        headers: bearer(jwtToken),
+        body: dto,
+      }),
+      "Failed to create GitHub integration",
     );
-    if (!res.ok) {
-      throw new Error("Failed to create GitHub integration");
-    }
-    return res.json() as Promise<Integration>;
   }
 
-  static async deleteIntegration(
-    jwtToken: string,
-    integrationId: string,
-  ): Promise<void> {
-    const res = await fetch(
-      `${baseUrl()}/external-connections/github/integrations/${integrationId}`,
-      {
-        method: "DELETE",
-        headers: authHeaders(jwtToken),
-      },
+  static deleteIntegration(jwtToken: string, integrationId: string) {
+    return unwrap(
+      backend.DELETE(
+        "/external-connections/github/integrations/{integrationId}",
+        {
+          params: { path: { integrationId } },
+          headers: bearer(jwtToken),
+        },
+      ),
+      "Failed to remove GitHub integration",
     );
-    if (!res.ok) {
-      throw new Error("Failed to remove GitHub integration");
-    }
   }
 
-  static async getIntegrationsForProject(
-    jwtToken: string,
-    projectId: string,
-  ): Promise<Integration[]> {
-    const res = await fetch(
-      `${baseUrl()}/projects/${projectId}/external-connections/github/integrations`,
-      { headers: authHeaders(jwtToken) },
+  static getIntegrationsForProject(jwtToken: string, projectId: string) {
+    return unwrap(
+      backend.GET(
+        "/projects/{projectId}/external-connections/github/integrations",
+        { params: { path: { projectId } }, headers: bearer(jwtToken) },
+      ),
+      "Failed to load GitHub integrations",
     );
-    if (!res.ok) {
-      throw new Error("Failed to load GitHub integrations");
-    }
-    return res.json() as Promise<Integration[]>;
   }
 
-  static async createInstallation(
-    jwtToken: string,
-    dto: { githubInstallationId: number },
-  ): Promise<void> {
-    const res = await fetch(
-      `${baseUrl()}/users/me/external-connections/github/installations`,
-      {
-        method: "POST",
-        headers: authHeaders(jwtToken),
-        body: JSON.stringify(dto),
-      },
+  static createInstallation(jwtToken: string, dto: CreateInstallationDto) {
+    return unwrap(
+      backend.POST("/users/me/external-connections/github/installations", {
+        headers: bearer(jwtToken),
+        body: dto,
+      }),
+      "Failed to create GitHub installation",
     );
-    if (!res.ok) {
-      throw new Error("Failed to create GitHub installation");
-    }
   }
 
   static async getAccessToken(
@@ -133,15 +93,17 @@ export class IntegrationsApi {
     projectId: string,
     integrationId: string,
   ): Promise<string> {
-    const res = await fetch(
-      `${baseUrl()}/projects/${projectId}/external-connections/github/integrations/${integrationId}/access-token`,
-      { headers: authHeaders(jwtToken) },
+    const { token } = await unwrap(
+      backend.GET(
+        "/projects/{projectId}/external-connections/github/integrations/{integrationId}/access-token",
+        {
+          params: { path: { projectId, integrationId } },
+          headers: bearer(jwtToken),
+        },
+      ),
+      "Failed to get GitHub access token",
     );
-    if (!res.ok) {
-      throw new Error("Failed to get GitHub access token");
-    }
-    const body = (await res.json()) as { token: string };
-    return body.token;
+    return token;
   }
 
   static async pushSecret(
@@ -167,20 +129,14 @@ export class IntegrationsApi {
     }
   }
 
-  static async acknowledgeSecretsPushed(
-    jwtToken: string,
-    projectId: string,
-  ): Promise<void> {
-    const res = await fetch(
-      `${baseUrl()}/projects/${projectId}/analytics/secrets-pushed`,
-      {
-        method: "POST",
-        headers: authHeaders(jwtToken),
-      },
+  static acknowledgeSecretsPushed(jwtToken: string, projectId: string) {
+    return unwrap(
+      backend.POST("/projects/{projectId}/analytics/secrets-pushed", {
+        params: { path: { projectId } },
+        headers: bearer(jwtToken),
+      }),
+      "Failed to acknowledge secrets push",
     );
-    if (!res.ok) {
-      throw new Error("Failed to acknowledge secrets push");
-    }
   }
 
   static async pushSecrets(
@@ -275,37 +231,4 @@ function parseSecretValue(rawValue: string): string {
     return rawValue.slice(1, -1);
   }
   return rawValue.replace(/\s+#.*$/, "").trim();
-}
-
-export interface Repository {
-  id: number;
-  name: string;
-  owner: string;
-  url: string;
-  isPrivate: boolean;
-  avatarUrl: string;
-}
-
-export interface Integration {
-  id: string;
-  projectId: string;
-  githubRepositoryId: number;
-  githubRepositoryPublicKey: string;
-  githubRepositoryPublicKeyId: string;
-  installationEntityId: string;
-  repositoryData?: Repository;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Installation {
-  id: string;
-  userId: string;
-  githubInstallationId: number;
-  liveData?: {
-    owner: string;
-    avatar: string;
-  };
-  createdAt: string;
-  updatedAt: string;
 }

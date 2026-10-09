@@ -58,8 +58,7 @@
   import {
     InvitationsApi,
     type Invitation,
-    type InvitationListItem,
-    type PersonalInvitationListItem,
+    type PersonalInvitation,
   } from "$lib/invitations/invitations.api";
   import {
     parseValueRangesFromString,
@@ -91,7 +90,7 @@
   import FtuxPopover from "$lib/shared/ui/FtuxPopover.svelte";
   import GitHubIcon from "$lib/shared/ui/GitHubIcon.svelte";
   import { ftux, ftuxUserOpenedIntegrations } from "$lib/stores/ftux.svelte";
-  import { getCompactRelativeTime, getRelativeTime } from "$lib/utils";
+  import { cn, getCompactRelativeTime, getRelativeTime } from "$lib/utils";
   import {
     IconArrowLeft,
     IconArrowRight,
@@ -186,8 +185,8 @@
   let inviteCopiedField = $state<"link" | "code" | null>(null);
   let creatingInvitation = $state(false);
   let lastCreatedInvitation = $state<Invitation | null>(null);
-  let pendingLinkInvitations = $state<InvitationListItem[]>([]);
-  let pendingPersonalInvitations = $state<PersonalInvitationListItem[]>([]);
+  let pendingLinkInvitations = $state<Invitation[]>([]);
+  let pendingPersonalInvitations = $state<PersonalInvitation[]>([]);
   let copiedInviteId = $state<string | null>(null);
   let revokingInviteId = $state<string | null>(null);
   let updatingMember = $state(false);
@@ -1161,8 +1160,8 @@
   }
 
   type ActiveInvite =
-    | { type: "link"; data: InvitationListItem }
-    | { type: "personal"; data: PersonalInvitationListItem };
+    | { type: "link"; data: Invitation }
+    | { type: "personal"; data: PersonalInvitation };
 
   const activeInvites = $derived.by((): ActiveInvite[] =>
     [
@@ -1376,7 +1375,6 @@
             id: "system",
             avatarUrl: SYSTEM_AUTHOR_AVATAR,
             displayName: "System",
-            role: "read",
           },
           patchContent: initialPatch,
           revealedPatchContent: revealedInitialPatch,
@@ -1765,17 +1763,6 @@
       ];
       closeIntegrationDialog();
       await loadIntegrations(jwt, activeProject.id);
-      const installation = installations.find(
-        (item) => item.id === repo.installationEntityId,
-      );
-      activeProject = {
-        ...activeProject,
-        integrations: {
-          githubInstallationId:
-            installation?.githubInstallationId ??
-            activeProject.integrations?.githubInstallationId,
-        },
-      };
     } catch {
       toast.error("Failed to connect repository");
     } finally {
@@ -2139,7 +2126,10 @@
 
 {#snippet hoverTip(text: string, extra = "")}
   <span
-    class={`pointer-events-none invisible absolute top-full left-1/2 z-[100] mt-1 -translate-x-1/2 rounded-lg border bg-popover px-3 py-2 text-sm font-normal whitespace-nowrap text-popover-foreground opacity-0 shadow-md transition-[opacity,visibility] duration-150 group-hover/tip:visible group-hover/tip:opacity-100 group-hover/tip:delay-400 ${extra}`}
+    class={cn(
+      "pointer-events-none invisible absolute top-full left-1/2 z-[100] mt-1 -translate-x-1/2 rounded-lg border bg-popover px-3 py-2 text-sm font-normal whitespace-nowrap text-popover-foreground opacity-0 shadow-md transition-[opacity,visibility] duration-150 group-hover/tip:visible group-hover/tip:opacity-100 group-hover/tip:delay-400",
+      extra,
+    )}
   >
     {text}
   </span>
@@ -2230,7 +2220,12 @@
 
 <svelte:window
   onkeydown={(event) => {
-    if (event.key === "Escape" && showUserMenu) closeUserMenu();
+    if (event.key !== "Escape") return;
+    if (showUserMenu) closeUserMenu();
+    else if (showCreateDialog) closeCreateDialog();
+    else if (showIntegrationDialog) closeIntegrationDialog();
+    else if (showAddPeopleDialog) closeAddPeopleDialog();
+    else if (selectedMember) closeMemberDialog();
   }}
 />
 
@@ -4187,7 +4182,7 @@
   <div
     role="dialog"
     aria-modal="true"
-    class="cryptly-dialog-content fixed top-[15vh] left-1/2 z-50 grid max-h-[85vh] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 gap-4 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg sm:max-w-sm"
+    class="cryptly-dialog-content fixed top-[15vh] left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 gap-4 rounded-lg border bg-background p-6 shadow-lg sm:max-w-sm"
     transition:dialogContentTransition={{ duration: 200 }}
   >
     <button
@@ -4244,7 +4239,7 @@
                   <span class="text-xs font-medium">{meta.label}</span>
                   {@render hoverTip(
                     meta.description,
-                    "max-w-48 whitespace-normal text-center",
+                    "w-max max-w-48 whitespace-normal text-center",
                   )}
                 </button>
               {/each}
@@ -4298,7 +4293,7 @@
   <div
     role="dialog"
     aria-modal="true"
-    class="cryptly-dialog-content fixed top-[15vh] left-1/2 z-50 grid max-h-[85vh] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 gap-4 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg sm:max-w-md"
+    class="cryptly-dialog-content fixed top-[15vh] left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 gap-4 rounded-lg border bg-background p-6 shadow-lg sm:max-w-md"
     transition:dialogContentTransition={{ duration: 200 }}
   >
     {#if addPeopleStep !== "type" && addPeopleStep !== "done"}
@@ -4468,7 +4463,7 @@
             <div class="text-sm font-medium">{meta.label}</div>
             {@render hoverTip(
               meta.description,
-              "max-w-48 whitespace-normal text-center",
+              "w-max max-w-48 whitespace-normal text-center",
             )}
           </button>
         {/each}

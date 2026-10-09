@@ -22,13 +22,13 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^7.2.1",
-    "axios": "^1.12.2",
     "commander": "^12.1.0",
     "diff": "^7.0.0",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.11",
+    "@packages/backend-sdk": "workspace:*",
     "@types/diff": "^7.0.0",
     "@types/node": "^22.10.7",
     "tsup": "^8.3.5",

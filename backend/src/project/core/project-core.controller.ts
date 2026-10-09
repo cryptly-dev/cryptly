@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
 import { Observable, filter, finalize, fromEvent, map } from 'rxjs';
 import { Role } from 'src/shared/types/role.enum';
@@ -74,7 +74,7 @@ export class ProjectCoreController {
   }
 
   @Get('users/me/projects')
-  @ApiResponse({ type: [ProjectSerialized] })
+  @ApiOkResponse({ type: [ProjectSerialized] })
   public async findUserProjects(@CurrentUserId() userId: string): Promise<ProjectSerialized[]> {
     const [projects, user] = await Promise.all([
       this.projectReadService.findUserProjects(userId),
@@ -108,7 +108,7 @@ export class ProjectCoreController {
   }
 
   @Get('users/me/projects/search')
-  @ApiResponse({ type: [ProjectSearchResponse] })
+  @ApiOkResponse({ type: [ProjectSearchResponse] })
   public async findUserProjectsForSearch(
     @CurrentUserId() userId: string,
   ): Promise<ProjectSearchResponse[]> {
@@ -127,7 +127,7 @@ export class ProjectCoreController {
   }
 
   @Post('projects')
-  @ApiResponse({ type: ProjectSerialized })
+  @ApiCreatedResponse({ type: ProjectSerialized })
   public async create(
     @CurrentUserId() userId: string,
     @Body() body: CreateProjectBody,
@@ -155,7 +155,7 @@ export class ProjectCoreController {
   @Get('projects/:projectId')
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Read, Role.Write, Role.Admin)
-  @ApiResponse({ type: ProjectSerialized })
+  @ApiOkResponse({ type: ProjectSerialized })
   public async findById(@Param('projectId') projectId: string): Promise<ProjectSerialized> {
     const project = await this.projectReadService.findByIdOrThrow(projectId);
     const memberIds = Object.keys(project.members);
@@ -175,7 +175,7 @@ export class ProjectCoreController {
   @Get('projects/:projectId/suggested-users')
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Admin)
-  @ApiResponse({ type: [UserPartialSerialized] })
+  @ApiOkResponse({ type: [UserPartialSerialized] })
   public async getSuggestedUsers(
     @CurrentUserId() userId: string,
     @Param('projectId') projectId: string,
@@ -218,7 +218,7 @@ export class ProjectCoreController {
   @Get('projects/:projectId/history')
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Read, Role.Write, Role.Admin)
-  @ApiResponse({ type: [ProjectSecretsVersionSerialized] })
+  @ApiOkResponse({ type: [ProjectSecretsVersionSerialized] })
   public async findHistoryById(
     @Param('projectId') projectId: string,
   ): Promise<ProjectSecretsVersionSerialized[]> {
@@ -227,7 +227,7 @@ export class ProjectCoreController {
 
   @Patch('projects/:projectId')
   @UseGuards(ProjectMemberGuard)
-  @ApiResponse({ type: ProjectSerialized })
+  @ApiOkResponse({ type: ProjectSerialized })
   public async update(
     @Param('projectId') projectId: string,
     @Body() body: UpdateProjectBody,

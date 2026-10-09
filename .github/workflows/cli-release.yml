@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'cli/**'
+      - 'packages/backend-sdk/**'
       - '.changeset/**'
       - '.github/workflows/cli-release.yml'
 
@@ -40,7 +41,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install
-        run: pnpm install --frozen-lockfile --filter @cryptly/cli
+        run: pnpm install --frozen-lockfile --filter "@cryptly/cli..."
 
       - name: Test
         run: pnpm test

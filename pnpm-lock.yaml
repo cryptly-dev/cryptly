@@ -22,9 +22,6 @@ importers:
       '@tabler/icons-svelte':
         specifier: ^3.34.1
         version: 3.41.1(svelte@5.55.5(@typescript-eslint/types@8.59.0))
-      bits-ui:
-        specifier: ^2.14.4
-        version: 2.18.0(@internationalized/date@3.12.1)(@sveltejs/kit@2.58.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.5(@typescript-eslint/types@8.59.0))(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))(typescript@5.8.3)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -61,9 +58,6 @@ importers:
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.5.0
-      tailwind-variants:
-        specifier: ^1.0.0
-        version: 1.0.0(tailwindcss@4.2.4)
     devDependencies:
       '@eslint/js':
         specifier: ^9.33.0
@@ -300,9 +294,6 @@ importers:
       '@inquirer/prompts':
         specifier: ^7.2.1
         version: 7.10.1(@types/node@22.19.17)
-      axios:
-        specifier: ^1.12.2
-        version: 1.15.2
       commander:
         specifier: ^12.1.0
         version: 12.1.0
@@ -316,6 +307,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.27.11
         version: 2.31.1(@types/node@22.19.17)
+      '@packages/backend-sdk':
+        specifier: workspace:*
+        version: link:../packages/backend-sdk
       '@types/diff':
         specifier: ^7.0.0
         version: 7.0.2
@@ -536,9 +530,6 @@ importers:
       openapi-fetch:
         specifier: ^0.15.0
         version: 0.15.2
-      openapi-typescript-helpers:
-        specifier: ^0.0.15
-        version: 0.0.15
     devDependencies:
       openapi-typescript:
         specifier: ^7.9.1
@@ -1225,6 +1216,7 @@ packages:
 
   '@clickhouse/client-common@1.18.3':
     resolution: {integrity: sha512-3axzO3zvrsGT5PzDenxgWscltYCNRDbhaHWUgdsmcM9OnW/VnZn9EarOcZogr9P82Z0mQh+Jd2x+p2K4TFD2fA==}
+    deprecated: 'Deprecated: import from @clickhouse/client or @clickhouse/client-web instead.'
 
   '@clickhouse/client@1.18.3':
     resolution: {integrity: sha512-340ngdYktL8PLUBK2QKSwe0o02tYfZSz1mSn1uXCEU8TxHvwh9pnQxElf9YHumDGj5gX/IdgxPsJTGMs82Hgug==}
@@ -2109,9 +2101,6 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
-
-  '@internationalized/date@3.12.1':
-    resolution: {integrity: sha512-6IedsVWXyq4P9Tj+TxuU8WGWM70hYLl12nbYU8jkikVpa6WXapFazPUcHUMDMoWftIDE2ILDkFFte6W2nFCkRQ==}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -3822,6 +3811,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@use-gesture/core@10.3.1':
     resolution: {integrity: sha512-WcINiDt8WjqBdUXye25anHiNxPc0VOrlT8F6LLkU6cycrOGUDyY/yyFmsg3k8i5OLvv25llc0QC45GhR/C8llw==}
@@ -4221,13 +4211,6 @@ packages:
   binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
-
-  bits-ui@2.18.0:
-    resolution: {integrity: sha512-GLOBZRVy3hxNHIQ2MpD/+5aK9KcBFZRhUJtZ1UDABXdlVR4K6zFpgt4T+Rwuhf2sQzlc6yK1q/DprHPjwT4Pjw==}
-    engines: {node: '>=20'}
-    peerDependencies:
-      '@internationalized/date': ^3.8.1
-      svelte: ^5.33.0
 
   bl@4.1.0:
     resolution: {integrity: sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w==}
@@ -4986,6 +4969,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -6059,16 +6043,13 @@ packages:
 
   lucide-svelte@0.544.0:
     resolution: {integrity: sha512-8kBxSivf8SJdEUJRHBpu9bRw0S/qfVK+Yfb92KQnRRBdP425RzT6aQfrIfZctG1oucPVTBQe1ZXgmth/3qVICg==}
+    deprecated: Package deprecated. Please use @lucide/svelte instead.
     peerDependencies:
       svelte: ^3 || ^4 || ^5.0.0-next.42
 
   luxon@3.7.2:
     resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
     engines: {node: '>=12'}
-
-  lz-string@1.5.0:
-    resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
-    hasBin: true
 
   maath@0.10.8:
     resolution: {integrity: sha512-tRvbDF0Pgqz+9XUa4jjfgAQ8/aPKmQdWXilFu2tMy4GWj4NOsx99HlULO4IeREfbO3a0sA145DZYyvXPkybm0g==}
@@ -7091,6 +7072,7 @@ packages:
   recharts@2.15.4:
     resolution: {integrity: sha512-UT/q6fwS3c1dHbXv2uFgYJ9BMFHu3fwnd7AYZaEQhXuYQ4hgsxLvsUXzGdKeZrW5xopzDCvuA2N41WJ88I7zIw==}
     engines: {node: '>=14'}
+    deprecated: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
     peerDependencies:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -7199,15 +7181,6 @@ packages:
     resolution: {integrity: sha512-k2xx7RuO9hWcdd9f+8JoBeqWtYrm5CALfgpkg2YDB80ds/QE4w0qqu34A7fqiAwiBBSBQOid7TLxwxVC27ymWQ==}
     peerDependencies:
       svelte: ^5.7.0
-
-  runed@0.35.1:
-    resolution: {integrity: sha512-2F4Q/FZzbeJTFdIS/PuOoPRSm92sA2LhzTnv6FXhCoENb3huf5+fDuNOg1LNvGOouy3u/225qxmuJvcV3IZK5Q==}
-    peerDependencies:
-      '@sveltejs/kit': ^2.21.0
-      svelte: ^5.7.0
-    peerDependenciesMeta:
-      '@sveltejs/kit':
-        optional: true
 
   rxjs@7.8.1:
     resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
@@ -7537,12 +7510,6 @@ packages:
     peerDependencies:
       svelte: ^5.0.0
 
-  svelte-toolbelt@0.10.6:
-    resolution: {integrity: sha512-YWuX+RE+CnWYx09yseAe4ZVMM7e7GRFZM6OYWpBKOb++s+SQ8RBIMMe+Bs/CznBMc0QPLjr+vDBxTAkozXsFXQ==}
-    engines: {node: '>=18', pnpm: '>=8.7.0'}
-    peerDependencies:
-      svelte: ^5.30.2
-
   svelte@5.55.5:
     resolution: {integrity: sha512-2uCs/LZ9us+AktdzYJM8OcxQ8qnPS1kpaO7syGT/MgO+6Qr1Ybl+TqPq+97u7PHqmmMlye5ZkoyXONy5mjjAbw==}
     engines: {node: '>=18'}
@@ -7554,20 +7521,8 @@ packages:
     resolution: {integrity: sha512-b19dMThMV4HVFynSAM1++gBHAbk2Tc/osgLIBZMKsyqh34jb2e8Os7T6ZW/Bt3pJFdBTd2JwAnAAEQV7rSNvcQ==}
     engines: {node: '>=0.10'}
 
-  tabbable@6.4.0:
-    resolution: {integrity: sha512-05PUHKSNE8ou2dwIxTngl4EzcnsCDZGJ/iCLtDflR/SHB/ny14rXc+qU5P4mG9JkusiV7EivzY9Mhm55AzAvCg==}
-
-  tailwind-merge@3.0.2:
-    resolution: {integrity: sha512-l7z+OYZ7mu3DTqrL88RiKrKIqO3NcpEO8V/Od04bNpvk0kiIFndGEoqfuzvj4yuhRkHKjRkII2z+KS2HfPcSxw==}
-
   tailwind-merge@3.5.0:
     resolution: {integrity: sha512-I8K9wewnVDkL1NTGoqWmVEIlUcB9gFriAEkXkfCjX5ib8ezGxtR3xD7iZIxrfArjEsH7F1CHD4RFUtxefdqV/A==}
-
-  tailwind-variants@1.0.0:
-    resolution: {integrity: sha512-2WSbv4ulEEyuBKomOunut65D8UZwxrHoRfYnxGcQNnHqlSCp2+B7Yz2W+yrNDrxRodOXtGD/1oCcKGNBnUqMqA==}
-    engines: {node: '>=16.x', pnpm: '>=7.x'}
-    peerDependencies:
-      tailwindcss: '*'
 
   tailwindcss@4.2.4:
     resolution: {integrity: sha512-HhKppgO81FQof5m6TEnuBWCZGgfRAWbaeOaGT00KOy/Pf/j6oUihdvBpA7ltCeAvZpFhW3j0PTclkxsd4IXYDA==}
@@ -8004,6 +7959,7 @@ packages:
 
   uuid@10.0.0:
     resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   v8-compile-cache-lib@3.0.1:
@@ -9912,10 +9868,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.17
 
-  '@internationalized/date@3.12.1':
-    dependencies:
-      '@swc/helpers': 0.5.21
-
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
@@ -11202,6 +11154,7 @@ snapshots:
   '@swc/helpers@0.5.21':
     dependencies:
       tslib: 2.8.1
+    optional: true
 
   '@swc/types@0.1.26':
     dependencies:
@@ -12230,19 +12183,6 @@ snapshots:
       require-from-string: 2.0.2
 
   binary-extensions@2.3.0: {}
-
-  bits-ui@2.18.0(@internationalized/date@3.12.1)(@sveltejs/kit@2.58.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.5(@typescript-eslint/types@8.59.0))(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))(typescript@5.8.3)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0)):
-    dependencies:
-      '@floating-ui/core': 1.7.5
-      '@floating-ui/dom': 1.7.6
-      '@internationalized/date': 3.12.1
-      esm-env: 1.2.2
-      runed: 0.35.1(@sveltejs/kit@2.58.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.5(@typescript-eslint/types@8.59.0))(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))(typescript@5.8.3)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))
-      svelte: 5.55.5(@typescript-eslint/types@8.59.0)
-      svelte-toolbelt: 0.10.6(@sveltejs/kit@2.58.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.5(@typescript-eslint/types@8.59.0))(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))(typescript@5.8.3)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))
-      tabbable: 6.4.0
-    transitivePeerDependencies:
-      - '@sveltejs/kit'
 
   bl@4.1.0:
     dependencies:
@@ -14318,8 +14258,6 @@ snapshots:
 
   luxon@3.7.2: {}
 
-  lz-string@1.5.0: {}
-
   maath@0.10.8(@types/three@0.180.0)(three@0.180.0):
     dependencies:
       '@types/three': 0.180.0
@@ -15639,15 +15577,6 @@ snapshots:
       esm-env: 1.2.2
       svelte: 5.55.5(@typescript-eslint/types@8.59.0)
 
-  runed@0.35.1(@sveltejs/kit@2.58.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.5(@typescript-eslint/types@8.59.0))(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))(typescript@5.8.3)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0)):
-    dependencies:
-      dequal: 2.0.3
-      esm-env: 1.2.2
-      lz-string: 1.5.0
-      svelte: 5.55.5(@typescript-eslint/types@8.59.0)
-    optionalDependencies:
-      '@sveltejs/kit': 2.58.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.5(@typescript-eslint/types@8.59.0))(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))(typescript@5.8.3)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3))
-
   rxjs@7.8.1:
     dependencies:
       tslib: 2.8.1
@@ -16036,15 +15965,6 @@ snapshots:
       runed: 0.28.0(svelte@5.55.5(@typescript-eslint/types@8.59.0))
       svelte: 5.55.5(@typescript-eslint/types@8.59.0)
 
-  svelte-toolbelt@0.10.6(@sveltejs/kit@2.58.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.5(@typescript-eslint/types@8.59.0))(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))(typescript@5.8.3)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0)):
-    dependencies:
-      clsx: 2.1.1
-      runed: 0.35.1(@sveltejs/kit@2.58.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.5(@typescript-eslint/types@8.59.0))(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))(typescript@5.8.3)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)))(svelte@5.55.5(@typescript-eslint/types@8.59.0))
-      style-to-object: 1.0.14
-      svelte: 5.55.5(@typescript-eslint/types@8.59.0)
-    transitivePeerDependencies:
-      - '@sveltejs/kit'
-
   svelte@5.55.5(@typescript-eslint/types@8.59.0):
     dependencies:
       '@jridgewell/remapping': 2.3.5
@@ -16072,16 +15992,7 @@ snapshots:
 
   symbol-observable@4.0.0: {}
 
-  tabbable@6.4.0: {}
-
-  tailwind-merge@3.0.2: {}
-
   tailwind-merge@3.5.0: {}
-
-  tailwind-variants@1.0.0(tailwindcss@4.2.4):
-    dependencies:
-      tailwind-merge: 3.0.2
-      tailwindcss: 4.2.4
 
   tailwindcss@4.2.4: {}
 

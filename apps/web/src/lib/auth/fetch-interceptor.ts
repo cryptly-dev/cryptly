@@ -61,6 +61,8 @@ export function installAuthFetchInterceptor(): void {
   nativeFetch = window.fetch.bind(window);
 
   window.fetch = async (input, init) => {
+    // A Request body can only be read once, so keep a copy for the retry.
+    const retryInput = input instanceof Request ? input.clone() : input;
     const response = await nativeFetch!(input, init);
 
     if (
@@ -74,8 +76,8 @@ export function installAuthFetchInterceptor(): void {
     try {
       const token = await refreshAccessToken();
       const retryResponse = await nativeFetch!(
-        input,
-        withBearerToken(input, init, token),
+        retryInput,
+        withBearerToken(retryInput, init, token),
       );
       if (retryResponse.status === 401) {
         handleAuthFailure();

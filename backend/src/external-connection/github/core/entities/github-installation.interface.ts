@@ -26,7 +26,7 @@ export class GithubInstallationSerialized {
   @ApiProperty()
   githubInstallationId: number;
 
-  @ApiProperty({ type: GithubInstallationLiveDataSerialized })
+  @ApiProperty({ type: GithubInstallationLiveDataSerialized, required: false })
   liveData?: GithubInstallationLiveDataSerialized;
 
   @ApiProperty()

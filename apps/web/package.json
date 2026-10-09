@@ -23,7 +23,6 @@
     "@monaco-editor/loader": "^1.5.0",
     "@packages/backend-sdk": "workspace:*",
     "@tabler/icons-svelte": "^3.34.1",
-    "bits-ui": "^2.14.4",
     "clsx": "^2.1.1",
     "diff": "^8.0.2",
     "dompurify": "^3.2.6",
@@ -35,8 +34,7 @@
     "motion": "^12.23.12",
     "svelte-dnd-action": "^0.9.61",
     "svelte-sonner": "^1.1.0",
-    "tailwind-merge": "^3.3.1",
-    "tailwind-variants": "^1.0.0"
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

@@ -164,6 +164,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/projects/{projectId}/analytics/secrets-pushed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ProjectCoreController_trackSecretsPushed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/projects/{projectId}/encrypted-secrets-keys": {
         parameters: {
             query?: never;
@@ -404,6 +420,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/cli-flow/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CliFlowController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/cli-flow/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CliFlowController_info"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/cli-flow/sessions/{sessionId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CliFlowController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/cli-flow/sessions/{sessionId}/poll": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CliFlowController_poll"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/local/login": {
         parameters: {
             query?: never;
@@ -524,6 +604,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["GithubExternalConnectionCoreController_getLocalGithubMockBootstrap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/me/external-connections/github/find-projects-by-repo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GithubExternalConnectionCoreController_findProjectsByRepo"];
         put?: never;
         post?: never;
         delete?: never;
@@ -732,7 +828,9 @@ export interface components {
             id: string;
             name: string;
             members: components["schemas"]["ProjectMemberSerialized"][];
-            encryptedSecretsKeys: Record<string, never>;
+            encryptedSecretsKeys: {
+                [key: string]: string;
+            };
             encryptedSecrets: string;
             settings: components["schemas"]["ProjectSettingsSerialized"];
             createdAt: string;
@@ -741,7 +839,9 @@ export interface components {
         ProjectSearchResponse: {
             id: string;
             name: string;
-            encryptedSecretsKeys: Record<string, never>;
+            encryptedSecretsKeys: {
+                [key: string]: string;
+            };
             encryptedSecrets: string;
         };
         ProjectSettingsBody: {
@@ -751,7 +851,9 @@ export interface components {
         CreateProjectBody: {
             name: string;
             encryptedSecrets: string;
-            encryptedSecretsKeys: Record<string, never>;
+            encryptedSecretsKeys: {
+                [key: string]: string;
+            };
             settings: components["schemas"]["ProjectSettingsBody"];
         };
         UserPartialSerialized: {
@@ -820,19 +922,61 @@ export interface components {
         };
         GithubLoginBody: {
             githubCode: string;
+            forceLocalLogin?: boolean;
         };
         TokenResponse: {
             token: string;
-            refreshToken?: string;
+            refreshToken: string;
             isNewUser?: boolean;
         };
         GoogleLoginBody: {
             googleCode: string;
-            forceLocalLogin: boolean;
+            forceLocalLogin?: boolean;
         };
         SendMessageBody: {
             deviceId: string;
-            message: Record<string, never>;
+            message: {
+                [key: string]: unknown;
+            };
+        };
+        StartCliSessionBody: {
+            /** @description Base64 SPKI of the CLI temp RSA-OAEP public key */
+            tempPublicKey: string;
+            /** @description Human-readable device label, e.g. "macbook-air · darwin" */
+            deviceName: string;
+        };
+        StartCliSessionResponse: {
+            sessionId: string;
+            approveUrl: string;
+            /** @description Unix milliseconds at which this session expires. */
+            expiresAt: number;
+        };
+        CliSessionInfoResponse: {
+            sessionId: string;
+            deviceName: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "consumed";
+            /** @description Unix milliseconds at which this session expires. */
+            expiresAt: number;
+            /** @description Base64 SPKI of the CLI temp public key — needed by the browser to wrap the private key. */
+            tempPublicKey: string;
+        };
+        ApproveCliSessionBody: {
+            /** @description RSA-OAEP-encrypted ephemeral AES key (wraps the user private key) */
+            wrappedKey: string;
+            /** @description AES-GCM-encrypted user private key (PKCS8) */
+            encryptedPrivateKey: string;
+        };
+        PollCliSessionResponse: {
+            /** @enum {string} */
+            status: "pending" | "approved" | "consumed";
+            jwt?: string;
+            refreshToken?: string;
+            /** @description RSA-OAEP-encrypted ephemeral AES key */
+            wrappedKey?: string;
+            /** @description AES-GCM-encrypted user private key (PKCS8) */
+            encryptedPrivateKey?: string;
+            userId?: string;
         };
         LocalLoginBody: {
             email: string;
@@ -848,9 +992,6 @@ export interface components {
             url: string;
             isPrivate: boolean;
         };
-        CreateGithubInstallationBody: {
-            githubInstallationId: number;
-        };
         GithubInstallationLiveDataSerialized: {
             owner: string;
             avatar: string;
@@ -859,9 +1000,21 @@ export interface components {
             id: string;
             userId: string;
             githubInstallationId: number;
-            liveData: components["schemas"]["GithubInstallationLiveDataSerialized"];
+            liveData?: components["schemas"]["GithubInstallationLiveDataSerialized"];
             createdAt: string;
             updatedAt: string;
+        };
+        CreateGithubInstallationBody: {
+            githubInstallationId: number;
+        };
+        GithubLocalMockBootstrapResponse: {
+            githubInstallationId: number;
+        };
+        FindProjectsByRepoResponse: {
+            projectId: string;
+            projectName: string;
+            /** @description Total github integrations on the project — useful for ranking matches. */
+            integrationCount: number;
         };
         CreateGithubIntegrationBody: {
             repositoryId: number;
@@ -875,9 +1028,12 @@ export interface components {
             githubRepositoryPublicKey: string;
             githubRepositoryPublicKeyId: string;
             installationEntityId: string;
-            repositoryData: Record<string, never>;
+            repositoryData?: components["schemas"]["GithubRepositorySerialized"];
             createdAt: string;
             updatedAt: string;
+        };
+        GithubAccessTokenResponse: {
+            token: string;
         };
         InstallationPayload: {
             id: number;
@@ -937,7 +1093,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -960,7 +1116,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1000,7 +1156,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1038,7 +1194,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1057,7 +1213,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1080,7 +1236,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1101,7 +1257,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1145,7 +1301,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1166,7 +1322,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1187,13 +1343,32 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectSecretsVersionSerialized"][];
                 };
+            };
+        };
+    };
+    ProjectCoreController_trackSecretsPushed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1275,7 +1450,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1298,7 +1473,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1319,7 +1494,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1363,7 +1538,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1384,7 +1559,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1409,7 +1584,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1428,7 +1603,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1449,7 +1624,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1510,7 +1685,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1533,7 +1708,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1547,7 +1722,7 @@ export interface operations {
         parameters: {
             query: {
                 deviceId: string;
-                role: string;
+                role: "requester" | "approver";
                 deviceName: string;
             };
             header?: never;
@@ -1567,7 +1742,7 @@ export interface operations {
     DeviceFlowController_sendMessage: {
         parameters: {
             query: {
-                role: string;
+                role: "requester" | "approver";
             };
             header?: never;
             path?: never;
@@ -1587,6 +1762,94 @@ export interface operations {
             };
         };
     };
+    CliFlowController_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartCliSessionBody"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StartCliSessionResponse"];
+                };
+            };
+        };
+    };
+    CliFlowController_info: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CliSessionInfoResponse"];
+                };
+            };
+        };
+    };
+    CliFlowController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveCliSessionBody"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CliFlowController_poll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PollCliSessionResponse"];
+                };
+            };
+        };
+    };
     LocalAuthController_login: {
         parameters: {
             query?: never;
@@ -1600,7 +1863,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1623,7 +1886,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1682,7 +1945,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1707,7 +1970,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["GithubInstallationSerialized"];
+                };
             };
         };
     };
@@ -1720,7 +1985,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1743,7 +2008,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1762,12 +2027,34 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GithubInstallationSerialized"][];
+                    "application/json": components["schemas"]["GithubLocalMockBootstrapResponse"];
+                };
+            };
+        };
+    };
+    GithubExternalConnectionCoreController_findProjectsByRepo: {
+        parameters: {
+            query: {
+                owner: string;
+                name: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FindProjectsByRepoResponse"][];
                 };
             };
         };
@@ -1785,7 +2072,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1806,7 +2093,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1827,12 +2114,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TokenResponse"];
+                    "application/json": components["schemas"]["GithubAccessTokenResponse"];
                 };
             };
         };
@@ -1886,7 +2173,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1909,7 +2196,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1930,7 +2217,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1974,7 +2261,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1993,7 +2280,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

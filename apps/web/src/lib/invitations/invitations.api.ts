@@ -1,239 +1,140 @@
-import { publicEnv } from "$lib/shared/env/public-env";
+import { backend, bearer, unwrap, type Schemas } from "$lib/api/backend";
 
-export type { InvitationAcceptance } from "./domain/invitation-acceptance";
+export type Invitation = Schemas["InvitationSerialized"];
+export type PersonalInvitation = Schemas["PersonalInvitationSerialized"];
+export type CreateInvitationDto = Schemas["CreateInvitationBody"];
+export type AcceptInvitationDto = Schemas["AcceptInvitationBody"];
+export type CreatePersonalInvitationDto =
+  Schemas["CreatePersonalInvitationBody"];
 
-const baseUrl = () => publicEnv.apiUrl.replace(/\/$/, "");
-
-function authHeaders(jwt: string) {
-  return {
-    Authorization: `Bearer ${jwt}`,
-    "Content-Type": "application/json",
-  };
-}
-
-export interface InvitationListItem {
-  id: string;
-  projectId: string;
-  role: "read" | "write" | "admin";
-  createdAt: string;
-  temporaryPublicKey: string;
-  temporaryPrivateKey: string;
-  temporarySecretsKey: string;
-  author: {
-    id: string;
-    email?: string;
-    displayName?: string;
-    avatarUrl?: string;
-  };
-}
-
-export interface PersonalInvitationListItem {
-  id: string;
-  projectId: string;
-  projectName: string;
-  role: "read" | "write" | "admin";
-  createdAt: string;
-  author: {
-    id: string;
-    email?: string;
-    displayName?: string;
-    avatarUrl?: string;
-  };
-  invitedUser: {
-    id: string;
-    email?: string;
-    displayName?: string;
-    avatarUrl?: string;
-  };
-}
-
-export interface Invitation {
-  id: string;
-  projectId: string;
-  authorId: string;
-  temporaryPublicKey: string;
-  temporaryPrivateKey: string;
-  temporarySecretsKey: string;
-  role: "read" | "write" | "admin";
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateInvitationDto {
-  projectId: string;
-  temporaryPublicKey: string;
-  temporaryPrivateKey: string;
-  temporarySecretsKey: string;
-  role: "read" | "write" | "admin";
-}
-
-export interface AcceptInvitationDto {
-  newSecretsKey: string;
-}
+const invitationPath = (id: string) => ({ path: { id } });
+const personalInvitationPath = (personalInvitationId: string) => ({
+  path: { personalInvitationId },
+});
 
 export class InvitationsApi {
-  static async getInvitation(
-    jwtToken: string,
-    invitationId: string,
-  ): Promise<Invitation> {
-    const res = await fetch(`${baseUrl()}/invitations/${invitationId}`, {
-      headers: authHeaders(jwtToken),
-    });
-    if (!res.ok) {
-      throw new Error("Failed to load invitation");
-    }
-    return res.json() as Promise<Invitation>;
-  }
-
-  static async getProjectInvitations(
-    jwtToken: string,
-    projectId: string,
-  ): Promise<InvitationListItem[]> {
-    const res = await fetch(`${baseUrl()}/projects/${projectId}/invitations`, {
-      headers: authHeaders(jwtToken),
-    });
-    if (!res.ok) {
-      throw new Error("Failed to load invitations");
-    }
-    return res.json() as Promise<InvitationListItem[]>;
-  }
-
-  static async deleteInvitation(
-    jwtToken: string,
-    invitationId: string,
-  ): Promise<void> {
-    const res = await fetch(`${baseUrl()}/invitations/${invitationId}`, {
-      method: "DELETE",
-      headers: authHeaders(jwtToken),
-    });
-    if (!res.ok) {
-      throw new Error("Failed to revoke invitation");
-    }
-  }
-
-  static async getProjectPersonalInvitations(
-    jwtToken: string,
-    projectId: string,
-  ): Promise<PersonalInvitationListItem[]> {
-    const res = await fetch(
-      `${baseUrl()}/projects/${projectId}/personal-invitations`,
-      {
-        headers: authHeaders(jwtToken),
-      },
+  static getInvitation(jwtToken: string, invitationId: string) {
+    return unwrap(
+      backend.GET("/invitations/{id}", {
+        params: invitationPath(invitationId),
+        headers: bearer(jwtToken),
+      }),
+      "Failed to load invitation",
     );
-    if (!res.ok) {
-      throw new Error("Failed to load personal invitations");
-    }
-    return res.json() as Promise<PersonalInvitationListItem[]>;
   }
 
-  static async deletePersonalInvitation(
+  static getProjectInvitations(jwtToken: string, projectId: string) {
+    return unwrap(
+      backend.GET("/projects/{projectId}/invitations", {
+        params: { path: { projectId } },
+        headers: bearer(jwtToken),
+      }),
+      "Failed to load invitations",
+    );
+  }
+
+  static deleteInvitation(jwtToken: string, invitationId: string) {
+    return unwrap(
+      backend.DELETE("/invitations/{id}", {
+        params: invitationPath(invitationId),
+        headers: bearer(jwtToken),
+      }),
+      "Failed to revoke invitation",
+    );
+  }
+
+  static getProjectPersonalInvitations(jwtToken: string, projectId: string) {
+    return unwrap(
+      backend.GET("/projects/{projectId}/personal-invitations", {
+        params: { path: { projectId } },
+        headers: bearer(jwtToken),
+      }),
+      "Failed to load personal invitations",
+    );
+  }
+
+  static deletePersonalInvitation(
     jwtToken: string,
     personalInvitationId: string,
-  ): Promise<void> {
-    const res = await fetch(
-      `${baseUrl()}/personal-invitations/${personalInvitationId}`,
-      {
-        method: "DELETE",
-        headers: authHeaders(jwtToken),
-      },
+  ) {
+    return unwrap(
+      backend.DELETE("/personal-invitations/{personalInvitationId}", {
+        params: personalInvitationPath(personalInvitationId),
+        headers: bearer(jwtToken),
+      }),
+      "Failed to revoke personal invitation",
     );
-    if (!res.ok) {
-      throw new Error("Failed to revoke personal invitation");
-    }
   }
 
-  static async getMyPersonalInvitations(
-    jwtToken: string,
-  ): Promise<PersonalInvitationListItem[]> {
-    const res = await fetch(`${baseUrl()}/users/me/personal-invitations`, {
-      headers: authHeaders(jwtToken),
-    });
-    if (!res.ok) {
-      throw new Error("Failed to load personal invitations");
-    }
-    return res.json() as Promise<PersonalInvitationListItem[]>;
+  static getMyPersonalInvitations(jwtToken: string) {
+    return unwrap(
+      backend.GET("/users/me/personal-invitations", {
+        headers: bearer(jwtToken),
+      }),
+      "Failed to load personal invitations",
+    );
   }
 
-  static async createInvitation(
-    jwtToken: string,
-    dto: CreateInvitationDto,
-  ): Promise<Invitation> {
-    const res = await fetch(`${baseUrl()}/invitations`, {
-      method: "POST",
-      headers: authHeaders(jwtToken),
-      body: JSON.stringify(dto),
-    });
-    if (!res.ok) {
-      throw new Error("Failed to create invitation");
-    }
-    return res.json() as Promise<Invitation>;
+  static createInvitation(jwtToken: string, dto: CreateInvitationDto) {
+    return unwrap(
+      backend.POST("/invitations", { headers: bearer(jwtToken), body: dto }),
+      "Failed to create invitation",
+    );
   }
 
-  static async acceptInvitation(
+  static acceptInvitation(
     jwtToken: string,
     invitationId: string,
     dto: AcceptInvitationDto,
-  ): Promise<void> {
-    const res = await fetch(`${baseUrl()}/invitations/${invitationId}/accept`, {
-      method: "POST",
-      headers: authHeaders(jwtToken),
-      body: JSON.stringify(dto),
-    });
-    if (!res.ok) {
-      throw new Error("Failed to accept invitation");
-    }
+  ) {
+    return unwrap(
+      backend.POST("/invitations/{id}/accept", {
+        params: invitationPath(invitationId),
+        headers: bearer(jwtToken),
+        body: dto,
+      }),
+      "Failed to accept invitation",
+    );
   }
 
-  static async createPersonalInvitation(
+  static createPersonalInvitation(
     jwtToken: string,
     projectId: string,
-    dto: { invitedUserId: string; role: "read" | "write" | "admin" },
-  ): Promise<void> {
-    const res = await fetch(
-      `${baseUrl()}/projects/${projectId}/personal-invitations`,
-      {
-        method: "POST",
-        headers: authHeaders(jwtToken),
-        body: JSON.stringify(dto),
-      },
+    dto: CreatePersonalInvitationDto,
+  ) {
+    return unwrap(
+      backend.POST("/projects/{projectId}/personal-invitations", {
+        params: { path: { projectId } },
+        headers: bearer(jwtToken),
+        body: dto,
+      }),
+      "Failed to create personal invitation",
     );
-    if (!res.ok) {
-      throw new Error("Failed to create personal invitation");
-    }
   }
 
-  static async acceptPersonalInvitation(
+  static acceptPersonalInvitation(
     jwtToken: string,
     personalInvitationId: string,
-  ): Promise<void> {
-    const res = await fetch(
-      `${baseUrl()}/personal-invitations/${personalInvitationId}/accept`,
-      {
-        method: "POST",
-        headers: authHeaders(jwtToken),
-        body: JSON.stringify({}),
-      },
+  ) {
+    return unwrap(
+      backend.POST("/personal-invitations/{personalInvitationId}/accept", {
+        params: personalInvitationPath(personalInvitationId),
+        headers: bearer(jwtToken),
+      }),
+      "Failed to accept personal invitation",
     );
-    if (!res.ok) {
-      throw new Error("Failed to accept personal invitation");
-    }
   }
 
-  static async rejectPersonalInvitation(
+  static rejectPersonalInvitation(
     jwtToken: string,
     personalInvitationId: string,
-  ): Promise<void> {
-    const res = await fetch(
-      `${baseUrl()}/personal-invitations/${personalInvitationId}/reject`,
-      {
-        method: "POST",
-        headers: authHeaders(jwtToken),
-        body: JSON.stringify({}),
-      },
+  ) {
+    return unwrap(
+      backend.POST("/personal-invitations/{personalInvitationId}/reject", {
+        params: personalInvitationPath(personalInvitationId),
+        headers: bearer(jwtToken),
+      }),
+      "Failed to reject personal invitation",
     );
-    if (!res.ok) {
-      throw new Error("Failed to reject personal invitation");
-    }
   }
 }

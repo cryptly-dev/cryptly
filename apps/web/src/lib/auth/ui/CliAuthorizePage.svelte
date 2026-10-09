@@ -5,13 +5,13 @@
   import { Check, CornerDownLeft, Terminal } from "lucide-svelte";
   import { onMount, tick } from "svelte";
   import { animate } from "motion";
+  import { ApiResponseError } from "$lib/api/backend";
   import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
   import {
     isValidCliSessionPublicId,
     persistCliAuthorizeReturn,
   } from "$lib/auth/cli-authorize-return";
   import {
-    CliFlowRequestError,
     approveCliSession,
     getCliSessionInfo,
     type CliSessionInfo,
@@ -98,7 +98,7 @@
           load = { kind: "ready", session };
         }
       } catch (e: unknown) {
-        const status = e instanceof CliFlowRequestError ? e.status : undefined;
+        const status = e instanceof ApiResponseError ? e.status : undefined;
         const message =
           status === 404
             ? "Session not found or expired."

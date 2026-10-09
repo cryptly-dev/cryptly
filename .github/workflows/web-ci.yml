@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - "apps/web/**"
+      - "backend/src/**"
+      - "backend/package.json"
+      - "cli/**"
       - "packages/backend-sdk/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
@@ -13,6 +16,9 @@ on:
   pull_request:
     paths:
       - "apps/web/**"
+      - "backend/src/**"
+      - "backend/package.json"
+      - "cli/**"
       - "packages/backend-sdk/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
@@ -37,6 +43,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Backend SDK matches the backend
+        run: |
+          pnpm generate:backend-sdk
+          git diff --exit-code -- packages/backend-sdk
+
       - name: Lint
         run: pnpm --filter web lint
 
@@ -45,3 +56,9 @@ jobs:
 
       - name: Svelte production build
         run: pnpm --filter web build
+
+      - name: CLI tests
+        run: pnpm --filter @cryptly/cli test
+
+      - name: CLI build
+        run: pnpm --filter @cryptly/cli build

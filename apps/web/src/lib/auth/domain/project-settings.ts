@@ -1,8 +1,7 @@
-export type ProjectRevealOn = "always" | "hover" | "never";
+import type { Schemas } from "@packages/backend-sdk";
 
-export interface ProjectSettings {
-  revealOn: ProjectRevealOn;
-}
+export type ProjectSettings = Schemas["ProjectSettingsSerialized"];
+export type ProjectRevealOn = ProjectSettings["revealOn"];
 
 export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
   revealOn: "hover",

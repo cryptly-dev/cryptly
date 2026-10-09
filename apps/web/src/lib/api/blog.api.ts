@@ -1,95 +1,47 @@
-import { publicEnv } from "$lib/shared/env/public-env";
+import { backend, bearer, unwrap, type Schemas } from "$lib/api/backend";
 
-const baseUrl = () => publicEnv.apiUrl.replace(/\/$/, "");
-
-export interface BlogPostAuthor {
-  id: string;
-  avatarUrl: string;
-  displayName: string;
-}
-
-export interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  excerpt?: string;
-  coverImageUrl?: string;
-  author: BlogPostAuthor;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateBlogPostDto {
-  title: string;
-  content: string;
-  excerpt?: string;
-  coverImageUrl?: string;
-  slug?: string;
-  createdAt?: string;
-}
-
-export interface UpdateBlogPostDto {
-  title?: string;
-  content?: string;
-  excerpt?: string;
-  coverImageUrl?: string;
-  slug?: string;
-  createdAt?: string;
-}
-
-function authHeaders(jwt: string) {
-  return { Authorization: `Bearer ${jwt}` };
-}
+export type BlogPost = Schemas["BlogPostSerialized"];
+export type CreateBlogPostDto = Schemas["CreateBlogPostBody"];
+export type UpdateBlogPostDto = Schemas["UpdateBlogPostBody"];
 
 export class BlogApi {
-  public static async list(): Promise<BlogPost[]> {
-    const res = await fetch(`${baseUrl()}/blog/posts`);
-    if (!res.ok) throw new Error("Failed to load posts");
-    return res.json() as Promise<BlogPost[]>;
+  public static list() {
+    return unwrap(backend.GET("/blog/posts"), "Failed to load posts");
   }
 
-  public static async getBySlug(slug: string): Promise<BlogPost> {
-    const res = await fetch(
-      `${baseUrl()}/blog/posts/${encodeURIComponent(slug)}`,
+  public static getBySlug(slug: string) {
+    return unwrap(
+      backend.GET("/blog/posts/{slug}", { params: { path: { slug } } }),
+      "Failed to load post",
     );
-    if (!res.ok) throw new Error("Failed to load post");
-    return res.json() as Promise<BlogPost>;
   }
 
-  public static async create(
-    jwtToken: string,
-    dto: CreateBlogPostDto,
-  ): Promise<BlogPost> {
-    const res = await fetch(`${baseUrl()}/blog/posts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders(jwtToken) },
-      body: JSON.stringify(dto),
-    });
-    if (!res.ok) throw new Error("Failed to create post");
-    return res.json() as Promise<BlogPost>;
+  public static create(jwtToken: string, dto: CreateBlogPostDto) {
+    return unwrap(
+      backend.POST("/blog/posts", { headers: bearer(jwtToken), body: dto }),
+      "Failed to create post",
+    );
   }
 
-  public static async update(
-    jwtToken: string,
-    id: string,
-    dto: UpdateBlogPostDto,
-  ): Promise<BlogPost> {
-    const res = await fetch(`${baseUrl()}/blog/posts/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...authHeaders(jwtToken) },
-      body: JSON.stringify(dto),
-    });
-    if (!res.ok) throw new Error("Failed to update post");
-    return res.json() as Promise<BlogPost>;
+  public static update(jwtToken: string, id: string, dto: UpdateBlogPostDto) {
+    return unwrap(
+      backend.PATCH("/blog/posts/{id}", {
+        params: { path: { id } },
+        headers: bearer(jwtToken),
+        body: dto,
+      }),
+      "Failed to update post",
+    );
   }
 
-  public static async delete(jwtToken: string, id: string): Promise<void> {
-    const res = await fetch(`${baseUrl()}/blog/posts/${id}`, {
-      method: "DELETE",
-      headers: { ...authHeaders(jwtToken) },
-    });
-    if (!res.ok) throw new Error("Failed to delete post");
+  public static delete(jwtToken: string, id: string) {
+    return unwrap(
+      backend.DELETE("/blog/posts/{id}", {
+        params: { path: { id } },
+        headers: bearer(jwtToken),
+      }),
+      "Failed to delete post",
+    );
   }
 }
 
