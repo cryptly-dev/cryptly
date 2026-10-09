@@ -1,5 +1,5 @@
 import { Body, Controller, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { TokenResponse } from '../../../shared/responses/token.response';
 import { Public } from '../../core/decorators/is-public';
 import { CustomJwtService } from '../../custom-jwt/custom-jwt.service';
@@ -7,6 +7,8 @@ import { RefreshTokenReadService } from '../read/refresh-token-read.service';
 import { RefreshTokenWriteService } from '../write/refresh-token-write.service';
 import { RefreshBody } from './dto/refresh.body';
 import { hashRefreshToken } from './refresh-token.utils';
+import { UserReadService } from '../../../user/read/user-read.service';
+import { ProductAnalyticsService } from '../../../shared/posthog/product-analytics.service';
 
 @Public()
 @Controller('auth')
@@ -16,10 +18,12 @@ export class RefreshTokenCoreController {
     private readonly refreshTokenReadService: RefreshTokenReadService,
     private readonly refreshTokenWriteService: RefreshTokenWriteService,
     private readonly jwtService: CustomJwtService,
+    private readonly userReadService: UserReadService,
+    private readonly productAnalytics: ProductAnalyticsService,
   ) {}
 
   @Post('refresh')
-  @ApiResponse({ type: TokenResponse })
+  @ApiCreatedResponse({ type: TokenResponse })
   public async refresh(@Body() body: RefreshBody): Promise<TokenResponse> {
     const tokenHash = hashRefreshToken(body.refreshToken);
     const existing = await this.refreshTokenReadService.findByHash(tokenHash);
@@ -40,6 +44,9 @@ export class RefreshTokenCoreController {
 
     await this.refreshTokenWriteService.revokeById(existing.id);
     const issued = await this.refreshTokenWriteService.issue(existing.userId);
+
+    const user = await this.userReadService.readByIdOrThrow(existing.userId);
+    this.productAnalytics.identify(existing.userId, user.email ?? existing.userId);
 
     return {
       token: await this.jwtService.sign({ id: existing.userId }),

@@ -118,10 +118,10 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/new': typeof BlogNewRoute
   '/invite/$inviteId': typeof InviteInviteIdRoute
-  '/blog': typeof BlogIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/app/project/$projectId': typeof AppProjectProjectIdRoute
   '/blog/edit/$slug': typeof BlogEditSlugRoute
-  '/app/project': typeof AppProjectIndexRoute
+  '/app/project/': typeof AppProjectIndexRoute
   '/app/callbacks/integrations/github': typeof AppCallbacksIntegrationsGithubRoute
   '/app/callbacks/oauth/github': typeof AppCallbacksOauthGithubRoute
   '/app/callbacks/oauth/google': typeof AppCallbacksOauthGoogleRoute
@@ -175,10 +175,10 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/new'
     | '/invite/$inviteId'
-    | '/blog'
+    | '/blog/'
     | '/app/project/$projectId'
     | '/blog/edit/$slug'
-    | '/app/project'
+    | '/app/project/'
     | '/app/callbacks/integrations/github'
     | '/app/callbacks/oauth/github'
     | '/app/callbacks/oauth/google'
@@ -249,7 +249,7 @@ declare module '@tanstack/react-router' {
     '/blog/': {
       id: '/blog/'
       path: '/blog'
-      fullPath: '/blog'
+      fullPath: '/blog/'
       preLoaderRoute: typeof BlogIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -305,7 +305,7 @@ declare module '@tanstack/react-router' {
     '/app/project/': {
       id: '/app/project/'
       path: '/project'
-      fullPath: '/app/project'
+      fullPath: '/app/project/'
       preLoaderRoute: typeof AppProjectIndexRouteImport
       parentRoute: typeof AppRoute
     }

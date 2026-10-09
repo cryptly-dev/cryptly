@@ -7,7 +7,7 @@ export class SendMessageBody {
   @IsNotEmpty()
   deviceId: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: 'object', additionalProperties: true })
   @IsNotEmpty()
-  message: any;
+  message: Record<string, unknown>;
 }

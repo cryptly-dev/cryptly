@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Query, Sse } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Observable, filter, finalize, fromEvent, map, merge, startWith } from 'rxjs';
 import { CurrentUserId } from '../core/decorators/current-user-id.decorator';
 import { APPROVERS_LIST, DeviceEvent } from '../events/device-event.enum';
@@ -18,6 +18,7 @@ export class DeviceFlowController {
   ) {}
 
   @Sse('messages')
+  @ApiQuery({ name: 'role', enum: DeviceFlowRole })
   public streamMessages(
     @CurrentUserId() userId: string,
     @Query('deviceId') deviceId: string,
@@ -74,6 +75,7 @@ export class DeviceFlowController {
   }
 
   @Post('send-message')
+  @ApiQuery({ name: 'role', enum: DeviceFlowRole })
   public async sendMessage(
     @CurrentUserId() userId: string,
     @Query('role') role: DeviceFlowRole,

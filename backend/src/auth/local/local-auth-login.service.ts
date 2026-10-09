@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap, UnauthorizedException } from '@nestjs/common';
 import { CustomJwtService } from '../custom-jwt/custom-jwt.service';
 import { UserReadService } from '../../user/read/user-read.service';
 import { UserWriteService } from '../../user/write/user-write.service';
@@ -12,6 +7,7 @@ import { TokenResponse } from '../../shared/responses/token.response';
 import { LocalLoginBody } from './dto/local-login.body';
 import { getEnvConfig } from '../../shared/config/env-config';
 import { RefreshTokenWriteService } from '../refresh-token/write/refresh-token-write.service';
+import { ProductAnalyticsService } from '../../shared/posthog/product-analytics.service';
 
 @Injectable()
 export class LocalAuthLoginService implements OnApplicationBootstrap {
@@ -22,6 +18,7 @@ export class LocalAuthLoginService implements OnApplicationBootstrap {
     private readonly userReadService: UserReadService,
     private readonly userWriteService: UserWriteService,
     private readonly refreshTokenWriteService: RefreshTokenWriteService,
+    private readonly productAnalytics: ProductAnalyticsService,
   ) {}
 
   public async onApplicationBootstrap(): Promise<void> {
@@ -56,9 +53,13 @@ export class LocalAuthLoginService implements OnApplicationBootstrap {
 
       this.logger.log(`Created new user for local login`, { email: dto.email, userId: newUser.id });
 
+      const token = await this.jwtService.sign({ id: newUser.id });
+      const refreshToken = (await this.refreshTokenWriteService.issue(newUser.id)).rawToken;
+      this.productAnalytics.loggedIn(newUser.id, dto.email, 'local');
+
       return {
-        token: await this.jwtService.sign({ id: newUser.id }),
-        refreshToken: (await this.refreshTokenWriteService.issue(newUser.id)).rawToken,
+        token,
+        refreshToken,
         isNewUser: true,
       };
     }
@@ -68,9 +69,13 @@ export class LocalAuthLoginService implements OnApplicationBootstrap {
       userId: user.id,
     });
 
+    const token = await this.jwtService.sign({ id: user.id });
+    const refreshToken = (await this.refreshTokenWriteService.issue(user.id)).rawToken;
+    this.productAnalytics.loggedIn(user.id, user.email ?? dto.email, 'local');
+
     return {
-      token: await this.jwtService.sign({ id: user.id }),
-      refreshToken: (await this.refreshTokenWriteService.issue(user.id)).rawToken,
+      token,
+      refreshToken,
       isNewUser: false,
     };
   }

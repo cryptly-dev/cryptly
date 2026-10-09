@@ -2,8 +2,9 @@ import { Logger } from '@logdash/js-sdk';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { createOpenApiDocument } from './openapi';
 import { AllExceptionsFilter } from './shared/filters/all-exceptions.filter';
 import { MetricsInterceptor } from './shared/posthog/metrics.interceptor';
 
@@ -21,14 +22,7 @@ async function bootstrap() {
   );
   app.useGlobalInterceptors(new MetricsInterceptor(app.get(Reflector)));
 
-  const config = new DocumentBuilder()
-    .addBearerAuth()
-    .addApiKey({ type: 'apiKey', in: 'header', name: 'project-api-key' }, 'project-api-key')
-    .setTitle('Cryptly')
-    .build();
-
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, documentFactory);
+  SwaggerModule.setup('docs', app, () => createOpenApiDocument(app));
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -38,7 +32,7 @@ async function bootstrap() {
   );
 
   await app.init();
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 9050);
 }
 bootstrap();
 

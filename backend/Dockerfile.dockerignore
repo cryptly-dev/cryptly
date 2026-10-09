@@ -1,0 +1,8 @@
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!backend
+backend/node_modules
+backend/dist
+backend/.env*

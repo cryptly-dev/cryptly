@@ -1,6 +1,6 @@
 import { Logger } from '@logdash/js-sdk';
 import { Body, Controller, Delete, Get, Patch, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUserId } from '../../auth/core/decorators/current-user-id.decorator';
 import { UserReadService } from '../read/user-read.service';
 import { UserWriteService } from '../write/user-write.service';
@@ -21,7 +21,7 @@ export class UserCoreController {
   ) {}
 
   @Get('me')
-  @ApiResponse({ type: UserSerialized })
+  @ApiOkResponse({ type: UserSerialized })
   public async readCurrentUser(@CurrentUserId() userId: string): Promise<UserSerialized> {
     const user = await this.userReadService.readByIdOrThrow(userId);
 
@@ -29,7 +29,7 @@ export class UserCoreController {
   }
 
   @Patch('me')
-  @ApiResponse({ type: UserSerialized })
+  @ApiOkResponse({ type: UserSerialized })
   public async updateUser(
     @CurrentUserId() userId: string,
     @Body() body: UpdateUserBody,
@@ -46,7 +46,7 @@ export class UserCoreController {
   }
 
   @Post('public-keys')
-  @ApiResponse({ type: GetPublicKeysResponse })
+  @ApiCreatedResponse({ type: GetPublicKeysResponse })
   public async getPublicKeys(@Body() body: GetPublicKeysBody): Promise<GetPublicKeysResponse> {
     const users = await this.userReadService.readByIds(body.userIds);
 

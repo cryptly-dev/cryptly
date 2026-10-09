@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsObject } from 'class-validator';
 
 export class RemoveUserFromBody {
-  @ApiProperty()
+  @ApiProperty({ type: 'object', additionalProperties: { type: 'string' } })
   @IsObject()
   public newencryptedSecretsKeys: Record<string, string>;
 }

@@ -122,7 +122,7 @@ export const EnvConfigs: EnvConfigs = {
       allowLocalLogin: process.env.ALLOW_LOCAL_LOGIN === 'true',
     },
     githubLocalMock: process.env.GITHUB_LOCAL_MOCK === 'true',
-    webAppUrl: process.env.WEB_APP_URL || 'http://localhost:5173',
+    webAppUrl: process.env.WEB_APP_URL || 'http://localhost:9090',
     logdash: {
       apiKey: process.env.LOGDASH_API_KEY!,
     },

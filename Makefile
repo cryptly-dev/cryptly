@@ -7,7 +7,7 @@ help:
 	@echo "  frontend   - Run frontend development server"
 	@echo "  dev        - Run both backend and frontend concurrently"
 	@echo "  local      - Set up and run complete local stack (with MongoDB)"
-	@echo "  install    - Install dependencies for both backend and frontend"
+	@echo "  install    - Install workspace dependencies"
 	@echo "  clean      - Clean node_modules and build artifacts"
 	@echo "  help       - Show this help message"
 
@@ -30,10 +30,8 @@ dev:
 
 # Install dependencies for both projects
 install:
-	@echo "Installing backend dependencies..."
-	cd backend && pnpm install
-	@echo "Installing frontend dependencies..."
-	cd frontend && pnpm install
+	@echo "Installing workspace dependencies..."
+	pnpm install
 
 # Clean build artifacts and node_modules
 clean:

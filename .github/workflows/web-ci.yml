@@ -1,0 +1,64 @@
+name: Web app CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/web/**"
+      - "backend/src/**"
+      - "backend/package.json"
+      - "cli/**"
+      - "packages/backend-sdk/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/web-ci.yml"
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "backend/src/**"
+      - "backend/package.json"
+      - "cli/**"
+      - "packages/backend-sdk/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/web-ci.yml"
+
+jobs:
+  check-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Backend SDK matches the backend
+        run: |
+          pnpm generate:backend-sdk
+          git diff --exit-code -- packages/backend-sdk
+
+      - name: Lint
+        run: pnpm --filter web lint
+
+      - name: Svelte check
+        run: pnpm --filter web check
+
+      - name: Svelte production build
+        run: pnpm --filter web build
+
+      - name: CLI tests
+        run: pnpm --filter @cryptly/cli test
+
+      - name: CLI build
+        run: pnpm --filter @cryptly/cli build

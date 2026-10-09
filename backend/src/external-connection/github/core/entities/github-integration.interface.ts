@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { GithubRepository } from '../../client/dto/github-repository.dto';
+import { GithubRepository, GithubRepositorySerialized } from '../../client/dto/github-repository.dto';
 
 export interface GithubIntegrationNormalized {
   id: string;
@@ -31,7 +31,7 @@ export class GithubIntegrationSerialized {
   @ApiProperty()
   installationEntityId: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: GithubRepositorySerialized, required: false })
   repositoryData?: GithubRepository;
 
   @ApiProperty()

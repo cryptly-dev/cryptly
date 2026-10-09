@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
 import { Observable, filter, finalize, fromEvent, map } from 'rxjs';
 import { Role } from 'src/shared/types/role.enum';
@@ -38,6 +38,7 @@ import { ProjectSerialized } from './entities/project.interface';
 import { ProjectSerializer } from './entities/project.serializer';
 import { ProjectMemberGuard } from './guards/project-member.guard';
 import { RemoveProjectMemberGuard } from './guards/remove-project-member.guard';
+import { ProductAnalyticsService } from '../../shared/posthog/product-analytics.service';
 
 @Controller('')
 @ApiTags('Projects')
@@ -51,6 +52,7 @@ export class ProjectCoreController {
     private readonly projectSecretsVersionReadService: ProjectSecretsVersionReadService,
     private readonly personalInvitationReadService: PersonalInvitationReadService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly productAnalytics: ProductAnalyticsService,
   ) {}
 
   @Sse('projects/:projectId/events')
@@ -72,7 +74,7 @@ export class ProjectCoreController {
   }
 
   @Get('users/me/projects')
-  @ApiResponse({ type: [ProjectSerialized] })
+  @ApiOkResponse({ type: [ProjectSerialized] })
   public async findUserProjects(@CurrentUserId() userId: string): Promise<ProjectSerialized[]> {
     const [projects, user] = await Promise.all([
       this.projectReadService.findUserProjects(userId),
@@ -106,7 +108,7 @@ export class ProjectCoreController {
   }
 
   @Get('users/me/projects/search')
-  @ApiResponse({ type: [ProjectSearchResponse] })
+  @ApiOkResponse({ type: [ProjectSearchResponse] })
   public async findUserProjectsForSearch(
     @CurrentUserId() userId: string,
   ): Promise<ProjectSearchResponse[]> {
@@ -125,7 +127,7 @@ export class ProjectCoreController {
   }
 
   @Post('projects')
-  @ApiResponse({ type: ProjectSerialized })
+  @ApiCreatedResponse({ type: ProjectSerialized })
   public async create(
     @CurrentUserId() userId: string,
     @Body() body: CreateProjectBody,
@@ -142,6 +144,8 @@ export class ProjectCoreController {
 
     await this.userWriteService.addToProjectsOrder(userId, project.id);
 
+    this.productAnalytics.capture(userId, 'project_created', { project_id: project.id });
+
     const members = await this.userReadService.readByIds([userId]);
     const membersHydrated = members.map((user) => UserSerializer.serializePartial(user));
 
@@ -151,7 +155,7 @@ export class ProjectCoreController {
   @Get('projects/:projectId')
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Read, Role.Write, Role.Admin)
-  @ApiResponse({ type: ProjectSerialized })
+  @ApiOkResponse({ type: ProjectSerialized })
   public async findById(@Param('projectId') projectId: string): Promise<ProjectSerialized> {
     const project = await this.projectReadService.findByIdOrThrow(projectId);
     const memberIds = Object.keys(project.members);
@@ -171,7 +175,7 @@ export class ProjectCoreController {
   @Get('projects/:projectId/suggested-users')
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Admin)
-  @ApiResponse({ type: [UserPartialSerialized] })
+  @ApiOkResponse({ type: [UserPartialSerialized] })
   public async getSuggestedUsers(
     @CurrentUserId() userId: string,
     @Param('projectId') projectId: string,
@@ -214,7 +218,7 @@ export class ProjectCoreController {
   @Get('projects/:projectId/history')
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Read, Role.Write, Role.Admin)
-  @ApiResponse({ type: [ProjectSecretsVersionSerialized] })
+  @ApiOkResponse({ type: [ProjectSecretsVersionSerialized] })
   public async findHistoryById(
     @Param('projectId') projectId: string,
   ): Promise<ProjectSecretsVersionSerialized[]> {
@@ -223,7 +227,7 @@ export class ProjectCoreController {
 
   @Patch('projects/:projectId')
   @UseGuards(ProjectMemberGuard)
-  @ApiResponse({ type: ProjectSerialized })
+  @ApiOkResponse({ type: ProjectSerialized })
   public async update(
     @Param('projectId') projectId: string,
     @Body() body: UpdateProjectBody,
@@ -248,6 +252,7 @@ export class ProjectCoreController {
         ProjectEvent.SecretsUpdated,
         new SecretsUpdatedEvent(projectId, body.encryptedSecrets, author!, latestVersion.updatedAt),
       );
+      this.productAnalytics.capture(userId, 'secrets_saved', { project_id: projectId });
     }
 
     return ProjectSerializer.serialize(
@@ -255,6 +260,17 @@ export class ProjectCoreController {
       membersHydrated,
       latestVersion.encryptedSecrets,
     );
+  }
+
+  @Post('projects/:projectId/analytics/secrets-pushed')
+  @UseGuards(ProjectMemberGuard)
+  @RequireRole(Role.Write, Role.Admin)
+  @HttpCode(204)
+  public async trackSecretsPushed(
+    @Param('projectId') projectId: string,
+    @CurrentUserId() userId: string,
+  ): Promise<void> {
+    this.productAnalytics.capture(userId, 'secrets_pushed', { project_id: projectId });
   }
 
   @Post('projects/:projectId/encrypted-secrets-keys')

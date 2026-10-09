@@ -10,7 +10,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ProjectMemberGuard } from 'src/project/core/guards/project-member.guard';
 import { RequireRole } from 'src/project/decorators/require-project-role.decorator';
 import { Role } from 'src/shared/types/role.enum';
@@ -42,7 +42,7 @@ export class PersonalInvitationCoreController {
   @Get('projects/:projectId/personal-invitations')
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Admin)
-  @ApiResponse({ type: [PersonalInvitationSerialized] })
+  @ApiOkResponse({ type: [PersonalInvitationSerialized] })
   public async findProjectPersonalInvitations(
     @Param('projectId') projectId: string,
   ): Promise<PersonalInvitationSerialized[]> {
@@ -74,7 +74,7 @@ export class PersonalInvitationCoreController {
   }
 
   @Get('users/me/personal-invitations')
-  @ApiResponse({ type: [PersonalInvitationSerialized] })
+  @ApiOkResponse({ type: [PersonalInvitationSerialized] })
   public async findMyPersonalInvitations(
     @CurrentUserId() userId: string,
   ): Promise<PersonalInvitationSerialized[]> {
@@ -104,7 +104,7 @@ export class PersonalInvitationCoreController {
   }
 
   @Post('projects/:projectId/personal-invitations')
-  @ApiResponse({ type: PersonalInvitationSerialized })
+  @ApiCreatedResponse({ type: PersonalInvitationSerialized })
   @UseGuards(ProjectMemberGuard)
   @RequireRole(Role.Admin)
   public async create(
@@ -127,7 +127,7 @@ export class PersonalInvitationCoreController {
   }
 
   @Post('personal-invitations/:personalInvitationId/accept')
-  @ApiResponse({ type: PersonalInvitationSerialized })
+  @ApiCreatedResponse({ type: PersonalInvitationSerialized })
   public async accept(
     @Param('personalInvitationId') id: string,
     @CurrentUserId() userId: string,

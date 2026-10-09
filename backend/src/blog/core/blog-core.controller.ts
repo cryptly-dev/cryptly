@@ -10,7 +10,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUserId } from '../../auth/core/decorators/current-user-id.decorator';
 import { Public } from '../../auth/core/decorators/is-public';
 import { AdminGuard } from '../../auth/core/guards/admin.guard';
@@ -36,7 +36,7 @@ export class BlogCoreController {
 
   @Get()
   @Public()
-  @ApiResponse({ type: [BlogPostSerialized] })
+  @ApiOkResponse({ type: [BlogPostSerialized] })
   public async findAll(): Promise<BlogPostSerialized[]> {
     const posts = await this.blogReadService.findAll();
 
@@ -57,7 +57,7 @@ export class BlogCoreController {
 
   @Get(':slug')
   @Public()
-  @ApiResponse({ type: BlogPostSerialized })
+  @ApiOkResponse({ type: BlogPostSerialized })
   public async findBySlug(@Param('slug') slug: string): Promise<BlogPostSerialized> {
     const post = await this.blogReadService.findBySlugOrThrow(slug);
     const author = await this.userReadService.readByIdOrThrow(post.authorId);
@@ -67,7 +67,7 @@ export class BlogCoreController {
 
   @Post()
   @UseGuards(AdminGuard)
-  @ApiResponse({ type: BlogPostSerialized })
+  @ApiCreatedResponse({ type: BlogPostSerialized })
   public async create(
     @CurrentUserId() userId: string,
     @Body() body: CreateBlogPostBody,
@@ -91,7 +91,7 @@ export class BlogCoreController {
 
   @Patch(':id')
   @UseGuards(AdminGuard)
-  @ApiResponse({ type: BlogPostSerialized })
+  @ApiOkResponse({ type: BlogPostSerialized })
   public async update(
     @Param('id') id: string,
     @Body() body: UpdateBlogPostBody,

@@ -1,83 +1,74 @@
-import axios, { AxiosError, type AxiosInstance } from "axios";
+import { createBackendClient, unwrap, type BackendClient } from "@packages/backend-sdk";
 import { readAuthState, writeAuthState } from "../config/auth-store.js";
 import { defaultApiUrl } from "../config/paths.js";
 
-export interface ApiClient {
-  axios: AxiosInstance;
-  getJwt(): string | null;
+export type ApiClient = BackendClient;
+
+const REQUEST_TIMEOUT_MS = 30_000;
+
+function timedFetch(request: Request): Promise<Response> {
+  return fetch(request, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
 }
 
-interface TokenRefreshResponse {
-  token: string;
-  refreshToken: string;
+/** Client for endpoints that need no session (login, polling, logout). */
+export function createPublicClient(): ApiClient {
+  return createBackendClient({ baseUrl: defaultApiUrl(), fetch: timedFetch });
 }
 
 /**
- * Returns an axios instance pre-configured with the user's JWT and a 401-retry
- * interceptor that refreshes the JWT using the stored refresh token. Refresh
- * results are persisted back to disk so the next CLI invocation starts with a
- * fresh refresh token (matches the rotating-refresh model the web uses).
+ * Returns a client that sends the user's JWT and retries once on 401 after
+ * refreshing it with the stored refresh token. Refresh results are persisted
+ * back to disk so the next CLI invocation starts with a fresh refresh token
+ * (matches the rotating-refresh model the web uses).
  */
 export async function createAuthedClient(): Promise<ApiClient> {
-  const auth = await readAuthState();
-  if (!auth) {
+  if (!(await readAuthState())) {
     throw new NotAuthenticatedError();
   }
 
   let jwt: string | null = null;
-
-  const instance = axios.create({
-    baseURL: defaultApiUrl(),
-    timeout: 30_000,
-  });
 
   const refreshOnce = async (): Promise<void> => {
     const current = await readAuthState();
     if (!current) {
       throw new NotAuthenticatedError();
     }
-    const response = await axios.post<TokenRefreshResponse>(
-      `${defaultApiUrl()}/auth/refresh`,
-      { refreshToken: current.refreshToken },
-      { timeout: 30_000 },
+    const tokens = await unwrap(
+      createPublicClient().POST("/auth/refresh", {
+        body: { refreshToken: current.refreshToken },
+      }),
+      "Session refresh failed",
     );
-    jwt = response.data.token;
-    await writeAuthState({ ...current, refreshToken: response.data.refreshToken });
+    jwt = tokens.token;
+    await writeAuthState({ ...current, refreshToken: tokens.refreshToken });
   };
 
-  instance.interceptors.request.use(async (config) => {
-    if (!jwt) {
-      await refreshOnce();
-    }
-    config.headers.Authorization = `Bearer ${jwt}`;
-    return config;
-  });
+  const send = (request: Request): Promise<Response> => {
+    request.headers.set("Authorization", `Bearer ${jwt}`);
+    return timedFetch(request);
+  };
 
-  instance.interceptors.response.use(
-    (r) => r,
-    async (error: AxiosError) => {
-      const original = error.config as
-        | (typeof error.config & { _cryptlyRetry?: boolean })
-        | undefined;
-      if (error.response?.status === 401 && original && !original._cryptlyRetry) {
-        original._cryptlyRetry = true;
-        try {
-          jwt = null;
-          await refreshOnce();
-          original.headers!.Authorization = `Bearer ${jwt}`;
-          return instance.request(original);
-        } catch {
-          throw new NotAuthenticatedError();
-        }
+  return createBackendClient({
+    baseUrl: defaultApiUrl(),
+    fetch: async (request) => {
+      if (!jwt) {
+        await refreshOnce();
       }
-      throw error;
+      // A request body can only be read once, so keep a copy for the retry.
+      const retry = request.clone();
+      const response = await send(request);
+      if (response.status !== 401) {
+        return response;
+      }
+      try {
+        jwt = null;
+        await refreshOnce();
+      } catch {
+        throw new NotAuthenticatedError();
+      }
+      return send(retry);
     },
-  );
-
-  return {
-    axios: instance,
-    getJwt: () => jwt,
-  };
+  });
 }
 
 export class NotAuthenticatedError extends Error {

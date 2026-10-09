@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/core/decorators/is-public';
 import { StatsResponse } from './dto/stats.response';
 import { StatsService } from './stats.service';
@@ -11,7 +11,7 @@ export class StatsController {
 
   @Get()
   @Public()
-  @ApiResponse({ type: StatsResponse })
+  @ApiOkResponse({ type: StatsResponse })
   public getStats(): Promise<StatsResponse> {
     return this.statsService.getStats();
   }
