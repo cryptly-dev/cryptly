@@ -9,5 +9,5 @@
   "moduleNameMapper": {
     "^src/(.*)$": "<rootDir>/../src/$1"
   },
-  "setupFiles": ["jest-date-mock"]
+  "setupFiles": ["<rootDir>/setup-env.ts", "jest-date-mock"]
 }
