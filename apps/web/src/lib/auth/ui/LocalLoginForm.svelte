@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { IconArrowRight } from '@tabler/icons-svelte';
-  import { onMount, tick } from 'svelte';
-  import { gotoAfterLogin } from '$lib/auth/after-login';
-  import { loadUserData, loginLocal } from '$lib/stores/auth.svelte';
+  import { IconArrowRight } from "@tabler/icons-svelte";
+  import { onMount, tick } from "svelte";
+  import { gotoAfterLogin } from "$lib/auth/after-login";
+  import { loadUserData, loginLocal } from "$lib/stores/auth.svelte";
 
   const QUICK_USERS = [
-    { label: 'User A', email: 'user-a@cryptly.dev' },
-    { label: 'User B', email: 'user-b@cryptly.dev' },
-    { label: 'User C', email: 'user-c@cryptly.dev' }
+    { label: "User A", email: "user-a@cryptly.dev" },
+    { label: "User B", email: "user-b@cryptly.dev" },
+    { label: "User C", email: "user-c@cryptly.dev" },
   ];
 
-  let email = $state('');
+  let email = $state("");
   let emailInput = $state<HTMLInputElement | null>(null);
 
   onMount(() => {
@@ -61,7 +61,7 @@
   </div>
 
   <div class="flex gap-2">
-    {#each QUICK_USERS as user}
+    {#each QUICK_USERS as user (user.email)}
       <button
         type="button"
         class="flex-1 cursor-pointer rounded-xl border border-neutral-700/60 bg-neutral-800/80 px-2 py-2 text-sm font-medium transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80"

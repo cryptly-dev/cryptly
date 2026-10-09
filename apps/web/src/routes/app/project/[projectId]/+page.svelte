@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ProjectPage from '$lib/projects/ui/ProjectPage.svelte';
+  import ProjectPage from "$lib/projects/ui/ProjectPage.svelte";
 
   let { data } = $props();
 </script>

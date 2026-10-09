@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { CircleCheck, CircleX } from 'lucide-svelte';
-  import GitHubIcon from '$lib/shared/ui/GitHubIcon.svelte';
+  import { CircleCheck, CircleX } from "lucide-svelte";
+  import GitHubIcon from "$lib/shared/ui/GitHubIcon.svelte";
 
   let { ok, closeToast }: { ok: boolean; closeToast?: () => void } = $props();
 </script>
@@ -13,8 +13,10 @@
       <CircleX class="size-5 shrink-0 text-red-600 dark:text-red-400" />
     {/if}
     <div class="flex items-center gap-2 whitespace-nowrap text-foreground">
-      <span>{ok ? 'Synced with' : 'Failed to sync with'}</span>
-      <span class="inline-flex items-center gap-1.5 rounded bg-secondary/50 px-2 py-0.5 text-sm">
+      <span>{ok ? "Synced with" : "Failed to sync with"}</span>
+      <span
+        class="inline-flex items-center gap-1.5 rounded bg-secondary/50 px-2 py-0.5 text-sm"
+      >
         <GitHubIcon class="size-4" />
         GitHub
       </span>

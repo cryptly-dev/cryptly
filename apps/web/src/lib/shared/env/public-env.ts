@@ -16,6 +16,9 @@ export const publicEnv: PublicEnv = {
   apiUrl: env.PUBLIC_API_URL ?? "http://localhost:9050",
   googleClientId: env.PUBLIC_GOOGLE_CLIENT_ID ?? "",
   githubClientId: env.PUBLIC_GITHUB_CLIENT_ID ?? "",
-  allowLocalLogin: env.PUBLIC_ALLOW_LOCAL_LOGIN === undefined ? dev : env.PUBLIC_ALLOW_LOCAL_LOGIN === "true",
+  allowLocalLogin:
+    env.PUBLIC_ALLOW_LOCAL_LOGIN === undefined
+      ? dev
+      : env.PUBLIC_ALLOW_LOCAL_LOGIN === "true",
   githubLocalMock: env.PUBLIC_GITHUB_LOCAL_MOCK === "true",
 };

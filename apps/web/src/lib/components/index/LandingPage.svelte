@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { browser } from '$app/environment';
-  import { onMount } from 'svelte';
-  import SiteFooter from '$lib/shared/ui/SiteFooter.svelte';
-  import { StatsApi } from '$lib/api/stats.api';
-  import LandingCoda from './LandingCoda.svelte';
-  import LandingCustomers from './LandingCustomers.svelte';
-  import LandingDivider from './LandingDivider.svelte';
-  import LandingHero from './LandingHero.svelte';
-  import LandingHistory from './LandingHistory.svelte';
-  import LandingInvite from './LandingInvite.svelte';
-  import LandingNumbers from './LandingNumbers.svelte';
-  import LandingVault from './LandingVault.svelte';
-  import LandingWire from './LandingWire.svelte';
-  import { STATS_REFRESH_INTERVAL_MS, type StatsState } from './landing-data';
+  import { browser } from "$app/environment";
+  import { onMount } from "svelte";
+  import SiteFooter from "$lib/shared/ui/SiteFooter.svelte";
+  import { StatsApi } from "$lib/api/stats.api";
+  import LandingCoda from "./LandingCoda.svelte";
+  import LandingCustomers from "./LandingCustomers.svelte";
+  import LandingDivider from "./LandingDivider.svelte";
+  import LandingHero from "./LandingHero.svelte";
+  import LandingHistory from "./LandingHistory.svelte";
+  import LandingInvite from "./LandingInvite.svelte";
+  import LandingNumbers from "./LandingNumbers.svelte";
+  import LandingVault from "./LandingVault.svelte";
+  import LandingWire from "./LandingWire.svelte";
+  import { STATS_REFRESH_INTERVAL_MS, type StatsState } from "./landing-data";
 
-  let statsState = $state<StatsState>({ status: 'loading' });
+  let statsState = $state<StatsState>({ status: "loading" });
 
   onMount(() => {
     if (!browser) return;
@@ -24,9 +24,9 @@
     async function run() {
       try {
         const data = await StatsApi.get();
-        if (!cancelled) statsState = { status: 'ready', data };
+        if (!cancelled) statsState = { status: "ready", data };
       } catch {
-        if (!cancelled) statsState = { status: 'error' };
+        if (!cancelled) statsState = { status: "error" };
       }
       if (cancelled) return;
       timeoutId = window.setTimeout(run, STATS_REFRESH_INTERVAL_MS);

@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import loader from '@monaco-editor/loader';
-  import type { ProjectRevealOn } from '$lib/auth/domain/project-settings';
-  import { registerDotenvLanguage } from './dotenv-language';
-  import { injectMaskingCSS } from './masking-css';
-  import { createSecretMasking } from './secretMasking';
+  import { onMount } from "svelte";
+  import loader from "@monaco-editor/loader";
+  import type { ProjectRevealOn } from "$lib/auth/domain/project-settings";
+  import { registerDotenvLanguage } from "./dotenv-language";
+  import { injectMaskingCSS } from "./masking-css";
+  import { createSecretMasking } from "./secretMasking";
 
   let {
     value,
     onChange,
     revealOn,
-    height = '55vh',
+    height = "55vh",
     fontSize = 14,
     padding = { top: 16, bottom: 80 },
     lineNumbersMinChars = undefined,
-    readOnly = false
+    readOnly = false,
   }: {
     value: string;
     onChange: (v: string) => void;
@@ -28,7 +28,9 @@
 
   let host = $state<HTMLDivElement | null>(null);
   let masking = $state<ReturnType<typeof createSecretMasking> | null>(null);
-  let editorInstance: any = null;
+  let editorInstance:
+    | import("monaco-editor").editor.IStandaloneCodeEditor
+    | null = null;
 
   onMount(() => {
     injectMaskingCSS();
@@ -47,31 +49,31 @@
 
       editorInstance = monaco.editor.create(host, {
         value: m.maskedInitialValue,
-        language: 'dotenv',
-        theme: 'dotenvTheme',
+        language: "dotenv",
+        theme: "dotenvTheme",
         minimap: { enabled: false },
-        wordWrap: 'on',
+        wordWrap: "on",
         scrollBeyondLastLine: false,
-        lineNumbers: 'on',
+        lineNumbers: "on",
         fontSize,
         automaticLayout: true,
         overviewRulerBorder: false,
         overviewRulerLanes: 0,
         hideCursorInOverviewRuler: true,
-        occurrencesHighlight: 'off',
+        occurrencesHighlight: "off",
         selectionHighlight: false,
-        renderLineHighlight: 'none',
+        renderLineHighlight: "none",
         links: false,
         padding,
         readOnly,
-        readOnlyMessage: { value: 'Read-only access' },
+        readOnlyMessage: { value: "Read-only access" },
         quickSuggestions: false,
         suggestOnTriggerCharacters: false,
-        wordBasedSuggestions: 'off',
+        wordBasedSuggestions: "off",
         parameterHints: { enabled: false },
-        tabCompletion: 'off',
-        snippetSuggestions: 'none',
-        ...(lineNumbersMinChars != null ? { lineNumbersMinChars } : {})
+        tabCompletion: "off",
+        snippetSuggestions: "none",
+        ...(lineNumbersMinChars != null ? { lineNumbersMinChars } : {}),
       });
 
       m.handleEditorMount(editorInstance, monaco);
@@ -94,7 +96,11 @@
   $effect(() => {
     if (!masking) return;
     // Monaco's default is 5; the mobile layout narrows the gutter.
-    editorInstance?.updateOptions({ fontSize, padding, lineNumbersMinChars: lineNumbersMinChars ?? 5 });
+    editorInstance?.updateOptions({
+      fontSize,
+      padding,
+      lineNumbersMinChars: lineNumbersMinChars ?? 5,
+    });
   });
 
   $effect(() => {
@@ -102,4 +108,8 @@
   });
 </script>
 
-<div bind:this={host} class="ph-no-capture w-full overflow-hidden" style:height></div>
+<div
+  bind:this={host}
+  class="ph-no-capture w-full overflow-hidden"
+  style:height
+></div>

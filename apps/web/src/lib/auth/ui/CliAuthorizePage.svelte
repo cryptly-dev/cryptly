@@ -1,36 +1,37 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { IconEye, IconEyeOff } from '@tabler/icons-svelte';
-  import { Check, CornerDownLeft, Terminal } from 'lucide-svelte';
-  import { onMount, tick } from 'svelte';
-  import { animate } from 'motion';
-  import { AsymmetricCrypto } from '$lib/auth/asymmetric-crypto';
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { IconEye, IconEyeOff } from "@tabler/icons-svelte";
+  import { Check, CornerDownLeft, Terminal } from "lucide-svelte";
+  import { onMount, tick } from "svelte";
+  import { animate } from "motion";
+  import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
   import {
     isValidCliSessionPublicId,
-    persistCliAuthorizeReturn
-  } from '$lib/auth/cli-authorize-return';
+    persistCliAuthorizeReturn,
+  } from "$lib/auth/cli-authorize-return";
   import {
     CliFlowRequestError,
     approveCliSession,
     getCliSessionInfo,
-    type CliSessionInfo
-  } from '$lib/auth/cli-flow.api';
-  import { randomBytes, u8ToBase64 } from '$lib/auth/crypto.utils';
-  import { SymmetricCrypto } from '$lib/auth/symmetric-crypto';
-  import { auth, loadUserData } from '$lib/stores/auth.svelte';
+    type CliSessionInfo,
+  } from "$lib/auth/cli-flow.api";
+  import { randomBytes, u8ToBase64 } from "$lib/auth/crypto.utils";
+  import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
+  import { auth, loadUserData } from "$lib/stores/auth.svelte";
 
   let { sessionId }: { sessionId: string } = $props();
 
   type LoadState =
-    | { kind: 'loading' }
-    | { kind: 'ready'; session: CliSessionInfo }
-    | { kind: 'already-approved' }
-    | { kind: 'error'; message: string };
+    | { kind: "loading" }
+    | { kind: "ready"; session: CliSessionInfo }
+    | { kind: "already-approved" }
+    | { kind: "error"; message: string };
 
-  let load = $state<LoadState>({ kind: 'loading' });
-  let passphrase = $state('');
+  let load = $state<LoadState>({ kind: "loading" });
+  let passphrase = $state("");
   let showPassphrase = $state(false);
-  let approveState = $state<'idle' | 'submitting' | 'done'>('idle');
+  let approveState = $state<"idle" | "submitting" | "done">("idle");
   let error = $state<string | null>(null);
   let passphraseInput = $state<HTMLInputElement | null>(null);
   let rootEl = $state<HTMLElement | null>(null);
@@ -38,10 +39,7 @@
   let redirectedToLogin = $state(false);
 
   const keysAreSetUp = $derived(
-    Boolean(
-      auth.userData?.publicKey &&
-        auth.userData?.privateKeyEncrypted
-    )
+    Boolean(auth.userData?.publicKey && auth.userData?.privateKeyEncrypted),
   );
 
   onMount(() => {
@@ -49,7 +47,7 @@
       void animate(
         rootEl,
         { opacity: [0, 1], y: [14, 0] },
-        { duration: 0.55, ease: [0, 0.55, 0.45, 1] }
+        { duration: 0.55, ease: [0, 0.55, 0.45, 1] },
       );
     }
   });
@@ -61,12 +59,12 @@
     const path =
       sessionId && isValidCliSessionPublicId(sessionId)
         ? `/app/cli-authorize?session=${sessionId}`
-        : '';
+        : "";
     if (path) {
       persistCliAuthorizeReturn(path);
     }
     redirectedToLogin = true;
-    void goto('/app/login', { replaceState: true });
+    void goto(resolve("/app/login"), { replaceState: true });
   });
 
   $effect(() => {
@@ -75,18 +73,18 @@
     }
     void (async () => {
       if (!sessionId) {
-        load = { kind: 'error', message: 'Missing session id.' };
+        load = { kind: "error", message: "Missing session id." };
         return;
       }
       if (!isValidCliSessionPublicId(sessionId)) {
-        load = { kind: 'error', message: 'Invalid session id.' };
+        load = { kind: "error", message: "Invalid session id." };
         return;
       }
       const token = auth.jwtToken;
       if (!token) {
         return;
       }
-      load = { kind: 'loading' };
+      load = { kind: "loading" };
       try {
         await loadUserData();
         const jwt = auth.jwtToken;
@@ -94,25 +92,24 @@
           return;
         }
         const session = await getCliSessionInfo(jwt, sessionId);
-        if (session.status !== 'pending') {
-          load = { kind: 'already-approved' };
+        if (session.status !== "pending") {
+          load = { kind: "already-approved" };
         } else {
-          load = { kind: 'ready', session };
+          load = { kind: "ready", session };
         }
       } catch (e: unknown) {
-        const status =
-          e instanceof CliFlowRequestError ? e.status : undefined;
+        const status = e instanceof CliFlowRequestError ? e.status : undefined;
         const message =
           status === 404
-            ? 'Session not found or expired.'
-            : 'Could not load session.';
-        load = { kind: 'error', message };
+            ? "Session not found or expired."
+            : "Could not load session.";
+        load = { kind: "error", message };
       }
     })();
   });
 
   $effect(() => {
-    if (load.kind !== 'ready' || approveState === 'done') {
+    if (load.kind !== "ready" || approveState === "done") {
       return;
     }
     void tick().then(() => {
@@ -122,18 +119,14 @@
 
   async function onApprove(e: Event) {
     e.preventDefault();
-    if (load.kind !== 'ready' || approveState !== 'idle') {
+    if (load.kind !== "ready" || approveState !== "idle") {
       return;
     }
-    if (
-      !passphrase ||
-      !auth.jwtToken ||
-      !auth.userData?.privateKeyEncrypted
-    ) {
+    if (!passphrase || !auth.jwtToken || !auth.userData?.privateKeyEncrypted) {
       return;
     }
 
-    approveState = 'submitting';
+    approveState = "submitting";
     error = null;
 
     let rawPrivateKey: string | null = null;
@@ -145,31 +138,31 @@
       try {
         rawPrivateKey = await SymmetricCrypto.decrypt(
           auth.userData.privateKeyEncrypted,
-          base64Key
+          base64Key,
         );
       } catch {
-        throw new Error('Incorrect passphrase');
+        throw new Error("Incorrect passphrase");
       }
 
       ephemeralKey = u8ToBase64(randomBytes(32));
       const wrappedKey = await AsymmetricCrypto.encrypt(
         ephemeralKey,
-        load.session.tempPublicKey
+        load.session.tempPublicKey,
       );
       const encryptedPrivateKey = await SymmetricCrypto.encrypt(
         rawPrivateKey,
-        ephemeralKey
+        ephemeralKey,
       );
 
       await approveCliSession(auth.jwtToken, load.session.sessionId, {
         wrappedKey,
-        encryptedPrivateKey
+        encryptedPrivateKey,
       });
 
-      approveState = 'done';
+      approveState = "done";
     } catch (e: unknown) {
-      error = e instanceof Error ? e.message : 'Failed to authorize';
-      approveState = 'idle';
+      error = e instanceof Error ? e.message : "Failed to authorize";
+      approveState = "idle";
       requestAnimationFrame(() => {
         passphraseInput?.focus();
         passphraseInput?.select();
@@ -190,35 +183,35 @@
     >
       <div class="mb-10">
         <div
-          class="mb-5 flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground/60"
+          class="mb-5 flex items-center gap-2 text-[11px] tracking-[0.22em] text-muted-foreground/60 uppercase"
         >
           <Terminal class="size-3.5" />
           <span>Authorize CLI</span>
         </div>
         <h1
-          class="text-[34px] font-semibold leading-[1.05] tracking-tight text-foreground md:text-[40px]"
+          class="text-[34px] leading-[1.05] font-semibold tracking-tight text-foreground md:text-[40px]"
         >
-          {#if load.kind === 'ready'}
+          {#if load.kind === "ready"}
             Authorize this device?
-          {:else if approveState === 'done'}
+          {:else if approveState === "done"}
             Authorized.
             <span class="text-muted-foreground">You can close this tab.</span>
-          {:else if load.kind === 'already-approved'}
+          {:else if load.kind === "already-approved"}
             Already used.
             <span class="text-muted-foreground"
               >Start a new session from your CLI.</span
             >
-          {:else if load.kind === 'error'}
+          {:else if load.kind === "error"}
             Something went wrong.
             <span class="text-muted-foreground">{load.message}</span>
           {:else}
             <span class="text-muted-foreground">Loading…</span>
           {/if}
         </h1>
-        {#if load.kind === 'ready' && approveState !== 'done'}
+        {#if load.kind === "ready" && approveState !== "done"}
           <div class="mt-5">
             <code
-              class="inline-block max-w-full break-all rounded-md border border-border/60 bg-neutral-900/40 px-2.5 py-1 font-mono text-[13px] text-foreground"
+              class="inline-block max-w-full rounded-md border border-border/60 bg-neutral-900/40 px-2.5 py-1 font-mono text-[13px] break-all text-foreground"
             >
               {load.session.deviceName}
             </code>
@@ -231,7 +224,7 @@
         {/if}
       </div>
 
-      {#if load.kind === 'ready' && approveState !== 'done'}
+      {#if load.kind === "ready" && approveState !== "done"}
         {#if !keysAreSetUp}
           <div class="pl-1 text-sm leading-relaxed text-amber-500/90">
             You haven't set up a passphrase on this account yet — finish
@@ -242,20 +235,22 @@
             <div class="relative">
               <input
                 bind:this={passphraseInput}
-                type={showPassphrase ? 'text' : 'password'}
+                type={showPassphrase ? "text" : "password"}
                 bind:value={passphrase}
                 oninput={() => (error = null)}
                 placeholder="Your passphrase"
-                disabled={approveState === 'submitting'}
+                disabled={approveState === "submitting"}
                 autocomplete="current-password"
                 required
-                class="h-12 w-full rounded-lg border border-border/60 bg-neutral-900/40 pl-4 pr-12 text-base text-foreground placeholder:text-muted-foreground/50 transition-colors focus:border-primary/60 focus:bg-neutral-900/60 focus:outline-none disabled:opacity-60 md:text-[15px]"
+                class="h-12 w-full rounded-lg border border-border/60 bg-neutral-900/40 pr-12 pl-4 text-base text-foreground transition-colors placeholder:text-muted-foreground/50 focus:border-primary/60 focus:bg-neutral-900/60 focus:outline-none disabled:opacity-60 md:text-[15px]"
               />
               <button
                 type="button"
                 tabindex="-1"
                 class="absolute inset-y-0 right-0 flex cursor-pointer items-center justify-center px-3 text-muted-foreground hover:text-foreground"
-                aria-label={showPassphrase ? 'Hide passphrase' : 'Show passphrase'}
+                aria-label={showPassphrase
+                  ? "Hide passphrase"
+                  : "Show passphrase"}
                 onclick={() => (showPassphrase = !showPassphrase)}
               >
                 {#if showPassphrase}
@@ -273,19 +268,19 @@
             <div class="flex items-center justify-between gap-2 pt-5">
               <button
                 type="button"
-                onclick={() => goto('/app/project')}
-                disabled={approveState === 'submitting'}
+                onclick={() => goto(resolve("/app/project"))}
+                disabled={approveState === "submitting"}
                 class="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={approveState === 'submitting' ||
+                disabled={approveState === "submitting" ||
                   passphrase.length === 0}
                 class="inline-flex h-11 cursor-pointer items-center gap-2 rounded-lg bg-primary px-5 text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {#if approveState === 'submitting'}
+                {#if approveState === "submitting"}
                   <span
                     class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
                   ></span>
@@ -300,7 +295,7 @@
         {/if}
       {/if}
 
-      {#if approveState === 'done'}
+      {#if approveState === "done"}
         <div class="mt-2 flex items-center gap-2 text-sm text-emerald-500/90">
           <Check class="size-4" />
           <span>Your CLI should report success in a moment.</span>

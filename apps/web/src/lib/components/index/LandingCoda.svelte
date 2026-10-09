@@ -1,27 +1,33 @@
 <script lang="ts">
-  import { ArrowRight } from 'lucide-svelte';
-  import GitHubIcon from '$lib/shared/ui/GitHubIcon.svelte';
-  import LandingShell from './LandingShell.svelte';
-  import { formatOrdinal, type StatsState } from './landing-data';
+  import { resolve } from "$app/paths";
+  import { ArrowRight } from "lucide-svelte";
+  import GitHubIcon from "$lib/shared/ui/GitHubIcon.svelte";
+  import LandingShell from "./LandingShell.svelte";
+  import { formatOrdinal, type StatsState } from "./landing-data";
 
   let { state }: { state: StatsState } = $props();
 
   const heading = $derived(
-    state.status === 'ready' ? `Ready to be the ${formatOrdinal(state.data.users + 1)}?` : 'Ready to join them?'
+    state.status === "ready"
+      ? `Ready to be the ${formatOrdinal(state.data.users + 1)}?`
+      : "Ready to join them?",
   );
 </script>
 
 <section class="py-24">
   <LandingShell>
-    <h2 class="max-w-3xl text-3xl font-semibold leading-[1.05] tracking-tight text-foreground md:text-5xl">
+    <h2
+      class="max-w-3xl text-3xl leading-[1.05] font-semibold tracking-tight text-foreground md:text-5xl"
+    >
       {heading}
     </h2>
     <p class="mt-6 max-w-xl text-lg leading-[1.7] text-muted-foreground">
-      Sign in, mint a passphrase in the browser, paste your first value. Three minutes, one vault, no charge.
+      Sign in, mint a passphrase in the browser, paste your first value. Three
+      minutes, one vault, no charge.
     </p>
     <div class="mt-10 flex flex-wrap items-center gap-3">
       <a
-        href="/app/project"
+        href={resolve("/app/project")}
         class="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-lg shadow-black/40 transition-all duration-300 hover:bg-neutral-100 hover:shadow-xl [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:translate-x-0.5"
       >
         <span

@@ -5,7 +5,12 @@ import {
 } from "$lib/auth/kea-storage-keys";
 
 /** First-run tour, mirrors the legacy kea `ftuxLogic` (same persisted keys). */
-export type FtuxStep = "not_started" | "editor" | "save" | "integrations" | "completed";
+export type FtuxStep =
+  | "not_started"
+  | "editor"
+  | "save"
+  | "integrations"
+  | "completed";
 
 const STEP_NUMBER: Record<FtuxStep, number> = {
   not_started: 0,
@@ -38,7 +43,11 @@ export function queueFTUX() {
 
 export function startFTUX() {
   if (ftux.step !== "not_started") return;
-  if (readFlag(FTUX_COMPLETED_STORAGE_KEY) || !readFlag(FTUX_QUEUED_STORAGE_KEY)) return;
+  if (
+    readFlag(FTUX_COMPLETED_STORAGE_KEY) ||
+    !readFlag(FTUX_QUEUED_STORAGE_KEY)
+  )
+    return;
   writeFlag(FTUX_QUEUED_STORAGE_KEY, false);
   ftux.step = "editor";
 }

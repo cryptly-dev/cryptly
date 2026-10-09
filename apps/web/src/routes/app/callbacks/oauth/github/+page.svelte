@@ -1,5 +1,5 @@
 <script lang="ts">
-  import OAuthCallbackPage from '$lib/auth/ui/OAuthCallbackPage.svelte';
+  import OAuthCallbackPage from "$lib/auth/ui/OAuthCallbackPage.svelte";
 </script>
 
 <OAuthCallbackPage method="github" />

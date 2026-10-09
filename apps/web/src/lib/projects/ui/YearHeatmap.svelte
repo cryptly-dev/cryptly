@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
 
   let {
     patches,
     selectedDayKey,
-    onDayClick
+    onDayClick,
   }: {
     patches: { createdAt: string }[];
     selectedDayKey: string | null;
@@ -46,49 +46,45 @@
   });
 
   const heatmapData = $derived.by(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const end = new Date(today);
-    end.setDate(end.getDate() + (6 - end.getDay()));
-    const start = new Date(end);
-    start.setDate(start.getDate() - (effectiveWeeks * 7 - 1));
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // The grid ends on this week's Saturday and spans `effectiveWeeks` full weeks.
+    const startOffset = 6 - today.getDay() - (effectiveWeeks * 7 - 1);
 
-    const dayMap = new Map<string, number>();
+    const dayCounts: Record<string, number> = {};
     for (const patch of patches) {
-      const d = new Date(patch.createdAt);
-      d.setHours(0, 0, 0, 0);
-      const key = dateToISODayKey(d);
-      dayMap.set(key, (dayMap.get(key) || 0) + 1);
+      const key = dateToISODayKey(new Date(patch.createdAt));
+      dayCounts[key] = (dayCounts[key] || 0) + 1;
     }
 
     const weeks: DayCell[][] = [];
     const monthLabels: { weekIdx: number; label: string }[] = [];
-    const monthsSeen = new Set<string>();
-    const cursor = new Date(start);
 
     for (let weekIdx = 0; weekIdx < effectiveWeeks; weekIdx += 1) {
       const week: DayCell[] = [];
       for (let dayIdx = 0; dayIdx < 7; dayIdx += 1) {
-        const date = new Date(cursor);
+        const date = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() + startOffset + weekIdx * 7 + dayIdx,
+        );
         const key = dateToISODayKey(date);
         week.push({
           date,
-          count: dayMap.get(key) || 0,
+          count: dayCounts[key] || 0,
           isFuture: date > today,
-          key
+          key,
         });
-        cursor.setDate(cursor.getDate() + 1);
       }
       const firstDay = week[0]!;
+      // Exactly one week per month starts on days 1-7, so each month gets one label.
       if (firstDay.date.getDate() <= 7) {
-        const monthKey = `${firstDay.date.getFullYear()}-${firstDay.date.getMonth()}`;
-        if (!monthsSeen.has(monthKey)) {
-          monthsSeen.add(monthKey);
-          monthLabels.push({
-            weekIdx,
-            label: firstDay.date.toLocaleDateString('en-US', { month: 'short' })
-          });
-        }
+        monthLabels.push({
+          weekIdx,
+          label: firstDay.date.toLocaleDateString("en-US", {
+            month: "short",
+          }),
+        });
       }
       weeks.push(week);
     }
@@ -99,34 +95,37 @@
   const gridWidth = $derived(effectiveWeeks * (SQ + GAP) - GAP);
 
   function getIntensity(count: number): string {
-    if (count === 0) return 'rgba(255,255,255,0.04)';
-    if (count === 1) return 'rgba(201,178,135,0.35)';
-    if (count < 4) return 'rgba(201,178,135,0.55)';
-    if (count < 8) return 'rgba(201,178,135,0.85)';
-    return 'rgb(201,178,135)';
+    if (count === 0) return "rgba(255,255,255,0.04)";
+    if (count === 1) return "rgba(201,178,135,0.35)";
+    if (count < 4) return "rgba(201,178,135,0.55)";
+    if (count < 8) return "rgba(201,178,135,0.85)";
+    return "rgb(201,178,135)";
   }
 
   function dateToISODayKey(date: Date): string {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   }
 
   function formatTooltip(date: Date, count: number): string {
-    const formatted = date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    const formatted = date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
     if (count === 0) return `No edits · ${formatted}`;
-    return `${count} edit${count === 1 ? '' : 's'} · ${formatted}`;
+    return `${count} edit${count === 1 ? "" : "s"} · ${formatted}`;
   }
 </script>
 
 <div bind:this={root} class="relative w-full">
-  <div class="relative mb-1 h-3" style={`margin-left: ${LABEL_WIDTH}px; width: ${gridWidth}px`}>
+  <div
+    class="relative mb-1 h-3"
+    style={`margin-left: ${LABEL_WIDTH}px; width: ${gridWidth}px`}
+  >
     {#each heatmapData.monthLabels as month (month.weekIdx)}
       <span
         class="absolute top-0 text-[9px] font-medium text-muted-foreground"
@@ -155,7 +154,7 @@
     >
       {#each heatmapData.weeks as week, weekIndex (weekIndex)}
         <div class="flex flex-col" style={`gap: ${GAP}px`}>
-          {#each week as day, dayIndex (day.key)}
+          {#each week as day (day.key)}
             {#if day.isFuture}
               <div style={`width: ${SQ}px; height: ${SQ}px`}></div>
             {:else}
@@ -164,7 +163,9 @@
                 type="button"
                 aria-label={formatTooltip(day.date, day.count)}
                 class={`relative rounded-[2px] transition-all duration-150 hover:z-20 hover:scale-[1.6] hover:ring-1 hover:ring-white/60 ${
-                  isSelected ? 'z-20 scale-[1.6] shadow-md shadow-primary/60 ring-2 ring-primary' : ''
+                  isSelected
+                    ? "z-20 scale-[1.6] shadow-md ring-2 shadow-primary/60 ring-primary"
+                    : ""
                 }`}
                 style={`width: ${SQ}px; height: ${SQ}px; background-color: ${getIntensity(day.count)}`}
                 onmouseenter={(event) => {
@@ -174,7 +175,7 @@
                     hover = {
                       x: rect.left - parentRect.left + rect.width / 2,
                       y: rect.top - parentRect.top,
-                      day
+                      day,
                     };
                   }
                 }}
@@ -187,9 +188,11 @@
     </div>
   </div>
 
-  <div class="mt-2 flex items-center justify-end gap-1 text-[9px] text-muted-foreground">
+  <div
+    class="mt-2 flex items-center justify-end gap-1 text-[9px] text-muted-foreground"
+  >
     <span>Less</span>
-    {#each [0, 1, 3, 6, 9] as level}
+    {#each [0, 1, 3, 6, 9] as level (level)}
       <span
         class="rounded-[2px]"
         style={`width: ${SQ}px; height: ${SQ}px; background-color: ${getIntensity(level)}`}
@@ -204,7 +207,7 @@
       style={`left: ${hover.x}px; top: ${hover.y - 6}px`}
     >
       <div
-        class="-translate-y-full whitespace-nowrap rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-[11px] shadow-lg"
+        class="-translate-y-full rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-[11px] whitespace-nowrap shadow-lg"
       >
         {formatTooltip(hover.day.date, hover.day.count)}
       </div>

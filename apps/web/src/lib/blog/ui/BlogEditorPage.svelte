@@ -1,18 +1,20 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
-  import { ArrowLeft, ImageUp, Loader2, Save, Trash2 } from 'lucide-svelte';
-  import { toast } from 'svelte-sonner';
-  import { BlogApi, uploadImage, type BlogPost } from '$lib/api/blog.api';
-  import { auth } from '$lib/stores/auth.svelte';
-  import BlogMarkdown from './BlogMarkdown.svelte';
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { onMount } from "svelte";
+  import { ArrowLeft, ImageUp, Loader2, Save, Trash2 } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
+  import { BlogApi, uploadImage, type BlogPost } from "$lib/api/blog.api";
+  import { auth } from "$lib/stores/auth.svelte";
+  import BlogMarkdown from "./BlogMarkdown.svelte";
 
-  let { mode, slug = '' }: { mode: 'create' | 'edit'; slug?: string } = $props();
+  let { mode, slug = "" }: { mode: "create" | "edit"; slug?: string } =
+    $props();
 
   function toLocalDateTimeInput(iso: string): string {
     const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '';
-    const pad = (n: number) => n.toString().padStart(2, '0');
+    if (Number.isNaN(d.getTime())) return "";
+    const pad = (n: number) => n.toString().padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
@@ -39,11 +41,11 @@ export const example = () => "hello, world";
 
   const isAdmin = $derived(Boolean(auth.userData?.isAdmin));
 
-  let title = $state('');
-  let excerpt = $state('');
-  let coverImageUrl = $state('');
-  let slugInput = $state('');
-  let releaseDate = $state('');
+  let title = $state("");
+  let excerpt = $state("");
+  let coverImageUrl = $state("");
+  let slugInput = $state("");
+  let releaseDate = $state("");
   let content = $state(PLACEHOLDER);
   let postId = $state<string | null>(null);
   let loadingPost = $state(true);
@@ -51,26 +53,28 @@ export const example = () => "hello, world";
   let deleting = $state(false);
   let uploadingImage = $state(false);
   let textareaEl: HTMLTextAreaElement | undefined = $state();
-  const wordCount = $derived(content.trim().split(/\s+/).filter(Boolean).length);
-  const isLoadingPost = $derived(mode === 'edit' && loadingPost);
+  const wordCount = $derived(
+    content.trim().split(/\s+/).filter(Boolean).length,
+  );
+  const isLoadingPost = $derived(mode === "edit" && loadingPost);
 
   onMount(() => {
-    if (mode !== 'edit' || !slug) return () => {};
+    if (mode !== "edit" || !slug) return () => {};
     let cancelled = false;
     loadingPost = true;
     BlogApi.getBySlug(slug)
       .then((post: BlogPost) => {
         if (cancelled) return;
         title = post.title;
-        excerpt = post.excerpt ?? '';
-        coverImageUrl = post.coverImageUrl ?? '';
+        excerpt = post.excerpt ?? "";
+        coverImageUrl = post.coverImageUrl ?? "";
         slugInput = post.slug;
         releaseDate = toLocalDateTimeInput(post.createdAt);
         content = post.content;
         postId = post.id;
       })
       .catch(() => {
-        if (!cancelled) toast.error('Failed to load post');
+        if (!cancelled) toast.error("Failed to load post");
       })
       .finally(() => {
         if (!cancelled) loadingPost = false;
@@ -101,7 +105,7 @@ export const example = () => "hello, world";
   async function uploadPastedImage(file: File) {
     const jwtToken = auth.jwtToken;
     if (!jwtToken) {
-      toast.error('Not authenticated');
+      toast.error("Not authenticated");
       return;
     }
     const placeholderToken = `__uploading_${Date.now()}__`;
@@ -110,11 +114,15 @@ export const example = () => "hello, world";
     uploadingImage = true;
     try {
       const result = await uploadImage(jwtToken, file);
-      content = content.replace(placeholderMarkdown, `![image](${result.displayUrl || result.url})`);
-      toast.success('Image uploaded');
+      content = content.replace(
+        placeholderMarkdown,
+        `![image](${result.displayUrl || result.url})`,
+      );
+      toast.success("Image uploaded");
     } catch (err) {
-      content = content.replace(placeholderMarkdown, '');
-      const message = err instanceof Error ? err.message : 'Image upload failed';
+      content = content.replace(placeholderMarkdown, "");
+      const message =
+        err instanceof Error ? err.message : "Image upload failed";
       toast.error(message);
     } finally {
       uploadingImage = false;
@@ -125,7 +133,7 @@ export const example = () => "hello, world";
     const items = e.clipboardData?.items;
     if (!items) return;
     for (const item of Array.from(items)) {
-      if (item.kind === 'file' && item.type.startsWith('image/')) {
+      if (item.kind === "file" && item.type.startsWith("image/")) {
         const file = item.getAsFile();
         if (!file) continue;
         e.preventDefault();
@@ -136,7 +144,7 @@ export const example = () => "hello, world";
   }
 
   function handleDragOver(e: DragEvent) {
-    if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) {
+    if (e.dataTransfer && Array.from(e.dataTransfer.types).includes("Files")) {
       e.preventDefault();
     }
   }
@@ -144,7 +152,9 @@ export const example = () => "hello, world";
   function handleDrop(e: DragEvent) {
     const files = e.dataTransfer?.files;
     if (!files || files.length === 0) return;
-    const images = Array.from(files).filter((file) => file.type.startsWith('image/'));
+    const images = Array.from(files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
     if (images.length === 0) return;
     e.preventDefault();
     for (const file of images) {
@@ -156,7 +166,7 @@ export const example = () => "hello, world";
     const items = e.clipboardData?.items;
     if (!items) return;
     for (const item of Array.from(items)) {
-      if (item.kind === 'file' && item.type.startsWith('image/')) {
+      if (item.kind === "file" && item.type.startsWith("image/")) {
         const jwtToken = auth.jwtToken;
         const file = item.getAsFile();
         if (!file || !jwtToken) continue;
@@ -166,9 +176,10 @@ export const example = () => "hello, world";
           try {
             const result = await uploadImage(jwtToken, file);
             coverImageUrl = result.displayUrl || result.url;
-            toast.success('Cover image uploaded');
+            toast.success("Cover image uploaded");
           } catch (err) {
-            const message = err instanceof Error ? err.message : 'Image upload failed';
+            const message =
+              err instanceof Error ? err.message : "Image upload failed";
             toast.error(message);
           } finally {
             uploadingImage = false;
@@ -183,15 +194,15 @@ export const example = () => "hello, world";
     if (saving || deleting) return;
     const jwtToken = auth.jwtToken;
     if (!jwtToken) {
-      toast.error('Not authenticated');
+      toast.error("Not authenticated");
       return;
     }
     if (!title.trim()) {
-      toast.error('Title is required');
+      toast.error("Title is required");
       return;
     }
     if (!content.trim()) {
-      toast.error('Content is required');
+      toast.error("Content is required");
       return;
     }
 
@@ -203,39 +214,45 @@ export const example = () => "hello, world";
         excerpt: excerpt.trim() || undefined,
         coverImageUrl: coverImageUrl.trim() || undefined,
         slug: slugInput.trim() || undefined,
-        createdAt: releaseDate ? new Date(releaseDate).toISOString() : undefined,
+        createdAt: releaseDate
+          ? new Date(releaseDate).toISOString()
+          : undefined,
       };
 
-      if (mode === 'create') {
+      if (mode === "create") {
         const created = await BlogApi.create(jwtToken, payload);
-        toast.success('Post published');
+        toast.success("Post published");
         postId = created.id;
         slugInput = created.slug;
-        await goto(`/blog/edit/${created.slug}`, { replaceState: true });
+        await goto(resolve(`/blog/edit/${created.slug}`), {
+          replaceState: true,
+        });
       } else if (postId) {
         const updated = await BlogApi.update(jwtToken, postId, payload);
-        toast.success('Post updated');
+        toast.success("Post updated");
         if (updated.slug !== slug) {
           slugInput = updated.slug;
-          await goto(`/blog/edit/${updated.slug}`, { replaceState: true });
+          await goto(resolve(`/blog/edit/${updated.slug}`), {
+            replaceState: true,
+          });
         }
       }
     } catch (err) {
       const message =
         err &&
-        typeof err === 'object' &&
-        'response' in err &&
+        typeof err === "object" &&
+        "response" in err &&
         err.response &&
-        typeof err.response === 'object' &&
-        'data' in err.response &&
+        typeof err.response === "object" &&
+        "data" in err.response &&
         err.response.data &&
-        typeof err.response.data === 'object' &&
-        'message' in err.response.data &&
-        typeof (err.response.data as { message?: string }).message === 'string'
+        typeof err.response.data === "object" &&
+        "message" in err.response.data &&
+        typeof (err.response.data as { message?: string }).message === "string"
           ? (err.response.data as { message: string }).message
           : err instanceof Error
             ? err.message
-            : 'Save failed';
+            : "Save failed";
       toast.error(message);
     } finally {
       saving = false;
@@ -245,15 +262,17 @@ export const example = () => "hello, world";
   async function handleDelete() {
     const jwtToken = auth.jwtToken;
     if (!jwtToken || !postId) return;
-    const ok = window.confirm('Delete this post? This action cannot be undone.');
+    const ok = window.confirm(
+      "Delete this post? This action cannot be undone.",
+    );
     if (!ok) return;
     deleting = true;
     try {
       await BlogApi.delete(jwtToken, postId);
-      toast.success('Post deleted');
-      await goto('/blog');
+      toast.success("Post deleted");
+      await goto(resolve("/blog"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Delete failed';
+      const message = err instanceof Error ? err.message : "Delete failed";
       toast.error(message);
     } finally {
       deleting = false;
@@ -261,28 +280,15 @@ export const example = () => "hello, world";
   }
 
   $effect(() => {
-    title;
-    content;
-    excerpt;
-    coverImageUrl;
-    slugInput;
-    releaseDate;
-    postId;
-    mode;
-    slug;
-    auth.jwtToken;
-    saving;
-    deleting;
-    const save = handleSave;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
         event.preventDefault();
         event.stopPropagation();
-        void save();
+        void handleSave();
       }
     };
-    document.addEventListener('keydown', handleKeyDown, true);
-    return () => document.removeEventListener('keydown', handleKeyDown, true);
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
   });
 </script>
 
@@ -290,11 +296,13 @@ export const example = () => "hello, world";
   <div class="min-h-screen bg-black text-foreground">
     <div class="mx-auto max-w-3xl px-6 py-24 text-center">
       <h1 class="text-3xl font-semibold">Admin access required</h1>
-      <p class="mt-3 text-neutral-400">You need admin privileges to access the editor.</p>
+      <p class="mt-3 text-neutral-400">
+        You need admin privileges to access the editor.
+      </p>
       <button
         type="button"
-        class="mt-8 inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs transition-all outline-none hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-        onclick={() => goto('/blog')}
+        class="mt-8 inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium whitespace-nowrap text-primary-foreground shadow-xs transition-all outline-none hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+        onclick={() => goto(resolve("/blog"))}
       >
         Back to blog
       </button>
@@ -303,17 +311,23 @@ export const example = () => "hello, world";
 {:else if isLoadingPost}
   <div class="min-h-screen bg-black text-foreground">
     <div class="mx-auto flex max-w-3xl items-center justify-center px-6 py-24">
-      <Loader2 class="h-6 w-6 animate-spin" role="status" aria-label="Loading" />
+      <Loader2
+        class="h-6 w-6 animate-spin"
+        role="status"
+        aria-label="Loading"
+      />
     </div>
   </div>
 {:else}
-  <div class="flex min-h-screen flex-col bg-black pt-20 text-foreground md:pt-24">
+  <div
+    class="flex min-h-screen flex-col bg-black pt-20 text-foreground md:pt-24"
+  >
     <div class="border-b border-neutral-900/80 bg-black/60 backdrop-blur-xl">
       <div class="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-4">
         <div class="flex items-center justify-between gap-3">
           <button
             type="button"
-            onclick={() => goto('/blog')}
+            onclick={() => goto(resolve("/blog"))}
             class="inline-flex items-center gap-2 text-sm text-neutral-500 transition-colors hover:text-neutral-300"
           >
             <ArrowLeft class="h-4 w-4" />
@@ -321,30 +335,36 @@ export const example = () => "hello, world";
           </button>
           <div class="flex items-center gap-2">
             {#if uploadingImage}
-              <span class="inline-flex items-center gap-2 text-xs text-neutral-500">
-                <Loader2 class="h-3 w-3 animate-spin" role="status" aria-label="Loading" />
+              <span
+                class="inline-flex items-center gap-2 text-xs text-neutral-500"
+              >
+                <Loader2
+                  class="h-3 w-3 animate-spin"
+                  role="status"
+                  aria-label="Loading"
+                />
                 Uploading image…
               </span>
             {/if}
-            {#if mode === 'edit'}
+            {#if mode === "edit"}
               <button
                 type="button"
                 onclick={handleDelete}
                 disabled={deleting || saving}
-                class="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-red-900/60 bg-background px-2.5 text-sm font-medium text-destructive shadow-xs transition-all outline-none hover:bg-red-950/40 hover:text-destructive focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 dark:bg-neutral-800 dark:hover:bg-red-950/40 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                class="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-red-900/60 bg-background px-2.5 text-sm font-medium whitespace-nowrap text-destructive shadow-xs transition-all outline-none hover:bg-red-950/40 hover:text-destructive focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 dark:bg-neutral-800 dark:hover:bg-red-950/40 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Trash2 class="h-3.5 w-3.5" />
-                {deleting ? 'Deleting…' : 'Delete'}
+                {deleting ? "Deleting…" : "Delete"}
               </button>
             {/if}
             <button
               type="button"
               onclick={handleSave}
               disabled={saving || deleting}
-              class="inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-primary px-2.5 text-sm font-medium text-primary-foreground shadow-xs transition-all outline-none hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              class="inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-primary px-2.5 text-sm font-medium whitespace-nowrap text-primary-foreground shadow-xs transition-all outline-none hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
             >
               <Save class="h-3.5 w-3.5" />
-              {saving ? 'Saving…' : mode === 'create' ? 'Publish' : 'Save'}
+              {saving ? "Saving…" : mode === "create" ? "Publish" : "Save"}
             </button>
           </div>
         </div>
@@ -419,7 +439,9 @@ export const example = () => "hello, world";
         </div>
         <div class="px-6 py-8 md:px-10 md:py-10">
           {#if title.trim()}
-            <h1 class="mb-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
+            <h1
+              class="mb-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl"
+            >
               {title}
             </h1>
           {/if}
@@ -434,7 +456,7 @@ export const example = () => "hello, world";
               alt=""
               class="mb-8 w-full rounded-xl border border-neutral-900"
               onerror={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
             />
           {/if}

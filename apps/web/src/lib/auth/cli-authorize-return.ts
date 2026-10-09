@@ -16,8 +16,12 @@ function pathnameOfReturn(pathWithSearch: string): string {
   return q >= 0 ? pathWithSearch.slice(0, q)! : pathWithSearch;
 }
 
+type CliAuthorizeReturnPath = `/app/cli-authorize?${string}`;
+
 /** Same-origin path allowlist for post-login redirect (open-redirect safe). */
-export function isAllowedCliAuthorizeReturn(pathWithSearch: string): boolean {
+export function isAllowedCliAuthorizeReturn(
+  pathWithSearch: string,
+): pathWithSearch is CliAuthorizeReturnPath {
   if (!pathWithSearch.startsWith("/")) {
     return false;
   }
@@ -41,7 +45,7 @@ export function persistCliAuthorizeReturn(pathWithSearch: string): void {
 }
 
 /** Returns validated path (pathname + search) or null. Clears storage. */
-export function readAndClearCliAuthorizeReturn(): string | null {
+export function readAndClearCliAuthorizeReturn(): CliAuthorizeReturnPath | null {
   if (!browser) {
     return null;
   }

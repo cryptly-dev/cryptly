@@ -1,5 +1,6 @@
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
+import { resolve } from "$app/paths";
 import { AuthApi, AuthRequestError } from "$lib/auth/auth-api";
 import {
   AUTH_JWT_STORAGE_KEY,
@@ -7,10 +8,7 @@ import {
 } from "$lib/auth/kea-storage-keys";
 import { keystore } from "$lib/auth/keystore";
 import { UserApi, type User } from "$lib/auth/user.api";
-import {
-  broadcastKeyLock,
-  markKeyLocked,
-} from "$lib/stores/key-state.svelte";
+import { broadcastKeyLock, markKeyLocked } from "$lib/stores/key-state.svelte";
 
 function readKey(storageKey: string): string | null {
   if (!browser) return null;
@@ -57,46 +55,46 @@ export async function loadUserData(): Promise<boolean> {
   loadUserPromiseToken = token;
   loadUserPromise = (async () => {
     try {
-    let data: User;
-    try {
-      data = await UserApi.getMe(token);
-    } catch {
-      if (!auth.refreshToken) {
-        auth.accountLoadError = "session";
-        await logout();
-        return false;
-      }
-      let refreshed;
+      let data: User;
       try {
-        refreshed = await AuthApi.refresh(auth.refreshToken);
-      } catch (error) {
-        if (isInvalidRefreshFailure(error)) {
+        data = await UserApi.getMe(token);
+      } catch {
+        if (!auth.refreshToken) {
           auth.accountLoadError = "session";
           await logout();
-        } else {
-          auth.accountLoadError = "network";
+          return false;
         }
-        return false;
+        let refreshed;
+        try {
+          refreshed = await AuthApi.refresh(auth.refreshToken);
+        } catch (error) {
+          if (isInvalidRefreshFailure(error)) {
+            auth.accountLoadError = "session";
+            await logout();
+          } else {
+            auth.accountLoadError = "network";
+          }
+          return false;
+        }
+        if (!refreshed.refreshToken) {
+          auth.accountLoadError = "session";
+          await logout();
+          return false;
+        }
+        setTokens(refreshed.token, refreshed.refreshToken);
+        data = await UserApi.getMe(refreshed.token);
       }
-      if (!refreshed.refreshToken) {
-        auth.accountLoadError = "session";
-        await logout();
-        return false;
+      if (seq !== loadUserSeq) {
+        return Boolean(auth.userData);
       }
-      setTokens(refreshed.token, refreshed.refreshToken);
-      data = await UserApi.getMe(refreshed.token);
-    }
-    if (seq !== loadUserSeq) {
-      return Boolean(auth.userData);
-    }
-    auth.userData = data;
-    return true;
+      auth.userData = data;
+      return true;
     } catch {
-    if (seq !== loadUserSeq) {
-      return Boolean(auth.userData);
-    }
-    auth.accountLoadError = auth.jwtToken ? "unknown" : "session";
-    return false;
+      if (seq !== loadUserSeq) {
+        return Boolean(auth.userData);
+      }
+      auth.accountLoadError = auth.jwtToken ? "unknown" : "session";
+      return false;
     }
   })().finally(() => {
     if (loadUserPromiseToken === token) {
@@ -165,7 +163,7 @@ export async function logout() {
     broadcastKeyLock();
   }
   if (browser) {
-    void goto("/app/login");
+    void goto(resolve("/app/login"));
   }
   if (currentRefresh) {
     try {

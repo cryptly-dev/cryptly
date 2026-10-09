@@ -1,43 +1,47 @@
 <script lang="ts">
-  import CryptlyLogo from '$lib/shared/ui/CryptlyLogo.svelte';
-  import GitHubIcon from '$lib/shared/ui/GitHubIcon.svelte';
-  import { createOAuthState } from '$lib/auth/browser-state';
-  import { publicEnv } from '$lib/shared/env/public-env';
-  import LocalLoginForm from './LocalLoginForm.svelte';
+  import CryptlyLogo from "$lib/shared/ui/CryptlyLogo.svelte";
+  import GitHubIcon from "$lib/shared/ui/GitHubIcon.svelte";
+  import { createOAuthState } from "$lib/auth/browser-state";
+  import { publicEnv } from "$lib/shared/env/public-env";
+  import LocalLoginForm from "./LocalLoginForm.svelte";
 
-  let loadingProvider = $state<'google' | 'github' | null>(null);
+  let loadingProvider = $state<"google" | "github" | null>(null);
 
   function googleOAuthUrl(state: string) {
     const { googleClientId, appUrl } = publicEnv;
-    return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleClientId)}&redirect_uri=${encodeURIComponent(`${appUrl.replace(/\/$/, '')}/app/callbacks/oauth/google`)}&response_type=code&scope=openid%20email%20profile&state=${encodeURIComponent(state)}`;
+    return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleClientId)}&redirect_uri=${encodeURIComponent(`${appUrl.replace(/\/$/, "")}/app/callbacks/oauth/google`)}&response_type=code&scope=openid%20email%20profile&state=${encodeURIComponent(state)}`;
   }
 
   function githubOAuthUrl(state: string) {
     const { githubClientId, appUrl } = publicEnv;
-    return `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(githubClientId)}&redirect_uri=${encodeURIComponent(`${appUrl.replace(/\/$/, '')}/app/callbacks/oauth/github`)}&scope=user:email&state=${encodeURIComponent(state)}`;
+    return `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(githubClientId)}&redirect_uri=${encodeURIComponent(`${appUrl.replace(/\/$/, "")}/app/callbacks/oauth/github`)}&scope=user:email&state=${encodeURIComponent(state)}`;
   }
 
   function handleGoogleLogin() {
-    const state = createOAuthState('google');
+    const state = createOAuthState("google");
     if (!state) return;
-    loadingProvider = 'google';
+    loadingProvider = "google";
     window.location.href = googleOAuthUrl(state);
   }
 
   function handleGitHubLogin() {
-    const state = createOAuthState('github');
+    const state = createOAuthState("github");
     if (!state) return;
-    loadingProvider = 'github';
+    loadingProvider = "github";
     window.location.href = githubOAuthUrl(state);
   }
 </script>
 
-<div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-8">
+<div
+  class="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-8"
+>
   <!-- `max-w-62` matches React `LoginPage` (`max-w-62` → 15.5rem) -->
   <div class="relative z-10 w-full max-w-[15.5rem] space-y-4">
     <div class="space-y-2 text-center">
       <CryptlyLogo size={42} class="m-auto mb-4" />
-      <h1 class="text-xl font-semibold tracking-tight text-foreground">Welcome to Cryptly</h1>
+      <h1 class="text-xl font-semibold tracking-tight text-foreground">
+        Welcome to Cryptly
+      </h1>
     </div>
 
     {#if publicEnv.allowLocalLogin}
@@ -47,7 +51,7 @@
         <button
           type="button"
           disabled={loadingProvider !== null}
-          class="inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-3 whitespace-nowrap rounded-md border-[0.5px] border-neutral-700/60 bg-neutral-800/80 text-sm font-medium transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0"
+          class="inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-3 rounded-md border-[0.5px] border-neutral-700/60 bg-neutral-800/80 text-sm font-medium whitespace-nowrap transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0"
           onclick={handleGoogleLogin}
         >
           <svg viewBox="0 0 24 24" class="h-5 w-5">
@@ -80,7 +84,7 @@
         <button
           type="button"
           disabled={loadingProvider !== null}
-          class="inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-3 whitespace-nowrap rounded-md border-[0.5px] border-neutral-700/60 bg-neutral-800/80 text-sm font-medium transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0"
+          class="inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-3 rounded-md border-[0.5px] border-neutral-700/60 bg-neutral-800/80 text-sm font-medium whitespace-nowrap transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-700/80 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0"
           onclick={handleGitHubLogin}
         >
           <GitHubIcon class="h-5 w-5" />

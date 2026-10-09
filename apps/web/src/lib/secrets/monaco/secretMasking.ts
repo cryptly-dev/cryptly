@@ -1,3 +1,4 @@
+import type * as Monaco from "monaco-editor";
 import type { ProjectRevealOn } from "$lib/auth/domain/project-settings";
 import { assembleRealText, sliceRealByMonacoRange } from "./assembler";
 import {
@@ -18,6 +19,18 @@ import {
 
 const TOOLTIP_DEFAULT_TEXT = "Click to copy";
 
+/**
+ * Monaco's runtime TextModel exposes `changeDecorations`, but the public
+ * `ITextModel` typings omit it.
+ */
+type TextModelWithChangeDecorations = Monaco.editor.ITextModel & {
+  changeDecorations(
+    callback: (accessor: {
+      changeDecoration(id: string, newRange: Monaco.IRange): void;
+    }) => void,
+  ): void;
+};
+
 interface UseSecretMaskingArgs {
   value: string;
   onChange: (value: string) => void;
@@ -26,7 +39,10 @@ interface UseSecretMaskingArgs {
 
 interface SecretMaskingResult {
   maskedInitialValue: string;
-  handleEditorMount: (editor: any, monaco: any) => void;
+  handleEditorMount: (
+    editor: Monaco.editor.IStandaloneCodeEditor,
+    monaco: typeof Monaco,
+  ) => void;
   syncExternalValue: (value: string, revealOn: ProjectRevealOn) => void;
   setOnChange: (onChange: (value: string) => void) => void;
   dispose: () => void;
@@ -37,10 +53,16 @@ export function createSecretMasking({
   onChange,
   revealOn,
 }: UseSecretMaskingArgs): SecretMaskingResult {
-  const editorRef = { current: null as any };
-  const monacoRef = { current: null as any };
-  const decorationsRef = { current: null as any };
-  const flashDecorationsRef = { current: null as any };
+  const editorRef = {
+    current: null as Monaco.editor.IStandaloneCodeEditor | null,
+  };
+  const monacoRef = { current: null as typeof Monaco | null };
+  const decorationsRef = {
+    current: null as Monaco.editor.IEditorDecorationsCollection | null,
+  };
+  const flashDecorationsRef = {
+    current: null as Monaco.editor.IEditorDecorationsCollection | null,
+  };
   const tooltipRef = { current: null as HTMLDivElement | null };
   const hoveredDecIdRef = { current: null as string | null };
   const groupZoneIdsRef = { current: [] as string[] };
@@ -103,7 +125,7 @@ export function createSecretMasking({
     if (!editor || !monacoInstance || !model) return;
 
     const expanded = getExpandedIds();
-    const decorations: Array<{ range: any; options: any }> = [];
+    const decorations: Monaco.editor.IModelDeltaDecoration[] = [];
 
     for (const decId of trackingDecorationIdsRef.current) {
       if (expanded.has(decId)) continue;
@@ -158,7 +180,7 @@ export function createSecretMasking({
   };
 
   const applyTypingChangesToReal = (
-    model: any,
+    model: Monaco.editor.ITextModel,
     changes: Array<{
       rangeOffset: number;
       rangeLength: number;
@@ -213,7 +235,7 @@ export function createSecretMasking({
     }
 
     withInternalEdit(() => {
-      const maskEdits: Array<{ range: unknown; text: string }> = [];
+      const maskEdits: Array<{ range: Monaco.IRange; text: string }> = [];
       for (const decId of touched.keys()) {
         const postRange = model.getDecorationRange(decId);
         if (!postRange) continue;
@@ -354,7 +376,7 @@ export function createSecretMasking({
     }, 1200);
   };
 
-  const flashCopied = (rangesToFlash: Array<{ range: any }>) => {
+  const flashCopied = (rangesToFlash: Array<{ range: Monaco.IRange }>) => {
     const editor = editorRef.current;
     const monacoInstance = monacoRef.current;
     if (!editor || !monacoInstance || rangesToFlash.length === 0) return;
@@ -389,7 +411,7 @@ export function createSecretMasking({
     const editor = editorRef.current;
     const model = editor?.getModel();
     if (!model) return;
-    const items: Array<{ range: any }> = [];
+    const items: Array<{ range: Monaco.IRange }> = [];
     for (const id of decIds) {
       const r = model.getDecorationRange(id);
       if (r) items.push({ range: r });
@@ -445,7 +467,7 @@ export function createSecretMasking({
 
     const groupsToShow = groups.filter((g) => g.ranges.length >= 2);
 
-    editor.changeViewZones((accessor: any) => {
+    editor.changeViewZones((accessor) => {
       for (const id of groupZoneIdsRef.current) {
         accessor.removeZone(id);
       }
@@ -477,7 +499,7 @@ export function createSecretMasking({
   const clearGroupZones = () => {
     const editor = editorRef.current;
     if (!editor) return;
-    editor.changeViewZones((accessor: any) => {
+    editor.changeViewZones((accessor) => {
       for (const id of groupZoneIdsRef.current) {
         accessor.removeZone(id);
       }
@@ -552,7 +574,7 @@ export function createSecretMasking({
   };
 
   const findOverlappingTrackingDecoration = (
-    model: any,
+    model: Monaco.editor.ITextModel,
     parsedRange: ValueRange,
   ): string | null => {
     for (const decId of trackingDecorationIdsRef.current) {
@@ -645,13 +667,13 @@ export function createSecretMasking({
     }
 
     const driftEdits: Array<{
-      range: ReturnType<typeof monacoInstance.Range>;
+      range: Monaco.Range;
       text: string;
     }> = [];
     const driftUpdates: Array<{
       decId: string;
       real: string;
-      range: ReturnType<typeof monacoInstance.Range>;
+      range: Monaco.Range;
     }> = [];
     for (const pr of parsed) {
       if (!pr.closed) continue;
@@ -689,17 +711,13 @@ export function createSecretMasking({
     if (driftEdits.length > 0) {
       withInternalEdit(() => {
         editor.executeEdits("mask-drift-reconcile", driftEdits);
-        model.changeDecorations((accessor: unknown) => {
-          const a = accessor as {
-            changeDecoration: (
-              id: string,
-              newRange: ReturnType<typeof monacoInstance.Range>,
-            ) => void;
-          };
-          for (const { decId, range } of driftUpdates) {
-            a.changeDecoration(decId, range);
-          }
-        });
+        (model as TextModelWithChangeDecorations).changeDecorations(
+          (accessor) => {
+            for (const { decId, range } of driftUpdates) {
+              accessor.changeDecoration(decId, range);
+            }
+          },
+        );
       });
       for (const { decId, real } of driftUpdates) {
         decorationToRealRef.current.set(decId, real);
@@ -722,7 +740,7 @@ export function createSecretMasking({
     // the parsed text directly as the new real when lengths differ.
     const rangeSyncUpdates: Array<{
       decId: string;
-      newRange: ReturnType<typeof monacoInstance.Range>;
+      newRange: Monaco.Range;
       newReal: string;
     }> = [];
     for (const pr of parsed) {
@@ -764,17 +782,13 @@ export function createSecretMasking({
       rangeSyncUpdates.push({ decId, newRange: pRange, newReal });
     }
     if (rangeSyncUpdates.length > 0) {
-      model.changeDecorations((accessor: unknown) => {
-        const a = accessor as {
-          changeDecoration: (
-            id: string,
-            newRange: ReturnType<typeof monacoInstance.Range>,
-          ) => void;
-        };
-        for (const { decId, newRange } of rangeSyncUpdates) {
-          a.changeDecoration(decId, newRange);
-        }
-      });
+      (model as TextModelWithChangeDecorations).changeDecorations(
+        (accessor) => {
+          for (const { decId, newRange } of rangeSyncUpdates) {
+            accessor.changeDecoration(decId, newRange);
+          }
+        },
+      );
       for (const { decId, newReal } of rangeSyncUpdates) {
         decorationToRealRef.current.set(decId, newReal);
       }
@@ -903,7 +917,10 @@ export function createSecretMasking({
     onChangeRef.current(out);
   };
 
-  const handleEditorMount = (editor: any, monaco: any) => {
+  const handleEditorMount = (
+    editor: Monaco.editor.IStandaloneCodeEditor,
+    monaco: typeof Monaco,
+  ) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
 
@@ -978,7 +995,7 @@ export function createSecretMasking({
     } | null = null;
     let mouseDownZoneId: string | null = null;
 
-    editor.onMouseDown((e: any) => {
+    editor.onMouseDown((e) => {
       if (e.target?.type === VIEW_ZONE_TARGET_TYPE) {
         mouseDownInfo = null;
         mouseDownZoneId = e.target.detail?.viewZoneId ?? null;
@@ -994,7 +1011,7 @@ export function createSecretMasking({
       mouseDownInfo = { pos, time: Date.now() };
     });
 
-    editor.onMouseUp((e: any) => {
+    editor.onMouseUp((e) => {
       if (mouseDownZoneId !== null) {
         const downZoneId = mouseDownZoneId;
         mouseDownZoneId = null;
@@ -1037,7 +1054,7 @@ export function createSecretMasking({
 
     const editorDom = editor.getDomNode();
     let hoveredZoneId: string | null = null;
-    editor.onMouseMove((e: any) => {
+    editor.onMouseMove((e) => {
       const targetType = e.target?.type;
 
       if (targetType === VIEW_ZONE_TARGET_TYPE) {

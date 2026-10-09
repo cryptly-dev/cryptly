@@ -2,8 +2,8 @@
   let { children } = $props();
 </script>
 
-<div class="relative min-h-screen-mobile overflow-hidden bg-background">
-  <div class="relative z-10 h-screen-mobile">
+<div class="min-h-screen-mobile relative overflow-hidden bg-background">
+  <div class="h-screen-mobile relative z-10">
     {@render children()}
   </div>
 </div>

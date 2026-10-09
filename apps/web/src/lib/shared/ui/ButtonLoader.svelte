@@ -1,10 +1,23 @@
 <script lang="ts">
-  let { class: className = 'size-4' }: { class?: string } = $props();
+  let { class: className = "size-4" }: { class?: string } = $props();
 </script>
 
 <!-- Same spinner as the legacy Button `isLoading` state. -->
-<svg class={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+<svg
+  class={`animate-spin ${className}`}
+  xmlns="http://www.w3.org/2000/svg"
+  fill="none"
+  viewBox="0 0 24 24"
+  aria-hidden="true"
+>
+  <circle
+    class="opacity-25"
+    cx="12"
+    cy="12"
+    r="10"
+    stroke="currentColor"
+    stroke-width="4"
+  />
   <path
     class="opacity-75"
     fill="currentColor"

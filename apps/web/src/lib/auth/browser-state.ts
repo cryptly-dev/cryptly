@@ -1,18 +1,18 @@
-import { browser } from '$app/environment';
+import { browser } from "$app/environment";
 
-const STATE_PREFIX = 'cryptly_browser_state:';
+const STATE_PREFIX = "cryptly_browser_state:";
 const STATE_TTL_MS = 10 * 60 * 1000;
 
-type OAuthProvider = 'google' | 'github';
+type OAuthProvider = "google" | "github";
 
 interface OAuthStateRecord {
-  kind: 'oauth';
+  kind: "oauth";
   provider: OAuthProvider;
   createdAt: number;
 }
 
 interface GitHubAppInstallStateRecord {
-  kind: 'github-app-install';
+  kind: "github-app-install";
   projectId: string;
   createdAt: number;
 }
@@ -30,7 +30,9 @@ function isFresh(record: BrowserStateRecord): boolean {
 function generateNonce(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
 }
 
 function writeState(record: BrowserStateRecord): string | null {
@@ -52,8 +54,8 @@ function readAndClearState(state: string | null): BrowserStateRecord | null {
     sessionStorage.removeItem(key);
     if (!raw) return null;
     const record = JSON.parse(raw) as BrowserStateRecord;
-    if (!record || typeof record !== 'object') return null;
-    if (typeof record.createdAt !== 'number' || !isFresh(record)) return null;
+    if (!record || typeof record !== "object") return null;
+    if (typeof record.createdAt !== "number" || !isFresh(record)) return null;
     return record;
   } catch {
     try {
@@ -66,21 +68,31 @@ function readAndClearState(state: string | null): BrowserStateRecord | null {
 }
 
 export function createOAuthState(provider: OAuthProvider): string | null {
-  return writeState({ kind: 'oauth', provider, createdAt: Date.now() });
+  return writeState({ kind: "oauth", provider, createdAt: Date.now() });
 }
 
-export function consumeOAuthState(provider: OAuthProvider, state: string | null): boolean {
+export function consumeOAuthState(
+  provider: OAuthProvider,
+  state: string | null,
+): boolean {
   const record = readAndClearState(state);
-  return record?.kind === 'oauth' && record.provider === provider;
+  return record?.kind === "oauth" && record.provider === provider;
 }
 
 export function createGitHubAppInstallState(projectId: string): string | null {
-  return writeState({ kind: 'github-app-install', projectId, createdAt: Date.now() });
+  return writeState({
+    kind: "github-app-install",
+    projectId,
+    createdAt: Date.now(),
+  });
 }
 
-export function consumeGitHubAppInstallState(state: string | null): string | null {
+export function consumeGitHubAppInstallState(
+  state: string | null,
+): string | null {
   const record = readAndClearState(state);
-  if (record?.kind !== 'github-app-install') return null;
-  if (typeof record.projectId !== 'string' || record.projectId.length === 0) return null;
+  if (record?.kind !== "github-app-install") return null;
+  if (typeof record.projectId !== "string" || record.projectId.length === 0)
+    return null;
   return record.projectId;
 }

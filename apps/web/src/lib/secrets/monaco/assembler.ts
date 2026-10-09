@@ -1,3 +1,4 @@
+import type * as Monaco from "monaco-editor";
 import { lineColToOffset, type MonacoSelectionLike } from "./parser";
 
 /**
@@ -7,10 +8,10 @@ import { lineColToOffset, type MonacoSelectionLike } from "./parser";
  * value). O(L + R).
  */
 export function assembleRealText(
-  model: any,
+  model: Monaco.editor.ITextModel | null,
   decorationToReal: Map<string, string>,
   expandedIds: Set<string>,
-  monaco: any
+  monaco: typeof Monaco,
 ): string {
   if (!model || decorationToReal.size === 0) {
     return model?.getValue() ?? "";
@@ -36,12 +37,12 @@ export function assembleRealText(
     const start = lineColToOffset(
       lineLengths,
       range.startLineNumber,
-      range.startColumn
+      range.startColumn,
     );
     const end = lineColToOffset(
       lineLengths,
       range.endLineNumber,
-      range.endColumn
+      range.endColumn,
     );
     entries.push({ id, start, end });
   }
@@ -74,14 +75,14 @@ export function assembleRealText(
  */
 export function sliceRealByMonacoRange(
   realText: string,
-  sel: MonacoSelectionLike
+  sel: MonacoSelectionLike,
 ): string {
   const lines = realText.split("\n");
   const lineLengths = lines.map((l) => l.length);
   const start = lineColToOffset(
     lineLengths,
     sel.startLineNumber,
-    sel.startColumn
+    sel.startColumn,
   );
   const end = lineColToOffset(lineLengths, sel.endLineNumber, sel.endColumn);
   return realText.slice(start, end);

@@ -1,19 +1,24 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { tick } from 'svelte';
-  import { animate } from 'motion';
-  import { ArrowRight } from 'lucide-svelte';
-  import { AsymmetricCrypto } from '$lib/auth/asymmetric-crypto';
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { tick } from "svelte";
+  import { animate } from "motion";
+  import { ArrowRight } from "lucide-svelte";
+  import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
   import {
     DEFAULT_PROJECT_SETTINGS,
     normalizeProjectSettings,
     type ProjectSettings,
-  } from '$lib/auth/domain/project-settings';
-  import { SymmetricCrypto } from '$lib/auth/symmetric-crypto';
-  import { UserApi } from '$lib/auth/user.api';
-  import { ProjectsApi, type Project } from '$lib/projects/projects.api';
-  import ShellLoader from '$lib/shared/ui/ShellLoader.svelte';
-  import { accountLoadErrorMessage, auth, loadUserData } from '$lib/stores/auth.svelte';
+  } from "$lib/auth/domain/project-settings";
+  import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
+  import { UserApi } from "$lib/auth/user.api";
+  import { ProjectsApi, type Project } from "$lib/projects/projects.api";
+  import ShellLoader from "$lib/shared/ui/ShellLoader.svelte";
+  import {
+    accountLoadErrorMessage,
+    auth,
+    loadUserData,
+  } from "$lib/stores/auth.svelte";
 
   let projects = $state<Project[] | null>(null);
   let projectsLoading = $state(true);
@@ -22,7 +27,7 @@
   let profileError = $state<string | null>(null);
   let createError = $state<string | null>(null);
 
-  let name = $state('');
+  let name = $state("");
   let submitting = $state(false);
   let emptyMotionEl: HTMLDivElement | undefined = $state();
   let nameInput: HTMLInputElement | undefined = $state();
@@ -39,7 +44,7 @@
     try {
       projects = await ProjectsApi.getProjects(jwt);
     } catch {
-      loadError = 'Failed to load projects';
+      loadError = "Failed to load projects";
       projects = [];
     } finally {
       projectsLoading = false;
@@ -48,7 +53,7 @@
 
   $effect(() => {
     if (!auth.jwtToken) {
-      void goto('/app/login');
+      void goto(resolve("/app/login"));
       return;
     }
     void (async () => {
@@ -68,15 +73,17 @@
     if (profileLoading || projectsLoading || projects === null) return;
     if (projects.length > 0) {
       const sorted = [...projects].sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
       );
       const targetId = sorted[0]!.id;
-      void goto(`/app/project/${targetId}`, { replaceState: true });
+      void goto(resolve(`/app/project/${targetId}`), { replaceState: true });
     }
   });
 
   $effect(() => {
-    if (profileLoading || projectsLoading || !projects || projects.length !== 0) return;
+    if (profileLoading || projectsLoading || !projects || projects.length !== 0)
+      return;
     void tick().then(() => {
       nameInput?.focus();
       if (emptyMotionEl) {
@@ -97,7 +104,8 @@
     createError = null;
     if (!trimmed || submitting || !jwt) return;
     if (!user?.publicKey) {
-      createError = 'Encryption keys are not ready. Finish passphrase setup first.';
+      createError =
+        "Encryption keys are not ready. Finish passphrase setup first.";
       return;
     }
 
@@ -108,8 +116,14 @@
       );
       const projectKey = await SymmetricCrypto.generateProjectKey();
       const content = `# Define your secrets below. Example:\nAPI_KEY="your-value-here"\nDATABASE_URL="postgres://..."`;
-      const contentEncrypted = await SymmetricCrypto.encrypt(content, projectKey);
-      const projectKeyEncrypted = await AsymmetricCrypto.encrypt(projectKey, user.publicKey);
+      const contentEncrypted = await SymmetricCrypto.encrypt(
+        content,
+        projectKey,
+      );
+      const projectKeyEncrypted = await AsymmetricCrypto.encrypt(
+        projectKey,
+        user.publicKey,
+      );
 
       const proj = await ProjectsApi.createProject(jwt, {
         name: trimmed,
@@ -120,17 +134,22 @@
 
       await UserApi.updateMe(jwt, { projectCreationDefaults: settings });
       await loadUserData();
-      await goto(`/app/project/${proj.id}`, { replaceState: true });
+      await goto(resolve(`/app/project/${proj.id}`), { replaceState: true });
     } catch {
       submitting = false;
-      createError = 'Could not create project. Try again or check the API and your connection.';
+      createError =
+        "Could not create project. Try again or check the API and your connection.";
     }
   }
 </script>
 
 {#if loadError}
-  <div class="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background p-6">
-    <p class="max-w-md text-center text-sm text-muted-foreground">{loadError}</p>
+  <div
+    class="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background p-6"
+  >
+    <p class="max-w-md text-center text-sm text-muted-foreground">
+      {loadError}
+    </p>
     <button
       type="button"
       class="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
@@ -140,8 +159,12 @@
     </button>
   </div>
 {:else if profileError}
-  <div class="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background p-6">
-    <p class="max-w-md text-center text-sm text-muted-foreground">{profileError}</p>
+  <div
+    class="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background p-6"
+  >
+    <p class="max-w-md text-center text-sm text-muted-foreground">
+      {profileError}
+    </p>
     <button
       type="button"
       class="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
@@ -165,21 +188,34 @@
   </div>
 {:else if !profileLoading && !projectsLoading && projects && projects.length === 0}
   <div class="flex min-h-screen items-center justify-center bg-background p-8">
-    <div bind:this={emptyMotionEl} class="w-full max-w-md" style="opacity:0;transform:translateY(14px)">
+    <div
+      bind:this={emptyMotionEl}
+      class="w-full max-w-md"
+      style="opacity:0;transform:translateY(14px)"
+    >
       <div class="mb-10">
-        <div class="mb-5 text-[11px] uppercase tracking-[0.22em] text-muted-foreground/60">New project</div>
-        <h1 class="text-[34px] font-semibold leading-[1.05] tracking-tight text-foreground md:text-[40px]">
+        <div
+          class="mb-5 text-[11px] tracking-[0.22em] text-muted-foreground/60 uppercase"
+        >
+          New project
+        </div>
+        <h1
+          class="text-[34px] leading-[1.05] font-semibold tracking-tight text-foreground md:text-[40px]"
+        >
           Name your first <span class="text-muted-foreground">project.</span>
         </h1>
         <p class="mt-5 text-[15px] leading-[1.7] text-muted-foreground">
-          Secrets you store in it are encrypted in your browser — before they leave your machine.
+          Secrets you store in it are encrypted in your browser — before they
+          leave your machine.
         </p>
       </div>
 
       {#if !auth.userData?.publicKey}
         <p class="mb-4 text-sm text-amber-200/90">
-          Set up your passphrase and keys to create a project.{' '}
-          <a href="/app/set-passphrase" class="underline underline-offset-2 hover:text-foreground"
+          Set up your passphrase and keys to create a project.
+          <a
+            href={resolve("/app/set-passphrase")}
+            class="underline underline-offset-2 hover:text-foreground"
             >Continue setup</a
           >
         </p>
@@ -199,13 +235,13 @@
             autocorrect="off"
             autocapitalize="off"
             spellcheck={false}
-            class="h-12 w-full rounded-lg border border-border/60 bg-neutral-900/40 pl-4 pr-14 text-[15px] text-foreground transition-colors placeholder:text-muted-foreground/50 focus:border-primary/60 focus:bg-neutral-900/60 focus:outline-none disabled:opacity-60"
+            class="h-12 w-full rounded-lg border border-border/60 bg-neutral-900/40 pr-14 pl-4 text-[15px] text-foreground transition-colors placeholder:text-muted-foreground/50 focus:border-primary/60 focus:bg-neutral-900/60 focus:outline-none disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={!name.trim() || submitting || !auth.userData?.publicKey}
             aria-label="Create project"
-            class="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+            class="absolute top-1/2 right-1.5 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {#if submitting}
               <span

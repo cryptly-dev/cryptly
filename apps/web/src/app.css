@@ -1,6 +1,8 @@
 @import "@fontsource-variable/funnel-display";
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+  logs: false;
+}
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -317,16 +319,16 @@ body {
 
   /* Blog body — mirrors frontend BlogMarkdown.tsx component styles */
   .blog-prose :where(h1) {
-    @apply text-foreground mt-10 mb-6 text-4xl font-semibold tracking-tight first:mt-0 md:text-5xl;
+    @apply mt-10 mb-6 text-4xl font-semibold tracking-tight text-foreground first:mt-0 md:text-5xl;
   }
   .blog-prose :where(h2) {
-    @apply text-foreground mt-10 mb-4 text-2xl font-semibold tracking-tight md:text-3xl;
+    @apply mt-10 mb-4 text-2xl font-semibold tracking-tight text-foreground md:text-3xl;
   }
   .blog-prose :where(h3) {
-    @apply text-foreground mt-8 mb-3 text-xl font-semibold tracking-tight md:text-2xl;
+    @apply mt-8 mb-3 text-xl font-semibold tracking-tight text-foreground md:text-2xl;
   }
   .blog-prose :where(h4) {
-    @apply text-foreground mt-6 mb-2 text-lg font-semibold;
+    @apply mt-6 mb-2 text-lg font-semibold text-foreground;
   }
   .blog-prose :where(p) {
     @apply my-5 text-[17px] leading-8 text-neutral-300;
@@ -368,7 +370,7 @@ body {
     @apply border-b border-neutral-900 px-4 py-2 text-neutral-300;
   }
   .blog-prose :where(strong) {
-    @apply text-foreground font-semibold;
+    @apply font-semibold text-foreground;
   }
   .blog-prose :where(em) {
     @apply text-neutral-200 italic;

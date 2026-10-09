@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { page } from '$app/state';
-  import { ArrowRight } from 'lucide-svelte';
-  import { tick } from 'svelte';
-  import GitHubIcon from '$lib/shared/ui/GitHubIcon.svelte';
-  import { cn } from '$lib/utils';
+  import { resolve } from "$app/paths";
+  import { page } from "$app/state";
+  import { ArrowRight } from "lucide-svelte";
+  import { tick } from "svelte";
+  import GitHubIcon from "$lib/shared/ui/GitHubIcon.svelte";
+  import { cn } from "$lib/utils";
 
-  const ACCENT = '#DDA15E';
+  const ACCENT = "#DDA15E";
 
   let navHome = $state<HTMLAnchorElement | null>(null);
   let navBlog = $state<HTMLAnchorElement | null>(null);
@@ -14,15 +15,19 @@
 
   const pathname = $derived(page.url.pathname);
 
-  const isAppShell = $derived(pathname.startsWith('/app') || pathname.startsWith('/invite/'));
+  const isAppShell = $derived(
+    pathname.startsWith("/app") || pathname.startsWith("/invite/"),
+  );
 
-  const isBlog = $derived(pathname === '/blog' || pathname.startsWith('/blog/'));
+  const isBlog = $derived(
+    pathname === "/blog" || pathname.startsWith("/blog/"),
+  );
   const isHome = $derived(!isBlog);
 
   $effect(() => {
     if (isAppShell) return;
     const path = pathname;
-    const el = path.startsWith('/blog') ? navBlog : navHome;
+    const el = path.startsWith("/blog") ? navBlog : navHome;
     void tick().then(() => {
       if (!el || !navRow) {
         underline = { ...underline, visible: false };
@@ -31,18 +36,25 @@
       const r = el.getBoundingClientRect();
       const nr = navRow.getBoundingClientRect();
       const pad = 12;
-      underline = { left: r.left - nr.left + pad, width: r.width - pad * 2, visible: true };
+      underline = {
+        left: r.left - nr.left + pad,
+        width: r.width - pad * 2,
+        visible: true,
+      };
     });
   });
 </script>
 
 {#if !isAppShell}
-  <header class="fixed left-0 right-0 top-4 z-30 px-4">
+  <header class="fixed top-4 right-0 left-0 z-30 px-4">
     <div class="mx-auto max-w-6xl">
       <div
         class="flex h-14 items-center justify-between rounded-full border border-border/50 bg-card/60 px-5 shadow-xl shadow-black/30 backdrop-blur-md"
       >
-        <a href="/" class="inline-flex items-center text-foreground transition-opacity hover:opacity-80">
+        <a
+          href={resolve("/")}
+          class="inline-flex items-center text-foreground transition-opacity hover:opacity-80"
+        >
           <span class="font-semibold tracking-tight">Cryptly</span>
         </a>
 
@@ -50,20 +62,24 @@
           <div class="relative flex items-center gap-1" bind:this={navRow}>
             <a
               bind:this={navHome}
-              href="/"
+              href={resolve("/")}
               class={cn(
-                'relative rounded-md px-3 py-1.5 transition-colors',
-                isHome ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                "relative rounded-md px-3 py-1.5 transition-colors",
+                isHome
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               Home
             </a>
             <a
               bind:this={navBlog}
-              href="/blog"
+              href={resolve("/blog")}
               class={cn(
-                'relative rounded-md px-3 py-1.5 transition-colors',
-                isBlog ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                "relative rounded-md px-3 py-1.5 transition-colors",
+                isBlog
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               Blog
@@ -90,7 +106,7 @@
         </nav>
 
         <a
-          href="/app/project"
+          href={resolve("/app/project")}
           class="group relative inline-flex items-center gap-1.5 overflow-hidden rounded-full bg-white px-3.5 py-1.5 text-sm font-medium text-black shadow-md shadow-black/30 transition-all duration-300 hover:bg-neutral-100 hover:shadow-lg [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:translate-x-0.5"
         >
           <span

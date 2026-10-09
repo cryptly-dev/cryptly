@@ -140,6 +140,7 @@ export async function requestUnlockFromDevice(deviceId: string): Promise<void> {
     publicKey: keyPair.publicKey,
     requesterDeviceId,
     pin,
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- serialized to a string immediately, never stored as state
     timestamp: new Date().toISOString(),
   };
 

@@ -1,16 +1,17 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { gotoAfterLogin } from '$lib/auth/after-login';
-  import { consumeOAuthState } from '$lib/auth/browser-state';
+  import { onMount } from "svelte";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { gotoAfterLogin } from "$lib/auth/after-login";
+  import { consumeOAuthState } from "$lib/auth/browser-state";
   import {
     auth,
     exchangeGithubCodeForJwt,
     exchangeGoogleCodeForJwt,
-    loadUserData
-  } from '$lib/stores/auth.svelte';
+    loadUserData,
+  } from "$lib/stores/auth.svelte";
 
-  let { method }: { method: 'google' | 'github' } = $props();
+  let { method }: { method: "google" | "github" } = $props();
 
   let exchangeSucceeded = $state(false);
   let afterLoginRan = $state(false);
@@ -18,15 +19,15 @@
   onMount(() => {
     void (async () => {
       const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
-      const state = params.get('state');
+      const code = params.get("code");
+      const state = params.get("state");
       const stateMatchesProvider = consumeOAuthState(method, state);
-      if (params.get('error') || !code || !stateMatchesProvider) {
-        await goto('/app/login');
+      if (params.get("error") || !code || !stateMatchesProvider) {
+        await goto(resolve("/app/login"));
         return;
       }
       try {
-        if (method === 'google') {
+        if (method === "google") {
           await exchangeGoogleCodeForJwt(code);
         } else {
           await exchangeGithubCodeForJwt(code);
@@ -34,7 +35,7 @@
         await loadUserData();
         exchangeSucceeded = true;
       } catch {
-        await goto('/app/login');
+        await goto(resolve("/app/login"));
       }
     })();
   });

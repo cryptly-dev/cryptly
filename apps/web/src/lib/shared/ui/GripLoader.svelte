@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { cn } from '$lib/utils';
+  import { onMount } from "svelte";
+  import { cn } from "$lib/utils";
 
   // GripVertical's six dots — same geometry as `frontend/src/components/ui/GripLoader.tsx`
   const GRIP_PERIMETER = [
@@ -18,19 +18,21 @@
 
   let {
     color,
-    class: className = '',
+    class: className = "",
   }: {
     color: string;
     class?: string;
   } = $props();
 
   const startOffsetMs =
-    ALLOWED_START_OFFSETS[Math.floor(Math.random() * ALLOWED_START_OFFSETS.length)]!;
+    ALLOWED_START_OFFSETS[
+      Math.floor(Math.random() * ALLOWED_START_OFFSETS.length)
+    ]!;
 
   onMount(() => {
-    if (document.getElementById('grip-loader-keyframes')) return;
-    const style = document.createElement('style');
-    style.id = 'grip-loader-keyframes';
+    if (document.getElementById("grip-loader-keyframes")) return;
+    const style = document.createElement("style");
+    style.id = "grip-loader-keyframes";
     style.textContent = `
     @keyframes grip-loader-fade {
       0% { opacity: 0.12; }
@@ -49,13 +51,14 @@
 
 <svg
   viewBox="0 0 24 24"
-  class={cn('h-3.5 w-3.5', className)}
+  class={cn("h-3.5 w-3.5", className)}
   role="status"
   aria-label="Loading"
 >
   {#each GRIP_PERIMETER as pos, i (i)}
     {@const fadeInStart = ((i + 4) * STEP_MS) % CYCLE_MS}
-    {@const phase = (((startOffsetMs - fadeInStart) % CYCLE_MS) + CYCLE_MS) % CYCLE_MS}
+    {@const phase =
+      (((startOffsetMs - fadeInStart) % CYCLE_MS) + CYCLE_MS) % CYCLE_MS}
     <circle
       cx={pos.cx}
       cy={pos.cy}

@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { animate } from 'motion';
-  import { ArrowRight } from 'lucide-svelte';
-  import GitHubIcon from '$lib/shared/ui/GitHubIcon.svelte';
-  import { cn } from '$lib/utils';
-  import LandingShell from './LandingShell.svelte';
-  import { ACCENT, HERO_DURATION, HERO_EASE, HERO_ROWS } from './landing-data';
+  import { resolve } from "$app/paths";
+  import { onMount } from "svelte";
+  import { animate } from "motion";
+  import { ArrowRight } from "lucide-svelte";
+  import GitHubIcon from "$lib/shared/ui/GitHubIcon.svelte";
+  import { cn } from "$lib/utils";
+  import LandingShell from "./LandingShell.svelte";
+  import { ACCENT, HERO_DURATION, HERO_EASE, HERO_ROWS } from "./landing-data";
 
   let hovered: number | null = $state(null);
 
@@ -19,21 +20,40 @@
     const ease = HERO_EASE as unknown as [number, number, number, number];
     const base = { duration: HERO_DURATION, ease };
     if (elH1) void animate(elH1, { opacity: [0, 1], y: [20, 0] }, base);
-    if (elP) void animate(elP, { opacity: [0, 1], y: [16, 0] }, { ...base, delay: 0.12 });
-    if (elCtas) void animate(elCtas, { opacity: [0, 1], y: [12, 0] }, { ...base, delay: 0.24 });
-    if (elMeta) void animate(elMeta, { opacity: [0, 1], y: [12, 0] }, { ...base, delay: 0.36 });
+    if (elP)
+      void animate(
+        elP,
+        { opacity: [0, 1], y: [16, 0] },
+        { ...base, delay: 0.12 },
+      );
+    if (elCtas)
+      void animate(
+        elCtas,
+        { opacity: [0, 1], y: [12, 0] },
+        { ...base, delay: 0.24 },
+      );
+    if (elMeta)
+      void animate(
+        elMeta,
+        { opacity: [0, 1], y: [12, 0] },
+        { ...base, delay: 0.36 },
+      );
     if (elRight)
-      void animate(elRight, { opacity: [0, 1], y: [20, 0] }, { duration: HERO_DURATION + 0.1, ease, delay: 0.18 });
+      void animate(
+        elRight,
+        { opacity: [0, 1], y: [20, 0] },
+        { duration: HERO_DURATION + 0.1, ease, delay: 0.18 },
+      );
   });
 </script>
 
-<section class="flex min-h-screen items-center pb-12 pt-28">
+<section class="flex min-h-screen items-center pt-28 pb-12">
   <LandingShell class="w-full">
     <div class="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
       <div class="lg:col-span-7">
         <h1
           bind:this={elH1}
-          class="text-5xl font-semibold leading-[0.98] tracking-tight text-foreground md:text-7xl lg:text-[80px]"
+          class="text-5xl leading-[0.98] font-semibold tracking-tight text-foreground md:text-7xl lg:text-[80px]"
           style="opacity:0;transform:translateY(20px)"
         >
           Your secrets
@@ -47,8 +67,9 @@
           class="mt-8 max-w-xl text-lg leading-[1.75] text-muted-foreground"
           style="opacity:0;transform:translateY(16px)"
         >
-          Cryptly is a small, open source secrets manager. Every value is encrypted before it leaves your browser — so
-          even we can't read it. Free, forever.
+          Cryptly is a small, open source secrets manager. Every value is
+          encrypted before it leaves your browser — so even we can't read it.
+          Free, forever.
         </p>
         <div
           bind:this={elCtas}
@@ -56,7 +77,7 @@
           style="opacity:0;transform:translateY(12px)"
         >
           <a
-            href="/app/project"
+            href={resolve("/app/project")}
             class="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-lg shadow-black/40 transition-all duration-300 hover:bg-neutral-100 hover:shadow-xl [&_svg]:transition-transform [&_svg]:duration-300 hover:[&_svg]:translate-x-0.5"
           >
             <span
@@ -82,41 +103,59 @@
           style="opacity:0;transform:translateY(12px)"
         >
           <span>Free forever</span>
-          <span aria-hidden="true" class="inline-block h-1 w-1 rounded-full align-middle" style:background-color={ACCENT}
+          <span
+            aria-hidden="true"
+            class="inline-block h-1 w-1 rounded-full align-middle"
+            style:background-color={ACCENT}
           ></span>
           <span>E2E encrypted</span>
-          <span aria-hidden="true" class="inline-block h-1 w-1 rounded-full align-middle" style:background-color={ACCENT}
+          <span
+            aria-hidden="true"
+            class="inline-block h-1 w-1 rounded-full align-middle"
+            style:background-color={ACCENT}
           ></span>
           <span>Open source</span>
         </div>
       </div>
-      <div bind:this={elRight} class="lg:col-span-5" style="opacity:0;transform:translateY(20px)">
+      <div
+        bind:this={elRight}
+        class="lg:col-span-5"
+        style="opacity:0;transform:translateY(20px)"
+      >
         <div
           class="overflow-hidden rounded-2xl border border-border/50 bg-card/40 shadow-2xl shadow-black/40 backdrop-blur-sm"
         >
           <div class="px-4 py-5 font-mono text-[13px] leading-[2]">
-            {#each HERO_ROWS as r, i}
+            {#each HERO_ROWS as r, i (r.k)}
               <div
                 role="presentation"
                 onmouseenter={() => (hovered = i)}
                 onmouseleave={() => (hovered = null)}
-                class="flex items-baseline gap-3 whitespace-nowrap px-2 py-1"
+                class="flex items-baseline gap-3 px-2 py-1 whitespace-nowrap"
               >
-                <span class="w-6 flex-shrink-0 text-right tabular-nums text-muted-foreground/50">
-                  {String(i + 1).padStart(2, '0')}
+                <span
+                  class="w-6 flex-shrink-0 text-right text-muted-foreground/50 tabular-nums"
+                >
+                  {String(i + 1).padStart(2, "0")}
                 </span>
                 <span class="font-medium" style:color={ACCENT}>{r.k}</span>
                 <span class="text-muted-foreground/50">=</span>
                 <span
-                  class={cn(hovered === i ? 'text-foreground/90' : 'text-muted-foreground/70')}
+                  class={cn(
+                    hovered === i
+                      ? "text-foreground/90"
+                      : "text-muted-foreground/70",
+                  )}
                 >
-                  {hovered === i ? r.v : '•'.repeat(r.dots)}
+                  {hovered === i ? r.v : "•".repeat(r.dots)}
                 </span>
               </div>
             {/each}
           </div>
         </div>
-        <div class="mt-3 text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground/80">
+        <div
+          class="mt-3 font-mono text-[10px] tracking-[0.25em] text-muted-foreground/80 uppercase"
+        >
           Fig. 01 — the editor, in repose
         </div>
       </div>

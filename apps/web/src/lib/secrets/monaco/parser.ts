@@ -1,3 +1,5 @@
+import type * as Monaco from "monaco-editor";
+
 const BULLET = "\u2022";
 
 export interface ValueRange {
@@ -37,7 +39,9 @@ export interface ValueGroup {
   ranges: ValueRange[];
 }
 
-export function getValueRanges(model: any): ParsedSecret[] {
+export function getValueRanges(
+  model: Monaco.editor.ITextModel,
+): ParsedSecret[] {
   const lineCount = model.getLineCount();
   const ranges: ParsedSecret[] = [];
 
@@ -274,7 +278,7 @@ export function parseValueRangesFromString(text: string): ParsedSecret[] {
 export function lineColToOffset(
   lineLengths: number[],
   line: number,
-  col: number
+  col: number,
 ): number {
   let offset = 0;
   for (let i = 0; i < line - 1; i++) {
@@ -333,16 +337,16 @@ export function maskText(text: string): MaskResult {
  * `getValueRanges` for the given model. Catches drift between the two
  * implementations early. No-op in production.
  */
-export function assertParserParity(model: any): void {
+export function assertParserParity(model: Monaco.editor.ITextModel): void {
   if (!import.meta.env?.DEV) return;
   try {
     const fromModel = getValueRanges(model);
     const fromString = parseValueRangesFromString(model.getValue());
     if (fromModel.length !== fromString.length) {
-      console.warn(
-        "[BaseFileEditor] parser parity mismatch: lengths differ",
-        { fromModel, fromString }
-      );
+      console.warn("[BaseFileEditor] parser parity mismatch: lengths differ", {
+        fromModel,
+        fromString,
+      });
       return;
     }
     for (let i = 0; i < fromModel.length; i++) {
@@ -364,7 +368,7 @@ export function assertParserParity(model: any): void {
 
 export function posInRange(
   pos: { lineNumber: number; column: number },
-  r: ValueRange
+  r: ValueRange,
 ): boolean {
   if (pos.lineNumber < r.startLine || pos.lineNumber > r.endLine) return false;
   if (pos.lineNumber === r.startLine && pos.column < r.startCol) return false;
@@ -374,7 +378,7 @@ export function posInRange(
 
 export function selectionTouchesRange(
   sel: MonacoSelectionLike,
-  r: ValueRange
+  r: ValueRange,
 ): boolean {
   const selStartBeforeOrAtRangeEnd =
     sel.startLineNumber < r.endLine ||
@@ -396,8 +400,8 @@ export function rangesEqual(a: ValueRange, b: ValueRange): boolean {
 
 /** Group = max run of non-blank lines containing ≥1 KEY=VALUE pair, bounded by blank lines or file edges. */
 export function getValueGroups(
-  model: any,
-  parsed: ParsedSecret[]
+  model: Monaco.editor.ITextModel,
+  parsed: ParsedSecret[],
 ): ValueGroup[] {
   const lineCount = model.getLineCount();
   const ranges = parsed.map((p) => p.range);

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CliAuthorizePage from '$lib/auth/ui/CliAuthorizePage.svelte';
+  import CliAuthorizePage from "$lib/auth/ui/CliAuthorizePage.svelte";
 
   let { data } = $props();
 </script>

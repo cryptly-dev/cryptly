@@ -1,8 +1,8 @@
-const DB_NAME = 'cryptly-keystore';
+const DB_NAME = "cryptly-keystore";
 const DB_VERSION = 1;
-const MASTER_STORE = 'master';
-const PROJECTS_STORE = 'projects';
-const MASTER_KEY_ID = 'self';
+const MASTER_STORE = "master";
+const PROJECTS_STORE = "projects";
+const MASTER_KEY_ID = "self";
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -30,7 +30,7 @@ function openDb(): Promise<IDBDatabase> {
 function tx(
   db: IDBDatabase,
   storeName: string,
-  mode: IDBTransactionMode
+  mode: IDBTransactionMode,
 ): IDBObjectStore {
   return db.transaction(storeName, mode).objectStore(storeName);
 }
@@ -46,7 +46,7 @@ export const keystore = {
   async getMasterKey(): Promise<CryptoKey | null> {
     const db = await openDb();
     const result = await awaitRequest(
-      tx(db, MASTER_STORE, 'readonly').get(MASTER_KEY_ID)
+      tx(db, MASTER_STORE, "readonly").get(MASTER_KEY_ID),
     );
     return (result as CryptoKey | undefined) ?? null;
   },
@@ -54,44 +54,38 @@ export const keystore = {
   async setMasterKey(key: CryptoKey): Promise<void> {
     const db = await openDb();
     await awaitRequest(
-      tx(db, MASTER_STORE, 'readwrite').put(key, MASTER_KEY_ID)
+      tx(db, MASTER_STORE, "readwrite").put(key, MASTER_KEY_ID),
     );
   },
 
   async clearMasterKey(): Promise<void> {
     const db = await openDb();
-    await awaitRequest(
-      tx(db, MASTER_STORE, 'readwrite').delete(MASTER_KEY_ID)
-    );
+    await awaitRequest(tx(db, MASTER_STORE, "readwrite").delete(MASTER_KEY_ID));
   },
 
   async getProjectKey(projectId: string): Promise<CryptoKey | null> {
     const db = await openDb();
     const result = await awaitRequest(
-      tx(db, PROJECTS_STORE, 'readonly').get(projectId)
+      tx(db, PROJECTS_STORE, "readonly").get(projectId),
     );
     return (result as CryptoKey | undefined) ?? null;
   },
 
   async setProjectKey(projectId: string, key: CryptoKey): Promise<void> {
     const db = await openDb();
-    await awaitRequest(
-      tx(db, PROJECTS_STORE, 'readwrite').put(key, projectId)
-    );
+    await awaitRequest(tx(db, PROJECTS_STORE, "readwrite").put(key, projectId));
   },
 
   async clearProjectKey(projectId: string): Promise<void> {
     const db = await openDb();
-    await awaitRequest(
-      tx(db, PROJECTS_STORE, 'readwrite').delete(projectId)
-    );
+    await awaitRequest(tx(db, PROJECTS_STORE, "readwrite").delete(projectId));
   },
 
   async wipeAll(): Promise<void> {
     const db = await openDb();
     await Promise.all([
-      awaitRequest(tx(db, MASTER_STORE, 'readwrite').clear()),
-      awaitRequest(tx(db, PROJECTS_STORE, 'readwrite').clear())
+      awaitRequest(tx(db, MASTER_STORE, "readwrite").clear()),
+      awaitRequest(tx(db, PROJECTS_STORE, "readwrite").clear()),
     ]);
-  }
+  },
 };

@@ -119,7 +119,7 @@ function escapeAttr(s: string): string {
 export function renderBlogMarkdown(markdown: string): string {
   const raw = (marked.parse(markdown, { async: false }) as string)
     .replace(/<table>/g, '<div class="table-wrap"><table>')
-    .replace(/<\/table>/g, '</table></div>');
+    .replace(/<\/table>/g, "</table></div>");
   return DOMPurify.sanitize(raw, {
     USE_PROFILES: { html: true },
     ADD_ATTR: ["class", "style", "target", "rel"],

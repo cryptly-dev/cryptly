@@ -36,7 +36,8 @@ function readStoredActivity(): number {
 
 function writeStoredActivity(value: number, { force = false } = {}) {
   if (!browser) return;
-  if (!force && value - lastActivityWriteAt < ACTIVITY_WRITE_THROTTLE_MS) return;
+  if (!force && value - lastActivityWriteAt < ACTIVITY_WRITE_THROTTLE_MS)
+    return;
   lastActivityWriteAt = value;
   localStorage.setItem(LAST_ACTIVITY_STORAGE_KEY, String(value));
 }

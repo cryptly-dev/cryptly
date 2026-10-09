@@ -1,21 +1,26 @@
 <script lang="ts">
-  import { page } from '$app/state';
-  import { goto } from '$app/navigation';
-  import { untrack } from 'svelte';
-  import { Check, X } from 'lucide-svelte';
-  import { toast } from 'svelte-sonner';
+  import { page } from "$app/state";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { untrack } from "svelte";
+  import { Check, X } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
   import {
     InvitationsApi,
-    type PersonalInvitationListItem
-  } from '$lib/invitations/invitations.api';
-  import { auth } from '$lib/stores/auth.svelte';
+    type PersonalInvitationListItem,
+  } from "$lib/invitations/invitations.api";
+  import { auth } from "$lib/stores/auth.svelte";
 
   let invitations = $state<PersonalInvitationListItem[]>([]);
   let loading = $state(false);
   let actingId = $state<string | null>(null);
 
   const shouldShow = $derived(
-    Boolean(auth.jwtToken && page.url.pathname.startsWith('/app') && !page.url.pathname.startsWith('/app/login'))
+    Boolean(
+      auth.jwtToken &&
+      page.url.pathname.startsWith("/app") &&
+      !page.url.pathname.startsWith("/app/login"),
+    ),
   );
 
   async function loadInvitations(jwt: string) {
@@ -43,10 +48,10 @@
     try {
       await InvitationsApi.acceptPersonalInvitation(jwt, invitation.id);
       invitations = invitations.filter((item) => item.id !== invitation.id);
-      toast.success('Invitation accepted');
-      await goto(`/app/project/${invitation.projectId}`);
+      toast.success("Invitation accepted");
+      await goto(resolve(`/app/project/${invitation.projectId}`));
     } catch {
-      toast.error('Failed to accept invitation');
+      toast.error("Failed to accept invitation");
     } finally {
       actingId = null;
     }
@@ -59,9 +64,9 @@
     try {
       await InvitationsApi.rejectPersonalInvitation(jwt, invitation.id);
       invitations = invitations.filter((item) => item.id !== invitation.id);
-      toast.success('Invitation declined');
+      toast.success("Invitation declined");
     } catch {
-      toast.error('Failed to decline invitation');
+      toast.error("Failed to decline invitation");
     } finally {
       actingId = null;
     }
@@ -69,19 +74,27 @@
 </script>
 
 {#if shouldShow && invitations.length > 0}
-  <div class="fixed bottom-4 left-4 z-40 w-[calc(100vw-2rem)] max-w-sm rounded-lg border border-border bg-background p-4 shadow-2xl">
+  <div
+    class="fixed bottom-4 left-4 z-40 w-[calc(100vw-2rem)] max-w-sm rounded-lg border border-border bg-background p-4 shadow-2xl"
+  >
     <div class="mb-3">
       <h2 class="text-sm font-semibold">Project invitations</h2>
-      <p class="text-xs text-muted-foreground">You have pending direct invitations.</p>
+      <p class="text-xs text-muted-foreground">
+        You have pending direct invitations.
+      </p>
     </div>
     <div class="space-y-2">
       {#each invitations as invitation (invitation.id)}
         <div class="rounded-md border border-border/60 bg-muted/30 p-3">
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="truncate text-sm font-medium">{invitation.projectName}</p>
+              <p class="truncate text-sm font-medium">
+                {invitation.projectName}
+              </p>
               <p class="text-xs text-muted-foreground">
-                Invited by {invitation.author.displayName || invitation.author.email || 'a teammate'} as {invitation.role}
+                Invited by {invitation.author.displayName ||
+                  invitation.author.email ||
+                  "a teammate"} as {invitation.role}
               </p>
             </div>
           </div>

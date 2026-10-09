@@ -1,33 +1,35 @@
 <script lang="ts">
-  import { browser } from '$app/environment';
-  import { beforeNavigate, goto } from '$app/navigation';
-  import { tick } from 'svelte';
-  import { fade } from 'svelte/transition';
-  import { Command } from 'lucide-svelte';
-  import { secretsEditorNavGuard } from '$lib/secrets/secrets-editor-nav-guard.svelte';
+  import { browser } from "$app/environment";
+  import { beforeNavigate, goto } from "$app/navigation";
+  import { tick } from "svelte";
+  import { fade } from "svelte/transition";
+  import { Command } from "lucide-svelte";
+  import { secretsEditorNavGuard } from "$lib/secrets/secrets-editor-nav-guard.svelte";
 
   let dialogOpen = $state(false);
   let saving = $state(false);
   let saveFailed = $state(false);
   let pendingDestination = $state<string | null>(null);
-  let snapshot = $state({ projectName: '', externallyUpdated: false });
+  let snapshot = $state({ projectName: "", externallyUpdated: false });
   let firstButton: HTMLButtonElement | undefined = $state();
 
   const kbdClass =
-    'pointer-events-none inline-flex h-6 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm border-0 bg-primary-foreground/20 px-1.5 font-sans text-xs font-medium text-primary-foreground';
+    "pointer-events-none inline-flex h-6 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm border-0 bg-primary-foreground/20 px-1.5 font-sans text-xs font-medium text-primary-foreground";
 
-  const canSave = $derived(!saving && !secretsEditorNavGuard.readOnly && !snapshot.externallyUpdated);
+  const canSave = $derived(
+    !saving && !secretsEditorNavGuard.readOnly && !snapshot.externallyUpdated,
+  );
 
   function shouldBlockNavigation(fromUrl: URL, toUrl: URL): boolean {
     if (!secretsEditorNavGuard.isDirty) return false;
     const fromPath = fromUrl.pathname;
     const toPath = toUrl.pathname;
-    if (!fromPath.startsWith('/app/project/')) return false;
-    const fromParts = fromPath.split('/');
+    if (!fromPath.startsWith("/app/project/")) return false;
+    const fromParts = fromPath.split("/");
     const fromId = fromParts[3];
     if (!fromId) return false;
-    if (toPath.startsWith('/app/project/')) {
-      const toId = toPath.split('/')[3];
+    if (toPath.startsWith("/app/project/")) {
+      const toId = toPath.split("/")[3];
       if (toId === fromId) return false;
     }
     return true;
@@ -35,14 +37,20 @@
 
   beforeNavigate((navigation) => {
     if (!navigation.to) return;
-    if (!shouldBlockNavigation(navigation.from?.url ?? new URL(browser ? window.location.href : 'http://localhost'), navigation.to.url)) {
+    if (
+      !shouldBlockNavigation(
+        navigation.from?.url ??
+          new URL(browser ? window.location.href : "http://localhost"),
+        navigation.to.url,
+      )
+    ) {
       return;
     }
     navigation.cancel();
     pendingDestination = navigation.to.url.href;
     snapshot = {
       projectName: secretsEditorNavGuard.projectName,
-      externallyUpdated: secretsEditorNavGuard.externallyUpdated
+      externallyUpdated: secretsEditorNavGuard.externallyUpdated,
     };
     saveFailed = false;
     dialogOpen = true;
@@ -54,25 +62,25 @@
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
   });
 
   $effect(() => {
     if (!dialogOpen) return;
     // Capture phase so the editor's own ⌘S handler doesn't also fire.
     const handler = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
         event.preventDefault();
         event.stopImmediatePropagation();
         void handleSave();
-      } else if (event.key === 'Escape' && !saving) {
+      } else if (event.key === "Escape" && !saving) {
         event.preventDefault();
         closeDialog();
       }
     };
-    document.addEventListener('keydown', handler, true);
-    return () => document.removeEventListener('keydown', handler, true);
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
   });
 
   function closeDialog() {
@@ -86,6 +94,7 @@
     closeDialog();
     // Let the editor's dirty flag settle so the guard doesn't block its own navigation.
     await tick();
+    // eslint-disable-next-line svelte/no-navigation-without-resolve -- dest is the already-resolved URL of the blocked navigation
     if (dest) void goto(dest);
   }
 
@@ -127,15 +136,18 @@
     aria-modal="true"
     aria-labelledby="unsaved-title"
     aria-describedby="unsaved-description"
-    class="fixed left-1/2 top-[15vh] z-50 grid max-h-[85vh] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 gap-4 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg sm:max-w-lg"
+    class="fixed top-[15vh] left-1/2 z-50 grid max-h-[85vh] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 gap-4 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg sm:max-w-lg"
     transition:fade={{ duration: 200 }}
   >
     <div class="flex flex-col gap-2 text-left">
-      <h2 id="unsaved-title" class="text-lg font-semibold leading-none">Save your changes?</h2>
+      <h2 id="unsaved-title" class="text-lg leading-none font-semibold">
+        Save your changes?
+      </h2>
       <p id="unsaved-description" class="text-sm text-muted-foreground">
         {#if snapshot.projectName}
-          You have unsaved edits to <span class="font-medium text-foreground">{snapshot.projectName}</span>. Save now,
-          discard them, or keep editing.
+          You have unsaved edits to <span class="font-medium text-foreground"
+            >{snapshot.projectName}</span
+          >. Save now, discard them, or keep editing.
         {:else}
           You have unsaved edits. Save now, discard them, or keep editing.
         {/if}
@@ -144,7 +156,8 @@
 
     {#if snapshot.externallyUpdated}
       <p class="text-sm text-amber-400">
-        This project was updated elsewhere. Refresh to load the latest version before saving.
+        This project was updated elsewhere. Refresh to load the latest version
+        before saving.
       </p>
     {/if}
 
@@ -174,7 +187,7 @@
         <button
           type="button"
           aria-label="Save"
-          class="inline-flex h-10 cursor-pointer items-center gap-2 whitespace-nowrap rounded-md border bg-primary px-4 font-semibold text-primary-foreground transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
+          class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border bg-primary px-4 font-semibold whitespace-nowrap text-primary-foreground transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           onclick={() => void handleSave()}
           disabled={!canSave}
         >

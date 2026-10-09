@@ -1,25 +1,25 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
-  import { fade } from 'svelte/transition';
-  import { ArrowLeft, X } from 'lucide-svelte';
+  import type { Snippet } from "svelte";
+  import { fade } from "svelte/transition";
+  import { ArrowLeft, X } from "lucide-svelte";
   import {
     FTUX_TOTAL_STEPS,
     completeFTUX,
     ftuxStepNumber,
     nextFTUXStep,
-    previousFTUXStep
-  } from '$lib/stores/ftux.svelte';
-  import { cn } from '$lib/utils';
+    previousFTUXStep,
+  } from "$lib/stores/ftux.svelte";
+  import { cn } from "$lib/utils";
 
   let {
     arrow,
-    arrowStyle = '',
-    nextLabel = 'Next',
-    class: className = '',
-    children
+    arrowStyle = "",
+    nextLabel = "Next",
+    class: className = "",
+    children,
   }: {
     /** Side of the card the arrow sits on (points at the anchor). */
-    arrow: 'top' | 'bottom';
+    arrow: "top" | "bottom";
     arrowStyle?: string;
     nextLabel?: string;
     class?: string;
@@ -33,14 +33,19 @@
   role="dialog"
   aria-label={`Tutorial step ${step} of ${FTUX_TOTAL_STEPS}`}
   class={cn(
-    'absolute z-[100] w-80 rounded-lg border bg-popover p-4 text-sm text-popover-foreground shadow-2xl',
-    className
+    "absolute z-[100] w-80 rounded-lg border bg-popover p-4 text-sm text-popover-foreground shadow-2xl",
+    className,
   )}
   transition:fade={{ duration: 150 }}
 >
   <span
-    class={cn('absolute', arrow === 'bottom' ? 'bottom-0 translate-y-full' : 'top-0 -translate-y-full rotate-180')}
-    style={arrowStyle || 'left: 50%; margin-left: -6px;'}
+    class={cn(
+      "absolute",
+      arrow === "bottom"
+        ? "bottom-0 translate-y-full"
+        : "top-0 -translate-y-full rotate-180",
+    )}
+    style={arrowStyle || "left: 50%; margin-left: -6px;"}
   >
     <svg
       class="-my-px block fill-popover drop-shadow-[0_1px_0_oklch(1_0_0_/_0.1)]"
@@ -54,7 +59,9 @@
   </span>
   <div class="flex flex-col gap-4">
     <div class="flex items-start justify-between gap-4">
-      <span class="text-sm font-medium text-muted-foreground">Step {step} of {FTUX_TOTAL_STEPS}</span>
+      <span class="text-sm font-medium text-muted-foreground"
+        >Step {step} of {FTUX_TOTAL_STEPS}</span
+      >
       <button
         type="button"
         aria-label="Skip tutorial"

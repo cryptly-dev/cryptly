@@ -1,6 +1,8 @@
+import type * as Monaco from "monaco-editor";
+
 let registered = false;
 
-export function registerDotenvLanguage(monaco: any): void {
+export function registerDotenvLanguage(monaco: typeof Monaco): void {
   if (registered) return;
   registered = true;
 

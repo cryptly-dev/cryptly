@@ -77,7 +77,9 @@ export class ProjectsApi {
     return res.json() as Promise<Project[]>;
   }
 
-  static async searchProjects(jwtToken: string): Promise<ProjectSearchResponse[]> {
+  static async searchProjects(
+    jwtToken: string,
+  ): Promise<ProjectSearchResponse[]> {
     const res = await fetch(`${baseUrl()}/users/me/projects/search`, {
       headers: { ...authHeaders(jwtToken) },
     });
@@ -171,7 +173,10 @@ export class ProjectsApi {
     return res.json() as Promise<Project>;
   }
 
-  static async deleteProject(jwtToken: string, projectId: string): Promise<void> {
+  static async deleteProject(
+    jwtToken: string,
+    projectId: string,
+  ): Promise<void> {
     const res = await fetch(`${baseUrl()}/projects/${projectId}`, {
       method: "DELETE",
       headers: { ...authHeaders(jwtToken) },
@@ -185,10 +190,13 @@ export class ProjectsApi {
     jwtToken: string,
     dto: { projectId: string; memberId: string },
   ): Promise<void> {
-    const res = await fetch(`${baseUrl()}/projects/${dto.projectId}/members/${dto.memberId}`, {
-      method: "DELETE",
-      headers: { ...authHeaders(jwtToken) },
-    });
+    const res = await fetch(
+      `${baseUrl()}/projects/${dto.projectId}/members/${dto.memberId}`,
+      {
+        method: "DELETE",
+        headers: { ...authHeaders(jwtToken) },
+      },
+    );
     if (!res.ok) {
       throw new Error("Failed to remove member");
     }
@@ -196,25 +204,38 @@ export class ProjectsApi {
 
   static async updateMemberRole(
     jwtToken: string,
-    dto: { projectId: string; memberId: string; role: "read" | "write" | "admin" },
+    dto: {
+      projectId: string;
+      memberId: string;
+      role: "read" | "write" | "admin";
+    },
   ): Promise<void> {
-    const res = await fetch(`${baseUrl()}/projects/${dto.projectId}/members/${dto.memberId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders(jwtToken),
+    const res = await fetch(
+      `${baseUrl()}/projects/${dto.projectId}/members/${dto.memberId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders(jwtToken),
+        },
+        body: JSON.stringify({ role: dto.role }),
       },
-      body: JSON.stringify({ role: dto.role }),
-    });
+    );
     if (!res.ok) {
       throw new Error("Failed to update member role");
     }
   }
 
-  static async getSuggestedUsers(jwtToken: string, projectId: string): Promise<SuggestedUser[]> {
-    const res = await fetch(`${baseUrl()}/projects/${projectId}/suggested-users`, {
-      headers: { ...authHeaders(jwtToken) },
-    });
+  static async getSuggestedUsers(
+    jwtToken: string,
+    projectId: string,
+  ): Promise<SuggestedUser[]> {
+    const res = await fetch(
+      `${baseUrl()}/projects/${projectId}/suggested-users`,
+      {
+        headers: { ...authHeaders(jwtToken) },
+      },
+    );
     if (!res.ok) {
       throw new Error("Failed to load suggested users");
     }
@@ -227,14 +248,17 @@ export class ProjectsApi {
     userId: string,
     encryptedSecretsKey: string,
   ): Promise<void> {
-    const res = await fetch(`${baseUrl()}/projects/${projectId}/encrypted-secrets-keys`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders(jwtToken),
+    const res = await fetch(
+      `${baseUrl()}/projects/${projectId}/encrypted-secrets-keys`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders(jwtToken),
+        },
+        body: JSON.stringify({ userId, encryptedSecretsKey }),
       },
-      body: JSON.stringify({ userId, encryptedSecretsKey }),
-    });
+    );
     if (!res.ok) {
       throw new Error("Failed to add encrypted secrets key");
     }

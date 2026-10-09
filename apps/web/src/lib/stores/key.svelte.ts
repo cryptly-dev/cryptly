@@ -6,11 +6,7 @@ import { UserApi } from "$lib/auth/user.api";
 import { recordUnlockActivity } from "$lib/keys/auto-lock";
 import { auth, loadUserData } from "./auth.svelte";
 import { queueFTUX } from "./ftux.svelte";
-import {
-  keyAuth,
-  markKeyLocked,
-  markKeyUnlocked,
-} from "./key-state.svelte";
+import { keyAuth, markKeyLocked, markKeyUnlocked } from "./key-state.svelte";
 
 export {
   broadcastKeyLock,
