@@ -2,6 +2,7 @@
   import { browser } from "$app/environment";
   import { onMount } from "svelte";
   import "../app.css";
+  import { identify } from "$lib/analytics/logdash";
   import DeviceFlowApproverDialog from "$lib/device-flow/ui/DeviceFlowApproverDialog.svelte";
   import { subscribeApproverStream } from "$lib/device-flow/device-flow-approver.svelte";
   import { installAuthFetchInterceptor } from "$lib/auth/fetch-interceptor";
@@ -18,6 +19,12 @@
 
   onMount(() => {
     installAuthFetchInterceptor();
+  });
+
+  // Covers page load, sign-in and sign-out: userData is the single source of the signed-in user.
+  const analyticsUserId = $derived(auth.userData?.id ?? null);
+  $effect(() => {
+    identify(analyticsUserId);
   });
 
   $effect(() => {

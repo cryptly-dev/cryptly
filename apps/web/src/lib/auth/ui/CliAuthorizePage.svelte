@@ -5,6 +5,7 @@
   import { Check, CornerDownLeft, Terminal } from "lucide-svelte";
   import { onMount, tick } from "svelte";
   import { animate } from "motion";
+  import { track } from "$lib/analytics/logdash";
   import { ApiResponseError } from "$lib/api/backend";
   import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
   import {
@@ -158,6 +159,7 @@
         wrappedKey,
         encryptedPrivateKey,
       });
+      track("cli_authorized");
 
       approveState = "done";
     } catch (e: unknown) {

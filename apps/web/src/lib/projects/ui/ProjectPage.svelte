@@ -2,6 +2,7 @@
   import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { track } from "$lib/analytics/logdash";
   import { createPatch } from "diff";
   import { onDestroy, onMount, tick } from "svelte";
   import { cubicOut } from "svelte/easing";
@@ -1623,6 +1624,7 @@
         installationEntityId: repo.installationEntityId,
       });
     }
+    track("project_created", { github_repo: Boolean(repo) });
     return created;
   }
 
@@ -1865,6 +1867,7 @@
         temporarySecretsKey: encryptedProjectKey,
         role,
       });
+      track("invitation_created", { kind: "link", role });
 
       invitePassphrase = passphrase;
       lastCreatedInvitation = invitation;
@@ -1905,6 +1908,7 @@
         invitedUserId: user.id,
         role,
       });
+      track("invitation_created", { kind: "direct", role });
       addPeopleStep = "done";
       void loadPendingInvitations(jwt, project);
     } catch {

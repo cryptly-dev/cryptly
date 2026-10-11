@@ -1,6 +1,7 @@
 <script lang="ts">
   import { IconArrowRight } from "@tabler/icons-svelte";
   import { onMount, tick } from "svelte";
+  import { track } from "$lib/analytics/logdash";
   import { gotoAfterLogin } from "$lib/auth/after-login";
   import { loadUserData, loginLocal } from "$lib/stores/auth.svelte";
 
@@ -20,6 +21,7 @@
   async function loginWithEmail(loginEmail: string) {
     await loginLocal(loginEmail);
     await loadUserData();
+    track("login_completed", { method: "local" });
     await gotoAfterLogin();
   }
 

@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { track } from "$lib/analytics/logdash";
   import { gotoAfterLogin } from "$lib/auth/after-login";
   import { consumeOAuthState } from "$lib/auth/browser-state";
   import {
@@ -33,6 +34,7 @@
           await exchangeGithubCodeForJwt(code);
         }
         await loadUserData();
+        track("login_completed", { method });
         exchangeSucceeded = true;
       } catch {
         await goto(resolve("/app/login"));

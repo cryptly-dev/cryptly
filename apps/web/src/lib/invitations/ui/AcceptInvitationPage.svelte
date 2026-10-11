@@ -7,6 +7,7 @@
     IconKey,
     IconUsers,
   } from "@tabler/icons-svelte";
+  import { track } from "$lib/analytics/logdash";
   import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
   import { persistInviteIdForAfterLogin } from "$lib/auth/after-login";
   import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
@@ -78,6 +79,7 @@
       await InvitationsApi.acceptInvitation(jwt, invitation.id, {
         newSecretsKey: reEncryptedProjectKey,
       });
+      track("invitation_accepted", { kind: "link" });
       await goto(resolve(`/app/project/${invitation.projectId}`));
     } catch {
       isError = true;

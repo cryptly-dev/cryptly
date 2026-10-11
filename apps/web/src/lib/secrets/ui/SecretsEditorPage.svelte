@@ -7,6 +7,7 @@
   import { fade } from "svelte/transition";
   import { toast } from "svelte-sonner";
   import { ChevronRight, Command } from "lucide-svelte";
+  import { track } from "$lib/analytics/logdash";
   import { ApiResponseError } from "$lib/api/backend";
   import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
   import {
@@ -302,6 +303,7 @@
         encryptedSecrets: encrypted,
       });
       baseline = content;
+      track("secrets_saved");
       ftuxUserSaved();
       await onSaved?.();
       return true;
@@ -510,6 +512,7 @@
     try {
       if (pushRevision !== keyAuth.revision || !keyAuth.hasMasterKey) return;
       await IntegrationsApi.pushSecrets(jwt, integrations, content);
+      track("secrets_pushed", { integrations: integrations.length });
       if (publicEnv.githubLocalMock) {
         toast.success("Pushed to GitHub (local mock — no secrets sent)", {
           richColors: true,
