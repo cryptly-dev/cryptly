@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { track } from "$lib/analytics/logdash";
 import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
 import { keystore } from "$lib/auth/keystore";
 import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
@@ -57,6 +58,7 @@ export async function setUpPassphrase(passphrase: string) {
     publicKey: keyPair.publicKey,
     privateKeyEncrypted: encrypted,
   });
+  track("signup_completed");
 
   queueFTUX();
   await loadUserData();

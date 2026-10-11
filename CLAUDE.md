@@ -59,6 +59,7 @@ pnpm build             # vite build using the Cloudflare adapter
 - `pnpm build` verifies the Cloudflare Workers output.
 - Production (cryptly.dev) is served by Vercel: `frontend/vercel.json` builds `apps/web` with `adapter-vercel` (selected when `VERCEL=1`).
 - Public env is inlined at build time; production values live in `apps/web/.env.production`.
+- Analytics: Logdash, served first-party by `apps/web/src/routes/_ld`. Use `track` / `identify` from `$lib/analytics/logdash`. Never put emails, names, user IDs or other personal data in event names or props; add new dynamic routes to `PATH_TEMPLATES` in `_ld/events/+server.ts`.
 
 ### Backend SDK (`packages/backend-sdk/`)
 

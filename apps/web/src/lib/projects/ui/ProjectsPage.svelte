@@ -4,6 +4,7 @@
   import { tick } from "svelte";
   import { animate } from "motion";
   import { ArrowRight } from "lucide-svelte";
+  import { track } from "$lib/analytics/logdash";
   import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
   import {
     DEFAULT_PROJECT_SETTINGS,
@@ -131,6 +132,7 @@
         encryptedSecretsKeys: { [user.id]: projectKeyEncrypted },
         settings,
       });
+      track("project_created", { github_repo: false });
 
       await UserApi.updateMe(jwt, { projectCreationDefaults: settings });
       await loadUserData();

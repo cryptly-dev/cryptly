@@ -5,6 +5,7 @@
   import { untrack } from "svelte";
   import { Check, X } from "lucide-svelte";
   import { toast } from "svelte-sonner";
+  import { track } from "$lib/analytics/logdash";
   import {
     InvitationsApi,
     type PersonalInvitation,
@@ -47,6 +48,7 @@
     actingId = invitation.id;
     try {
       await InvitationsApi.acceptPersonalInvitation(jwt, invitation.id);
+      track("invitation_accepted", { kind: "direct" });
       invitations = invitations.filter((item) => item.id !== invitation.id);
       toast.success("Invitation accepted");
       await goto(resolve(`/app/project/${invitation.projectId}`));
