@@ -1,5 +1,9 @@
-import { env } from "$env/dynamic/public";
+import * as staticEnv from "$env/static/public";
 import { dev } from "$app/environment";
+
+// Inlined at build time (prod builds read apps/web/.env.production), so it works on any host
+// without runtime env vars. Namespace import: unset vars stay undefined and fall back below.
+const env: Partial<Record<string, string>> = staticEnv;
 
 export interface PublicEnv {
   appUrl: string;
