@@ -30,7 +30,7 @@
 - **👥 Team collaboration** - Share encrypted secrets with team members via secure invitations
 - **📝 Version history** - Track all changes to your secrets with full version control
 - **🔄 GitHub integration** - Sync secrets directly to your GitHub repositories
-- **🎨 Modern UI** - Responsive SvelteKit app in `apps/web` (Cloudflare Workers); legacy React UI remains in `frontend/` until post-cutover retirement
+- **🎨 Modern UI** - Responsive SvelteKit app in `apps/web`, served on cryptly.dev by Vercel via `frontend/vercel.json`; legacy React UI source remains in `frontend/` until post-cutover retirement
 - **🚀 Real-time updates** - See changes instantly with SSE support
 - **🔑 Multiple auth ooptions** - Login with Google, GitHub, or local development mode
 - **📦 Project organization** - Organize secrets by projects for better management

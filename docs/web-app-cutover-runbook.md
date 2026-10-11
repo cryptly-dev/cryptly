@@ -1,6 +1,6 @@
 # Web app cutover and rollback (SvelteKit vs legacy React)
 
-Production **`WEB_APP_URL`** (backend `EnvConfigs`) is used when the API builds links such as the CLI browser approval URL (`/app/cli-authorize?session=…`). The browser app itself is deployed separately (e.g. Cloudflare Workers for `apps/web`).
+Production **`WEB_APP_URL`** (backend `EnvConfigs`) is used when the API builds links such as the CLI browser approval URL (`/app/cli-authorize?session=…`). The browser app itself is deployed separately: Vercel serves `cryptly.dev` from the Vercel project rooted at `frontend/`, and `frontend/vercel.json` overrides its build to ship `apps/web` (`adapter-vercel`, picked when `VERCEL=1`). Production public env comes from `apps/web/.env.production`, inlined at build time.
 
 ## Flip order (big-bang)
 
@@ -11,7 +11,7 @@ Production **`WEB_APP_URL`** (backend `EnvConfigs`) is used when the API builds 
 
 ## Rollback
 
-- **Web:** redeploy or repoint DNS/hosting to the **last known good** static Worker or asset bundle. Keep a **tag or artifact** for the legacy React app until `frontend/` is removed from the repo.
+- **Web:** revert `frontend/vercel.json` to the SPA rewrite (no `buildCommand`) so Vercel builds the React app again. Keep a **tag or artifact** for the legacy React app until `frontend/` is removed from the repo.
 - **Backend:** if `WEB_APP_URL` was changed for the cutover, revert it so CLI approval links and any server-built URLs match the app users actually open.
 - **CLI:** users mid-approval may need a fresh `cryptly login` if sessions expire during the switch.
 

@@ -57,6 +57,8 @@ pnpm build             # vite build using the Cloudflare adapter
 
 - `pnpm check` is the typecheck for the SvelteKit app.
 - `pnpm build` verifies the Cloudflare Workers output.
+- Production (cryptly.dev) is served by Vercel: `frontend/vercel.json` builds `apps/web` with `adapter-vercel` (selected when `VERCEL=1`).
+- Public env is inlined at build time; production values live in `apps/web/.env.production`.
 
 ### Backend SDK (`packages/backend-sdk/`)
 
