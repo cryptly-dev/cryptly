@@ -13,9 +13,12 @@ importers:
       '@fontsource-variable/funnel-display':
         specifier: ^5.2.8
         version: 5.2.8
-      '@monaco-editor/loader':
-        specifier: ^1.5.0
-        version: 1.7.0
+      '@fontsource-variable/geist':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/geist-mono':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@packages/backend-sdk':
         specifier: workspace:*
         version: link:../../packages/backend-sdk
@@ -1946,6 +1949,12 @@ packages:
 
   '@fontsource-variable/funnel-display@5.2.8':
     resolution: {integrity: sha512-krvlZmy6EoFdmCKldTHpAzxxt5gFRXebueyDZ7DUIQ37YRAD8SrH0ljwoLOL/ZSCD5jHqKS6EhFPXLuhuJrOGA==}
+
+  '@fontsource-variable/geist-mono@5.3.0':
+    resolution: {integrity: sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw==}
+
+  '@fontsource-variable/geist@5.3.0':
+    resolution: {integrity: sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA==}
 
   '@grpc/grpc-js@1.14.3':
     resolution: {integrity: sha512-Iq8QQQ/7X3Sac15oB6p0FmUg/klxQvXLeileoqrTRGJYLV+/9tubbr9ipz0GKHjmXVsgFPo/+W+2cA8eNcR+XA==}
@@ -9931,6 +9940,10 @@ snapshots:
   '@floating-ui/utils@0.2.11': {}
 
   '@fontsource-variable/funnel-display@5.2.8': {}
+
+  '@fontsource-variable/geist-mono@5.3.0': {}
+
+  '@fontsource-variable/geist@5.3.0': {}
 
   '@grpc/grpc-js@1.14.3':
     dependencies:

@@ -8,6 +8,7 @@ export interface GithubIntegrationNormalized {
   githubRepositoryPublicKey: string;
   githubRepositoryPublicKeyId: string;
   installationEntityId: string;
+  lastPushedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +34,9 @@ export class GithubIntegrationSerialized {
 
   @ApiProperty({ type: GithubRepositorySerialized, required: false })
   repositoryData?: GithubRepository;
+
+  @ApiProperty({ required: false })
+  lastPushedAt?: string;
 
   @ApiProperty()
   createdAt: string;

@@ -129,11 +129,17 @@ export class IntegrationsApi {
     }
   }
 
-  static acknowledgeSecretsPushed(jwtToken: string, projectId: string) {
+  /** Records the push (analytics + `lastPushedAt` on these integrations for the sync status). */
+  static acknowledgeSecretsPushed(
+    jwtToken: string,
+    projectId: string,
+    integrationIds: string[],
+  ) {
     return unwrap(
       backend.POST("/projects/{projectId}/analytics/secrets-pushed", {
         params: { path: { projectId } },
         headers: bearer(jwtToken),
+        body: { integrationIds },
       }),
       "Failed to acknowledge secrets push",
     );
@@ -144,8 +150,36 @@ export class IntegrationsApi {
     integrations: Integration[],
     content: string,
   ): Promise<void> {
-    if (publicEnv.githubLocalMock) return;
+    const targets = integrations.filter(
+      (integration) =>
+        integration.repositoryData?.owner && integration.repositoryData.name,
+    );
 
+    // The local GitHub mock never sends secrets anywhere; it still records the push below so
+    // the sync status works locally.
+    if (!publicEnv.githubLocalMock) {
+      await this.pushToRepositories(jwtToken, targets, content);
+    }
+
+    const projectId = integrations[0]?.projectId;
+    if (projectId) {
+      try {
+        await this.acknowledgeSecretsPushed(
+          jwtToken,
+          projectId,
+          targets.map((integration) => integration.id),
+        );
+      } catch {
+        // the push itself succeeded; a missing record only leaves the sync status stale
+      }
+    }
+  }
+
+  private static async pushToRepositories(
+    jwtToken: string,
+    integrations: Integration[],
+    content: string,
+  ): Promise<void> {
     const secrets = parseDotenv(content);
     await Promise.all(
       integrations.map(async (integration) => {
@@ -175,14 +209,6 @@ export class IntegrationsApi {
         );
       }),
     );
-    const pid = integrations[0]?.projectId;
-    if (pid) {
-      try {
-        await this.acknowledgeSecretsPushed(jwtToken, pid);
-      } catch {
-        // analytics must not fail the push flow
-      }
-    }
   }
 }
 

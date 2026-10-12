@@ -18,6 +18,7 @@
     type CliSessionInfo,
   } from "$lib/auth/cli-flow.api";
   import { randomBytes, u8ToBase64 } from "$lib/auth/crypto.utils";
+  import { decryptPrivateKey } from "$lib/auth/private-key";
   import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
   import { auth, loadUserData } from "$lib/stores/auth.svelte";
 
@@ -134,16 +135,8 @@
     let ephemeralKey: string | null = null;
 
     try {
-      const base64Key =
-        await SymmetricCrypto.deriveBase64KeyFromPassphrase(passphrase);
-      try {
-        rawPrivateKey = await SymmetricCrypto.decrypt(
-          auth.userData.privateKeyEncrypted,
-          base64Key,
-        );
-      } catch {
-        throw new Error("Incorrect passphrase");
-      }
+      // Throws "Incorrect passphrase"; checked against the server's current key.
+      rawPrivateKey = await decryptPrivateKey(passphrase);
 
       ephemeralKey = u8ToBase64(randomBytes(32));
       const wrappedKey = await AsymmetricCrypto.encrypt(
