@@ -1,13 +1,15 @@
 <script lang="ts">
-  import { Check, Eye, EyeOff, Smartphone, X } from "lucide-svelte";
+  import { Eye, EyeOff } from "lucide-svelte";
   import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
-  import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
+  import { decryptPrivateKey } from "$lib/auth/private-key";
   import {
     clearApproverMessage,
     deviceFlowApprover,
     sendApproverResponse,
   } from "$lib/device-flow/device-flow-approver.svelte";
-  import { auth } from "$lib/stores/auth.svelte";
+  import Button from "$lib/ui/Button.svelte";
+  import Dialog from "$lib/ui/Dialog.svelte";
+  import IconButton from "$lib/ui/IconButton.svelte";
 
   let passphrase = $state("");
   let showPassphrase = $state(false);
@@ -25,13 +27,10 @@
     }
   });
 
+  /** Checked against the server's current key, so a passphrase changed elsewhere counts. */
   async function verifyPassphrase(candidate: string): Promise<boolean> {
-    const enc = auth.userData?.privateKeyEncrypted;
-    if (!enc) return false;
     try {
-      const base64Key =
-        await SymmetricCrypto.deriveBase64KeyFromPassphrase(candidate);
-      await SymmetricCrypto.decrypt(enc, base64Key);
+      await decryptPrivateKey(candidate);
       return true;
     } catch {
       return false;
@@ -84,119 +83,75 @@
   }
 </script>
 
-{#if msg?.type === "request"}
-  <div
-    class="fixed inset-0 z-[60] grid place-items-center bg-black/80 p-4 backdrop-blur-sm"
-  >
+<Dialog
+  open={msg?.type === "request"}
+  title="Sign in request from another device"
+  description="Share your passphrase with it to unlock it. It is encrypted for that device's one-time key before it leaves this browser."
+  dismissible={false}
+>
+  {#if typeof msg?.pin === "string"}
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="device-flow-title"
-      class="w-full max-w-md rounded-lg border border-border bg-background p-6 shadow-2xl"
+      class="flex flex-col items-center gap-1 rounded-card bg-root px-2 py-3"
     >
-      <div class="mb-6 flex items-start gap-3">
-        <div class="rounded-full bg-primary/10 p-2">
-          <Smartphone class="size-6 text-primary" />
-        </div>
-        <div>
-          <h2
-            id="device-flow-title"
-            class="text-lg font-semibold tracking-tight"
-          >
-            Device sign in request
-          </h2>
-          <p class="mt-1 text-sm text-muted-foreground">
-            Another device is trying to sign in
-          </p>
-        </div>
-      </div>
-
-      {#if typeof msg.pin === "string"}
-        <div class="mb-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
-          <p
-            class="text-center font-mono text-3xl font-bold tracking-wider text-primary"
-          >
-            {msg.pin}
-          </p>
-          <p class="mt-2 text-center text-sm text-muted-foreground">
-            Verify this PIN matches on your other device
-          </p>
-        </div>
-      {/if}
-
-      <div
-        class="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4"
+      <p
+        class="indent-[0.2em] mono text-[24px] leading-8 font-semibold tracking-[0.2em]"
       >
-        <p class="text-sm text-amber-900 dark:text-amber-100">
-          Enter your passphrase to share it with the requesting device. It is
-          encrypted under that device's one-time key before it leaves this
-          browser.
-        </p>
-      </div>
-
-      <div class="grid gap-2">
-        <label for="approver-pass" class="text-sm font-medium"
-          >Your passphrase</label
-        >
-        <div
-          class="flex h-11 items-center rounded-lg border border-input bg-background ring-offset-background focus-within:border-primary/60"
-        >
-          <input
-            id="approver-pass"
-            type={showPassphrase ? "text" : "password"}
-            bind:value={passphrase}
-            placeholder="Enter your passphrase"
-            autocomplete="current-password"
-            class="min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
-            onkeydown={(e) => {
-              if (e.key === "Enter" && passphrase && !processing)
-                void handleApprove();
-            }}
-          />
-          <button
-            type="button"
-            aria-label={showPassphrase ? "Hide passphrase" : "Show passphrase"}
-            class="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
-            onclick={() => {
-              showPassphrase = !showPassphrase;
-            }}
-          >
-            {#if showPassphrase}
-              <EyeOff class="size-4" />
-            {:else}
-              <Eye class="size-4" />
-            {/if}
-          </button>
-        </div>
-        {#if passphraseError}
-          <div
-            class="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-2 text-sm text-destructive"
-          >
-            Incorrect passphrase
-          </div>
-        {/if}
-      </div>
-
-      <div class="mt-6 flex gap-2">
-        <button
-          type="button"
-          class="inline-flex flex-1 items-center justify-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium transition hover:bg-secondary"
-          onclick={() => void handleReject()}
-          disabled={processing}
-        >
-          <X class="size-4" />
-          Reject
-        </button>
-        <button
-          type="button"
-          class="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-          onclick={() => void handleApprove()}
-          disabled={processing || !passphrase}
-        >
-          <Check class="size-4" />
-          Approve
-        </button>
-      </div>
+        {msg.pin}
+      </p>
+      <p class="text-[12.5px] text-fg3">
+        Check that this PIN matches on your other device.
+      </p>
     </div>
+  {/if}
+
+  <div class="flex flex-col gap-2">
+    <div
+      class="flex h-9 items-center gap-1 rounded-[10px] bg-field pr-1 pl-2.5 shadow-field focus-within:shadow-[inset_0_0_0_1px_var(--fg3)]"
+    >
+      <!-- svelte-ignore a11y_autofocus -->
+      <input
+        id="approver-pass"
+        aria-label="Your passphrase"
+        autofocus
+        type={showPassphrase ? "text" : "password"}
+        bind:value={passphrase}
+        placeholder="Your passphrase"
+        autocomplete="current-password"
+        class="h-full min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ph md:text-[13px]"
+        oninput={() => {
+          if (passphraseError) passphraseError = false;
+        }}
+        onkeydown={(e) => {
+          if (e.key === "Enter" && passphrase && !processing)
+            void handleApprove();
+        }}
+      />
+      <IconButton
+        label={showPassphrase ? "Hide passphrase" : "Show passphrase"}
+        onclick={() => {
+          showPassphrase = !showPassphrase;
+        }}
+      >
+        {#if showPassphrase}
+          <EyeOff strokeWidth={1.75} />
+        {:else}
+          <Eye strokeWidth={1.75} />
+        {/if}
+      </IconButton>
+    </div>
+    {#if passphraseError}
+      <p class="text-[12.5px] text-danger">Incorrect passphrase</p>
+    {/if}
   </div>
-{/if}
+
+  <div class="flex justify-end gap-2 pt-1">
+    <Button onclick={() => void handleReject()} disabled={processing}
+      >Reject</Button
+    >
+    <Button
+      variant="primary"
+      onclick={() => void handleApprove()}
+      disabled={processing || !passphrase}>Approve</Button
+    >
+  </div>
+</Dialog>

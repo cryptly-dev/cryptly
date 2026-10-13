@@ -434,6 +434,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecretsPushedBody"
+              }
+            }
+          }
+        },
         "responses": {
           "204": {
             "description": ""
@@ -2268,6 +2278,18 @@
           }
         }
       },
+      "SecretsPushedBody": {
+        "type": "object",
+        "properties": {
+          "integrationIds": {
+            "description": "GitHub integrations of this project the secrets were pushed to.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "AddEncryptedSecretsKeyBody": {
         "type": "object",
         "properties": {
@@ -2811,6 +2833,9 @@
           },
           "repositoryData": {
             "$ref": "#/components/schemas/GithubRepositorySerialized"
+          },
+          "lastPushedAt": {
+            "type": "string"
           },
           "createdAt": {
             "type": "string"

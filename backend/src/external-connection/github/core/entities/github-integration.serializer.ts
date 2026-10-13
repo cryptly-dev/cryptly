@@ -14,6 +14,7 @@ export class GithubIntegrationSerializer {
       githubRepositoryPublicKey: entity.githubRepositoryPublicKey,
       githubRepositoryPublicKeyId: entity.githubRepositoryPublicKeyId,
       installationEntityId: entity.installationEntityId.toString(),
+      lastPushedAt: entity.lastPushedAt,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };
@@ -33,6 +34,7 @@ export class GithubIntegrationSerializer {
       githubRepositoryPublicKeyId: normalized.githubRepositoryPublicKeyId,
       installationEntityId: normalized.installationEntityId,
       repositoryData: extraProps?.repositoryData,
+      lastPushedAt: normalized.lastPushedAt?.toISOString(),
       createdAt: normalized.createdAt.toISOString(),
       updatedAt: normalized.updatedAt.toISOString(),
     };

@@ -32,6 +32,7 @@ import { ProjectWriteService } from '../write/project-write.service';
 import { AddEncryptedSecretsKeyBody } from './dto/add-encrypted-secrets-key.body';
 import { CreateProjectBody } from './dto/create-project.body';
 import { ProjectSearchResponse } from './dto/project-search.response';
+import { SecretsPushedBody } from './dto/secrets-pushed.body';
 import { UpdateMemberRoleBody } from './dto/update-member-role.body';
 import { UpdateProjectBody } from './dto/update-project.body';
 import { ProjectSerialized } from './entities/project.interface';
@@ -39,6 +40,7 @@ import { ProjectSerializer } from './entities/project.serializer';
 import { ProjectMemberGuard } from './guards/project-member.guard';
 import { RemoveProjectMemberGuard } from './guards/remove-project-member.guard';
 import { ProductAnalyticsService } from '../../shared/posthog/product-analytics.service';
+import { GithubIntegrationWriteService } from '../../external-connection/github/write/github-integration-write.service';
 
 @Controller('')
 @ApiTags('Projects')
@@ -53,6 +55,7 @@ export class ProjectCoreController {
     private readonly personalInvitationReadService: PersonalInvitationReadService,
     private readonly eventEmitter: EventEmitter2,
     private readonly productAnalytics: ProductAnalyticsService,
+    private readonly githubIntegrationWriteService: GithubIntegrationWriteService,
   ) {}
 
   @Sse('projects/:projectId/events')
@@ -269,7 +272,15 @@ export class ProjectCoreController {
   public async trackSecretsPushed(
     @Param('projectId') projectId: string,
     @CurrentUserId() userId: string,
+    @Body() body: SecretsPushedBody,
   ): Promise<void> {
+    if (body.integrationIds?.length) {
+      await this.githubIntegrationWriteService.markPushed(
+        projectId,
+        body.integrationIds,
+        new Date(),
+      );
+    }
     this.productAnalytics.capture(userId, 'secrets_pushed', { project_id: projectId });
   }
 

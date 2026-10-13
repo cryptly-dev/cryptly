@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { GithubExternalConnectionWriteModule } from '../../external-connection/github/write/github-external-connection-write.module';
 import { PersonalInvitationReadModule } from '../../personal-invitation/read/personal-invitation-read.module';
 import { ProjectSecretsVersionReadModule } from '../../project-secrets-version/read/project-secrets-version-read.module';
 import { UserReadModule } from '../../user/read/user-read.module';
@@ -18,6 +19,7 @@ import { PROJECT_MEMBER_GUARD_REQUIRED_IMPORTS } from './guards/project-member.g
     ProjectSecretsVersionReadModule,
     PersonalInvitationReadModule,
     ProjectEventModule,
+    GithubExternalConnectionWriteModule,
     ...PROJECT_MEMBER_GUARD_REQUIRED_IMPORTS,
   ],
   controllers: [ProjectCoreController],

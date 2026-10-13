@@ -1,262 +1,100 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { tick } from "svelte";
-  import { animate } from "motion";
-  import { ArrowRight } from "lucide-svelte";
-  import { track } from "$lib/analytics/logdash";
-  import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
-  import {
-    DEFAULT_PROJECT_SETTINGS,
-    normalizeProjectSettings,
-    type ProjectSettings,
-  } from "$lib/auth/domain/project-settings";
-  import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
-  import { UserApi } from "$lib/auth/user.api";
-  import { ProjectsApi, type Project } from "$lib/projects/projects.api";
-  import ShellLoader from "$lib/shared/ui/ShellLoader.svelte";
-  import {
-    accountLoadErrorMessage,
-    auth,
-    loadUserData,
-  } from "$lib/stores/auth.svelte";
+  import { toast } from "svelte-sonner";
+  import { normalizeProjectSettings } from "$lib/auth/domain/project-settings";
+  import { projectPath } from "$lib/paths";
+  import { createEncryptedProject } from "$lib/projects/create-project";
+  import type { Project } from "$lib/projects/projects.api";
+  import { shell } from "$lib/shell/shell.svelte";
+  import { auth } from "$lib/stores/auth.svelte";
+  import Button from "$lib/ui/Button.svelte";
 
-  let projects = $state<Project[] | null>(null);
-  let projectsLoading = $state(true);
-  let loadError = $state<string | null>(null);
-  let profileLoading = $state(true);
-  let profileError = $state<string | null>(null);
-  let createError = $state<string | null>(null);
-
+  /** `/app/project`: open the most recently updated project, or name the first one. */
   let name = $state("");
-  let submitting = $state(false);
-  let emptyMotionEl: HTMLDivElement | undefined = $state();
-  let nameInput: HTMLInputElement | undefined = $state();
+  let creating = $state(false);
 
-  async function loadProjects() {
-    const jwt = auth.jwtToken;
-    if (!jwt) {
-      projectsLoading = false;
-      projects = null;
-      return;
-    }
-    projectsLoading = true;
-    loadError = null;
-    try {
-      projects = await ProjectsApi.getProjects(jwt);
-    } catch {
-      loadError = "Failed to load projects";
-      projects = [];
-    } finally {
-      projectsLoading = false;
-    }
-  }
+  const latest = $derived(
+    shell.projects?.reduce<Project | null>(
+      (best, p) =>
+        !best || Date.parse(p.updatedAt) > Date.parse(best.updatedAt)
+          ? p
+          : best,
+      null,
+    ) ?? null,
+  );
+  const empty = $derived(shell.projects?.length === 0);
+  const keysReady = $derived(Boolean(auth.userData?.publicKey));
 
+  // `creating`: the first project navigates to itself once it exists.
   $effect(() => {
-    if (!auth.jwtToken) {
-      void goto(resolve("/app/login"));
-      return;
-    }
-    void (async () => {
-      profileLoading = true;
-      profileError = null;
-      const ok = await loadUserData();
-      profileLoading = false;
-      if (!ok || !auth.userData) {
-        if (!auth.jwtToken) return;
-        profileError = accountLoadErrorMessage();
-      }
-      await loadProjects();
-    })();
+    if (latest && !creating)
+      void goto(resolve(projectPath(latest.id)), { replaceState: true });
   });
 
-  $effect(() => {
-    if (profileLoading || projectsLoading || projects === null) return;
-    if (projects.length > 0) {
-      const sorted = [...projects].sort(
-        (a, b) =>
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-      );
-      const targetId = sorted[0]!.id;
-      void goto(resolve(`/app/project/${targetId}`), { replaceState: true });
-    }
-  });
-
-  $effect(() => {
-    if (profileLoading || projectsLoading || !projects || projects.length !== 0)
-      return;
-    void tick().then(() => {
-      nameInput?.focus();
-      if (emptyMotionEl) {
-        void animate(
-          emptyMotionEl,
-          { opacity: [0, 1], y: [14, 0] },
-          { duration: 0.55, ease: [0, 0.55, 0.45, 1] },
-        );
-      }
-    });
-  });
-
-  async function handleCreate(e: Event) {
-    e.preventDefault();
+  async function create(event: SubmitEvent) {
+    event.preventDefault();
     const trimmed = name.trim();
-    const jwt = auth.jwtToken;
-    const user = auth.userData;
-    createError = null;
-    if (!trimmed || submitting || !jwt) return;
-    if (!user?.publicKey) {
-      createError =
-        "Encryption keys are not ready. Finish passphrase setup first.";
-      return;
-    }
-
-    submitting = true;
+    if (!trimmed || creating) return;
+    creating = true;
     try {
-      const settings: ProjectSettings = normalizeProjectSettings(
-        user.projectCreationDefaults ?? DEFAULT_PROJECT_SETTINGS,
-      );
-      const projectKey = await SymmetricCrypto.generateProjectKey();
-      const content = `# Define your secrets below. Example:\nAPI_KEY="your-value-here"\nDATABASE_URL="postgres://..."`;
-      const contentEncrypted = await SymmetricCrypto.encrypt(
-        content,
-        projectKey,
-      );
-      const projectKeyEncrypted = await AsymmetricCrypto.encrypt(
-        projectKey,
-        user.publicKey,
-      );
-
-      const proj = await ProjectsApi.createProject(jwt, {
+      await createEncryptedProject({
         name: trimmed,
-        encryptedSecrets: contentEncrypted,
-        encryptedSecretsKeys: { [user.id]: projectKeyEncrypted },
-        settings,
+        settings: normalizeProjectSettings(
+          auth.userData?.projectCreationDefaults,
+        ),
+        replaceState: true,
       });
-      track("project_created", { github_repo: false });
-
-      await UserApi.updateMe(jwt, { projectCreationDefaults: settings });
-      await loadUserData();
-      await goto(resolve(`/app/project/${proj.id}`), { replaceState: true });
     } catch {
-      submitting = false;
-      createError =
-        "Could not create project. Try again or check the API and your connection.";
+      toast.error("Could not create project");
+      creating = false;
     }
   }
 </script>
 
-{#if loadError}
-  <div
-    class="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background p-6"
-  >
-    <p class="max-w-md text-center text-sm text-muted-foreground">
-      {loadError}
-    </p>
-    <button
-      type="button"
-      class="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
-      onclick={() => void loadProjects()}
-    >
-      Retry
-    </button>
-  </div>
-{:else if profileError}
-  <div
-    class="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background p-6"
-  >
-    <p class="max-w-md text-center text-sm text-muted-foreground">
-      {profileError}
-    </p>
-    <button
-      type="button"
-      class="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground"
-      onclick={() => {
-        profileError = null;
-        void (async () => {
-          profileLoading = true;
-          const ok = await loadUserData();
-          profileLoading = false;
-          if (!ok || !auth.userData) {
-            if (!auth.jwtToken) return;
-            profileError = accountLoadErrorMessage();
-            return;
-          }
-          await loadProjects();
-        })();
-      }}
-    >
-      Retry
-    </button>
-  </div>
-{:else if !profileLoading && !projectsLoading && projects && projects.length === 0}
-  <div class="flex min-h-screen items-center justify-center bg-background p-8">
-    <div
-      bind:this={emptyMotionEl}
-      class="w-full max-w-md"
-      style="opacity:0;transform:translateY(14px)"
-    >
-      <div class="mb-10">
-        <div
-          class="mb-5 text-[11px] tracking-[0.22em] text-muted-foreground/60 uppercase"
-        >
-          New project
-        </div>
-        <h1
-          class="text-[34px] leading-[1.05] font-semibold tracking-tight text-foreground md:text-[40px]"
-        >
-          Name your first <span class="text-muted-foreground">project.</span>
-        </h1>
-        <p class="mt-5 text-[15px] leading-[1.7] text-muted-foreground">
-          Secrets you store in it are encrypted in your browser — before they
+<svelte:head>
+  <title>Projects · Cryptly</title>
+</svelte:head>
+
+{#if empty}
+  <div class="grid flex-1 place-items-center p-6">
+    <form class="flex w-full max-w-[360px] flex-col gap-4" onsubmit={create}>
+      <div>
+        <h1 class="text-[15px] font-semibold">Name your first project</h1>
+        <p class="mt-1 text-fg3">
+          Secrets you store in it are encrypted in your browser, before they
           leave your machine.
         </p>
       </div>
-
-      {#if !auth.userData?.publicKey}
-        <p class="mb-4 text-sm text-amber-200/90">
-          Set up your passphrase and keys to create a project.
-          <a
-            href={resolve("/app/set-passphrase")}
-            class="underline underline-offset-2 hover:text-foreground"
+      {#if !keysReady}
+        <p class="text-[12.5px] text-warning">
+          Set up your passphrase first.
+          <a href={resolve("/app/set-passphrase")} class="underline"
             >Continue setup</a
           >
         </p>
       {/if}
-      {#if createError}
-        <p class="mb-3 text-sm text-destructive">{createError}</p>
-      {/if}
-      <form onsubmit={handleCreate}>
-        <div class="relative">
-          <input
-            bind:this={nameInput}
-            type="text"
-            bind:value={name}
-            placeholder="checkout-api"
-            disabled={submitting}
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="off"
-            spellcheck={false}
-            class="h-12 w-full rounded-lg border border-border/60 bg-neutral-900/40 pr-14 pl-4 text-[15px] text-foreground transition-colors placeholder:text-muted-foreground/50 focus:border-primary/60 focus:bg-neutral-900/60 focus:outline-none disabled:opacity-60"
-          />
-          <button
-            type="submit"
-            disabled={!name.trim() || submitting || !auth.userData?.publicKey}
-            aria-label="Create project"
-            class="absolute top-1/2 right-1.5 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {#if submitting}
-              <span
-                class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-              ></span>
-            {:else}
-              <ArrowRight class="h-4 w-4" />
-            {/if}
-          </button>
-        </div>
-      </form>
-    </div>
+      <div class="flex gap-2">
+        <!-- svelte-ignore a11y_autofocus -->
+        <input
+          bind:value={name}
+          autofocus
+          aria-label="Project name"
+          placeholder="checkout-api"
+          maxlength="200"
+          autocomplete="off"
+          spellcheck="false"
+          data-1p-ignore
+          disabled={creating || !keysReady}
+          class="h-[30px] min-w-0 flex-1 rounded-[10px] bg-field px-2.5 text-[16px] shadow-field outline-none placeholder:text-ph focus:shadow-[inset_0_0_0_1px_var(--fg3)] disabled:opacity-60 md:text-[13px]"
+        />
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={!name.trim() || creating || !keysReady}
+          >{creating ? "Creating…" : "Create"}</Button
+        >
+      </div>
+    </form>
   </div>
-{:else}
-  <ShellLoader class="h-screen w-screen" />
 {/if}

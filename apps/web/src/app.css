@@ -1,9 +1,13 @@
 @import "@fontsource-variable/funnel-display";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 @import "tailwindcss";
 @plugin "daisyui" {
   logs: false;
 }
 @import "tw-animate-css";
+@import "./lib/appearance/greys.css";
+@import "./lib/appearance/theme.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -50,6 +54,54 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-editor: #1e1e1e;
+  /* App design system (lib/appearance/theme.css). */
+  --font-ui: "Geist Variable", system-ui, sans-serif;
+  --font-code: "Geist Mono Variable", ui-monospace, monospace;
+  --color-root: var(--root);
+  --color-root-hover: var(--root-hover);
+  --color-root-sel: var(--root-sel);
+  --color-s50: var(--s50);
+  --color-s50-hover: var(--s50-hover);
+  --color-s50-sel: var(--s50-sel);
+  --color-s50-border: var(--s50-border);
+  --color-s100: var(--s100);
+  --color-s100-hover: var(--s100-hover);
+  --color-s100-sel: var(--s100-sel);
+  --color-s100-border: var(--s100-border);
+  --color-s150: var(--s150);
+  --color-s150-hover: var(--s150-hover);
+  --color-s150-border: var(--s150-border);
+  --color-elev: var(--elev);
+  --color-elev-hover: var(--elev-hover);
+  --color-elev-border: var(--elev-border);
+  --color-field: var(--field);
+  --color-field-border: var(--field-border);
+  --color-fg: var(--fg);
+  --color-fg2: var(--fg2);
+  --color-fg3: var(--fg3);
+  --color-ph: var(--ph);
+  --color-faint: var(--faint);
+  --color-btn: var(--btn);
+  --color-btn-hover: var(--btn-hover);
+  --color-btn-border: var(--btn-border);
+  --color-btn-primary: var(--btn-primary);
+  --color-btn-primary-hover: var(--btn-primary-hover);
+  --color-btn-primary-fg: var(--btn-primary-fg);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-bg-hover: var(--danger-bg-hover);
+  --radius-panel: 24px;
+  --radius-well: 18px;
+  --radius-card: 12px;
+  --radius-row: 6px;
+  --shadow-raise: var(--raise-shadow);
+  --shadow-panel: inset 0 0 0 0.5px var(--s50-border);
+  --shadow-card: inset 0 0 0 0.5px var(--s100-border), var(--raise-shadow);
+  --shadow-btn: inset 0 0 0 0.5px var(--btn-border), var(--raise-shadow);
+  --shadow-field: inset 0 0 0 0.5px var(--field-border);
+  --shadow-elev: 0 0 0 0.5px var(--elev-border), var(--elev-shadow);
   --animate-marquee: marquee var(--duration) infinite linear;
   --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
   @keyframes marquee {
@@ -200,6 +252,15 @@
 html,
 body {
   min-height: 100%;
+}
+
+/* Monospace for keys and values. Ligatures off so "==" or "->" never render as one glyph. */
+@utility mono {
+  font-family: var(--font-code);
+  font-variant-ligatures: none;
+  font-feature-settings:
+    "liga" 0,
+    "calt" 0;
 }
 
 body {

@@ -4,7 +4,10 @@
   import { resolve } from "$app/paths";
   import { toast } from "svelte-sonner";
   import { consumeGitHubAppInstallState } from "$lib/auth/browser-state";
+  import { ApiResponseError } from "$lib/api/backend";
   import { IntegrationsApi } from "$lib/api/integrations.api";
+  import { projectPath } from "$lib/paths";
+  import { CONNECT_AFTER_INSTALL_KEY } from "$lib/projects/ui/settings/GithubSection.svelte";
   import { publicEnv } from "$lib/shared/env/public-env";
   import { auth } from "$lib/stores/auth.svelte";
 
@@ -37,11 +40,19 @@
 
       try {
         if (!publicEnv.githubLocalMock) {
+          // 409: already registered (the app was re-configured to share more repositories).
           await IntegrationsApi.createInstallation(auth.jwtToken, {
             githubInstallationId: installationId,
+          }).catch((error: unknown) => {
+            if (!(error instanceof ApiResponseError && error.status === 409))
+              throw error;
           });
         }
-        await goto(resolve(`/app/project/${projectId}`));
+        // Back to GitHub sync with the connect dialog open, to pick the repository.
+        sessionStorage.setItem(CONNECT_AFTER_INSTALL_KEY, projectId);
+        await goto(resolve(projectPath(projectId, "settings", "github")), {
+          replaceState: true,
+        });
       } catch {
         await goto(resolve("/app/project"));
         toast.error("Failed to connect GitHub");
