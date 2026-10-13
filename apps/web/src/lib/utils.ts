@@ -43,12 +43,10 @@ export function getRelativeTime(dateString: string): string {
   }
 }
 
-export function getCompactRelativeTime(
-  dateString: string,
-  now: number = Date.now(),
-): string {
+export function getCompactRelativeTime(dateString: string): string {
   const date = new Date(dateString);
-  const diffInMs = now - date.getTime();
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
   const diffInSeconds = Math.floor(diffInMs / 1000);
 
   if (diffInSeconds < 60) return "now";

@@ -2,17 +2,12 @@ import { browser } from "$app/environment";
 import { track } from "$lib/analytics/logdash";
 import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
 import { keystore } from "$lib/auth/keystore";
-import { decryptPrivateKey, encryptPrivateKey } from "$lib/auth/private-key";
+import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
 import { UserApi } from "$lib/auth/user.api";
 import { recordUnlockActivity } from "$lib/keys/auto-lock";
 import { auth, loadUserData } from "./auth.svelte";
 import { queueFTUX } from "./ftux.svelte";
-import {
-  keyAuth,
-  markKeyLocked,
-  markKeyUnlocked,
-  PASSPHRASE_CHANGED_STORAGE_KEY,
-} from "./key-state.svelte";
+import { keyAuth, markKeyLocked, markKeyUnlocked } from "./key-state.svelte";
 
 export {
   broadcastKeyLock,
@@ -38,12 +33,6 @@ export async function hydrateMasterKey() {
 
 if (browser) {
   void hydrateMasterKey();
-  // Another tab changed the passphrase: reload the encrypted private key it re-wrote.
-  window.addEventListener("storage", (event) => {
-    if (event.key === PASSPHRASE_CHANGED_STORAGE_KEY && auth.jwtToken) {
-      void loadUserData();
-    }
-  });
 }
 
 export async function setUpPassphrase(passphrase: string) {
@@ -51,7 +40,12 @@ export async function setUpPassphrase(passphrase: string) {
     return;
   }
   const keyPair = await AsymmetricCrypto.generateKeyPair();
-  const encrypted = await encryptPrivateKey(keyPair.privateKey, passphrase);
+  const base64Key =
+    await SymmetricCrypto.deriveBase64KeyFromPassphrase(passphrase);
+  const encrypted = await SymmetricCrypto.encrypt(
+    keyPair.privateKey,
+    base64Key,
+  );
 
   const masterKey = await AsymmetricCrypto.importPrivateKeyNonExtractable(
     keyPair.privateKey,
@@ -70,11 +64,23 @@ export async function setUpPassphrase(passphrase: string) {
   await loadUserData();
 }
 
-/** Throws IncorrectPassphraseError. Checked against the server's current key, not a stale copy. */
 export async function unlock(passphrase: string): Promise<void> {
-  const masterKey = await AsymmetricCrypto.importPrivateKeyNonExtractable(
-    await decryptPrivateKey(passphrase),
-  );
+  const encrypted = auth.userData?.privateKeyEncrypted;
+  if (!encrypted) {
+    return;
+  }
+
+  const base64Key =
+    await SymmetricCrypto.deriveBase64KeyFromPassphrase(passphrase);
+  let pkcs8Base64: string;
+  try {
+    pkcs8Base64 = await SymmetricCrypto.decrypt(encrypted, base64Key);
+  } catch {
+    throw new Error("Invalid passphrase");
+  }
+
+  const masterKey =
+    await AsymmetricCrypto.importPrivateKeyNonExtractable(pkcs8Base64);
   await keystore.setMasterKey(masterKey);
   markKeyUnlocked();
   recordUnlockActivity();

@@ -1,732 +1,1280 @@
 import type * as Monaco from "monaco-editor";
-import { toast } from "svelte-sonner";
 import type { ProjectRevealOn } from "$lib/auth/domain/project-settings";
-import { parseEnv, peek, type EnvDoc } from "$lib/secrets/env-doc";
+import { assembleRealText, sliceRealByMonacoRange } from "./assembler";
+import {
+  assertParserParity,
+  bulletsForSubstring,
+  getValueGroups,
+  getValueRanges,
+  maskText,
+  posInRange,
+  selectionTouchesRange,
+  stripQuotes,
+  type MaskEntry,
+  type MaskResult,
+  type ParsedSecret,
+  type ValueGroup,
+  type ValueRange,
+} from "./parser";
+
+const TOOLTIP_DEFAULT_TEXT = "Click to copy";
 
 /**
- * Masking for the .env editor. A masked value is not in the Monaco model at all: its line ends
- * right after `KEY=` and a zero-width tracking decoration ("anchor") marks where the value
- * goes, with a fixed mask injected there (the peek, or 8 bullets in Hidden mode). The page
- * therefore never holds a masked value, its length or its line count. Revealing (caret or
- * hover in Peek mode, or typing a new value) puts the text back into the model.
- *
- * The editor stands for `real`, the plain text: the model with every hidden value put back.
- * Undo/redo work on `real` snapshots, because the model is rewritten as values hide and show.
+ * Monaco's runtime TextModel exposes `changeDecorations`, but the public
+ * `ITextModel` typings omit it.
  */
-
-type Editor = Monaco.editor.IStandaloneCodeEditor;
-type Model = Monaco.editor.ITextModel;
-/** The runtime model has `changeDecorations`; the public typings omit it. */
-type DecoratableModel = Model & {
+type TextModelWithChangeDecorations = Monaco.editor.ITextModel & {
   changeDecorations(
-    fn: (accessor: {
-      changeDecoration(id: string, range: Monaco.IRange): void;
+    callback: (accessor: {
+      changeDecoration(id: string, newRange: Monaco.IRange): void;
     }) => void,
   ): void;
 };
 
-const TOOLTIP = "Click to copy";
-const HIDDEN_HINT =
-  "Values are hidden in this project. Edit them in the table view.";
-
-interface Span {
-  startLineNumber: number;
-  startColumn: number;
-  endLineNumber: number;
-  endColumn: number;
+interface UseSecretMaskingArgs {
+  value: string;
+  onChange: (value: string) => void;
+  revealOn: ProjectRevealOn;
 }
 
-/** A value and whatever follows it on its last line (`"…" # note`), in 1-based coordinates. */
-function valueSpan(doc: EnvDoc, index: number): Span | null {
-  const s = doc.secrets[index];
-  if (!`${s.raw}${s.tail}`.trim()) return null;
-  return {
-    startLineNumber: s.start + 1,
-    startColumn: s.valueCol + 1,
-    endLineNumber: s.end + 1,
-    endColumn: doc.lines[s.end].length + 1,
-  };
-}
-
-/** `text` with every value removed, plus where each one was and what it was. */
-function hideAll(text: string) {
-  const doc = parseEnv(text);
-  const lines: string[] = [];
-  const slots: { line: number; column: number; text: string }[] = [];
-  const at = new Map(doc.secrets.map((s, i) => [s.start, i]));
-  for (let i = 0; i < doc.lines.length; i++) {
-    const index = at.get(i);
-    const span = index === undefined ? null : valueSpan(doc, index);
-    if (index === undefined || !span) {
-      lines.push(doc.lines[i]);
-      continue;
-    }
-    const s = doc.secrets[index];
-    const first = doc.lines[i];
-    lines.push(first.slice(0, s.valueCol));
-    slots.push({
-      line: lines.length,
-      column: s.valueCol + 1,
-      text: [
-        first.slice(s.valueCol),
-        ...doc.lines.slice(i + 1, s.end + 1),
-      ].join(doc.eol),
-    });
-    i = s.end;
-  }
-  return { masked: lines.join(doc.eol), slots, eol: doc.eol };
-}
-
-/** The value as the app uses it (quotes stripped, escapes resolved). */
-function decode(valueText: string): string {
-  return parseEnv(`K=${valueText}`).secrets[0]?.value ?? "";
-}
-
-function touches(sel: Monaco.Selection, r: Span): boolean {
-  const before =
-    sel.startLineNumber < r.endLineNumber ||
-    (sel.startLineNumber === r.endLineNumber && sel.startColumn <= r.endColumn);
-  const after =
-    sel.endLineNumber > r.startLineNumber ||
-    (sel.endLineNumber === r.startLineNumber && sel.endColumn >= r.startColumn);
-  return before && after;
+interface SecretMaskingResult {
+  maskedInitialValue: string;
+  handleEditorMount: (
+    editor: Monaco.editor.IStandaloneCodeEditor,
+    monaco: typeof Monaco,
+  ) => void;
+  syncExternalValue: (value: string, revealOn: ProjectRevealOn) => void;
+  setOnChange: (onChange: (value: string) => void) => void;
+  dispose: () => void;
 }
 
 export function createSecretMasking({
   value,
   onChange,
   revealOn,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  revealOn: ProjectRevealOn;
-}) {
-  const plain = revealOn === "always";
-  // Peek mode shows a value while the caret is in it or the pointer is on its line.
-  const reveals = revealOn === "hover";
+}: UseSecretMaskingArgs): SecretMaskingResult {
+  const editorRef = {
+    current: null as Monaco.editor.IStandaloneCodeEditor | null,
+  };
+  const monacoRef = { current: null as typeof Monaco | null };
+  const decorationsRef = {
+    current: null as Monaco.editor.IEditorDecorationsCollection | null,
+  };
+  const flashDecorationsRef = {
+    current: null as Monaco.editor.IEditorDecorationsCollection | null,
+  };
+  const tooltipRef = { current: null as HTMLDivElement | null };
+  const hoveredDecIdRef = { current: null as string | null };
+  const groupZoneIdsRef = { current: [] as string[] };
+  const groupZoneMapRef = {
+    current: new Map<string, { group: ValueGroup; pill: HTMLElement }>(),
+  };
 
-  let editor: Editor | null = null;
-  let monaco: typeof Monaco | null = null;
-  let emit = onChange;
-  let real = value;
-  let lastEmitted = value;
+  const hoverRevealedDecIdRef = { current: null as string | null };
+  const caretRevealedDecIdsRef = { current: new Set<string>() };
 
-  const tracked = new Set<string>();
-  /** Text of each hidden value, by anchor decoration. */
-  const hidden = new Map<string, string>();
-  /** Values currently in the model (revealed or being typed). */
-  const shown = new Set<string>();
-  /** Values typed in this session: shown while the caret is in them, in every mode. */
-  const fresh = new Set<string>();
-  let hoverId: string | null = null;
-  let internal = 0;
-  let masks: Monaco.editor.IEditorDecorationsCollection | null = null;
-  let flashes: Monaco.editor.IEditorDecorationsCollection | null = null;
-  let tooltip: HTMLDivElement | null = null;
-  let tooltipTimer: number | null = null;
-  let zoneIds: string[] = [];
-  const zones = new Map<string, { text: () => string; pill: HTMLElement }>();
-  /** Anchor offsets before the next user edit, to tell deleted values apart. */
-  let anchorsBefore = new Map<string, { offset: number; lineStart: number }>();
-  let past: string[] = [];
-  let future: string[] = [];
-  let lastEditAt = 0;
-  const disposers: (() => void)[] = [];
+  const trackingDecorationIdsRef = { current: new Set<string>() };
+  const decorationToRealRef = { current: new Map<string, string>() };
 
-  const maskedInitialValue = plain ? value : hideAll(value).masked;
+  // Pre-edit offset snapshot per tracking decoration. Refreshed after every
+  // internal edit (ingest, expand/collapse, mask-after-typing, drift
+  // reconcile, initial mount) so that the NEXT user-driven keystroke's
+  // change events can be mapped onto the right slot inside each stored real
+  // value.
+  const decorationPreEditOffsetsRef = {
+    current: new Map<string, { start: number; length: number }>(),
+  };
 
-  const model = () => editor?.getModel() ?? null;
-  const rangeOf = (id: string) => model()?.getDecorationRange(id) ?? null;
-  const isEmpty = (r: Span) =>
-    r.startLineNumber === r.endLineNumber && r.startColumn === r.endColumn;
+  // Re-entrancy counter. depth > 0 means "this content change is ours".
+  const internalEditDepthRef = { current: 0 };
 
-  function quietly(fn: () => void) {
-    internal++;
-    try {
-      fn();
-    } finally {
-      internal--;
+  const lastParentValueRef = { current: value };
+
+  const pendingInitialMaskRef = { current: null as MaskResult | null };
+
+  const onChangeRef = { current: onChange };
+  const lastEmittedValueRef = { current: value };
+
+  const revealOnRef = { current: revealOn };
+  // Pre-mount masking: synchronously mask `value` BEFORE Monaco mounts,
+  // so plaintext never enters the DOM, not even for one frame.
+  const maskedInitialValue = (() => {
+    if (revealOn === "always") {
+      pendingInitialMaskRef.current = null;
+      lastParentValueRef.current = value;
+      return value;
     }
-  }
+    const result = maskText(value);
+    pendingInitialMaskRef.current = result;
+    lastParentValueRef.current = value;
+    return result.masked;
+  })();
 
-  function setRange(id: string, range: Span) {
-    (model() as DecoratableModel | null)?.changeDecorations((a) =>
-      a.changeDecoration(id, range),
-    );
-  }
+  const tooltipResetTimerRef = { current: null as number | null };
 
-  function track(range: Span): string {
-    const [id] = editor!.deltaDecorations(
-      [],
-      [
+  const getExpandedIds = (): Set<string> => {
+    const ids = new Set<string>(caretRevealedDecIdsRef.current);
+    if (hoverRevealedDecIdRef.current) ids.add(hoverRevealedDecIdRef.current);
+    return ids;
+  };
+
+  const refreshMaskDecorations = () => {
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+    const model = editor?.getModel();
+    if (!editor || !monacoInstance || !model) return;
+
+    const expanded = getExpandedIds();
+    const decorations: Monaco.editor.IModelDeltaDecoration[] = [];
+
+    for (const decId of trackingDecorationIdsRef.current) {
+      if (expanded.has(decId)) continue;
+      const range = model.getDecorationRange(decId);
+      if (!range) continue;
+      if (
+        range.startLineNumber === range.endLineNumber &&
+        range.startColumn === range.endColumn
+      ) {
+        continue;
+      }
+      decorations.push({
+        range,
+        options: { inlineClassName: "secret-masked" },
+      });
+    }
+
+    if (!decorationsRef.current) {
+      decorationsRef.current = editor.createDecorationsCollection(decorations);
+    } else {
+      decorationsRef.current.set(decorations);
+    }
+  };
+
+  const withInternalEdit = <T>(fn: () => T): T => {
+    internalEditDepthRef.current++;
+    try {
+      return fn();
+    } finally {
+      internalEditDepthRef.current--;
+    }
+  };
+
+  const snapshotDecorationOffsets = () => {
+    const model = editorRef.current?.getModel();
+    const snap = decorationPreEditOffsetsRef.current;
+    snap.clear();
+    if (!model) return;
+    for (const decId of trackingDecorationIdsRef.current) {
+      const range = model.getDecorationRange(decId);
+      if (!range) continue;
+      const start = model.getOffsetAt({
+        lineNumber: range.startLineNumber,
+        column: range.startColumn,
+      });
+      const end = model.getOffsetAt({
+        lineNumber: range.endLineNumber,
+        column: range.endColumn,
+      });
+      snap.set(decId, { start, length: end - start });
+    }
+  };
+
+  const applyTypingChangesToReal = (
+    model: Monaco.editor.ITextModel,
+    changes: Array<{
+      rangeOffset: number;
+      rangeLength: number;
+      text: string;
+    }>,
+  ) => {
+    const editor = editorRef.current;
+    if (!editor || !model || changes.length === 0) return;
+    const snap = decorationPreEditOffsetsRef.current;
+    if (snap.size === 0) return;
+    const expanded = getExpandedIds();
+
+    const touched = new Map<
+      string,
+      Array<{ offsetWithin: number; rangeLength: number; text: string }>
+    >();
+    for (const [decId, { start: decStart, length: decLen }] of snap) {
+      if (expanded.has(decId)) continue;
+      const decEnd = decStart + decLen;
+      const relevant: Array<{
+        offsetWithin: number;
+        rangeLength: number;
+        text: string;
+      }> = [];
+      for (const ch of changes) {
+        const chStart = ch.rangeOffset;
+        const chEnd = ch.rangeOffset + ch.rangeLength;
+        if (chStart >= decStart && chEnd <= decEnd) {
+          relevant.push({
+            offsetWithin: chStart - decStart,
+            rangeLength: ch.rangeLength,
+            text: ch.text,
+          });
+        }
+      }
+      if (relevant.length > 0) touched.set(decId, relevant);
+    }
+
+    if (touched.size === 0) return;
+
+    for (const [decId, decChanges] of touched) {
+      const oldReal = decorationToRealRef.current.get(decId) ?? "";
+      decChanges.sort((a, b) => b.offsetWithin - a.offsetWithin);
+      let newReal = oldReal;
+      for (const ch of decChanges) {
+        newReal =
+          newReal.slice(0, ch.offsetWithin) +
+          ch.text +
+          newReal.slice(ch.offsetWithin + ch.rangeLength);
+      }
+      decorationToRealRef.current.set(decId, newReal);
+    }
+
+    withInternalEdit(() => {
+      const maskEdits: Array<{ range: Monaco.IRange; text: string }> = [];
+      for (const decId of touched.keys()) {
+        const postRange = model.getDecorationRange(decId);
+        if (!postRange) continue;
+        const real = decorationToRealRef.current.get(decId) ?? "";
+        const expectedBullets = bulletsForSubstring(real);
+        const currentText = model.getValueInRange(postRange);
+        if (currentText === expectedBullets) continue;
+        maskEdits.push({ range: postRange, text: expectedBullets });
+      }
+      if (maskEdits.length > 0) {
+        editor.executeEdits("mask-after-typing", maskEdits);
+      }
+    });
+  };
+
+  const expandDecorationInModel = (decId: string) => {
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+    const model = editor?.getModel();
+    if (!editor || !monacoInstance || !model) return;
+    const real = decorationToRealRef.current.get(decId);
+    if (real == null) return;
+    const range = model.getDecorationRange(decId);
+    if (!range) return;
+    const current = model.getValueInRange(range);
+    if (current === real) return;
+    if (current.length !== real.length) return;
+    withInternalEdit(() => {
+      editor.executeEdits("mask-expand", [
         {
           range,
-          options: {
-            stickiness:
-              monaco!.editor.TrackedRangeStickiness
-                .AlwaysGrowsWhenTypingAtEdges,
-          },
+          text: real,
         },
-      ],
-    );
-    tracked.add(id);
-    return id;
-  }
+      ]);
+    });
+    snapshotDecorationOffsets();
+  };
 
-  function untrack(id: string) {
-    editor?.deltaDecorations([id], []);
-    tracked.delete(id);
-    hidden.delete(id);
-    shown.delete(id);
-    fresh.delete(id);
-    if (hoverId === id) hoverId = null;
-  }
-
-  /** The plain text: the model with every hidden value put back. */
-  function assemble(from?: Span): string {
-    const m = model();
-    if (!m) return real;
-    const start = from
-      ? m.getOffsetAt({
-          lineNumber: from.startLineNumber,
-          column: from.startColumn,
-        })
-      : 0;
-    const end = from
-      ? m.getOffsetAt({
-          lineNumber: from.endLineNumber,
-          column: from.endColumn,
-        })
-      : m.getValueLength();
-    let text = m.getValue().slice(start, end);
-    const inside: { offset: number; text: string }[] = [];
-    for (const [id, t] of hidden) {
-      const r = rangeOf(id);
-      const offset = r ? m.getOffsetAt(r.getStartPosition()) - start : -1;
-      if (offset >= 0 && offset <= end - start)
-        inside.push({ offset, text: t });
-    }
-    // Back to front, so earlier offsets stay valid.
-    for (const x of inside.sort((a, b) => b.offset - a.offset))
-      text = text.slice(0, x.offset) + x.text + text.slice(x.offset);
-    return text;
-  }
-
-  /** Puts a hidden value back into the model. */
-  function show(id: string) {
-    const m = model();
-    const r = rangeOf(id);
-    const text = hidden.get(id);
-    if (!m || !r || text === undefined) return;
-    const pos = r.getStartPosition();
-    quietly(() =>
-      m.applyEdits([
+  const collapseDecorationInModel = (decId: string) => {
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+    const model = editor?.getModel();
+    if (!editor || !monacoInstance || !model) return;
+    const range = model.getDecorationRange(decId);
+    if (!range) return;
+    const current = model.getValueInRange(range);
+    if (current.length === 0) return;
+    decorationToRealRef.current.set(decId, current);
+    const bullets = bulletsForSubstring(current);
+    if (current === bullets) return;
+    withInternalEdit(() => {
+      editor.executeEdits("mask-collapse", [
         {
-          range: monaco!.Range.fromPositions(pos),
-          text,
-          forceMoveMarkers: false,
+          range,
+          text: bullets,
         },
-      ]),
-    );
-    const end = m.getPositionAt(m.getOffsetAt(pos) + text.length);
-    setRange(id, monaco!.Range.fromPositions(pos, end));
-    hidden.delete(id);
-    shown.add(id);
-  }
-
-  /** Takes a value out of the model again, re-reading where it starts and ends. */
-  function hide(id: string) {
-    const m = model();
-    const r = rangeOf(id);
-    if (!m || !r) return untrack(id);
-    const doc = parseEnv(m.getValue());
-    const index = doc.secrets.findIndex(
-      (s) => s.start + 1 === r.startLineNumber,
-    );
-    const span = index < 0 ? null : valueSpan(doc, index);
-    // No longer a value (e.g. its `=` was deleted): the text stays as typed.
-    if (!span) return untrack(id);
-    const text = m.getValueInRange(span);
-    quietly(() => m.applyEdits([{ range: span, text: "" }]));
-    setRange(
-      id,
-      monaco!.Range.fromPositions({
-        lineNumber: span.startLineNumber,
-        column: span.startColumn,
-      }),
-    );
-    hidden.set(id, text);
-    shown.delete(id);
-    fresh.delete(id);
-  }
-
-  function refreshMasks() {
-    if (!editor || !monaco) return;
-    const decorations: Monaco.editor.IModelDeltaDecoration[] = [];
-    for (const [id, text] of hidden) {
-      const r = rangeOf(id);
-      if (!r) continue;
-      const p = reveals ? peek(decode(text)) : null;
-      decorations.push({
-        range: monaco.Range.fromPositions(r.getStartPosition()),
-        options: {
-          showIfCollapsed: true,
-          before: {
-            content: p ? `${p.head}••••••${p.tail}` : "••••••••",
-            inlineClassName: `secret-mask secret-mask-${p?.head.length ?? 0}`,
-            cursorStops: monaco.editor.InjectedTextCursorStops.Left,
-          },
-        },
-      });
-    }
-    if (!masks) masks = editor.createDecorationsCollection(decorations);
-    else masks.set(decorations);
-  }
-
-  /** Shows exactly the values the caret is in (and the hovered one), hides the rest. */
-  function syncShown() {
-    if (!editor) return;
-    const selections = editor.getSelections() ?? [];
-    const want = new Set<string>();
-    for (const id of tracked) {
-      if (!reveals && !fresh.has(id)) continue;
-      const r = rangeOf(id);
-      if (r && selections.some((sel) => touches(sel, r))) want.add(id);
-    }
-    if (reveals && hoverId && tracked.has(hoverId)) want.add(hoverId);
-    for (const id of [...shown]) if (!want.has(id)) hide(id);
-    for (const id of want) if (!shown.has(id)) show(id);
-    refreshMasks();
-    snapshotAnchors();
-  }
-
-  function snapshotAnchors() {
-    const m = model();
-    anchorsBefore = new Map();
-    if (!m) return;
-    for (const id of hidden.keys()) {
-      const r = rangeOf(id);
-      if (!r) continue;
-      anchorsBefore.set(id, {
-        offset: m.getOffsetAt(r.getStartPosition()),
-        lineStart: m.getOffsetAt({ lineNumber: r.startLineNumber, column: 1 }),
-      });
-    }
-  }
-
-  /** Shows `text` from scratch: everything hidden, nothing shown. */
-  function render(text: string) {
-    const m = model();
-    if (!editor || !monaco || !m) return;
-    const view = editor.saveViewState();
-    const { masked, slots, eol } = hideAll(text);
-    for (const id of [...tracked]) untrack(id);
-    quietly(() => {
-      m.setValue(masked);
-      m.setEOL(
-        eol === "\r\n"
-          ? monaco!.editor.EndOfLineSequence.CRLF
-          : monaco!.editor.EndOfLineSequence.LF,
-      );
+      ]);
     });
-    for (const slot of slots) {
-      const id = track(
-        monaco.Range.fromPositions({
-          lineNumber: slot.line,
-          column: slot.column,
-        }),
-      );
-      hidden.set(id, slot.text);
+    snapshotDecorationOffsets();
+  };
+
+  const hideTooltip = () => {
+    if (tooltipResetTimerRef.current !== null) {
+      window.clearTimeout(tooltipResetTimerRef.current);
+      tooltipResetTimerRef.current = null;
     }
-    real = text;
-    if (view) editor.restoreViewState(view);
-    syncShown();
-    refreshZones();
-  }
-
-  /** After a user edit: drop deleted values, pick up typed ones, keep the rest in place. */
-  function reconcile(
-    changes: readonly Monaco.editor.IModelContentChange[],
-  ): boolean {
-    const m = model();
-    if (!editor || !monaco || !m) return true;
-
-    // A value goes away with its line: the edit covered its key and its anchor.
-    for (const [id, a] of anchorsBefore) {
-      if (!hidden.has(id)) continue;
-      const deleted = changes.some(
-        (c) =>
-          c.rangeLength > 0 &&
-          c.rangeOffset <= a.lineStart &&
-          c.rangeOffset + c.rangeLength >= a.offset,
-      );
-      if (deleted) untrack(id);
+    const tip = tooltipRef.current;
+    if (tip && tip.style.display !== "none") {
+      tip.style.display = "none";
     }
-
-    // A hidden value is valid only at the very end of a `KEY=` line.
-    let doc = parseEnv(m.getValue());
-    for (const id of [...hidden.keys()]) {
-      const r = rangeOf(id);
-      if (!r) {
-        untrack(id);
-        continue;
+    hoveredDecIdRef.current = null;
+    const revealedId = hoverRevealedDecIdRef.current;
+    if (revealedId) {
+      hoverRevealedDecIdRef.current = null;
+      if (!caretRevealedDecIdsRef.current.has(revealedId)) {
+        collapseDecorationInModel(revealedId);
       }
-      const s = doc.secrets.find((x) => x.start + 1 === r.startLineNumber);
-      const ok =
-        s &&
-        s.valueCol + 1 === r.startColumn &&
-        r.startColumn === m.getLineMaxColumn(r.startLineNumber);
-      if (ok) {
-        if (!isEmpty(r))
-          setRange(id, monaco.Range.fromPositions(r.getStartPosition()));
-        continue;
-      }
-      // Text was typed or joined onto a hidden value. Peek mode reveals it in place; Hidden
-      // mode never reveals, so the edit is undone.
-      if (!reveals) return false;
-      show(id);
-      doc = parseEnv(m.getValue());
+      refreshMaskDecorations();
     }
+  };
 
-    // Shown values follow their line; typed values start being tracked.
-    const claimed = new Set<number>();
-    for (const id of [...shown]) {
-      const r = rangeOf(id);
-      const index = r
-        ? doc.secrets.findIndex((s) => s.start + 1 === r.startLineNumber)
-        : -1;
-      const span = index < 0 ? null : valueSpan(doc, index);
-      if (!span || claimed.has(index)) {
-        untrack(id);
-        continue;
-      }
-      claimed.add(index);
-      setRange(id, span);
-    }
-    const anchored = new Set(
-      [...hidden.keys()].map((id) => rangeOf(id)?.startLineNumber),
-    );
-    doc.secrets.forEach((s, index) => {
-      const span = valueSpan(doc, index);
-      if (!span || claimed.has(index) || anchored.has(s.start + 1)) return;
-      const id = track(span);
-      shown.add(id);
-      fresh.add(id);
+  const showTooltipAtDecoration = (decId: string) => {
+    const editor = editorRef.current;
+    const model = editor?.getModel();
+    if (!editor || !model) return;
+
+    const range = model.getDecorationRange(decId);
+    if (!range) return;
+
+    const domNode = editor.getDomNode();
+    if (!domNode) return;
+
+    const visiblePos = editor.getScrolledVisiblePosition({
+      lineNumber: range.startLineNumber,
+      column: range.startColumn,
     });
+    if (!visiblePos) return;
 
-    syncShown();
-    refreshZones();
-    return true;
-  }
-
-  function commit(next: string) {
-    if (next === real) return;
-    const now = Date.now();
-    if (now - lastEditAt > 600 || !past.length) past.push(real);
-    if (past.length > 200) past.shift();
-    future = [];
-    lastEditAt = now;
-    real = next;
-    lastEmitted = next;
-    emit(next);
-  }
-
-  function travel(from: string[], to: string[]) {
-    const next = from.pop();
-    if (next === undefined) return;
-    to.push(real);
-    render(next);
-    lastEmitted = next;
-    lastEditAt = 0;
-    emit(next);
-  }
-
-  function hideTooltip() {
-    if (tooltip) tooltip.style.display = "none";
-  }
-
-  function showTooltip(id: string, text = TOOLTIP) {
-    const r = rangeOf(id);
-    const dom = editor?.getDomNode();
-    if (!editor || !r || !dom) return;
-    const pos = editor.getScrolledVisiblePosition(r.getStartPosition());
-    if (!pos) return;
-    if (!tooltip) {
-      tooltip = document.createElement("div");
-      tooltip.className = "secret-tooltip";
-      dom.appendChild(tooltip);
+    let tip = tooltipRef.current;
+    if (!tip) {
+      tip = document.createElement("div");
+      tip.className = "secret-tooltip";
+      tip.textContent = TOOLTIP_DEFAULT_TEXT;
+      domNode.appendChild(tip);
+      tooltipRef.current = tip;
+    } else {
+      if (tooltipResetTimerRef.current !== null) {
+        window.clearTimeout(tooltipResetTimerRef.current);
+        tooltipResetTimerRef.current = null;
+      }
+      if (tip.classList.contains("copied")) {
+        tip.classList.remove("copied");
+      }
+      if (tip.textContent !== TOOLTIP_DEFAULT_TEXT) {
+        tip.textContent = TOOLTIP_DEFAULT_TEXT;
+      }
     }
-    tooltip.textContent = text;
-    tooltip.classList.toggle("copied", text !== TOOLTIP);
-    tooltip.style.display = "";
-    tooltip.style.transform = `translate3d(${pos.left}px, ${pos.top}px, 0) translateY(-100%) translateY(-6px)`;
-  }
 
-  function idOnLine(line: number): string | null {
-    for (const id of tracked) {
-      const r = rangeOf(id);
-      if (r && line >= r.startLineNumber && line <= r.endLineNumber) return id;
+    if (tip.style.display === "none") tip.style.display = "";
+    tip.style.transform = `translate3d(${visiblePos.left}px, ${visiblePos.top}px, 0) translateY(-100%) translateY(-6px)`;
+  };
+
+  const flashTooltipCopied = () => {
+    const tip = tooltipRef.current;
+    if (!tip) return;
+    if (tooltipResetTimerRef.current !== null) {
+      window.clearTimeout(tooltipResetTimerRef.current);
     }
-    return null;
-  }
-
-  function flash(range: Span) {
-    if (!editor) return;
-    const d = [{ range, options: { inlineClassName: "secret-copied" } }];
-    if (!flashes) flashes = editor.createDecorationsCollection(d);
-    else flashes.set(d);
-    window.setTimeout(() => flashes?.clear(), 1500);
-  }
-
-  function copyValue(id: string) {
-    const r = rangeOf(id);
-    const m = model();
-    if (!r || !m) return;
-    const text = hidden.get(id) ?? m.getValueInRange(r);
-    void navigator.clipboard?.writeText(decode(text)).catch(() => {});
-    if (!isEmpty(r)) flash(r);
-    showTooltip(id, "Copied!");
-    if (tooltipTimer !== null) window.clearTimeout(tooltipTimer);
-    tooltipTimer = window.setTimeout(() => {
-      tooltipTimer = null;
-      if (hoverId === id || idOnLine(r.startLineNumber) === id) showTooltip(id);
+    tip.classList.add("copied");
+    tip.textContent = "Copied!";
+    tooltipResetTimerRef.current = window.setTimeout(() => {
+      tooltipResetTimerRef.current = null;
+      const t = tooltipRef.current;
+      if (t) {
+        t.classList.remove("copied");
+        t.textContent = TOOLTIP_DEFAULT_TEXT;
+      }
     }, 1200);
-  }
+  };
 
-  /** "Copy whole group" above every group with two or more values. */
-  function refreshZones() {
-    const m = model();
-    if (!editor || !m) return;
-    const groups = parseEnv(m.getValue()).groups.filter(
-      (g) => g.secrets.length >= 2,
+  const flashCopied = (rangesToFlash: Array<{ range: Monaco.IRange }>) => {
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+    if (!editor || !monacoInstance || rangesToFlash.length === 0) return;
+
+    // `secret-copied` is ONLY the green-flash animation (no bullet overlay).
+    // We intentionally don't stack `secret-masked` here: the underlying
+    // mask decoration already paints bullets for collapsed values, and
+    // for group-copy flashes this range covers whole lines including
+    // keys — masking those would briefly turn key names into dots.
+    const decorations = rangesToFlash.map((entry) => ({
+      range: entry.range,
+      options: {
+        inlineClassName: "secret-copied",
+      },
+    }));
+
+    if (!flashDecorationsRef.current) {
+      flashDecorationsRef.current =
+        editor.createDecorationsCollection(decorations);
+    } else {
+      flashDecorationsRef.current.set(decorations);
+    }
+
+    window.setTimeout(() => {
+      if (flashDecorationsRef.current) {
+        flashDecorationsRef.current.clear();
+      }
+    }, 1500);
+  };
+
+  const flashCopiedDecorations = (decIds: string[]) => {
+    const editor = editorRef.current;
+    const model = editor?.getModel();
+    if (!model) return;
+    const items: Array<{ range: Monaco.IRange }> = [];
+    for (const id of decIds) {
+      const r = model.getDecorationRange(id);
+      if (r) items.push({ range: r });
+    }
+    flashCopied(items);
+  };
+
+  const copyGroup = (group: ValueGroup, pill: HTMLElement) => {
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+    if (!editor || !monacoInstance) return;
+    const model = editor.getModel();
+    if (!model) return;
+
+    const realFile = assembleRealText(
+      model,
+      decorationToRealRef.current,
+      getExpandedIds(),
+      monacoInstance,
     );
+    const realLines = realFile.split("\n");
+    const text = realLines.slice(group.startLine - 1, group.endLine).join("\n");
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+
+    const original = pill.textContent;
+    pill.classList.add("copied");
+    pill.textContent = "Copied!";
+    window.setTimeout(() => {
+      if (pill.isConnected) {
+        pill.classList.remove("copied");
+        pill.textContent = original;
+      }
+    }, 1200);
+
+    flashCopied([
+      {
+        range: new monacoInstance.Range(
+          group.startLine,
+          1,
+          group.endLine,
+          model.getLineMaxColumn(group.endLine),
+        ),
+      },
+    ]);
+  };
+
+  const applyGroupZones = (groups: ValueGroup[]) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const groupsToShow = groups.filter((g) => g.ranges.length >= 2);
+
     editor.changeViewZones((accessor) => {
-      for (const id of zoneIds) accessor.removeZone(id);
-      zoneIds = [];
-      zones.clear();
-      for (const g of groups) {
-        const node = document.createElement("div");
-        node.className = "secret-group-zone";
+      for (const id of groupZoneIdsRef.current) {
+        accessor.removeZone(id);
+      }
+      groupZoneIdsRef.current = [];
+      groupZoneMapRef.current.clear();
+
+      for (const group of groupsToShow) {
+        const zoneNode = document.createElement("div");
+        zoneNode.className = "secret-group-zone";
+
         const pill = document.createElement("span");
         pill.className = "secret-group-pill";
         pill.textContent = "Copy whole group";
-        node.appendChild(pill);
+
+        zoneNode.appendChild(pill);
+
         const id = accessor.addZone({
-          afterLineNumber: g.start,
+          afterLineNumber: group.startLine - 1,
           heightInPx: 22,
-          domNode: node,
+          domNode: zoneNode,
           suppressMouseDown: true,
         });
-        const span: Span = {
-          startLineNumber: g.start + 1,
-          startColumn: 1,
-          endLineNumber: g.end + 1,
-          endColumn: m.getLineMaxColumn(g.end + 1),
-        };
-        zoneIds.push(id);
-        zones.set(id, {
-          pill,
-          text: () => {
-            flash(span);
-            return assemble(span);
-          },
-        });
+        groupZoneIdsRef.current.push(id);
+        groupZoneMapRef.current.set(id, { group, pill });
       }
     });
-  }
+  };
 
-  function copyZone(id: string) {
-    const zone = zones.get(id);
-    if (!zone) return;
-    void navigator.clipboard?.writeText(zone.text()).catch(() => {});
-    zone.pill.classList.add("copied");
-    zone.pill.textContent = "Copied!";
-    window.setTimeout(() => {
-      zone.pill.classList.remove("copied");
-      zone.pill.textContent = "Copy whole group";
-    }, 1200);
-  }
-
-  function handleEditorMount(e: Editor, m: typeof Monaco) {
-    editor = e;
-    monaco = m;
-    if (plain) {
-      const sub = e.onDidChangeModelContent(() => {
-        if (internal) return;
-        const next = e.getValue();
-        lastEmitted = next;
-        real = next;
-        emit(next);
-      });
-      disposers.push(() => sub.dispose());
-      return;
-    }
-
-    render(value);
-    e.updateOptions({ emptySelectionClipboard: false, dragAndDrop: false });
-
-    // The model is rewritten as values hide and show, so undo works on plain-text snapshots.
-    const { KeyMod, KeyCode } = m;
-    e.addCommand(KeyMod.CtrlCmd | KeyCode.KeyZ, () => travel(past, future));
-    e.addCommand(KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyZ, () =>
-      travel(future, past),
-    );
-    e.addCommand(KeyMod.CtrlCmd | KeyCode.KeyY, () => travel(future, past));
-
-    const zoneOf = (t: Monaco.editor.IMouseTarget) =>
-      t.type === m.editor.MouseTargetType.CONTENT_VIEW_ZONE
-        ? t.detail.viewZoneId
-        : undefined;
-
-    const subs = [
-      e.onDidChangeModelContent((event) => {
-        if (internal) return;
-        if (reconcile(event.changes)) {
-          commit(assemble());
-          return;
-        }
-        // Hidden mode: the edit touched a hidden value. Put the text back as it was.
-        const before = real;
-        queueMicrotask(() => render(before));
-        toast(HIDDEN_HINT, { id: "secrets-hidden-edit" });
-      }),
-      e.onDidChangeCursorSelection(() => {
-        if (!internal) syncShown();
-      }),
-      e.onMouseMove((event) => {
-        const dom = e.getDomNode();
-        const zone = zoneOf(event.target);
-        if (zone) {
-          dom?.classList.toggle("secret-group-zone-hover", zones.has(zone));
-          hideTooltip();
-          return;
-        }
-        dom?.classList.remove("secret-group-zone-hover");
-        const line = event.target.position?.lineNumber;
-        const id = line ? idOnLine(line) : null;
-        if (!id) {
-          hideTooltip();
-          if (hoverId) {
-            hoverId = null;
-            syncShown();
-          }
-          return;
-        }
-        showTooltip(id);
-        // Multi-line values reveal on click only: showing them would move the lines under
-        // the pointer.
-        const r = rangeOf(id);
-        const oneLine =
-          r?.startLineNumber === r?.endLineNumber &&
-          !hidden.get(id)?.includes("\n");
-        const next = reveals && oneLine ? id : null;
-        if (hoverId !== next) {
-          hoverId = next;
-          syncShown();
-        }
-      }),
-      e.onMouseLeave(() => {
-        hideTooltip();
-        e.getDomNode()?.classList.remove("secret-group-zone-hover");
-        if (hoverId) {
-          hoverId = null;
-          syncShown();
-        }
-      }),
-    ];
-
-    let down: {
-      line: number;
-      column: number;
-      at: number;
-      zone?: string;
-    } | null = null;
-    subs.push(
-      e.onMouseDown((event) => {
-        const zone = zoneOf(event.target);
-        const pos = event.target.position;
-        down = zone
-          ? { line: 0, column: 0, at: Date.now(), zone }
-          : pos
-            ? { line: pos.lineNumber, column: pos.column, at: Date.now() }
-            : null;
-      }),
-      e.onMouseUp((event) => {
-        const start = down;
-        down = null;
-        if (!start || Date.now() - start.at > 300) return;
-        if (start.zone) {
-          if (zoneOf(event.target) === start.zone) copyZone(start.zone);
-          return;
-        }
-        const pos = event.target.position;
-        if (
-          !pos ||
-          pos.lineNumber !== start.line ||
-          pos.column !== start.column
-        )
-          return;
-        const id = idOnLine(pos.lineNumber);
-        const r = id ? rangeOf(id) : null;
-        // Clicking the value (not its key) copies it.
-        if (
-          id &&
-          r &&
-          (pos.lineNumber > r.startLineNumber || pos.column >= r.startColumn)
-        )
-          copyValue(id);
-      }),
-    );
-    disposers.push(() => subs.forEach((s) => s.dispose()));
-
-    // Hidden values are not in the model, so copy and cut put them back in. Capture phase,
-    // before Monaco's own handler on its textarea writes the model text.
-    const dom = e.getDomNode();
-    const onCopy = (event: ClipboardEvent, cut: boolean) => {
-      const sel = e.getSelection();
-      if (!sel || sel.isEmpty() || !event.clipboardData) return;
-      event.clipboardData.setData("text/plain", assemble(sel));
-      event.preventDefault();
-      event.stopPropagation();
-      if (cut && !e.getOption(m.editor.EditorOption.readOnly))
-        e.executeEdits("cut", [{ range: sel, text: "" }]);
-    };
-    const copy = (event: ClipboardEvent) => onCopy(event, false);
-    const cut = (event: ClipboardEvent) => onCopy(event, true);
-    dom?.addEventListener("copy", copy, true);
-    dom?.addEventListener("cut", cut, true);
-    disposers.push(() => {
-      dom?.removeEventListener("copy", copy, true);
-      dom?.removeEventListener("cut", cut, true);
+  const clearGroupZones = () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.changeViewZones((accessor) => {
+      for (const id of groupZoneIdsRef.current) {
+        accessor.removeZone(id);
+      }
+      groupZoneIdsRef.current = [];
+      groupZoneMapRef.current.clear();
     });
-  }
+  };
 
-  function syncExternalValue(next: string) {
-    if (next === lastEmitted || next === real) return;
-    lastEmitted = next;
-    if (plain) {
-      const m = model();
-      real = next;
-      if (m && m.getValue() !== next) quietly(() => m.setValue(next));
+  const recomputeInFlightRef = { current: false };
+
+  const recomputeCaretReveals = () => {
+    // tight: never reveal via caret; yolo: hook not wired.
+    if (revealOnRef.current !== "hover") return;
+    if (recomputeInFlightRef.current) return;
+    const editor = editorRef.current;
+    const model = editor?.getModel();
+    if (!editor || !model) return;
+
+    recomputeInFlightRef.current = true;
+    try {
+      const selections = editor.getSelections() ?? [];
+      const next = new Set<string>();
+
+      for (const decId of trackingDecorationIdsRef.current) {
+        const range = model.getDecorationRange(decId);
+        if (!range) continue;
+        const rValueRange: ValueRange = {
+          startLine: range.startLineNumber,
+          startCol: range.startColumn,
+          endLine: range.endLineNumber,
+          endCol: range.endColumn,
+        };
+        for (const sel of selections) {
+          if (selectionTouchesRange(sel, rValueRange)) {
+            next.add(decId);
+            break;
+          }
+        }
+      }
+
+      const prev = caretRevealedDecIdsRef.current;
+      let unchanged = false;
+      if (prev.size === next.size) {
+        unchanged = true;
+        for (const id of prev) {
+          if (!next.has(id)) {
+            unchanged = false;
+            break;
+          }
+        }
+      }
+
+      if (!unchanged) {
+        const hoverId = hoverRevealedDecIdRef.current;
+        for (const id of prev) {
+          if (!next.has(id) && id !== hoverId) {
+            collapseDecorationInModel(id);
+          }
+        }
+        for (const id of next) {
+          if (!prev.has(id)) {
+            expandDecorationInModel(id);
+          }
+        }
+
+        caretRevealedDecIdsRef.current = next;
+        refreshMaskDecorations();
+      }
+    } finally {
+      recomputeInFlightRef.current = false;
+    }
+  };
+
+  const findOverlappingTrackingDecoration = (
+    model: Monaco.editor.ITextModel,
+    parsedRange: ValueRange,
+  ): string | null => {
+    for (const decId of trackingDecorationIdsRef.current) {
+      const r = model.getDecorationRange(decId);
+      if (!r) continue;
+      if (
+        r.startLineNumber === r.endLineNumber &&
+        r.startColumn === r.endColumn
+      ) {
+        continue;
+      }
+      if (
+        r.startLineNumber > parsedRange.endLine ||
+        r.endLineNumber < parsedRange.startLine
+      ) {
+        continue;
+      }
+      return decId;
+    }
+    return null;
+  };
+
+  const applySecretDecorations = () => {
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+    const model = editor?.getModel();
+    if (!editor || !monacoInstance || !model) return;
+
+    assertParserParity(model);
+
+    const parsed = getValueRanges(model);
+    const expanded = getExpandedIds();
+
+    const toIngest: ParsedSecret[] = [];
+    for (const pr of parsed) {
+      const existing = findOverlappingTrackingDecoration(model, pr.range);
+      if (existing == null) toIngest.push(pr);
+    }
+
+    if (toIngest.length > 0) {
+      const ingestPlan: Array<{
+        range: ValueRange;
+        original: string;
+        key: string;
+      }> = [];
+      for (const pr of toIngest) {
+        const r = pr.range;
+        const monacoRange = new monacoInstance.Range(
+          r.startLine,
+          r.startCol,
+          r.endLine,
+          r.endCol,
+        );
+        const original = model.getValueInRange(monacoRange);
+        ingestPlan.push({ range: r, original, key: pr.key });
+      }
+
+      withInternalEdit(() => {
+        const edits = ingestPlan.map(({ range, original }) => ({
+          range: new monacoInstance.Range(
+            range.startLine,
+            range.startCol,
+            range.endLine,
+            range.endCol,
+          ),
+          text: bulletsForSubstring(original),
+        }));
+        editor.executeEdits("mask-ingest", edits);
+
+        const newDecs = ingestPlan.map(({ range }) => ({
+          range: new monacoInstance.Range(
+            range.startLine,
+            range.startCol,
+            range.endLine,
+            range.endCol,
+          ),
+          options: {
+            stickiness:
+              monacoInstance.editor.TrackedRangeStickiness
+                ?.AlwaysGrowsWhenTypingAtEdges ?? 0,
+          },
+        }));
+        const newIds = editor.deltaDecorations([], newDecs);
+        for (let i = 0; i < newIds.length; i++) {
+          const id = newIds[i];
+          trackingDecorationIdsRef.current.add(id);
+          decorationToRealRef.current.set(id, ingestPlan[i].original);
+        }
+      });
+    }
+
+    const driftEdits: Array<{
+      range: Monaco.Range;
+      text: string;
+    }> = [];
+    const driftUpdates: Array<{
+      decId: string;
+      real: string;
+      range: Monaco.Range;
+    }> = [];
+    for (const pr of parsed) {
+      if (!pr.closed) continue;
+      const decId = findOverlappingTrackingDecoration(model, pr.range);
+      if (decId == null) continue;
+      if (expanded.has(decId)) continue;
+      const parsedRange = new monacoInstance.Range(
+        pr.range.startLine,
+        pr.range.startCol,
+        pr.range.endLine,
+        pr.range.endCol,
+      );
+      const curr = model.getValueInRange(parsedRange);
+      if (curr.length === 0) continue;
+      let pure = true;
+      for (let i = 0; i < curr.length; i++) {
+        const c = curr.charCodeAt(i);
+        if (c !== 0x2022 && c !== 0x0a) {
+          pure = false;
+          break;
+        }
+      }
+      if (pure) continue;
+      const storedReal = decorationToRealRef.current.get(decId);
+      const newReal =
+        storedReal != null && storedReal.length === curr.length
+          ? storedReal
+          : curr;
+      driftUpdates.push({ decId, real: newReal, range: parsedRange });
+      driftEdits.push({
+        range: parsedRange,
+        text: bulletsForSubstring(newReal),
+      });
+    }
+    if (driftEdits.length > 0) {
+      withInternalEdit(() => {
+        editor.executeEdits("mask-drift-reconcile", driftEdits);
+        (model as TextModelWithChangeDecorations).changeDecorations(
+          (accessor) => {
+            for (const { decId, range } of driftUpdates) {
+              accessor.changeDecoration(decId, range);
+            }
+          },
+        );
+      });
+      for (const { decId, real } of driftUpdates) {
+        decorationToRealRef.current.set(decId, real);
+      }
+    }
+
+    // Range sync: snap every tracked decoration's range back to the
+    // parser's canonical range for the value it covers. `AlwaysGrows`
+    // stickiness will happily extend a decoration across a newline (e.g.
+    // user hits Enter at the end of an unquoted value) — without this
+    // step the decoration stays inflated and caret-reveal keeps thinking
+    // the caret is still inside the value (because the inflated `endCol`
+    // reaches wherever the caret went), so it never collapses back to
+    // bullets.
+    //
+    // Expanded decorations are synced too: we only touch the range, not
+    // the model text. For a collapsed decoration we also trim the stored
+    // real to match the new length (typical excess is a trailing `\n`);
+    // for an expanded decoration the model holds plaintext, so we take
+    // the parsed text directly as the new real when lengths differ.
+    const rangeSyncUpdates: Array<{
+      decId: string;
+      newRange: Monaco.Range;
+      newReal: string;
+    }> = [];
+    for (const pr of parsed) {
+      if (!pr.closed) continue;
+      const decId = findOverlappingTrackingDecoration(model, pr.range);
+      if (decId == null) continue;
+      const decRange = model.getDecorationRange(decId);
+      if (!decRange) continue;
+      if (
+        decRange.startLineNumber === pr.range.startLine &&
+        decRange.startColumn === pr.range.startCol &&
+        decRange.endLineNumber === pr.range.endLine &&
+        decRange.endColumn === pr.range.endCol
+      ) {
+        continue;
+      }
+      const pRange = new monacoInstance.Range(
+        pr.range.startLine,
+        pr.range.startCol,
+        pr.range.endLine,
+        pr.range.endCol,
+      );
+      const parsedText = model.getValueInRange(pRange);
+      const storedReal = decorationToRealRef.current.get(decId) ?? "";
+      const isExpanded = expanded.has(decId);
+      let newReal: string;
+      if (isExpanded) {
+        // Model holds the live value — trust it.
+        newReal = parsedText;
+      } else if (storedReal.length === parsedText.length) {
+        newReal = storedReal;
+      } else if (storedReal.length > parsedText.length) {
+        // Trim trailing overflow (typical case: an inserted `\n`).
+        newReal = storedReal.slice(0, parsedText.length);
+      } else {
+        // Stored is shorter than parsed: fall back to model text.
+        newReal = parsedText;
+      }
+      rangeSyncUpdates.push({ decId, newRange: pRange, newReal });
+    }
+    if (rangeSyncUpdates.length > 0) {
+      (model as TextModelWithChangeDecorations).changeDecorations(
+        (accessor) => {
+          for (const { decId, newRange } of rangeSyncUpdates) {
+            accessor.changeDecoration(decId, newRange);
+          }
+        },
+      );
+      for (const { decId, newReal } of rangeSyncUpdates) {
+        decorationToRealRef.current.set(decId, newReal);
+      }
+    }
+
+    const decHasParsedOverlap = (r: {
+      startLineNumber: number;
+      endLineNumber: number;
+    }): boolean => {
+      for (const pr of parsed) {
+        if (r.startLineNumber > pr.range.endLine) continue;
+        if (r.endLineNumber < pr.range.startLine) continue;
+        return true;
+      }
+      return false;
+    };
+
+    const toDrop: string[] = [];
+    for (const decId of trackingDecorationIdsRef.current) {
+      if (expanded.has(decId)) continue;
+      const r = model.getDecorationRange(decId);
+      if (!r) {
+        toDrop.push(decId);
+        continue;
+      }
+      const empty =
+        r.startLineNumber === r.endLineNumber && r.startColumn === r.endColumn;
+      if (empty || !decHasParsedOverlap(r)) {
+        toDrop.push(decId);
+      }
+    }
+
+    if (toDrop.length > 0) {
+      editor.deltaDecorations(toDrop, []);
+      for (const id of toDrop) {
+        trackingDecorationIdsRef.current.delete(id);
+        decorationToRealRef.current.delete(id);
+      }
+    }
+
+    refreshMaskDecorations();
+    recomputeCaretReveals();
+
+    const groups = getValueGroups(model, parsed);
+    applyGroupZones(groups);
+
+    snapshotDecorationOffsets();
+  };
+
+  const revealDecoration = (decId: string) => {
+    // tight / yolo never hover-reveal.
+    if (revealOnRef.current !== "hover") return;
+    if (hoverRevealedDecIdRef.current === decId) return;
+    const prev = hoverRevealedDecIdRef.current;
+    if (prev && !caretRevealedDecIdsRef.current.has(prev)) {
+      collapseDecorationInModel(prev);
+    }
+    hoverRevealedDecIdRef.current = decId;
+    if (!caretRevealedDecIdsRef.current.has(decId)) {
+      expandDecorationInModel(decId);
+    }
+    refreshMaskDecorations();
+  };
+
+  const findDecorationAtPosition = (pos: {
+    lineNumber: number;
+    column: number;
+  }): string | null => {
+    const editor = editorRef.current;
+    const model = editor?.getModel();
+    if (!model) return null;
+    for (const decId of trackingDecorationIdsRef.current) {
+      const r = model.getDecorationRange(decId);
+      if (!r) continue;
+      const valueRange: ValueRange = {
+        startLine: r.startLineNumber,
+        startCol: r.startColumn,
+        endLine: r.endLineNumber,
+        endCol: r.endColumn,
+      };
+      if (posInRange(pos, valueRange)) return decId;
+    }
+    return null;
+  };
+
+  const findDecorationOnLine = (line: number): string | null => {
+    const editor = editorRef.current;
+    const model = editor?.getModel();
+    if (!model) return null;
+    for (const decId of trackingDecorationIdsRef.current) {
+      const r = model.getDecorationRange(decId);
+      if (!r) continue;
+      if (line >= r.startLineNumber && line <= r.endLineNumber) return decId;
+    }
+    return null;
+  };
+
+  const buildRealText = (): string => {
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+    const model = editor?.getModel();
+    if (!model || !monacoInstance) return "";
+    return assembleRealText(
+      model,
+      decorationToRealRef.current,
+      getExpandedIds(),
+      monacoInstance,
+    );
+  };
+
+  const handleEditorChange = () => {
+    if (internalEditDepthRef.current > 0) return;
+    let out = buildRealText();
+    out = out.replace(/\n*$/, "") + "\n";
+    lastEmittedValueRef.current = out;
+    onChangeRef.current(out);
+  };
+
+  const handleYoloChange = () => {
+    const editor = editorRef.current;
+    const model = editor?.getModel();
+    if (!model) return;
+    let out = model.getValue();
+    out = out.replace(/\n*$/, "") + "\n";
+    lastEmittedValueRef.current = out;
+    onChangeRef.current(out);
+  };
+
+  const handleEditorMount = (
+    editor: Monaco.editor.IStandaloneCodeEditor,
+    monaco: typeof Monaco,
+  ) => {
+    editorRef.current = editor;
+    monacoRef.current = monaco;
+
+    if (revealOn === "always") {
+      // yolo: plain text editor. No masking, no decorations, no listeners
+      // beyond forwarding content changes to the parent.
+      editor.onDidChangeModelContent(() => {
+        handleYoloChange();
+      });
       return;
     }
-    past = [];
-    future = [];
-    render(next);
+
+    const initial = pendingInitialMaskRef.current;
+    pendingInitialMaskRef.current = null;
+    if (initial && initial.entries.length > 0) {
+      const decs = initial.entries.map((entry: MaskEntry) => ({
+        range: new monaco.Range(
+          entry.range.startLine,
+          entry.range.startCol,
+          entry.range.endLine,
+          entry.range.endCol,
+        ),
+        options: {
+          stickiness:
+            monaco.editor.TrackedRangeStickiness
+              ?.AlwaysGrowsWhenTypingAtEdges ?? 0,
+        },
+      }));
+      const ids = editor.deltaDecorations([], decs);
+      for (let i = 0; i < ids.length; i++) {
+        trackingDecorationIdsRef.current.add(ids[i]);
+        decorationToRealRef.current.set(ids[i], initial.entries[i].original);
+      }
+      editor.getModel()?.pushStackElement();
+    }
+
+    const model = editor.getModel();
+    if (model) {
+      const groups = getValueGroups(model, getValueRanges(model));
+      applyGroupZones(groups);
+    }
+    refreshMaskDecorations();
+
+    snapshotDecorationOffsets();
+
+    editor.onDidChangeModelContent(
+      (e: {
+        changes?: Array<{
+          rangeOffset: number;
+          rangeLength: number;
+          text: string;
+        }>;
+      }) => {
+        if (internalEditDepthRef.current > 0) return;
+        const m = editor.getModel();
+        if (m && e?.changes) {
+          applyTypingChangesToReal(m, e.changes);
+        }
+        applySecretDecorations();
+        handleEditorChange();
+      },
+    );
+
+    const VIEW_ZONE_TARGET_TYPE =
+      monaco.editor.MouseTargetType?.CONTENT_VIEW_ZONE ?? 8;
+    const CONTENT_TEXT_TARGET_TYPE =
+      monaco.editor.MouseTargetType?.CONTENT_TEXT ?? 6;
+
+    let mouseDownInfo: {
+      pos: { lineNumber: number; column: number };
+      time: number;
+    } | null = null;
+    let mouseDownZoneId: string | null = null;
+
+    editor.onMouseDown((e) => {
+      if (e.target?.type === VIEW_ZONE_TARGET_TYPE) {
+        mouseDownInfo = null;
+        mouseDownZoneId = e.target.detail?.viewZoneId ?? null;
+        return;
+      }
+
+      mouseDownZoneId = null;
+      const pos = e.target?.position;
+      if (!pos) {
+        mouseDownInfo = null;
+        return;
+      }
+      mouseDownInfo = { pos, time: Date.now() };
+    });
+
+    editor.onMouseUp((e) => {
+      if (mouseDownZoneId !== null) {
+        const downZoneId = mouseDownZoneId;
+        mouseDownZoneId = null;
+        if (
+          e.target?.type === VIEW_ZONE_TARGET_TYPE &&
+          e.target.detail?.viewZoneId === downZoneId
+        ) {
+          const entry = groupZoneMapRef.current.get(downZoneId);
+          if (entry) copyGroup(entry.group, entry.pill);
+        }
+        return;
+      }
+
+      if (!mouseDownInfo) return;
+      const downInfo = mouseDownInfo;
+      mouseDownInfo = null;
+
+      const pos = e.target?.position;
+      if (!pos) return;
+
+      const samePos =
+        pos.lineNumber === downInfo.pos.lineNumber &&
+        pos.column === downInfo.pos.column;
+      const fast = Date.now() - downInfo.time < 300;
+
+      if (!samePos || !fast) return;
+
+      const decId = findDecorationAtPosition(pos);
+      if (!decId) return;
+
+      const real = decorationToRealRef.current.get(decId);
+      if (real == null) return;
+      const toCopy = stripQuotes(real);
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(toCopy).catch(() => {});
+      }
+      flashCopiedDecorations([decId]);
+      flashTooltipCopied();
+    });
+
+    const editorDom = editor.getDomNode();
+    let hoveredZoneId: string | null = null;
+    editor.onMouseMove((e) => {
+      const targetType = e.target?.type;
+
+      if (targetType === VIEW_ZONE_TARGET_TYPE) {
+        const zoneId: string | undefined = e.target.detail?.viewZoneId;
+        if (zoneId && groupZoneMapRef.current.has(zoneId)) {
+          if (zoneId !== hoveredZoneId) {
+            if (hoveredZoneId) {
+              groupZoneMapRef.current
+                .get(hoveredZoneId)
+                ?.pill.classList.remove("hover");
+            }
+            hoveredZoneId = zoneId;
+            groupZoneMapRef.current.get(zoneId)?.pill.classList.add("hover");
+            editorDom?.classList.add("secret-group-zone-hover");
+          }
+          hideTooltip();
+          return;
+        }
+      }
+
+      if (hoveredZoneId) {
+        groupZoneMapRef.current
+          .get(hoveredZoneId)
+          ?.pill.classList.remove("hover");
+        hoveredZoneId = null;
+        editorDom?.classList.remove("secret-group-zone-hover");
+      }
+
+      if (targetType !== CONTENT_TEXT_TARGET_TYPE) {
+        hideTooltip();
+        return;
+      }
+
+      const pos = e.target?.position;
+      if (!pos) {
+        hideTooltip();
+        return;
+      }
+
+      const decId = findDecorationOnLine(pos.lineNumber);
+      if (!decId) {
+        hideTooltip();
+        return;
+      }
+
+      if (hoveredDecIdRef.current === decId) return;
+
+      hoveredDecIdRef.current = decId;
+      // `tight` keeps the tooltip ("Click to copy") but never reveals.
+      revealDecoration(decId);
+      showTooltipAtDecoration(decId);
+    });
+
+    editor.onDidChangeCursorSelection(() => {
+      recomputeCaretReveals();
+    });
+
+    editor.onDidScrollChange(() => {
+      const id = hoveredDecIdRef.current;
+      if (id) {
+        showTooltipAtDecoration(id);
+      } else if (
+        tooltipRef.current &&
+        tooltipRef.current.style.display !== "none"
+      ) {
+        tooltipRef.current.style.display = "none";
+      }
+    });
+
+    const domNode = editor.getDomNode();
+    if (domNode) {
+      domNode.addEventListener("mouseleave", () => {
+        hideTooltip();
+        domNode.classList.remove("secret-group-zone-hover");
+      });
+    }
+
+    const handleCopy = (e: ClipboardEvent) => {
+      const sel = editor.getSelection();
+      if (!sel || sel.isEmpty()) return;
+      const realFile = buildRealText();
+      const realSliced = sliceRealByMonacoRange(realFile, sel);
+      if (e.clipboardData) {
+        e.clipboardData.setData("text/plain", realSliced);
+        e.preventDefault();
+      }
+    };
+
+    const handleCut = (e: ClipboardEvent) => {
+      const sel = editor.getSelection();
+      const m = editor.getModel();
+      if (!sel || sel.isEmpty() || !m) return;
+      const realFile = buildRealText();
+      const realSliced = sliceRealByMonacoRange(realFile, sel);
+      if (e.clipboardData) {
+        e.clipboardData.setData("text/plain", realSliced);
+        e.preventDefault();
+      }
+      withInternalEdit(() => {
+        editor.executeEdits("clipboard-cut", [
+          { range: sel, text: "", forceMoveMarkers: true },
+        ]);
+      });
+      applySecretDecorations();
+      handleEditorChange();
+    };
+
+    if (editorDom) {
+      editorDom.addEventListener("copy", handleCopy as EventListener);
+      editorDom.addEventListener("cut", handleCut as EventListener);
+    }
+  };
+
+  function syncExternalValue(value: string, revealOn: ProjectRevealOn) {
+    revealOnRef.current = revealOn;
+    if (value === lastParentValueRef.current) return;
+    if (value === lastEmittedValueRef.current) {
+      lastParentValueRef.current = value;
+      return;
+    }
+    lastParentValueRef.current = value;
+    lastEmittedValueRef.current = value;
+
+    const editor = editorRef.current;
+    const monacoInstance = monacoRef.current;
+
+    if (revealOn === "always") {
+      if (!editor) return;
+      const model = editor.getModel();
+      if (!model) return;
+      if (model.getValue() === value) return;
+      withInternalEdit(() => {
+        const fullRange = model.getFullModelRange();
+        editor.executeEdits("external-value-reset", [
+          { range: fullRange, text: value, forceMoveMarkers: true },
+        ]);
+        if (model.getValue() !== value) {
+          model.setValue(value);
+        }
+        model.pushStackElement();
+      });
+      return;
+    }
+
+    if (!editor || !monacoInstance) {
+      const result = maskText(value);
+      pendingInitialMaskRef.current = result;
+      return;
+    }
+
+    const model = editor.getModel();
+    if (!model) return;
+
+    hoverRevealedDecIdRef.current = null;
+    caretRevealedDecIdsRef.current = new Set();
+
+    const oldIds = Array.from(trackingDecorationIdsRef.current);
+    if (oldIds.length > 0) {
+      editor.deltaDecorations(oldIds, []);
+    }
+    trackingDecorationIdsRef.current.clear();
+    decorationToRealRef.current.clear();
+
+    const result = maskText(value);
+
+    withInternalEdit(() => {
+      const fullRange = model.getFullModelRange();
+      editor.executeEdits("external-value-reset", [
+        { range: fullRange, text: result.masked, forceMoveMarkers: true },
+      ]);
+      if (model.getValue() !== result.masked) {
+        model.setValue(result.masked);
+      }
+
+      if (result.entries.length > 0) {
+        const decs = result.entries.map((entry: MaskEntry) => ({
+          range: new monacoInstance.Range(
+            entry.range.startLine,
+            entry.range.startCol,
+            entry.range.endLine,
+            entry.range.endCol,
+          ),
+          options: {
+            stickiness:
+              monacoInstance.editor.TrackedRangeStickiness
+                ?.AlwaysGrowsWhenTypingAtEdges ?? 0,
+          },
+        }));
+        const ids = editor.deltaDecorations([], decs);
+        for (let i = 0; i < ids.length; i++) {
+          trackingDecorationIdsRef.current.add(ids[i]);
+          decorationToRealRef.current.set(ids[i], result.entries[i].original);
+        }
+      }
+
+      model.pushStackElement();
+    });
+
+    refreshMaskDecorations();
+    const groups = getValueGroups(model, getValueRanges(model));
+    applyGroupZones(groups);
+  }
+
+  function setOnChange(onChange: (value: string) => void) {
+    onChangeRef.current = onChange;
+  }
+
+  function dispose() {
+    if (tooltipRef.current) {
+      tooltipRef.current.remove();
+      tooltipRef.current = null;
+    }
+    clearGroupZones();
   }
 
   return {
     maskedInitialValue,
     handleEditorMount,
     syncExternalValue,
-    setOnChange(next: (value: string) => void) {
-      emit = next;
-    },
-    dispose() {
-      disposers.forEach((d) => d());
-      tooltip?.remove();
-      tooltip = null;
-      if (tooltipTimer !== null) window.clearTimeout(tooltipTimer);
-    },
+    setOnChange,
+    dispose,
   };
 }

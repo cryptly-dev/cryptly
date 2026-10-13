@@ -9,40 +9,6 @@
     />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="darkreader-lock" />
-    <script>
-      // Apply the saved app theme and grey preset before first paint (lib/appearance/appearance.svelte.ts).
-      (function () {
-        var a = {};
-        try {
-          a =
-            JSON.parse(localStorage.getItem("cryptly.appearance") || "{}") ||
-            {};
-        } catch (e) {}
-        var t =
-          a.theme === "light" || a.theme === "dark"
-            ? a.theme
-            : matchMedia("(prefers-color-scheme: light)").matches
-              ? "light"
-              : "dark";
-        document.documentElement.dataset.theme = t;
-        document.documentElement.dataset.greys =
-          typeof a.greys === "string" ? a.greys : "Stone";
-        // App shell pages: until the app mounts (body wrapper still empty), paint the theme's
-        // root grey instead of the landing page's black, so light mode doesn't flash dark.
-        if (/^\/app\/(project|settings)(\/|$)/.test(location.pathname)) {
-          var s = document.createElement("style");
-          var empty = "html:not(:has(body > div > :not(script)))";
-          s.textContent =
-            empty +
-            "," +
-            empty +
-            " body{background:var(--root," +
-            (t === "light" ? "#ece9e7" : "#161413") +
-            ")!important}";
-          document.head.appendChild(s);
-        }
-      })();
-    </script>
     <meta name="theme-color" content="#000000" />
 
     <!-- Open Graph / Facebook -->

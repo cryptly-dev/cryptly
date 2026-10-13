@@ -20,10 +20,6 @@ export class GithubIntegrationEntity {
   @Prop({ required: true })
   public githubRepositoryPublicKeyId: string;
 
-  /** When a member last pushed the project's secrets to this repository (pushes run in the browser). */
-  @Prop()
-  public lastPushedAt?: Date;
-
   @Prop()
   public createdAt: Date;
 
