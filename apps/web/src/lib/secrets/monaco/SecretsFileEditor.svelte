@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import loader from "@monaco-editor/loader";
   import type { ProjectRevealOn } from "$lib/auth/domain/project-settings";
   import { registerDotenvLanguage } from "./dotenv-language";
+  import { initMonaco } from "./init";
   import { injectMaskingCSS } from "./masking-css";
   import { createSecretMasking } from "./secretMasking";
 
@@ -15,6 +15,7 @@
     padding = { top: 16, bottom: 80 },
     lineNumbersMinChars = undefined,
     readOnly = false,
+    onReady,
   }: {
     value: string;
     onChange: (v: string) => void;
@@ -24,6 +25,8 @@
     padding?: { top: number; bottom: number };
     lineNumbersMinChars?: number;
     readOnly?: boolean;
+    /** Fires once Monaco is mounted and styled. */
+    onReady?: () => void;
   } = $props();
 
   let host = $state<HTMLDivElement | null>(null);
@@ -37,7 +40,7 @@
     let cancelled = false;
 
     void (async () => {
-      const monaco = await loader.init();
+      const monaco = await initMonaco();
       if (cancelled || !host) {
         return;
       }
@@ -78,6 +81,7 @@
 
       m.handleEditorMount(editorInstance, monaco);
       m.syncExternalValue(value, revealOn);
+      onReady?.();
     })();
 
     return () => {
@@ -100,6 +104,7 @@
       fontSize,
       padding,
       lineNumbersMinChars: lineNumbersMinChars ?? 5,
+      readOnly,
     });
   });
 

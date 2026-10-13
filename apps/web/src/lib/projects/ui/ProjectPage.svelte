@@ -70,7 +70,6 @@
   import DiffEditor from "./DiffEditor.svelte";
   import GripLoader from "$lib/shared/ui/GripLoader.svelte";
   import HistoryIcon from "$lib/shared/ui/HistoryIcon.svelte";
-  import ShellLoader from "$lib/shared/ui/ShellLoader.svelte";
   import ButtonLoader from "$lib/shared/ui/ButtonLoader.svelte";
   import SlidersIcon from "$lib/shared/ui/SlidersIcon.svelte";
   import YearHeatmap from "./YearHeatmap.svelte";
@@ -142,6 +141,8 @@
   let activeProject = $state<Project | null>(null);
   let displayedProjectId = $state("");
   let pendingProjectId = $state<string | null>(null);
+  let editorSwitching = $state(false);
+  let editorLoading = $state(true);
   let loading = $state(true);
   let loadError = $state<string | null>(null);
   let searchQuery = $state("");
@@ -345,6 +346,14 @@
   );
   const isAdmin = $derived(currentRole === "admin");
   const isSwitching = $derived(pendingProjectId !== null);
+  // One grip across the shell and editor loads, so it never remounts mid-boot.
+  const showLoader = $derived(
+    loading && !activeProject
+      ? true
+      : loadError && !activeProject
+        ? false
+        : activeTab === "editor" && editorLoading,
+  );
   const DangerIcon = $derived(isAdmin ? IconTrash : IconUserMinus);
   const revealOnSetting = $derived(
     normalizeProjectSettings(activeProject?.settings).revealOn,
@@ -2316,7 +2325,10 @@
         >
           {#each uniqueProjects as project, index (project.id)}
             {@const isDisplayed = project.id === displayedProjectId}
-            {@const isPending = project.id === pendingProjectId}
+            {@const isPending =
+              project.id ===
+              (pendingProjectId ??
+                (editorSwitching ? displayedProjectId : null))}
             {@const isShadow = (
               project as Project & { isDndShadowItem?: boolean }
             ).isDndShadowItem}
@@ -2833,12 +2845,21 @@
     </div>
 
     <div
-      class={`min-h-0 flex-1 overflow-hidden transition-opacity duration-300 ease-in-out ${
-        isSwitching ? "pointer-events-none opacity-60" : "opacity-100"
+      class={`relative min-h-0 flex-1 overflow-hidden transition-opacity duration-300 ease-in-out ${
+        isSwitching || editorSwitching
+          ? "pointer-events-none opacity-60"
+          : "opacity-100"
       } ${isSearching ? "hidden" : ""}`}
     >
+      {#if showLoader}
+        <div
+          class="pointer-events-none absolute inset-0 flex items-center justify-center"
+        >
+          <GripLoader color="#DDA15E" class="h-12 w-12" />
+        </div>
+      {/if}
       {#if loading && !activeProject}
-        <ShellLoader label="Loading project" class="h-full" />
+        <!-- The grip above covers the shell load. -->
       {:else if loadError && !activeProject}
         <section
           class="flex h-full items-center justify-center bg-background p-6"
@@ -2869,8 +2890,12 @@
       {:else}
         <!-- Kept mounted on every tab (only hidden) so unsaved editor edits survive tab switches. -->
         <div class={activeTab === "editor" ? "h-full" : "hidden"}>
+          <!-- Loads the pending project right away so the swap lands together with the shell. -->
           <SecretsEditorPage
-            projectId={displayedProjectId}
+            projectId={pendingProjectId ?? displayedProjectId}
+            busy={isSwitching}
+            bind:switching={editorSwitching}
+            bind:loading={editorLoading}
             projectName={activeProject?.name ?? ""}
             changedBy={changedByLabel}
             active={activeTab === "editor"}

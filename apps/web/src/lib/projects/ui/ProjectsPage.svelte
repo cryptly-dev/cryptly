@@ -14,7 +14,7 @@
   import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
   import { UserApi } from "$lib/auth/user.api";
   import { ProjectsApi, type Project } from "$lib/projects/projects.api";
-  import ShellLoader from "$lib/shared/ui/ShellLoader.svelte";
+  import GripLoader from "$lib/shared/ui/GripLoader.svelte";
   import {
     accountLoadErrorMessage,
     auth,
@@ -258,5 +258,7 @@
     </div>
   </div>
 {:else}
-  <ShellLoader class="h-screen w-screen" />
+  <div class="flex h-screen w-screen items-center justify-center">
+    <GripLoader color="#DDA15E" class="h-12 w-12" />
+  </div>
 {/if}

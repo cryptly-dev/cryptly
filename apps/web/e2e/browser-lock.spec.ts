@@ -327,18 +327,13 @@ test("lock broadcast in one tab locks another open tab", async ({
   await context.close();
 });
 
-test("shell loading state is text-first, not the large six-dot grip", async ({
-  page,
-}) => {
+test("projects loading state is the legacy amber grip", async ({ page }) => {
   await mockApi(page, { userDelayMs: 1_000 });
   await seedBrowserState(page, Date.now());
 
   await page.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
 
-  await expect(
-    page.getByRole("status").filter({ hasText: "Loading" }),
-  ).toBeVisible();
-  await expect(page.locator('svg[aria-label="Loading"]')).toHaveCount(0);
+  await expect(page.locator('svg[aria-label="Loading"]')).toBeVisible();
 });
 
 test("unlock after lock cleanup does not leave project shell stuck loading", async ({
@@ -445,4 +440,60 @@ test("unsaved edits survive tab switches and project switches go through the gua
   await guard.getByRole("button", { name: "Discard changes" }).click();
   await expect(page).toHaveURL(/project-two$/);
   await expect(guard).toHaveCount(0);
+});
+
+test("saving does not flag the project as updated elsewhere", async ({
+  page,
+}) => {
+  const passphrase = "correct horse battery staple";
+  const fixtures = await createUnlockedFixtures(page, passphrase);
+  await mockApi(page, { user: fixtures.user, projects: [fixtures.project] });
+  // The backend echoes every save to all subscribers, the saver included,
+  // and the echo can arrive before the PATCH response.
+  let echo: string | null = null;
+  let echoed = () => {};
+  const echoDelivered = new Promise<void>((resolve) => (echoed = resolve));
+  await page.route("**/projects/*/events", async (route) => {
+    if (!echo) return route.fulfill({ status: 204, body: "" });
+    await route.fulfill({
+      headers: { "content-type": "text/event-stream" },
+      body: `data: ${JSON.stringify({ newEncryptedSecrets: echo })}\n\n`,
+    });
+    echoed();
+  });
+  await page.route("**/projects/project-eval", async (route) => {
+    if (route.request().method() !== "PATCH") return route.fallback();
+    echo = route.request().postDataJSON().encryptedSecrets;
+    await echoDelivered;
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await route.fulfill({ json: {} });
+  });
+  await seedAuthOnly(page);
+
+  await page.goto(`${APP}/app/project/project-eval`, {
+    waitUntil: "domcontentloaded",
+  });
+  await page.getByRole("textbox", { name: "Passphrase" }).fill(passphrase);
+  await page.getByRole("button", { name: "Unlock" }).click();
+
+  const editor = page.locator(".monaco-editor .view-lines");
+  await editor.click();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type('SAVED="1"');
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+
+  await expect(
+    page.getByRole("button", { name: "Saved", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("This project was updated elsewhere"),
+  ).toHaveCount(0);
+
+  await editor.click();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.type("2");
+  await expect(
+    page.getByRole("button", { name: "Save", exact: true }),
+  ).toBeEnabled();
 });

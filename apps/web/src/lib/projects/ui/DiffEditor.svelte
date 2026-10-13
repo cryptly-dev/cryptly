@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import loader from "@monaco-editor/loader";
+  import { initMonaco } from "$lib/secrets/monaco/init";
   import type * as Monaco from "monaco-editor";
 
   type RevealOn = "always" | "hover" | "never";
@@ -192,7 +192,7 @@
     let cancelled = false;
 
     void (async () => {
-      const monaco = await loader.init();
+      const monaco = await initMonaco();
       if (cancelled || !host) return;
 
       registerDiffLanguage(monaco);
