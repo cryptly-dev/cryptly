@@ -13,9 +13,4 @@ export const secretsEditorNavGuard = $state({
   save: null as null | (() => Promise<boolean>),
   discard: null as null | (() => void),
   push: null as null | (() => Promise<void>),
-  /**
-   * Replaces the working document (History's Restore). The saved version stays the baseline,
-   * so the result shows as unsaved changes and ⌘Z undoes it. Null until secrets are decrypted.
-   */
-  replaceDoc: null as null | ((content: string) => void),
 });

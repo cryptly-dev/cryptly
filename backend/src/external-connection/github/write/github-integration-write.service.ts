@@ -25,17 +25,6 @@ export class GithubIntegrationWriteService {
     return GithubIntegrationSerializer.normalize(integration);
   }
 
-  /** Only touches integrations of `projectId`, so ids from other projects are ignored. */
-  public async markPushed(projectId: string, integrationIds: string[], at: Date): Promise<void> {
-    await this.githubIntegrationModel.updateMany(
-      {
-        _id: { $in: integrationIds.map((id) => new Types.ObjectId(id)) },
-        projectId: new Types.ObjectId(projectId),
-      },
-      { $set: { lastPushedAt: at } },
-    );
-  }
-
   public async deleteById(integrationId: string): Promise<void> {
     await this.githubIntegrationModel.deleteOne({ _id: new Types.ObjectId(integrationId) });
   }

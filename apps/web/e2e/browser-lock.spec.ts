@@ -327,7 +327,7 @@ test("lock broadcast in one tab locks another open tab", async ({
   await context.close();
 });
 
-test("shell loading state is a quiet skeleton, not the large six-dot grip", async ({
+test("shell loading state is text-first, not the large six-dot grip", async ({
   page,
 }) => {
   await mockApi(page, { userDelayMs: 1_000 });
@@ -336,7 +336,7 @@ test("shell loading state is a quiet skeleton, not the large six-dot grip", asyn
   await page.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
 
   await expect(
-    page.getByRole("status", { name: "Loading projects" }),
+    page.getByRole("status").filter({ hasText: "Loading" }),
   ).toBeVisible();
   await expect(page.locator('svg[aria-label="Loading"]')).toHaveCount(0);
 });
@@ -417,22 +417,26 @@ test("unsaved edits survive tab switches and project switches go through the gua
   await page.getByRole("textbox", { name: "Passphrase" }).fill(passphrase);
   await page.getByRole("button", { name: "Unlock" }).click();
 
-  // Raw .env view: the editor lives in Monaco there (the table is the default view).
-  await page.getByRole("radio", { name: ".env" }).click();
   const editor = page.locator(".monaco-editor .view-lines");
   await editor.click();
   await page.keyboard.press("ControlOrMeta+End");
   await page.keyboard.press("Enter");
   await page.keyboard.type('UNSAVED="1"');
-  await expect(page.getByRole("button", { name: /^Save/ })).toBeEnabled();
+  await expect(
+    page.getByRole("button", { name: "Save", exact: true }),
+  ).toBeEnabled();
 
-  const tabs = page.getByRole("navigation", { name: "Project" });
-  await tabs.getByRole("link", { name: "History" }).click();
-  await expect(page).toHaveURL(/project-eval\/history$/);
-  await tabs.getByRole("link", { name: "Secrets" }).click();
+  await page
+    .getByRole("button", { name: "History", exact: true })
+    .first()
+    .click();
+  await page
+    .getByRole("button", { name: "Editor", exact: true })
+    .first()
+    .click();
   await expect(editor).toContainText("UNSAVED");
 
-  await page.getByRole("link", { name: /Second Project/ }).click();
+  await page.locator("aside nav a", { hasText: "Second Project" }).click();
   const guard = page.getByRole("dialog", { name: "Save your changes?" });
   await expect(guard).toBeVisible();
   await expect(page).toHaveURL(/project-eval$/);

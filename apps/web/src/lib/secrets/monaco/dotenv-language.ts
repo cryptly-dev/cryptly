@@ -16,12 +16,31 @@ export function registerDotenvLanguage(monaco: typeof Monaco): void {
     tokenizer: {
       root: [
         [/#.*$/, "comment"],
-        [/^\s*(?:export\s+)?[a-zA-Z_][a-zA-Z0-9_.-]*(?=\s*=)/, "variable"],
+        [/^[a-zA-Z_][a-zA-Z0-9_.]*(?=\s*=)/, "variable"],
         [/=/, "delimiter"],
         [/"(?:[^"\\]|\\.)*"/, "string"],
         [/'(?:[^'\\]|\\.)*'/, "string"],
         [/./, ""],
       ],
+    },
+  });
+
+  monaco.editor.defineTheme("dotenvTheme", {
+    base: "vs-dark",
+    inherit: true,
+    rules: [
+      { token: "variable", foreground: "DDA15E" },
+      { token: "delimiter", foreground: "CCCCCC" },
+      { token: "identifier", foreground: "CCCCCC" },
+      { token: "string", foreground: "CCCCCC" },
+      { token: "string.escape", foreground: "D7BA7D" },
+      { token: "comment", foreground: "545C66", fontStyle: "italic" },
+    ],
+    colors: {
+      "editor.foreground": "#CCCCCC",
+      "editor.background": "#000000",
+      "editor.lineHighlightBackground": "#0a0a0a",
+      focusBorder: "#00000000",
     },
   });
 }

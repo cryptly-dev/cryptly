@@ -105,10 +105,7 @@ export async function createTestApp(): Promise<TestApp> {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
-  // Listen once on 127.0.0.1, the host supertest sends requests to. Otherwise supertest calls
-  // listen(0) on `::` per request, and on macOS that can pick a port another process already
-  // holds on 127.0.0.1, so the request hits that process (random 404s / socket hang ups).
-  await app.listen(0, '127.0.0.1');
+  await app.init();
 
   const userModel: Model<UserEntity> = module.get(getModelToken(UserEntity.name));
   const projectModel: Model<ProjectEntity> = module.get(getModelToken(ProjectEntity.name));

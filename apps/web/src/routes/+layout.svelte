@@ -8,7 +8,7 @@
   import { installAuthFetchInterceptor } from "$lib/auth/fetch-interceptor";
   import BlogHeader from "$lib/components/blog/BlogHeader.svelte";
   import PassphraseGate from "$lib/components/shell/PassphraseGate.svelte";
-  import { appearance } from "$lib/appearance/appearance.svelte";
+  import PersonalInvitationsInbox from "$lib/invitations/ui/PersonalInvitationsInbox.svelte";
   import { startKeyAutoLock } from "$lib/keys/auto-lock";
   import UnlockBrowserDialog from "$lib/keys/ui/UnlockBrowserDialog.svelte";
   import { auth } from "$lib/stores/auth.svelte";
@@ -49,9 +49,10 @@
 <PassphraseGate />
 <UnlockBrowserDialog />
 <DeviceFlowApproverDialog />
+<PersonalInvitationsInbox />
 <Toaster
   position="top-center"
-  theme={appearance.resolved}
+  theme="system"
   class="toaster group"
-  style="--normal-bg: var(--elev); --normal-text: var(--fg); --normal-border: var(--elev-border); --border-radius: 12px; font-family: 'Geist Variable', system-ui, sans-serif;"
+  style="--normal-bg: var(--popover); --normal-text: var(--popover-foreground); --normal-border: var(--border);"
 />

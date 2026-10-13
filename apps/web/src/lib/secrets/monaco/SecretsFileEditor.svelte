@@ -1,31 +1,32 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { MediaQuery } from "svelte/reactivity";
+  import loader from "@monaco-editor/loader";
   import type { ProjectRevealOn } from "$lib/auth/domain/project-settings";
-  import { appearance } from "$lib/appearance/appearance.svelte";
   import { registerDotenvLanguage } from "./dotenv-language";
   import { injectMaskingCSS } from "./masking-css";
   import { createSecretMasking } from "./secretMasking";
-  import { applyEditorTheme } from "./theme";
 
   let {
     value,
     onChange,
     revealOn,
+    height = "55vh",
+    fontSize = 14,
+    padding = { top: 16, bottom: 80 },
+    lineNumbersMinChars = undefined,
     readOnly = false,
   }: {
     value: string;
     onChange: (v: string) => void;
     revealOn: ProjectRevealOn;
+    height?: string;
+    fontSize?: number;
+    padding?: { top: number; bottom: number };
+    lineNumbersMinChars?: number;
     readOnly?: boolean;
   } = $props();
 
-  const FONT = '"Geist Mono Variable", ui-monospace, monospace';
-  // 16px on phones keeps iOS from zooming into the editor.
-  const mobile = new MediaQuery("(max-width: 767px)");
-
   let host = $state<HTMLDivElement | null>(null);
-  let monacoApi = $state<typeof import("monaco-editor") | null>(null);
   let masking = $state<ReturnType<typeof createSecretMasking> | null>(null);
   let editorInstance:
     | import("monaco-editor").editor.IStandaloneCodeEditor
@@ -36,15 +37,12 @@
     let cancelled = false;
 
     void (async () => {
-      const [{ default: monaco }] = await Promise.all([
-        import("$lib/secrets/monaco/monaco"),
-        // Monaco measures glyphs once; measure with Geist Mono, not the fallback.
-        document.fonts.load(`12.5px ${FONT}`).catch(() => []),
-      ]);
-      if (cancelled || !host) return;
+      const monaco = await loader.init();
+      if (cancelled || !host) {
+        return;
+      }
 
       registerDotenvLanguage(monaco);
-      applyEditorTheme(monaco, appearance.resolved === "dark");
 
       const m = createSecretMasking({ value, onChange, revealOn });
       masking = m;
@@ -52,18 +50,12 @@
       editorInstance = monaco.editor.create(host, {
         value: m.maskedInitialValue,
         language: "dotenv",
+        theme: "dotenvTheme",
         minimap: { enabled: false },
         wordWrap: "on",
         scrollBeyondLastLine: false,
         lineNumbers: "on",
-        lineNumbersMinChars: 3,
-        lineDecorationsWidth: 12,
-        glyphMargin: false,
-        folding: false,
-        fontFamily: FONT,
-        fontLigatures: false,
-        fontSize: mobile.current ? 16 : 12.5,
-        lineHeight: mobile.current ? 24 : 20,
+        fontSize,
         automaticLayout: true,
         overviewRulerBorder: false,
         overviewRulerLanes: 0,
@@ -72,8 +64,7 @@
         selectionHighlight: false,
         renderLineHighlight: "none",
         links: false,
-        padding: { top: 8, bottom: 8 },
-        scrollbar: { verticalScrollbarSize: 10, horizontalScrollbarSize: 10 },
+        padding,
         readOnly,
         readOnlyMessage: { value: "Read-only access" },
         quickSuggestions: false,
@@ -82,10 +73,11 @@
         parameterHints: { enabled: false },
         tabCompletion: "off",
         snippetSuggestions: "none",
+        ...(lineNumbersMinChars != null ? { lineNumbersMinChars } : {}),
       });
 
       m.handleEditorMount(editorInstance, monaco);
-      monacoApi = monaco;
+      m.syncExternalValue(value, revealOn);
     })();
 
     return () => {
@@ -102,24 +94,22 @@
   });
 
   $effect(() => {
-    // Re-read the tokens whenever the theme or grey preset changes.
-    const dark = appearance.resolved === "dark";
-    void appearance.greys;
-    if (monacoApi) applyEditorTheme(monacoApi, dark);
-  });
-
-  $effect(() => {
-    if (!monacoApi) return;
+    if (!masking) return;
+    // Monaco's default is 5; the mobile layout narrows the gutter.
     editorInstance?.updateOptions({
-      readOnly,
-      fontSize: mobile.current ? 16 : 12.5,
-      lineHeight: mobile.current ? 24 : 20,
+      fontSize,
+      padding,
+      lineNumbersMinChars: lineNumbersMinChars ?? 5,
     });
   });
 
   $effect(() => {
-    masking?.syncExternalValue(value);
+    masking?.syncExternalValue(value, revealOn);
   });
 </script>
 
-<div bind:this={host} class="ph-no-capture h-full w-full overflow-hidden"></div>
+<div
+  bind:this={host}
+  class="ph-no-capture w-full overflow-hidden"
+  style:height
+></div>

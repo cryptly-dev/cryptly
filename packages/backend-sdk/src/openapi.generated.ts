@@ -875,10 +875,6 @@ export interface components {
             encryptedSecrets?: string;
             settings?: components["schemas"]["ProjectSettingsBody"];
         };
-        SecretsPushedBody: {
-            /** @description GitHub integrations of this project the secrets were pushed to. */
-            integrationIds?: string[];
-        };
         AddEncryptedSecretsKeyBody: {
             userId: string;
             encryptedSecretsKey: string;
@@ -1033,7 +1029,6 @@ export interface components {
             githubRepositoryPublicKeyId: string;
             installationEntityId: string;
             repositoryData?: components["schemas"]["GithubRepositorySerialized"];
-            lastPushedAt?: string;
             createdAt: string;
             updatedAt: string;
         };
@@ -1367,11 +1362,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SecretsPushedBody"];
-            };
-        };
+        requestBody?: never;
         responses: {
             204: {
                 headers: {
