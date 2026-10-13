@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { EventSource } from "eventsource";
-  import { onDestroy } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import { MediaQuery } from "svelte/reactivity";
   import { fade } from "svelte/transition";
   import { toast } from "svelte-sonner";
@@ -43,6 +43,9 @@
     projectName = "",
     changedBy = null,
     active = true,
+    busy = false,
+    switching = $bindable(false),
+    loading = $bindable(false),
     onSaved,
     onConnectIntegrations,
   }: {
@@ -52,6 +55,12 @@
     changedBy?: string | null;
     /** False while another project tab is shown; the editor stays mounted so unsaved edits survive. */
     active?: boolean;
+    /** The shell is mid project switch; block edits until it settles. */
+    busy?: boolean;
+    /** True while the previous project stays on screen until `projectId` is decrypted. */
+    switching?: boolean;
+    /** True until the first project is decrypted; the shell shows its loader meanwhile. */
+    loading?: boolean;
     onSaved?: () => void | Promise<void>;
     onConnectIntegrations?: () => void;
   } = $props();
@@ -71,6 +80,10 @@
   let pushing = $state(false);
   let integrations = $state<Integration[]>([]);
   let isExternallyUpdated = $state(false);
+  let monacoReady = $state(false);
+  let loadSeq = 0;
+  /** Plaintext of the save in flight; its own SSE echo can arrive before the request resolves. */
+  let pendingSave: string | null = null;
   let projectEvents: EventSource | null = null;
   let projectEventsReconnect: ReturnType<typeof setTimeout> | null = null;
   let showSlideToConfirm = $state(false);
@@ -87,8 +100,9 @@
   const isDirty = $derived(
     normalizeEditorText(doc) !== normalizeEditorText(baseline),
   );
+  const frozen = $derived(switching || busy);
   const saveDisabled = $derived(
-    saving || !isDirty || readOnly || !aesKey || isExternallyUpdated,
+    saving || !isDirty || readOnly || frozen || !aesKey || isExternallyUpdated,
   );
   const hasGithubIntegration = $derived(integrations.length > 0);
   const pushDisabled = $derived(
@@ -96,6 +110,7 @@
       saving ||
       pushing ||
       readOnly ||
+      frozen ||
       isExternallyUpdated ||
       !hasGithubIntegration,
   );
@@ -134,6 +149,7 @@
     saving = false;
     pushing = false;
     isExternallyUpdated = false;
+    switching = false;
     showSlideToConfirm = false;
     resetSlideConfirm();
     loadPhase = nextPhase;
@@ -144,25 +160,32 @@
   }
 
   async function loadProjectFor(pid: string) {
+    const seq = ++loadSeq;
+    const stale = () => seq !== loadSeq;
     const loadRevision = keyAuth.revision;
-    loadPhase = "loading";
+    const lockedSinceStart = () =>
+      loadRevision !== keyAuth.revision || !keyAuth.hasMasterKey;
+    const fail = (phase: "error" | "forbidden", message: string) => {
+      clearDecryptedState(phase);
+      loadMessage = message;
+    };
+    // Like the legacy app: keep the previous project on screen (frozen) until this one is decrypted.
+    switching = loadPhase === "ready";
+    if (!switching) loadPhase = "loading";
     loadMessage = null;
     isExternallyUpdated = false;
     closeProjectEvents();
     aesKey = null;
-    baseline = "";
-    doc = "";
-    integrations = [];
     const jwt = auth.jwtToken;
     if (!jwt) {
       void goto(resolve("/app/login"));
       return;
     }
     const ok = await loadUserData();
+    if (stale()) return;
     if (!ok || !auth.userData) {
       if (!auth.jwtToken) return;
-      loadPhase = "error";
-      loadMessage = accountLoadErrorMessage();
+      fail("error", accountLoadErrorMessage());
       return;
     }
     const activeJwt = auth.jwtToken;
@@ -176,42 +199,41 @@
     try {
       project = await ProjectsApi.getProject(activeJwt, pid);
     } catch (e) {
+      if (stale()) return;
       if (e instanceof ApiResponseError && e.status === 404) {
         void goto(resolve("/app/project"), { replaceState: true });
         return;
       }
-      loadPhase = "error";
-      loadMessage = e instanceof Error ? e.message : "Failed to load project";
+      fail("error", e instanceof Error ? e.message : "Failed to load project");
       return;
     }
 
-    revealOn = normalizeProjectSettings(project.settings).revealOn;
+    let nextIntegrations: Integration[] = [];
     try {
-      integrations = await IntegrationsApi.getIntegrationsForProject(
+      nextIntegrations = await IntegrationsApi.getIntegrationsForProject(
         activeJwt,
         pid,
       );
     } catch {
-      integrations = [];
+      // Push stays disabled without integrations.
     }
-
-    const member = project.members?.find((m) => m.id === userId);
-    readOnly = member?.role === "read";
+    if (stale()) return;
 
     const encKeyForUser = project.encryptedSecretsKeys?.[userId];
     if (!encKeyForUser) {
-      loadPhase = "forbidden";
-      loadMessage = "You do not have a secrets key for this project.";
+      fail("forbidden", "You do not have a secrets key for this project.");
       return;
     }
 
     let key = await keystore.getProjectKey(project.id);
-    if (loadRevision !== keyAuth.revision || !keyAuth.hasMasterKey) {
+    if (stale()) return;
+    if (lockedSinceStart()) {
       clearDecryptedState();
       return;
     }
     if (!key) {
       const masterKey = await keystore.getMasterKey();
+      if (stale()) return;
       if (!masterKey) {
         clearDecryptedState();
         return;
@@ -222,44 +244,54 @@
           masterKey,
         );
         key = await SymmetricCrypto.importAesKey(projectKeyB64);
-        if (loadRevision !== keyAuth.revision || !keyAuth.hasMasterKey) {
+        if (stale()) return;
+        if (lockedSinceStart()) {
           clearDecryptedState();
           return;
         }
         await keystore.setProjectKey(project.id, key);
       } catch {
-        loadPhase = "error";
-        loadMessage =
-          "Could not decrypt the project key. Try unlocking again or re-login.";
+        if (stale()) return;
+        fail(
+          "error",
+          "Could not decrypt the project key. Try unlocking again or re-login.",
+        );
         return;
       }
     }
 
-    aesKey = key;
-
+    let content: string;
     try {
-      const content = await SymmetricCrypto.decryptWithKey(
+      content = await SymmetricCrypto.decryptWithKey(
         project.encryptedSecrets,
         key,
       );
-      if (loadRevision !== keyAuth.revision || !keyAuth.hasMasterKey) {
-        clearDecryptedState();
-        return;
-      }
-      doc = content;
-      baseline = content;
     } catch {
-      loadPhase = "error";
-      loadMessage = "Could not decrypt project secrets.";
+      if (stale()) return;
+      fail("error", "Could not decrypt project secrets.");
+      return;
+    }
+    if (stale()) return;
+    if (lockedSinceStart()) {
+      clearDecryptedState();
       return;
     }
 
+    revealOn = normalizeProjectSettings(project.settings).revealOn;
+    integrations = nextIntegrations;
+    readOnly = project.members?.find((m) => m.id === userId)?.role === "read";
+    aesKey = key;
+    doc = content;
+    baseline = content;
+    switching = false;
     loadPhase = "ready";
     openProjectEvents(pid, key);
   }
 
   $effect(() => {
-    void loadProjectFor(projectId);
+    const pid = projectId;
+    // Only a project change reloads; a token refresh must not wipe unsaved edits.
+    untrack(() => void loadProjectFor(pid));
   });
 
   $effect(() => {
@@ -269,7 +301,7 @@
 
   $effect(() => {
     if (loadPhase !== "locked" || !keyAuth.hasMasterKey) return;
-    void loadProjectFor(projectId);
+    untrack(() => void loadProjectFor(projectId));
   });
 
   onDestroy(() => {
@@ -299,6 +331,7 @@
       const encrypted = await SymmetricCrypto.encryptWithKey(content, key);
       if (saveRevision !== keyAuth.revision || !keyAuth.hasMasterKey)
         return false;
+      pendingSave = content;
       await ProjectsApi.updateProjectContent(jwt, projectId, {
         encryptedSecrets: encrypted,
       });
@@ -313,6 +346,7 @@
       }
       return false;
     } finally {
+      pendingSave = null;
       saving = false;
     }
   }
@@ -353,20 +387,29 @@
     try {
       const event = JSON.parse(data) as { newEncryptedSecrets?: string };
       if (!event.newEncryptedSecrets) return;
-      if (isDirty) {
-        isExternallyUpdated = true;
-        return;
-      }
       const next = await SymmetricCrypto.decryptWithKey(
         event.newEncryptedSecrets,
         key,
       );
+      if (aesKey !== key) return;
+      // Our own save echoing back (before or after its request resolves) is not an external update.
+      if (next === pendingSave || next === baseline) return;
+      if (isDirty) {
+        isExternallyUpdated = true;
+        return;
+      }
       doc = next;
       baseline = next;
     } catch {
       // Manual reload remains available if a malformed or undecryptable event arrives.
     }
   }
+
+  $effect(() => {
+    // Through Monaco's first mount too, so the loader hands straight off to a styled editor.
+    loading =
+      loadPhase === "loading" || (loadPhase === "ready" && !monacoReady);
+  });
 
   $effect(() => {
     secretsEditorNavGuard.isDirty = loadPhase === "ready" && isDirty;
@@ -550,11 +593,7 @@
 <svelte:window onkeydown={onGlobalKeydown} />
 
 {#if loadPhase === "loading"}
-  <div
-    class="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground"
-  >
-    Loading project…
-  </div>
+  <!-- The shell's grip loader covers this. -->
 {:else if loadPhase === "error" || loadPhase === "forbidden"}
   <div
     class="rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-muted-foreground"
@@ -564,7 +603,7 @@
 {:else if loadPhase === "locked"}
   <!-- The unlock dialog covers this state (prod shows an empty editor area). -->
 {:else if loadPhase === "ready"}
-  <section class="relative h-full min-h-0">
+  <section class={cn("relative h-full min-h-0", !monacoReady && "invisible")}>
     {#if isExternallyUpdated}
       <div
         class="absolute top-4 left-1/2 z-20 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 shadow-lg"
@@ -579,12 +618,13 @@
         value={doc}
         onChange={onDocChange}
         {revealOn}
-        {readOnly}
+        readOnly={readOnly || frozen}
         fontSize={mobile.current ? 16 : 14}
         padding={mobile.current
           ? { top: 12, bottom: 80 }
           : { top: 16, bottom: 80 }}
         lineNumbersMinChars={mobile.current ? 3 : undefined}
+        onReady={() => (monacoReady = true)}
       />
     {/key}
     {#if changedBy}
