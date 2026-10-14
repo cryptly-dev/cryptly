@@ -15,6 +15,7 @@ const user = {
   publicKey: "eval-public-key",
   privateKeyEncrypted: "eval-private-key-encrypted",
   projectCreationDefaults: { revealOn: "hover" },
+  lockBrowserOn: "tab-close",
   isAdmin: false,
 };
 
@@ -438,6 +439,49 @@ async function seedAuthOnly(page: Page) {
     { jwtKey: JWT_STORAGE_KEY, refreshKey: REFRESH_STORAGE_KEY },
   );
 }
+
+test("the passphrase setting can lock the browser whenever the tab loses focus", async ({
+  page,
+}) => {
+  const passphrase = "correct horse battery staple";
+  const fixtures = await createUnlockedFixtures(page, passphrase);
+  let currentUser = fixtures.user;
+  await mockApi(page, { user: fixtures.user, projects: [fixtures.project] });
+  await page.route("**/users/me", async (route) => {
+    if (route.request().method() === "PATCH") {
+      currentUser = { ...currentUser, ...route.request().postDataJSON() };
+    }
+    await route.fulfill({ json: currentUser });
+  });
+  await seedAuthOnly(page);
+
+  await page.goto(`${APP}/app/project/project-eval`, {
+    waitUntil: "domcontentloaded",
+  });
+  await page.getByRole("textbox", { name: "Passphrase" }).fill(passphrase);
+  await page.getByRole("button", { name: "Unlock" }).click();
+  const unlockDialog = page.getByRole("dialog", {
+    name: "Unlock this browser",
+  });
+  await expect(unlockDialog).toHaveCount(0);
+
+  // By default only closing the tab locks it.
+  await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+  expect(await hasStoredMasterKey(page)).toBe(true);
+  await expect(unlockDialog).toHaveCount(0);
+
+  await page.getByRole("button", { name: /Eval User/ }).click();
+  const focusLoss = page.getByRole("menuitemradio", {
+    name: "Whenever the tab loses focus",
+  });
+  await focusLoss.click();
+  await expect(focusLoss).toHaveAttribute("aria-checked", "true");
+  expect(currentUser.lockBrowserOn).toBe("focus-loss");
+
+  await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+  await expect(unlockDialog).toBeVisible();
+  await expect.poll(() => hasStoredMasterKey(page)).toBe(false);
+});
 
 test("unsaved edits survive tab switches and project switches go through the guard", async ({
   page,

@@ -9,7 +9,7 @@
   import BlogHeader from "$lib/components/blog/BlogHeader.svelte";
   import PassphraseGate from "$lib/components/shell/PassphraseGate.svelte";
   import PersonalInvitationsInbox from "$lib/invitations/ui/PersonalInvitationsInbox.svelte";
-  import { followKeyLocks } from "$lib/keys/lock-sync";
+  import { followKeyLocks, lockOnFocusLoss } from "$lib/keys/lock-sync";
   import UnlockBrowserDialog from "$lib/keys/ui/UnlockBrowserDialog.svelte";
   import { auth } from "$lib/stores/auth.svelte";
   import { keyAuth } from "$lib/stores/key.svelte";
@@ -37,6 +37,13 @@
     if (!browser) return;
     if (!auth.jwtToken || !keyAuth.hasMasterKey) return;
     return followKeyLocks();
+  });
+
+  $effect(() => {
+    if (!browser) return;
+    if (!auth.jwtToken || !keyAuth.hasMasterKey) return;
+    if (auth.userData?.lockBrowserOn !== "focus-loss") return;
+    return lockOnFocusLoss();
   });
 </script>
 

@@ -49,7 +49,7 @@
   } from "$lib/auth/domain/project-settings";
   import { keystore } from "$lib/auth/keystore";
   import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
-  import { UserApi } from "$lib/auth/user.api";
+  import { UserApi, type LockBrowserOn } from "$lib/auth/user.api";
   import {
     ProjectsApi,
     type EncryptedVersion,
@@ -157,6 +157,7 @@
   let editingDisplayName = $state(false);
   let displayNameInput = $state("");
   let savingDisplayName = $state(false);
+  let savingLockBrowserOn = $state(false);
   let showCreateDialog = $state(false);
   let newProjectName = $state("");
   let creatingProject = $state(false);
@@ -1581,6 +1582,15 @@
   const menuItemClass =
     "relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent focus-visible:bg-accent";
 
+  const LOCK_BROWSER_OPTIONS: {
+    value: LockBrowserOn;
+    label: string;
+  }[] = [
+    { value: "tab-close", label: "After closing the tab" },
+    { value: "focus-loss", label: "Whenever the tab loses focus" },
+  ];
+  const lockBrowserOn = $derived(auth.userData?.lockBrowserOn ?? "tab-close");
+
   function closeUserMenu() {
     showUserMenu = false;
     cancelDisplayNameEdit();
@@ -1604,6 +1614,20 @@
       toast.error("Failed to update display name");
     } finally {
       savingDisplayName = false;
+    }
+  }
+
+  async function saveLockBrowserOn(value: LockBrowserOn) {
+    const jwt = auth.jwtToken;
+    if (!jwt || savingLockBrowserOn || value === lockBrowserOn) return;
+    savingLockBrowserOn = true;
+    try {
+      await UserApi.updateMe(jwt, { lockBrowserOn: value });
+      await loadUserData();
+    } catch {
+      toast.error("Failed to update passphrase setting");
+    } finally {
+      savingLockBrowserOn = false;
     }
   }
 
@@ -2221,6 +2245,28 @@
       Edit display name
     </button>
   {/if}
+  <div class="-mx-1 my-1 h-px bg-border"></div>
+  <p class="px-2 pt-1.5 pb-1 text-xs font-medium text-muted-foreground">
+    Ask for passphrase
+  </p>
+  {#each LOCK_BROWSER_OPTIONS as option (option.value)}
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={lockBrowserOn === option.value}
+      disabled={savingLockBrowserOn}
+      class={`${menuItemClass} disabled:pointer-events-none disabled:opacity-50`}
+      onclick={() => void saveLockBrowserOn(option.value)}
+    >
+      <Check
+        class={cn(
+          "mr-2 size-4",
+          lockBrowserOn === option.value ? "text-foreground" : "invisible",
+        )}
+      />
+      {option.label}
+    </button>
+  {/each}
   <div class="-mx-1 my-1 h-px bg-border"></div>
   <button
     type="button"

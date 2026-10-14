@@ -97,6 +97,41 @@ describe('User writes (e2e)', () => {
       });
     });
 
+    it('updates lockBrowserOn', async () => {
+      // given
+      const { user, token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .patch(`/users/me`)
+        .set('authorization', `Bearer ${token}`)
+        .send({ lockBrowserOn: 'focus-loss' });
+
+      // then
+      expect(response.status).toEqual(HttpStatus.OK);
+      expect(response.body).toMatchObject({ lockBrowserOn: 'focus-loss' });
+      const userFromDb = await bootstrap.models.userModel.findById(user.id).lean();
+      expect(userFromDb?.lockBrowserOn).toEqual('focus-loss');
+    });
+
+    it('rejects an unknown lockBrowserOn', async () => {
+      // given
+      const { token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .patch(`/users/me`)
+        .set('authorization', `Bearer ${token}`)
+        .send({ lockBrowserOn: 'never' });
+
+      // then
+      expect(response.status).toEqual(HttpStatus.BAD_REQUEST);
+    });
+
     it('updates displayName', async () => {
       // given
       const { user, token } = await bootstrap.utils.userUtils.createDefault({

@@ -2,6 +2,7 @@ import { backend, bearer, unwrap, type Schemas } from "$lib/api/backend";
 
 export type User = Schemas["UserSerialized"];
 export type UpdateUserDto = Schemas["UpdateUserBody"];
+export type LockBrowserOn = User["lockBrowserOn"];
 
 export class UserApi {
   static getMe(jwtToken: string) {

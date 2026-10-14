@@ -32,6 +32,21 @@ describe('UserCoreController (reads)', () => {
       expect(response.body).toMatchObject({ id: expect.any(String), email: user.email });
     });
 
+    it('defaults to locking the browser when the tab closes', async () => {
+      // given
+      const { token } = await bootstrap.utils.userUtils.createDefault({
+        email: 'test@test.com',
+      });
+
+      // when
+      const response = await request(bootstrap.app.getHttpServer())
+        .get('/users/me')
+        .set('authorization', `Bearer ${token}`);
+
+      // then
+      expect(response.body).toMatchObject({ lockBrowserOn: 'tab-close' });
+    });
+
     it('returns 401 when not logged in', async () => {
       // when
       const response = await request(bootstrap.app.getHttpServer()).get('/users/me');

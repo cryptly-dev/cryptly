@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProjectRevealOn, ProjectSettings } from '../../../shared/types/project-settings';
 import { AuthMethod } from '../enum/auth-method.enum';
+import { BrowserLockOn } from '../enum/browser-lock-on.enum';
 
 export class UserPartialNormalized {
   public id: string;
@@ -15,6 +16,7 @@ export class UserNormalized extends UserPartialNormalized {
   public privateKeyEncrypted?: string;
   public projectsOrder: string[];
   public projectCreationDefaults: ProjectSettings;
+  public lockBrowserOn: BrowserLockOn;
   public isAdmin: boolean;
 }
 
@@ -49,6 +51,9 @@ export class UserSerialized extends UserPartialSerialized {
 
   @ApiProperty({ type: ProjectCreationDefaultsSerialized })
   public projectCreationDefaults: ProjectCreationDefaultsSerialized;
+
+  @ApiProperty({ enum: BrowserLockOn })
+  public lockBrowserOn: BrowserLockOn;
 
   @ApiProperty()
   public isAdmin: boolean;

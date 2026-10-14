@@ -790,6 +790,8 @@ export interface components {
             authMethod: "google" | "github" | "local";
             privateKeyEncrypted?: string;
             projectCreationDefaults: components["schemas"]["ProjectCreationDefaultsSerialized"];
+            /** @enum {string} */
+            lockBrowserOn: "tab-close" | "focus-loss";
             isAdmin: boolean;
         };
         ProjectCreationDefaultsBody: {
@@ -802,6 +804,8 @@ export interface components {
             privateKeyEncrypted?: string;
             projectsOrder?: string[];
             projectCreationDefaults?: components["schemas"]["ProjectCreationDefaultsBody"];
+            /** @enum {string} */
+            lockBrowserOn?: "tab-close" | "focus-loss";
         };
         GetPublicKeysBody: {
             userIds: string[];

@@ -9,6 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ProjectRevealOn } from '../../../shared/types/project-settings';
+import { BrowserLockOn } from '../enum/browser-lock-on.enum';
 
 class ProjectCreationDefaultsBody {
   @ApiProperty({ enum: ProjectRevealOn })
@@ -46,4 +47,9 @@ export class UpdateUserBody {
   @Type(() => ProjectCreationDefaultsBody)
   @ApiProperty({ required: false, type: ProjectCreationDefaultsBody })
   public projectCreationDefaults?: ProjectCreationDefaultsBody;
+
+  @IsOptional()
+  @IsEnum(BrowserLockOn)
+  @ApiProperty({ required: false, enum: BrowserLockOn })
+  public lockBrowserOn?: BrowserLockOn;
 }

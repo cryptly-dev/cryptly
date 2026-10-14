@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { DEFAULT_PROJECT_SETTINGS, ProjectSettings } from '../../../shared/types/project-settings';
 import { AuthMethod } from '../enum/auth-method.enum';
+import { BrowserLockOn } from '../enum/browser-lock-on.enum';
 
 @Schema({ collection: 'users', timestamps: true })
 export class UserEntity {
@@ -30,6 +31,9 @@ export class UserEntity {
 
   @Prop({ type: Object, default: DEFAULT_PROJECT_SETTINGS })
   projectCreationDefaults: ProjectSettings;
+
+  @Prop({ type: String, enum: BrowserLockOn, default: BrowserLockOn.TabClose })
+  lockBrowserOn: BrowserLockOn;
 
   @Prop({ default: false })
   isAdmin: boolean;

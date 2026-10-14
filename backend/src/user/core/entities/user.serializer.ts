@@ -1,3 +1,4 @@
+import { BrowserLockOn } from '../enum/browser-lock-on.enum';
 import { UserEntity } from './user.entity';
 import { normalizeProjectSettings } from '../../../shared/types/project-settings';
 import {
@@ -23,6 +24,7 @@ export class UserSerializer {
       publicKey: entity.publicKey,
       projectsOrder: entity.projectsOrder || [],
       projectCreationDefaults: normalizeProjectSettings(entity.projectCreationDefaults),
+      lockBrowserOn: entity.lockBrowserOn ?? BrowserLockOn.TabClose,
       isAdmin: entity.isAdmin ?? false,
     };
   }
@@ -39,6 +41,7 @@ export class UserSerializer {
       privateKeyEncrypted: normalized.privateKeyEncrypted,
       publicKey: normalized.publicKey,
       projectCreationDefaults: normalizeProjectSettings(normalized.projectCreationDefaults),
+      lockBrowserOn: normalized.lockBrowserOn ?? BrowserLockOn.TabClose,
       isAdmin: normalized.isAdmin ?? false,
     };
 

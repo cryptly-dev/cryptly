@@ -1959,6 +1959,13 @@
           "projectCreationDefaults": {
             "$ref": "#/components/schemas/ProjectCreationDefaultsSerialized"
           },
+          "lockBrowserOn": {
+            "type": "string",
+            "enum": [
+              "tab-close",
+              "focus-loss"
+            ]
+          },
           "isAdmin": {
             "type": "boolean"
           }
@@ -1969,6 +1976,7 @@
           "displayName",
           "authMethod",
           "projectCreationDefaults",
+          "lockBrowserOn",
           "isAdmin"
         ]
       },
@@ -2008,6 +2016,13 @@
           },
           "projectCreationDefaults": {
             "$ref": "#/components/schemas/ProjectCreationDefaultsBody"
+          },
+          "lockBrowserOn": {
+            "type": "string",
+            "enum": [
+              "tab-close",
+              "focus-loss"
+            ]
           }
         }
       },

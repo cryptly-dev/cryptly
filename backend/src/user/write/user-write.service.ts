@@ -89,6 +89,10 @@ export class UserWriteService {
       updateQuery.projectCreationDefaults = normalizeProjectSettings(dto.projectCreationDefaults);
     }
 
+    if (dto.lockBrowserOn !== undefined) {
+      updateQuery.lockBrowserOn = dto.lockBrowserOn;
+    }
+
     const user = await this.userModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
       updateQuery,
