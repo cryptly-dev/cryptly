@@ -40,6 +40,7 @@
   } from "$lib/api/integrations.api";
   import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
   import { createGitHubAppInstallState } from "$lib/auth/browser-state";
+  import { keepUnlockedWhileAway } from "$lib/keys/tab-session";
   import {
     DEFAULT_PROJECT_SETTINGS,
     normalizeProjectSettings,
@@ -120,6 +121,8 @@
 
   type TabType = "editor" | "history" | "members" | "integrations" | "settings";
   const ACTIVE_TAB_STORAGE_KEY = "cryptly.project.activeTab";
+  // Same lifetime as the install state the GitHub callback has to present.
+  const GITHUB_INSTALL_ROUND_TRIP_MS = 10 * 60 * 1000;
 
   const mobileTabs = [
     { id: "editor", label: "Editor", icon: IconBraces },
@@ -1814,6 +1817,7 @@
       }
       const state = createGitHubAppInstallState(activeProject.id);
       if (!state) throw new Error("Failed to start GitHub installation");
+      keepUnlockedWhileAway(GITHUB_INSTALL_ROUND_TRIP_MS);
       window.location.href = `https://github.com/apps/cryptly-dev/installations/new?state=${encodeURIComponent(state)}`;
     } catch {
       installingGithubApp = false;

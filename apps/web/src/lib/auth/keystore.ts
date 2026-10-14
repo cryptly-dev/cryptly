@@ -1,3 +1,5 @@
+import { joinTabSession } from "$lib/keys/tab-session";
+
 const DB_NAME = "cryptly-keystore";
 const DB_VERSION = 1;
 const MASTER_STORE = "master";
@@ -9,20 +11,26 @@ let dbPromise: Promise<IDBDatabase> | null = null;
 function openDb(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
 
-  dbPromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(MASTER_STORE)) {
-        db.createObjectStore(MASTER_STORE);
-      }
-      if (!db.objectStoreNames.contains(PROJECTS_STORE)) {
-        db.createObjectStore(PROJECTS_STORE);
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
+  dbPromise = (async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(MASTER_STORE)) {
+          db.createObjectStore(MASTER_STORE);
+        }
+        if (!db.objectStoreNames.contains(PROJECTS_STORE)) {
+          db.createObjectStore(PROJECTS_STORE);
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    // Keys left behind by a session whose tabs were all closed are purged
+    // before anything can read them.
+    if (!(await joinTabSession())) await clearAll(db);
+    return db;
+  })();
 
   return dbPromise;
 }
@@ -40,6 +48,13 @@ function awaitRequest<T>(req: IDBRequest<T>): Promise<T> {
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+}
+
+async function clearAll(db: IDBDatabase): Promise<void> {
+  await Promise.all([
+    awaitRequest(tx(db, MASTER_STORE, "readwrite").clear()),
+    awaitRequest(tx(db, PROJECTS_STORE, "readwrite").clear()),
+  ]);
 }
 
 export const keystore = {
@@ -82,10 +97,6 @@ export const keystore = {
   },
 
   async wipeAll(): Promise<void> {
-    const db = await openDb();
-    await Promise.all([
-      awaitRequest(tx(db, MASTER_STORE, "readwrite").clear()),
-      awaitRequest(tx(db, PROJECTS_STORE, "readwrite").clear()),
-    ]);
+    await clearAll(await openDb());
   },
 };

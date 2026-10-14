@@ -4,9 +4,7 @@ const APP = process.env.SVELTE_URL ?? "http://127.0.0.1:9090";
 const JWT_STORAGE_KEY = "secretly-app_src_lib_logics_authLogic_jwtToken";
 const REFRESH_STORAGE_KEY =
   "secretly-app_src_lib_logics_authLogic_refreshToken";
-const LAST_ACTIVITY_STORAGE_KEY = "cryptly:key-last-activity-at";
 const LOCKED_AT_STORAGE_KEY = "cryptly:key-locked-at";
-const LOCK_AFTER_MS = 30 * 60 * 1000;
 
 const user = {
   id: "eval-user",
@@ -200,13 +198,25 @@ async function createUnlockedFixtures(
   );
 }
 
-async function seedBrowserState(page: Page, lastActivityAt: number) {
+// A fresh tab purges leftover keys as it joins the tab session, so seed after.
+async function waitForTabSession(page: Page) {
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const { held = [] } = await navigator.locks.query();
+        return held.some((lock) => lock.name === "cryptly:open-tab");
+      }),
+    )
+    .toBe(true);
+}
+
+async function seedBrowserState(page: Page) {
   await page.goto(`${APP}/`, { waitUntil: "domcontentloaded" });
+  await waitForTabSession(page);
   await page.evaluate(
-    async ({ jwtKey, refreshKey, activityKey, activityAt }) => {
+    async ({ jwtKey, refreshKey }) => {
       localStorage.setItem(jwtKey, "eval-jwt");
       localStorage.setItem(refreshKey, "eval-refresh");
-      localStorage.setItem(activityKey, String(activityAt));
 
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
         const request = indexedDB.open("cryptly-keystore", 1);
@@ -241,12 +251,7 @@ async function seedBrowserState(page: Page, lastActivityAt: number) {
       });
       db.close();
     },
-    {
-      jwtKey: JWT_STORAGE_KEY,
-      refreshKey: REFRESH_STORAGE_KEY,
-      activityKey: LAST_ACTIVITY_STORAGE_KEY,
-      activityAt: lastActivityAt,
-    },
+    { jwtKey: JWT_STORAGE_KEY, refreshKey: REFRESH_STORAGE_KEY },
   );
 }
 
@@ -270,25 +275,44 @@ async function hasStoredMasterKey(page: Page): Promise<boolean> {
   });
 }
 
-test("stale unlocked browser locks immediately and wipes local keys", async ({
+test("closing every tab locks the next one and wipes local keys", async ({
   page,
 }) => {
   await mockApi(page);
-  await seedBrowserState(page, Date.now() - LOCK_AFTER_MS - 5_000);
-
+  await seedBrowserState(page);
   await page.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
-
+  await expect(
+    page.getByRole("heading", { name: /Name your first/i }),
+  ).toBeVisible();
   await expect(
     page.getByRole("dialog", { name: "Unlock this browser" }),
+  ).toHaveCount(0);
+
+  const nextTab = await page.context().newPage();
+  await mockApi(nextTab);
+  await page.close();
+  await nextTab.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
+
+  await expect(
+    nextTab.getByRole("dialog", { name: "Unlock this browser" }),
   ).toBeVisible();
-  await expect.poll(() => hasStoredMasterKey(page)).toBe(false);
+  await expect.poll(() => hasStoredMasterKey(nextTab)).toBe(false);
 });
 
-test("recently active unlocked browser stays open", async ({ page }) => {
+test("an open tab stays unlocked across reloads and idle time", async ({
+  page,
+}) => {
+  await page.clock.install();
   await mockApi(page);
-  await seedBrowserState(page, Date.now());
+  await seedBrowserState(page);
 
   await page.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
+  await expect(
+    page.getByRole("heading", { name: /Name your first/i }),
+  ).toBeVisible();
+
+  await page.clock.runFor(2 * 60 * 60 * 1000);
+  await page.reload({ waitUntil: "domcontentloaded" });
 
   await expect(
     page.getByRole("heading", { name: /Name your first/i }),
@@ -299,6 +323,34 @@ test("recently active unlocked browser stays open", async ({ page }) => {
   await expect.poll(() => hasStoredMasterKey(page)).toBe(true);
 });
 
+test("a tab opened while another is open stays unlocked after the first closes", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ colorScheme: "dark" });
+  const pageOne = await context.newPage();
+  const pageTwo = await context.newPage();
+  await mockApi(pageOne);
+  await mockApi(pageTwo);
+  await seedBrowserState(pageOne);
+
+  await pageOne.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
+  await pageTwo.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
+  await expect(
+    pageTwo.getByRole("heading", { name: /Name your first/i }),
+  ).toBeVisible();
+
+  await pageOne.close();
+  await pageTwo.reload({ waitUntil: "domcontentloaded" });
+
+  await expect(
+    pageTwo.getByRole("heading", { name: /Name your first/i }),
+  ).toBeVisible();
+  await expect(
+    pageTwo.getByRole("dialog", { name: "Unlock this browser" }),
+  ).toHaveCount(0);
+  await context.close();
+});
+
 test("lock broadcast in one tab locks another open tab", async ({
   browser,
 }) => {
@@ -307,7 +359,7 @@ test("lock broadcast in one tab locks another open tab", async ({
   const pageTwo = await context.newPage();
   await mockApi(pageOne);
   await mockApi(pageTwo);
-  await seedBrowserState(pageOne, Date.now());
+  await seedBrowserState(pageOne);
 
   await pageOne.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
   await pageTwo.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
@@ -329,7 +381,7 @@ test("lock broadcast in one tab locks another open tab", async ({
 
 test("projects loading state is the legacy amber grip", async ({ page }) => {
   await mockApi(page, { userDelayMs: 1_000 });
-  await seedBrowserState(page, Date.now());
+  await seedBrowserState(page);
 
   await page.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
 

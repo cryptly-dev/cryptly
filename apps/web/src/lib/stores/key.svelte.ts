@@ -4,7 +4,6 @@ import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
 import { keystore } from "$lib/auth/keystore";
 import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
 import { UserApi } from "$lib/auth/user.api";
-import { recordUnlockActivity } from "$lib/keys/auto-lock";
 import { auth, loadUserData } from "./auth.svelte";
 import { queueFTUX } from "./ftux.svelte";
 import { keyAuth, markKeyLocked, markKeyUnlocked } from "./key-state.svelte";
@@ -52,7 +51,6 @@ export async function setUpPassphrase(passphrase: string) {
   );
   await keystore.setMasterKey(masterKey);
   markKeyUnlocked();
-  recordUnlockActivity();
 
   await UserApi.updateMe(auth.jwtToken!, {
     publicKey: keyPair.publicKey,
@@ -83,7 +81,6 @@ export async function unlock(passphrase: string): Promise<void> {
     await AsymmetricCrypto.importPrivateKeyNonExtractable(pkcs8Base64);
   await keystore.setMasterKey(masterKey);
   markKeyUnlocked();
-  recordUnlockActivity();
 }
 
 export async function reset() {
