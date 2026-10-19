@@ -55,3 +55,14 @@ export async function gotoAfterLogin(): Promise<void> {
   }
   await goto(resolve("/app/project"));
 }
+
+/** Resumes an invite that sent a new account to set its passphrase first. */
+export async function gotoAfterPassphraseSetup(): Promise<void> {
+  const inviteId = readStoredInviteIdAfterLogin();
+  if (inviteId) {
+    clearStoredInviteAfterLogin();
+    await goto(resolve(`/invite/${inviteId}`), { replaceState: true });
+    return;
+  }
+  await goto(resolve("/app/project"), { replaceState: true });
+}

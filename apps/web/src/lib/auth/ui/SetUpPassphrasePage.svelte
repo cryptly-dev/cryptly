@@ -5,6 +5,7 @@
   import { AlertTriangle, CornerDownLeft } from "lucide-svelte";
   import { onMount, tick } from "svelte";
   import { animate } from "motion";
+  import { gotoAfterPassphraseSetup } from "$lib/auth/after-login";
   import { auth, logout } from "$lib/stores/auth.svelte";
   import { setUpPassphrase } from "$lib/stores/key.svelte";
 
@@ -41,7 +42,7 @@
       return;
     }
     if (!shouldSetUpPassphrase) {
-      void goto(resolve("/app/project"), { replaceState: true });
+      void gotoAfterPassphraseSetup();
     }
   });
 

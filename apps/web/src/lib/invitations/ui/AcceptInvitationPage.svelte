@@ -27,6 +27,9 @@
   let loadError = $state<string | null>(null);
 
   const isLoggedIn = $derived(Boolean(auth.jwtToken));
+  const keysAreSetUp = $derived(
+    Boolean(auth.userData?.publicKey && auth.userData?.privateKeyEncrypted),
+  );
 
   async function loadInvitation() {
     const jwt = auth.jwtToken;
@@ -45,6 +48,14 @@
 
   $effect(() => {
     if (isLoggedIn) void loadInvitation();
+  });
+
+  // A new account comes here straight from login, before PassphraseGate (which only guards /app)
+  // has made it create the key pair the project key gets re-encrypted to.
+  $effect(() => {
+    if (!auth.userData || keysAreSetUp) return;
+    persistInviteIdForAfterLogin(inviteId);
+    void goto(resolve("/app/set-passphrase"), { replaceState: true });
   });
 
   async function acceptInvitation() {
