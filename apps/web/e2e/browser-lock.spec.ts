@@ -483,6 +483,189 @@ test("the passphrase setting can lock the browser whenever the tab loses focus",
   await expect.poll(() => hasStoredMasterKey(page)).toBe(false);
 });
 
+const IDLE_USER = { ...user, lockBrowserOn: "inactivity" };
+const ONE_HOUR_MS = 60 * 60 * 1000;
+
+async function openUnlockedApp(page: Page) {
+  await page.goto(`${APP}/app/project`, { waitUntil: "domcontentloaded" });
+  await expect(
+    page.getByRole("heading", { name: /Name your first/i }),
+  ).toBeVisible();
+}
+
+function unlockDialog(page: Page) {
+  return page.getByRole("dialog", { name: "Unlock this browser" });
+}
+
+async function setLastActive(page: Page, msAgo: number) {
+  await page.evaluate((ago) => {
+    localStorage.setItem("cryptly:last-active-at", String(Date.now() - ago));
+  }, msAgo);
+}
+
+test("an hour without activity locks the browser and wipes local keys", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await mockApi(page, { user: IDLE_USER });
+  await seedBrowserState(page);
+  await openUnlockedApp(page);
+
+  await page.clock.runFor(ONE_HOUR_MS + 60 * 1000);
+
+  await expect(unlockDialog(page)).toBeVisible();
+  await expect.poll(() => hasStoredMasterKey(page)).toBe(false);
+});
+
+test("activity in any tab keeps every tab unlocked", async ({ browser }) => {
+  const context = await browser.newContext();
+  await context.clock.install();
+  const idleTab = await context.newPage();
+  await mockApi(idleTab, { user: IDLE_USER });
+  await seedBrowserState(idleTab);
+  await openUnlockedApp(idleTab);
+  const activeTab = await context.newPage();
+  await mockApi(activeTab, { user: IDLE_USER });
+  await openUnlockedApp(activeTab);
+
+  await context.clock.runFor(50 * 60 * 1000);
+  await activeTab.mouse.move(200, 200);
+  await context.clock.runFor(50 * 60 * 1000);
+
+  await expect(unlockDialog(idleTab)).toHaveCount(0);
+  expect(await hasStoredMasterKey(idleTab)).toBe(true);
+  await context.close();
+});
+
+test("the first input after a long absence locks instead of renewing the session", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await mockApi(page, { user: IDLE_USER });
+  await seedBrowserState(page);
+  await openUnlockedApp(page);
+  await page.clock.fastForward(10 * 1000);
+
+  await setLastActive(page, 2 * ONE_HOUR_MS);
+  await page.mouse.move(300, 300);
+
+  await expect(unlockDialog(page)).toBeVisible();
+  await expect(unlockDialog(page)).toContainText(
+    "locked after 1 hour of inactivity",
+  );
+  await expect.poll(() => hasStoredMasterKey(page)).toBe(false);
+});
+
+test("reloading after a long absence still locks", async ({ page }) => {
+  await mockApi(page, { user: IDLE_USER, userDelayMs: 500 });
+  await seedBrowserState(page);
+  await openUnlockedApp(page);
+
+  await setLastActive(page, 2 * ONE_HOUR_MS);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.mouse.move(300, 300);
+
+  await expect(unlockDialog(page)).toBeVisible();
+  await expect(unlockDialog(page)).toContainText(
+    "locked after 1 hour of inactivity",
+  );
+  await expect.poll(() => hasStoredMasterKey(page)).toBe(false);
+});
+
+test("unlocking after an idle lock stays unlocked, the setting can be chosen, and a later lock from another tab does not blame inactivity", async ({
+  page,
+}) => {
+  const passphrase = "correct horse battery staple";
+  const fixtures = await createUnlockedFixtures(page, passphrase);
+  let currentUser = { ...fixtures.user, lockBrowserOn: "tab-close" };
+  await mockApi(page, { user: currentUser, projects: [fixtures.project] });
+  await page.route("**/users/me", async (route) => {
+    if (route.request().method() === "PATCH") {
+      currentUser = { ...currentUser, ...route.request().postDataJSON() };
+    }
+    await route.fulfill({ json: currentUser });
+  });
+  await seedAuthOnly(page);
+  await page.goto(`${APP}/app/project/project-eval`, {
+    waitUntil: "domcontentloaded",
+  });
+  const unlock = async () => {
+    await page.getByRole("textbox", { name: "Passphrase" }).fill(passphrase);
+    await page.getByRole("button", { name: "Unlock" }).click();
+    await expect(unlockDialog(page)).toHaveCount(0);
+  };
+  await unlock();
+
+  await page.getByRole("button", { name: /Eval User/ }).click();
+  const inactivity = page.getByRole("menuitemradio", {
+    name: "After 1 hour of inactivity",
+  });
+  await inactivity.click();
+  await expect(inactivity).toHaveAttribute("aria-checked", "true");
+  expect(currentUser.lockBrowserOn).toBe("inactivity");
+
+  await setLastActive(page, 2 * ONE_HOUR_MS);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(unlockDialog(page)).toBeVisible();
+
+  await unlock();
+  await expect(unlockDialog(page)).toHaveCount(0);
+  await expect.poll(() => hasStoredMasterKey(page)).toBe(true);
+
+  await page.evaluate((key) => {
+    window.dispatchEvent(
+      new StorageEvent("storage", { key, newValue: String(Date.now()) }),
+    );
+  }, LOCKED_AT_STORAGE_KEY);
+  await expect(unlockDialog(page)).toBeVisible();
+  await expect(unlockDialog(page)).not.toContainText("inactivity");
+});
+
+test("the user menu is fully visible on a phone", async ({ page }) => {
+  const fixtures = await createUnlockedFixtures(page, "correct horse");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mockApi(page, { user: fixtures.user, projects: [fixtures.project] });
+  await seedAuthOnly(page);
+  await page.goto(`${APP}/app/project/project-eval`, {
+    waitUntil: "domcontentloaded",
+  });
+  await page.getByRole("textbox", { name: "Passphrase" }).fill("correct horse");
+  await page.getByRole("button", { name: "Unlock" }).click();
+  await expect(unlockDialog(page)).toHaveCount(0);
+
+  await page.getByRole("button", { name: "User menu" }).click();
+  for (const option of await page.getByRole("menuitemradio").all()) {
+    await option.click({ trial: true, timeout: 5000 });
+  }
+  await expect(page.getByRole("menuitemradio")).toHaveCount(3);
+});
+
+test("an idle locked tab stops reconnecting until someone returns", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await mockApi(page, { user: IDLE_USER });
+  await seedBrowserState(page);
+  let requesterStreamRequests = 0;
+  page.on("request", (request) => {
+    if (request.url().includes("device-flow/messages?role=requester")) {
+      requesterStreamRequests += 1;
+    }
+  });
+  await openUnlockedApp(page);
+  await page.clock.runFor(ONE_HOUR_MS + 60 * 1000);
+  await expect(unlockDialog(page)).toBeVisible();
+
+  const requestsWhenIdle = requesterStreamRequests;
+  await page.clock.runFor(10 * 60 * 1000);
+  expect(requesterStreamRequests).toBe(requestsWhenIdle);
+
+  await page.mouse.move(300, 300);
+  await expect
+    .poll(() => requesterStreamRequests)
+    .toBeGreaterThan(requestsWhenIdle);
+});
+
 test("unsaved edits survive tab switches and project switches go through the guard", async ({
   page,
 }) => {

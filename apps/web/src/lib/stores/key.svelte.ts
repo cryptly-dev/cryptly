@@ -4,9 +4,15 @@ import { AsymmetricCrypto } from "$lib/auth/asymmetric-crypto";
 import { keystore } from "$lib/auth/keystore";
 import { SymmetricCrypto } from "$lib/auth/symmetric-crypto";
 import { UserApi } from "$lib/auth/user.api";
+import { recordActivity } from "$lib/keys/activity.svelte";
 import { auth, loadUserData } from "./auth.svelte";
 import { queueFTUX } from "./ftux.svelte";
-import { keyAuth, markKeyLocked, markKeyUnlocked } from "./key-state.svelte";
+import {
+  forgetLockReason,
+  keyAuth,
+  markKeyLocked,
+  markKeyUnlocked,
+} from "./key-state.svelte";
 
 export {
   broadcastKeyLock,
@@ -80,6 +86,8 @@ export async function unlock(passphrase: string): Promise<void> {
   const masterKey =
     await AsymmetricCrypto.importPrivateKeyNonExtractable(pkcs8Base64);
   await keystore.setMasterKey(masterKey);
+  recordActivity();
+  forgetLockReason();
   markKeyUnlocked();
 }
 

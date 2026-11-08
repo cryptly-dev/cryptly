@@ -24,7 +24,7 @@ export class UserSerializer {
       publicKey: entity.publicKey,
       projectsOrder: entity.projectsOrder || [],
       projectCreationDefaults: normalizeProjectSettings(entity.projectCreationDefaults),
-      lockBrowserOn: entity.lockBrowserOn ?? BrowserLockOn.TabClose,
+      lockBrowserOn: entity.lockBrowserOn ?? BrowserLockOn.Inactivity,
       isAdmin: entity.isAdmin ?? false,
     };
   }
@@ -41,7 +41,7 @@ export class UserSerializer {
       privateKeyEncrypted: normalized.privateKeyEncrypted,
       publicKey: normalized.publicKey,
       projectCreationDefaults: normalizeProjectSettings(normalized.projectCreationDefaults),
-      lockBrowserOn: normalized.lockBrowserOn ?? BrowserLockOn.TabClose,
+      lockBrowserOn: normalized.lockBrowserOn ?? BrowserLockOn.Inactivity,
       isAdmin: normalized.isAdmin ?? false,
     };
 

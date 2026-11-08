@@ -791,7 +791,7 @@ export interface components {
             privateKeyEncrypted?: string;
             projectCreationDefaults: components["schemas"]["ProjectCreationDefaultsSerialized"];
             /** @enum {string} */
-            lockBrowserOn: "tab-close" | "focus-loss";
+            lockBrowserOn: "inactivity" | "tab-close" | "focus-loss";
             isAdmin: boolean;
         };
         ProjectCreationDefaultsBody: {
@@ -805,7 +805,7 @@ export interface components {
             projectsOrder?: string[];
             projectCreationDefaults?: components["schemas"]["ProjectCreationDefaultsBody"];
             /** @enum {string} */
-            lockBrowserOn?: "tab-close" | "focus-loss";
+            lockBrowserOn?: "inactivity" | "tab-close" | "focus-loss";
         };
         GetPublicKeysBody: {
             userIds: string[];

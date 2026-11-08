@@ -1,9 +1,11 @@
 import { browser } from "$app/environment";
 import { keystore } from "$lib/auth/keystore";
+import { whenIdle } from "$lib/keys/activity.svelte";
 import {
   broadcastKeyLock,
   KEY_LOCKED_AT_STORAGE_KEY,
   markKeyLocked,
+  noteLockedByInactivity,
 } from "$lib/stores/key-state.svelte";
 
 let lockPromise: Promise<void> | null = null;
@@ -42,6 +44,14 @@ export function followKeyLocks() {
   if (!browser) return;
   window.addEventListener("storage", handleStorage);
   return () => window.removeEventListener("storage", handleStorage);
+}
+
+export function lockOnInactivity() {
+  if (!browser) return;
+  return whenIdle(() => {
+    noteLockedByInactivity();
+    lockEveryTab();
+  });
 }
 
 /** Locks every tab as soon as this one loses focus. */

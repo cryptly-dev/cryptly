@@ -32,7 +32,7 @@ export class UserEntity {
   @Prop({ type: Object, default: DEFAULT_PROJECT_SETTINGS })
   projectCreationDefaults: ProjectSettings;
 
-  @Prop({ type: String, enum: BrowserLockOn, default: BrowserLockOn.TabClose })
+  @Prop({ type: String, enum: BrowserLockOn, default: BrowserLockOn.Inactivity })
   lockBrowserOn: BrowserLockOn;
 
   @Prop({ default: false })

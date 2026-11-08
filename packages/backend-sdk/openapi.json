@@ -1962,6 +1962,7 @@
           "lockBrowserOn": {
             "type": "string",
             "enum": [
+              "inactivity",
               "tab-close",
               "focus-loss"
             ]
@@ -2020,6 +2021,7 @@
           "lockBrowserOn": {
             "type": "string",
             "enum": [
+              "inactivity",
               "tab-close",
               "focus-loss"
             ]
