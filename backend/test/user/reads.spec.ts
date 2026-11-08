@@ -44,7 +44,7 @@ describe('UserCoreController (reads)', () => {
         .set('authorization', `Bearer ${token}`);
 
       // then
-      expect(response.body).toMatchObject({ lockBrowserOn: 'tab-close' });
+      expect(response.body).toMatchObject({ lockBrowserOn: 'inactivity' });
     });
 
     it('returns 401 when not logged in', async () => {

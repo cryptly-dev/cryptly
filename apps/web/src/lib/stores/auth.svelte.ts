@@ -9,7 +9,11 @@ import {
 } from "$lib/auth/kea-storage-keys";
 import { keystore } from "$lib/auth/keystore";
 import { UserApi, type User } from "$lib/auth/user.api";
-import { broadcastKeyLock, markKeyLocked } from "$lib/stores/key-state.svelte";
+import {
+  broadcastKeyLock,
+  forgetLockReason,
+  markKeyLocked,
+} from "$lib/stores/key-state.svelte";
 
 function readKey(storageKey: string): string | null {
   if (!browser) return null;
@@ -155,6 +159,7 @@ export async function logout() {
   try {
     await keystore.wipeAll();
   } finally {
+    forgetLockReason();
     markKeyLocked();
     broadcastKeyLock();
   }

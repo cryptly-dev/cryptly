@@ -15,8 +15,10 @@
     deviceFlowRequester,
     requestUnlockFromDevice,
   } from "$lib/device-flow/device-flow-requester.svelte";
+  import { activity } from "$lib/keys/activity.svelte";
   import { auth, logout } from "$lib/stores/auth.svelte";
   import { hydrateMasterKey, keyAuth, unlock } from "$lib/stores/key.svelte";
+  import { wasLockedByInactivity } from "$lib/stores/key-state.svelte";
 
   let passphrase = $state("");
   let showPassphrase = $state(false);
@@ -43,6 +45,8 @@
     ),
   );
 
+  const lockedByInactivity = $derived(open && wasLockedByInactivity());
+
   $effect(() => {
     if (open) return;
     passphrase = "";
@@ -61,8 +65,9 @@
     }
   });
 
+  const wantsApprovers = $derived(open && !activity.idle);
   $effect(() => {
-    if (!open) {
+    if (!wantsApprovers) {
       detachDeviceFlowRequester();
       return;
     }
@@ -118,6 +123,9 @@
         Unlock this browser
       </h2>
       <p id="unlock-description" class="text-sm text-muted-foreground">
+        {#if lockedByInactivity}
+          Cryptly locked after 1 hour of inactivity.
+        {/if}
         Enter your account passphrase.
       </p>
       <button

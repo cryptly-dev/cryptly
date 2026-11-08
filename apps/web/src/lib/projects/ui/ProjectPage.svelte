@@ -1586,10 +1586,11 @@
     value: LockBrowserOn;
     label: string;
   }[] = [
+    { value: "inactivity", label: "After 1 hour of inactivity" },
     { value: "tab-close", label: "After closing the tab" },
     { value: "focus-loss", label: "Whenever the tab loses focus" },
   ];
-  const lockBrowserOn = $derived(auth.userData?.lockBrowserOn ?? "tab-close");
+  const lockBrowserOn = $derived(auth.userData?.lockBrowserOn ?? "inactivity");
 
   function closeUserMenu() {
     showUserMenu = false;
@@ -2726,7 +2727,7 @@
       </div>
     {/if}
     <div
-      class={`${isSearching ? "hidden" : "flex"} shrink-0 flex-col border-b border-border/50 bg-card/20 backdrop-blur-sm md:hidden`}
+      class={`${isSearching ? "hidden" : "flex"} relative z-20 shrink-0 flex-col border-b border-border/50 bg-card/20 backdrop-blur-sm md:hidden`}
     >
       <div class="flex items-center gap-2 px-3 py-2">
         <a

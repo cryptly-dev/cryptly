@@ -9,7 +9,12 @@
   import BlogHeader from "$lib/components/blog/BlogHeader.svelte";
   import PassphraseGate from "$lib/components/shell/PassphraseGate.svelte";
   import PersonalInvitationsInbox from "$lib/invitations/ui/PersonalInvitationsInbox.svelte";
-  import { followKeyLocks, lockOnFocusLoss } from "$lib/keys/lock-sync";
+  import { trackActivity } from "$lib/keys/activity.svelte";
+  import {
+    followKeyLocks,
+    lockOnFocusLoss,
+    lockOnInactivity,
+  } from "$lib/keys/lock-sync";
   import UnlockBrowserDialog from "$lib/keys/ui/UnlockBrowserDialog.svelte";
   import { auth } from "$lib/stores/auth.svelte";
   import { keyAuth } from "$lib/stores/key.svelte";
@@ -44,6 +49,22 @@
     if (!auth.jwtToken || !keyAuth.hasMasterKey) return;
     if (auth.userData?.lockBrowserOn !== "focus-loss") return;
     return lockOnFocusLoss();
+  });
+
+  // Early input would overwrite the last activity time and hide an overdue lock.
+  const lockStateLoaded = $derived(
+    auth.userData !== null && keyAuth.masterKeyHydrated,
+  );
+  $effect(() => {
+    if (!browser || !lockStateLoaded) return;
+    return trackActivity();
+  });
+
+  $effect(() => {
+    if (!browser || !lockStateLoaded) return;
+    if (!auth.jwtToken || !keyAuth.hasMasterKey) return;
+    if (auth.userData?.lockBrowserOn !== "inactivity") return;
+    return lockOnInactivity();
   });
 </script>
 
