@@ -28,7 +28,7 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
 
       const errorResponse = exception instanceof HttpException ? exception.getResponse() : null;
 
-      this.logger.error('Unhandled Exception', {
+      const details = {
         statusCode: status,
         message,
         method: request.method,
@@ -36,9 +36,17 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
         timestamp: new Date().toISOString(),
         userId: (request as any).user?.id,
         error: exception instanceof Error ? exception.message : String(exception),
-        stack: exception instanceof Error ? exception.stack : undefined,
         responseBody: errorResponse,
-      });
+      };
+
+      if (status < HttpStatus.INTERNAL_SERVER_ERROR) {
+        this.logger.http('Request rejected', details);
+      } else {
+        this.logger.error('Unhandled Exception', {
+          ...details,
+          stack: exception instanceof Error ? exception.stack : undefined,
+        });
+      }
     }
 
     super.catch(exception, host);

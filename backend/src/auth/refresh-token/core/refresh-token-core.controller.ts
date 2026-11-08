@@ -1,3 +1,4 @@
+import { Logger } from '@logdash/js-sdk';
 import { Body, Controller, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
 import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { TokenResponse } from '../../../shared/responses/token.response';
@@ -20,6 +21,7 @@ export class RefreshTokenCoreController {
     private readonly jwtService: CustomJwtService,
     private readonly userReadService: UserReadService,
     private readonly productAnalytics: ProductAnalyticsService,
+    private readonly logger: Logger,
   ) {}
 
   @Post('refresh')
@@ -38,6 +40,7 @@ export class RefreshTokenCoreController {
 
     if (existing.revokedAt !== null) {
       // Reuse of a revoked token — possible theft. Revoke all tokens for the user.
+      this.logger.warn('Refresh token reuse detected', { userId: existing.userId });
       await this.refreshTokenWriteService.revokeAllForUser(existing.userId);
       throw new UnauthorizedException('Refresh token has been revoked');
     }
